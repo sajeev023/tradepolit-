@@ -4,6 +4,8 @@ import { MarketDataService } from "@/lib/market-data-service";
 import { compileTechnicalContext } from "@/lib/indicators";
 import { successResponse, validationError, internalError } from "@/lib/api-helpers";
 
+export const dynamic = "force-dynamic";
+
 const indicatorsQuerySchema = z.object({
   symbol: z.string().min(1, "Symbol is required"),
   tf: z.enum(["1m", "5m", "15m", "1h", "4h", "1d", "1W"]).default("1h"),

@@ -269,7 +269,6 @@ function LoginPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -320,42 +319,6 @@ function LoginPageContent() {
     }, 800);
   };
 
-  const handleDemoLogin = async () => {
-    setIsDemoLoading(true);
-    setError(null);
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: "partner@tradepilot.ai",
-      password: "TradePilotDemo2026!",
-    });
-    if (authError) {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: "partner@tradepilot.ai",
-        password: "TradePilotDemo2026!",
-        options: { data: { full_name: "YC Partner" } },
-      });
-      if (signUpError) {
-        setError(signUpError.message);
-        setIsDemoLoading(false);
-        return;
-      }
-      const { error: retryError } = await supabase.auth.signInWithPassword({
-        email: "partner@tradepilot.ai",
-        password: "TradePilotDemo2026!",
-      });
-      if (retryError) {
-        setError(retryError.message);
-        setIsDemoLoading(false);
-        return;
-      }
-    }
-    setSuccess(true);
-    setTimeout(() => {
-      router.push(redirectTo);
-      router.refresh();
-    }, 800);
-  };
-
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     const supabase = createClient();
@@ -371,7 +334,7 @@ function LoginPageContent() {
     }
   };
 
-  const isLoading = isSubmitting || isDemoLoading || isGoogleLoading;
+  const isLoading = isSubmitting || isGoogleLoading;
 
   return (
     <>
@@ -429,12 +392,6 @@ function LoginPageContent() {
           transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
           cursor: pointer;
         }
-        .demo-btn:hover:not(:disabled) {
-          background: rgba(30,212,168,0.15) !important;
-          transform: translateY(-1px);
-          box-shadow: 0 0 20px rgba(30,212,168,0.15);
-        }
-        .demo-btn:active:not(:disabled) { transform: scale(0.99); }
         .eye-btn:hover { color: #A1A1AA !important; }
         .remember-check:hover { border-color: rgba(30,212,168,0.5) !important; }
       `}</style>
@@ -472,35 +429,6 @@ function LoginPageContent() {
             Sign in to your TradePilot account
           </p>
         </div>
-
-        {/* Demo Login */}
-        <button
-          id="demo-login-btn"
-          onClick={handleDemoLogin}
-          disabled={isLoading}
-          aria-label="Instant YC Partner Demo Login"
-          className="demo-btn"
-          style={{
-            width: "100%",
-            height: 44,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            borderRadius: 10,
-            border: "1px solid rgba(30,212,168,0.3)",
-            background: "rgba(30,212,168,0.07)",
-            color: "#1ED4A8",
-            fontSize: 13,
-            fontWeight: 600,
-            letterSpacing: "-0.01em",
-            marginBottom: 10,
-            opacity: isLoading ? 0.5 : 1,
-          }}
-        >
-          {isDemoLoading ? <SpinnerIcon /> : <PlayIcon />}
-          Instant YC Partner Demo Login
-        </button>
 
         {/* Google */}
         <button

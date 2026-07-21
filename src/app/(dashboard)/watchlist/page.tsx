@@ -5,8 +5,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, Plus, Trash2, X, RefreshCw, AlertTriangle, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
-import { useIsDemoUser } from "@/hooks/useIsDemoUser";
 
 const MAX_NAME_LENGTH = 40;
 
@@ -26,7 +24,6 @@ const GROUPS = ["Crypto", "Forex", "Commodity", "Indices"];
 
 export default function WatchlistPage() {
   const router = useRouter();
-  const { isDemo } = useIsDemoUser();
   const queryClient = useQueryClient();
   const [newWatchlistName, setNewWatchlistName] = useState("");
   const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>("");
@@ -134,7 +131,6 @@ export default function WatchlistPage() {
   const activeWatchlist = watchlists?.find(w => w.id === selectedWatchlistId) || watchlists?.[0];
 
 const handleToggleAsset = (symbol: string) => {
-    if (isDemo) return;
     if (!activeWatchlist) return;
     const current: string[] = activeWatchlist.instruments || [];
     const updated = current.includes(symbol)
@@ -161,14 +157,6 @@ const handleToggleAsset = (symbol: string) => {
 
 return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      {isDemo && (
-        <LockedFeatureBanner
-          feature="watchlistEdit"
-          title="Watchlist Manager"
-          description="Preview mode: Watchlist is read-only. Create a free account to add, remove, and organize your tracked assets."
-        />
-      )}
-
       <div className="animate-fade-in">
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
           Watchlist Manager
@@ -197,21 +185,20 @@ return (
                   Create Watchlist
                 </h2>
               </div>
-              <form onSubmit={(e) => { e.preventDefault(); const name = newWatchlistName.trim(); if (!name || isDemo) return; if (name.length > MAX_NAME_LENGTH) { toast.error(`Name must be ${MAX_NAME_LENGTH} characters or fewer`); return; } createMutation.mutate(); }} className="flex gap-2">
+              <form onSubmit={(e) => { e.preventDefault(); const name = newWatchlistName.trim(); if (!name) return; if (name.length > MAX_NAME_LENGTH) { toast.error(`Name must be ${MAX_NAME_LENGTH} characters or fewer`); return; } createMutation.mutate(); }} className="flex gap-2">
                 <input
                   type="text"
                   value={newWatchlistName}
                   onChange={e => setNewWatchlistName(e.target.value)}
-                  placeholder={isDemo ? "Create free account to add watchlists" : "e.g. Crypto Majors"}
-                  disabled={isDemo}
+                  placeholder="e.g. Crypto Majors"
                   className="flex-1 px-3 py-2 text-xs rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-[var(--color-text-primary)]"
                 />
                 <button
                   type="submit"
-                  disabled={createMutation.isPending || !newWatchlistName.trim() || isDemo}
+                  disabled={createMutation.isPending || !newWatchlistName.trim()}
                   className="btn-primary text-xs px-4 disabled:opacity-40"
                 >
-                  <Plus size={14} /> {isDemo ? "Upgrade" : "Create"}
+                  <Plus size={14} /> Create
                 </button>
               </form>
             </div>
@@ -360,7 +347,7 @@ return (
                             <span>{symbol}</span>
                             <span className="text-[9px] font-sans opacity-50">{group}</span>
                           </div>
-                          {!isDemo && !isAdded && (
+                          {!isAdded && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -371,11 +358,6 @@ return (
                             >
                               {updateMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
                             </button>
-                          )}
-                          {isDemo && !isAdded && (
-                            <span className="p-1 text-[10px] text-zinc-500" title="Create free account to add">
-                              🔒
-                            </span>
                           )}
                         </div>
                       );
@@ -412,22 +394,15 @@ return (
                               }}
                             >
                               <span>{s}</span>
-                              {!isDemo && (
-                                <span
-                                  className="p-0.5 hover:bg-white/20 rounded-full transition-colors inline-flex items-center justify-center ml-0.5 cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleToggleAsset(s);
-                                  }}
-                                >
-                                  {updateMutation.isPending ? <RefreshCw size={9} className="animate-spin" /> : <X size={9} />}
-                                </span>
-                              )}
-                              {isDemo && (
-                                <span className="p-0.5 text-[10px] text-zinc-500" title="Create free account to customize">
-                                  🔒
-                                </span>
-                              )}
+                              <span
+                                className="p-0.5 hover:bg-white/20 rounded-full transition-colors inline-flex items-center justify-center ml-0.5 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleAsset(s);
+                                }}
+                              >
+                                {updateMutation.isPending ? <RefreshCw size={9} className="animate-spin" /> : <X size={9} />}
+                              </span>
                             </span>
                           );
                         })}

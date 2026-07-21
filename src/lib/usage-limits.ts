@@ -25,7 +25,7 @@ export async function checkAnalysisLimit(userId: string, userEmail?: string): Pr
     now.getUTCMonth() === lastReset.getUTCMonth() &&
     now.getUTCDate() === lastReset.getUTCDate();
 
-  let count = isSameDay ? user.analysesCountToday : 0;
+  const count = isSameDay ? user.analysesCountToday : 0;
 
   if (!isSameDay) {
     await prisma.user.update({
@@ -72,7 +72,7 @@ export async function checkAlertLimit(userId: string, userEmail?: string): Promi
     now.getUTCMonth() === lastReset.getUTCMonth() &&
     now.getUTCDate() === lastReset.getUTCDate();
 
-  let count = isSameDay ? user.alertsCountToday : 0;
+  const count = isSameDay ? user.alertsCountToday : 0;
 
   if (!isSameDay) {
     await prisma.user.update({

@@ -12,7 +12,7 @@ import {
 
 const updateTradeSchema = z.object({
   instrument: z.string().min(1).optional(),
-  assetClass: z.enum(["CRYPTO", "FOREX"]).optional(),
+  assetClass: z.enum(["CRYPTO", "FOREX", "COMMODITY", "INDEX"]).optional(),
   direction: z.enum(["LONG", "SHORT"]).optional(),
   entryPrice: z.number().positive().optional(),
   exitPrice: z.number().positive().nullable().optional(),

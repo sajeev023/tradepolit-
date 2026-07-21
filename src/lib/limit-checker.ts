@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getEntitlementForUser, getRemainingAnalyses, getRemainingAlerts, isDemoUser } from "@/lib/entitlements";
+import { getEntitlementForUser, getRemainingAnalyses, getRemainingAlerts } from "@/lib/entitlements";
 
 export interface LimitCheckResult {
   allowed: boolean;
@@ -12,27 +12,45 @@ export interface LimitCheckResult {
   plan: string;
 }
 
-async function getDbUserWithReset(userId: string) {
+interface UserWithReset {
+  id: string;
+  analysesCountToday: number;
+  alertsCountToday: number;
+  lastUsageReset: Date;
+  email: string | null;
+  profilePlan: string | null;
+  profileSubscriptionStatus: string | null;
+}
+
+async function getDbUserWithReset(userId: string): Promise<UserWithReset | null> {
   const dbUser = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-      subscriptionStatus: true,
+      id: true,
       analysesCountToday: true,
       alertsCountToday: true,
       lastUsageReset: true,
       email: true,
-      createdAt: true,
+      profile: {
+        select: {
+          plan: true,
+          subscriptionStatus: true,
+        },
+      },
     },
   });
-  return dbUser;
+  if (!dbUser) return null;
+  return {
+    ...dbUser,
+    profilePlan: dbUser.profile?.plan ?? null,
+    profileSubscriptionStatus: dbUser.profile?.subscriptionStatus ?? null,
+  };
 }
 
-async function ensureDailyReset(userId: string, dbUser: {
-  analysesCountToday: number;
-  alertsCountToday: number;
-  lastUsageReset: Date;
-  subscriptionStatus: string;
-}): Promise<{ analysesCount: number; alertsCount: number }> {
+async function ensureDailyReset(
+  userId: string,
+  dbUser: Pick<UserWithReset, "analysesCountToday" | "alertsCountToday" | "lastUsageReset">
+): Promise<{ analysesCount: number; alertsCount: number }> {
   const now = new Date();
   const lastReset = new Date(dbUser.lastUsageReset);
   const isSameDay =
@@ -58,13 +76,31 @@ async function ensureDailyReset(userId: string, dbUser: {
   };
 }
 
-export async function checkUsageLimit(userId: string, type: "analyses" | "alerts", userEmail?: string): Promise<LimitCheckResult> {
+export async function checkUsageLimit(
+  userId: string,
+  type: "analyses" | "alerts",
+  userEmail?: string
+): Promise<LimitCheckResult> {
   const dbUser = await getDbUserWithReset(userId);
   if (!dbUser) {
-    return { allowed: false, remaining: 0, isPro: false, isDemo: false, analysesUsed: 0, alertsUsed: 0, limit: 0, plan: "FREE" };
+    return {
+      allowed: false,
+      remaining: 0,
+      isPro: false,
+      isDemo: false,
+      analysesUsed: 0,
+      alertsUsed: 0,
+      limit: 0,
+      plan: "FREE",
+    };
   }
 
-  const entitlement = getEntitlementForUser(userId, userEmail, dbUser.subscriptionStatus, dbUser.subscriptionStatus);
+  const entitlement = getEntitlementForUser(
+    userId,
+    userEmail,
+    dbUser.profilePlan ?? undefined,
+    dbUser.profileSubscriptionStatus ?? undefined
+  );
   const { analysesCount, alertsCount } = await ensureDailyReset(userId, dbUser);
   const isPro = entitlement.isUnlimitedAnalyses;
   const isDemo = entitlement.plan === "YC_DEMO";
@@ -96,11 +132,20 @@ export async function checkUsageLimit(userId: string, type: "analyses" | "alerts
   };
 }
 
-export async function recordUsage(userId: string, type: "analyses" | "alerts", userEmail?: string): Promise<boolean> {
+export async function recordUsage(
+  userId: string,
+  type: "analyses" | "alerts",
+  userEmail?: string
+): Promise<boolean> {
   const dbUser = await getDbUserWithReset(userId);
   if (!dbUser) return false;
 
-  const entitlement = getEntitlementForUser(userId, userEmail, dbUser.subscriptionStatus, dbUser.subscriptionStatus);
+  const entitlement = getEntitlementForUser(
+    userId,
+    userEmail,
+    dbUser.profilePlan ?? undefined,
+    dbUser.profileSubscriptionStatus ?? undefined
+  );
 
   // Pro users: no tracking needed
   if (entitlement.isUnlimitedAnalyses && entitlement.isUnlimitedAlerts) return true;
@@ -129,7 +174,10 @@ export async function recordUsage(userId: string, type: "analyses" | "alerts", u
   return true;
 }
 
-export async function getCurrentUsage(userId: string, userEmail?: string): Promise<{
+export async function getCurrentUsage(
+  userId: string,
+  userEmail?: string
+): Promise<{
   analysesUsed: number;
   alertsUsed: number;
   analysesRemaining: number;
@@ -142,10 +190,25 @@ export async function getCurrentUsage(userId: string, userEmail?: string): Promi
 }> {
   const dbUser = await getDbUserWithReset(userId);
   if (!dbUser) {
-    return { analysesUsed: 0, alertsUsed: 0, analysesRemaining: 0, alertsRemaining: 0, limit: 0, alertLimit: 0, plan: "FREE", isDemo: false, isPro: false };
+    return {
+      analysesUsed: 0,
+      alertsUsed: 0,
+      analysesRemaining: 0,
+      alertsRemaining: 0,
+      limit: 0,
+      alertLimit: 0,
+      plan: "FREE",
+      isDemo: false,
+      isPro: false,
+    };
   }
 
-  const entitlement = getEntitlementForUser(userId, userEmail, dbUser.subscriptionStatus, dbUser.subscriptionStatus);
+  const entitlement = getEntitlementForUser(
+    userId,
+    userEmail,
+    dbUser.profilePlan ?? undefined,
+    dbUser.profileSubscriptionStatus ?? undefined
+  );
   const { analysesCount, alertsCount } = await ensureDailyReset(userId, dbUser);
 
   return {

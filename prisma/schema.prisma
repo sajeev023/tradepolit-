@@ -18,6 +18,8 @@ enum Role {
 enum AssetClass {
   CRYPTO
   FOREX
+  COMMODITY
+  INDEX
 }
 
 enum Direction {
@@ -74,10 +76,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  stripeCustomerId      String?   @unique
-  stripeSubscriptionId  String?   @unique
-  stripePriceId         String?
-  subscriptionStatus    String    @default("FREE")
+  // Subscription state lives in UserProfile. These counters stay on User.
   analysesCountToday    Int       @default(0)
   alertsCountToday      Int       @default(0)
   lastUsageReset        DateTime  @default(now())
@@ -312,16 +311,24 @@ model UserProfile {
   lastTimeframe   String   @default("4h")
   updatedAt       DateTime @updatedAt
 
+  // Single source of truth for subscription / plan gating.
   plan                    String    @default("FREE")
-  stripeCustomerId        String?
+  stripeCustomerId        String?   @unique
   stripeSubscriptionId    String?
+  stripePriceId           String?
   subscriptionStatus      String    @default("INACTIVE")
   subscriptionExpiresAt   DateTime?
-  dailyAnalysisCount      Int       @default(0)
-  dailyAlertCount         Int       @default(0)
-  lastAnalysisReset       DateTime  @default(now())
 
   @@map("user_profiles")
+}
+
+model WebhookEvent {
+  id            String   @id @default(uuid())
+  stripeEventId String   @unique
+  eventType     String
+  processedAt   DateTime @default(now())
+
+  @@map("webhook_events")
 }
 
 model BehavioralEvent {

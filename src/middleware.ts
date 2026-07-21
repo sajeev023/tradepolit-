@@ -13,9 +13,6 @@ const publicRoutes = [
 
 const adminRoutes = ["/admin"];
 
-const DEMO_EMAILS = ["partner@tradepilot.ai", "trader@tradepilot.app"];
-const DEMO_SESSION_MINUTES = 15;
-
 function isPublicRoute(pathname: string): boolean {
   return publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
@@ -40,26 +37,6 @@ function isStaticAsset(pathname: string): boolean {
   );
 }
 
-function isDemoUser(email?: string): boolean {
-  return email ? DEMO_EMAILS.includes(email) : false;
-}
-
-function getDemoSessionStart(request: NextRequest): number | null {
-  const cookie = request.cookies.get("demo-session-start");
-  if (cookie?.value) {
-    return parseInt(cookie.value, 10);
-  }
-  return null;
-}
-
-function setDemoSessionStart(response: NextResponse): void {
-  response.cookies.set("demo-session-start", Date.now().toString(), {
-    path: "/",
-    maxAge: DEMO_SESSION_MINUTES * 60,
-    sameSite: "lax",
-  });
-}
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -68,28 +45,6 @@ export async function middleware(request: NextRequest) {
   }
 
   const { user, supabaseResponse } = await updateSession(request);
-
-  // Check demo session expiry for protected routes
-  if (user && isDemoUser(user.email)) {
-    const sessionStart = getDemoSessionStart(request);
-    const now = Date.now();
-    
-    if (!sessionStart) {
-      // First request - set session start
-      setDemoSessionStart(supabaseResponse);
-    } else if (now - sessionStart > DEMO_SESSION_MINUTES * 60 * 1000) {
-      // Session expired - clear cookies and redirect to signup
-      const url = request.nextUrl.clone();
-      url.pathname = "/signup";
-      url.searchParams.set("expired", "demo");
-      
-      const response = NextResponse.redirect(url);
-      response.cookies.delete("sb-mock-session");
-      response.cookies.delete("sb-mock-email");
-      response.cookies.delete("demo-session-start");
-      return response;
-    }
-  }
 
   if (isPublicRoute(pathname)) {
     if (user && ["/", "/login", "/signup"].includes(pathname)) {

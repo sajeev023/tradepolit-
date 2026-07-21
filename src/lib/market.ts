@@ -243,13 +243,14 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
       price,
       ...defaultStats,
       updatedAt: new Date().toISOString(),
+      source: "LIVE",
     };
   }
 
   // ── Step D: Generate smooth-walk simulated price if API failed or not configured (prevents jumping)
   if (!priceData) {
     const cacheKeyMock = `mock:price:${normSymbol}`;
-    let lastMockPriceObj = await getCachedData<{ price: number }>(cacheKeyMock);
+    const lastMockPriceObj = await getCachedData<{ price: number }>(cacheKeyMock);
     const basePrice = lastMockPriceObj?.price || BASELINE_PRICES[normSymbol] || 100.0;
     
     const vol = VOLATILITIES[normSymbol] || 0.01;
@@ -268,6 +269,7 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
       low24h: Math.min(walkedPrice, BASELINE_PRICES[normSymbol] || 100.0) * 0.998,
       volume24h: (BASELINE_PRICES[normSymbol] || 100.0) * 1000 + Math.random() * 500,
       updatedAt: new Date().toISOString(),
+      source: "SIMULATED",
     };
     
     // Save mock price back to cache for persistent walk (TTL: 1 hour)
@@ -428,8 +430,9 @@ export async function getOHLCV(
     console.error(`OHLCV upstream failed for ${normSymbol}, falling back to mock:`, err);
   }
 
-  // 2. Generate simulated historical candles if needed
-  if (candles.length === 0) {
+  // 2. Generate simulated historical candles if needed (clearly marked)
+  const isSimulated = candles.length === 0;
+  if (isSimulated) {
     const basePrice = BASELINE_PRICES[normSymbol] || 100.0;
     const vol = VOLATILITIES[normSymbol] || 0.01;
     let currentPrice = basePrice;
@@ -488,6 +491,11 @@ export async function getOHLCV(
   else ttl = 60;                            // 1W and others: 60s
 
   await setCachedData(cacheKey, candles, ttl);
+
+  if (isSimulated) {
+    // Simulated candles are not cached; mark them for callers.
+    return candles.map(c => ({ ...c, source: "SIMULATED" as const }));
+  }
 
   return candles;
 }

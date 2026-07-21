@@ -2,10 +2,16 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { MarketDataService } from "@/lib/market-data-service";
 import { calculateEMA, calculateRSI, calculateVolatility } from "@/lib/indicators";
-import { successResponse, internalError } from "@/lib/api-helpers";
+import { successResponse, internalError, unauthorizedError } from "@/lib/api-helpers";
 
 export async function GET(request: NextRequest) {
   try {
+    const cronSecret = process.env.CRON_SECRET;
+    const authorization = request.headers.get("authorization");
+    if (!cronSecret || authorization !== `Bearer ${cronSecret}`) {
+      return unauthorizedError("Invalid or missing CRON_SECRET");
+    }
+
     // 1. Fetch all active user alerts
     const activeAlerts = await prisma.alert.findMany({
       where: { isActive: true },

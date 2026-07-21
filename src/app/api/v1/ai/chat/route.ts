@@ -9,14 +9,18 @@ import {
   unauthorizedError,
   validationError,
   internalError,
+  errorResponse,
+  rateLimitError as rateLimitResponse,
 } from "@/lib/api-helpers";
 import { MarketDataService } from "@/lib/market-data-service";
-import { compileTechnicalContext, validateAnalysisConsistency, appendTelemetryMetadata } from "@/lib/indicators";
+import { compileTechnicalContext, validateAnalysisConsistency, appendTelemetryMetadata, calculateEMA } from "@/lib/indicators";
 import { callFastestModel } from "@/lib/nvidia-ai";
 import { getAnalyzeChartSystemPrompt } from "@/lib/prompt-cache";
 import { safeParseAIResponse } from "@/lib/ai-response-parser";
 import { validateMarketData, validateIndicators, validateLevels, isDataFresh } from "@/lib/validate-market-data";
 import { checkTokenBudget } from "@/lib/token-budget";
+import { getEntitlementForUser } from "@/lib/entitlements";
+import { checkRateLimit, getClientIdentifier } from "@/lib/rate-limit";
 
 const chatMessageSchema = z.object({
   chatId: z.string().uuid().optional(),
@@ -42,6 +46,11 @@ export async function POST(request: NextRequest) {
   };
 
   try {
+    const rateLimit = checkRateLimit(getClientIdentifier(request), "ai-chat", 20, 60_000);
+    if (!rateLimit.allowed) {
+      return rateLimitResponse("AI chat rate limit exceeded. Please slow down.");
+    }
+
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
 
@@ -119,8 +128,15 @@ export async function POST(request: NextRequest) {
       const tech = compileTechnicalContext(resolvedSymbol, resolvedTimeframe, candles);
       validateAnalysisConsistency(tech);
 
-      // Verify data freshness
-      isDataFresh(lastCandle ? lastCandle.timestamp : Date.now(), resolvedTimeframe);
+      // Verify data freshness and reject stale data
+      const dataIsFresh = isDataFresh(lastCandle ? lastCandle.timestamp : Date.now(), resolvedTimeframe);
+      if (!dataIsFresh) {
+        return errorResponse(
+          "UPSTREAM_UNAVAILABLE",
+          "Market telemetry is stale. Please refresh chart data and try again.",
+          503
+        );
+      }
 
       // Run validators
       const marketErrors = validateMarketData({
@@ -129,11 +145,12 @@ export async function POST(request: NextRequest) {
         ohlcv: candles
       }, resolvedSymbol, resolvedTimeframe);
 
+      const closes = candles.map(c => c.close);
       const indicatorErrors = validateIndicators({
         rsi: tech.rsi,
         macd: { macd: tech.macdValue, signal: tech.macdSignal },
-        ema9: tech.currentPrice,
-        ema21: tech.currentPrice,
+        ema9: closes.length >= 9 ? calculateEMA(closes, 9).pop() ?? NaN : NaN,
+        ema21: closes.length >= 21 ? calculateEMA(closes, 21).pop() ?? NaN : NaN,
         atr: tech.atr
       });
 
@@ -146,7 +163,15 @@ export async function POST(request: NextRequest) {
 
       if (allErrors.length === 0 && tech.currentPrice && tech.rsi && tech.support && tech.resistance) {
         const systemPrompt = getAnalyzeChartSystemPrompt();
-        const budget = checkTokenBudget(message, systemPrompt, [], "FREE");
+        // Resolve the user's actual entitlement tier for token budgeting.
+        const userEntitlement = getEntitlementForUser(
+          user.id,
+          user.email ?? undefined,
+          userProfile?.plan ?? undefined,
+          userProfile?.subscriptionStatus ?? undefined
+        );
+        const tier = userEntitlement.isUnlimitedAnalyses ? "PRO" : "FREE";
+        const budget = checkTokenBudget(message, systemPrompt, [], tier);
         if (!budget.isWithinLimit) {
           const headers = {
             "Server-Timing": `db;dur=${totalDbTime.toFixed(2)};desc="Prisma queries", api;dur=${(Date.now() - startTime).toFixed(2)};desc="API Total"`,

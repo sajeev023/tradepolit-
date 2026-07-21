@@ -13,7 +13,7 @@ import {
 // Zod schema for trade creation
 const createTradeSchema = z.object({
   instrument: z.string().min(1, "Instrument symbol is required"),
-  assetClass: z.enum(["CRYPTO", "FOREX"]),
+  assetClass: z.enum(["CRYPTO", "FOREX", "COMMODITY", "INDEX"]),
   direction: z.enum(["LONG", "SHORT"]),
   entryPrice: z.number().positive("Entry price must be positive"),
   exitPrice: z.number().positive("Exit price must be positive").optional(),

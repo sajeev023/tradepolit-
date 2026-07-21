@@ -459,7 +459,7 @@ export function compileTechnicalContext(
     }
   }
 
-  let entryPrice = currentPrice;
+  const entryPrice = currentPrice;
   let stopLoss = 0;
   let takeProfit = 0;
   let invalidationLevel = 0;
@@ -713,7 +713,7 @@ export function appendTelemetryMetadata(
   const priceDiff = analyzedPrice ? (Math.abs(livePrice - analyzedPrice) / analyzedPrice) * 100 : 0;
   
   // Clean any previous metadata block from the narrative to prevent duplication
-  let cleanedNarrative = narrative.split("\n\n---\n**Telemetry Metadata:**")[0];
+  const cleanedNarrative = narrative.split("\n\n---\n**Telemetry Metadata:**")[0];
   
   let metadata = cleanedNarrative +
     `\n\n---\n**Telemetry Metadata:**\n` +

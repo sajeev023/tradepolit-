@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Mail, Lock, Loader2, Play } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
 
 const signupSchema = z.object({
@@ -24,7 +24,6 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
 
   const {
     register,
@@ -65,50 +64,6 @@ export default function SignupPage() {
     router.refresh();
   };
 
-  const handleDemoLogin = async () => {
-    setIsDemoLoading(true);
-    setError(null);
-    const supabase = createClient();
-    
-    // First try to sign in
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: "partner@tradepilot.ai",
-      password: "TradePilotDemo2026!",
-    });
-    
-    // If it fails (e.g. user does not exist), try to sign them up first!
-    if (authError) {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: "partner@tradepilot.ai",
-        password: "TradePilotDemo2026!",
-        options: {
-          data: { full_name: "YC Partner" }
-        }
-      });
-      
-      if (signUpError) {
-        setError(signUpError.message);
-        setIsDemoLoading(false);
-        return;
-      }
-      
-      // Try logging in again after signup
-      const { error: retryError } = await supabase.auth.signInWithPassword({
-        email: "partner@tradepilot.ai",
-        password: "TradePilotDemo2026!",
-      });
-      
-      if (retryError) {
-        setError(retryError.message);
-        setIsDemoLoading(false);
-        return;
-      }
-    }
-    
-    router.push("/charts");
-    router.refresh();
-  };
-
   const handleGoogleSignup = async () => {
     setIsGoogleLoading(true);
     const supabase = createClient();
@@ -134,22 +89,6 @@ export default function SignupPage() {
           Create your TradePilot account and load the charts in under 30 seconds.
         </p>
       </div>
-
-      {/* Instant YC Partner Demo Login Button */}
-      <button
-        onClick={handleDemoLogin}
-        disabled={isDemoLoading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all duration-200 mb-3 disabled:opacity-50 cursor-pointer h-[44px]"
-        style={{
-          backgroundColor: "rgba(30, 212, 168, 0.1)",
-          color: "var(--color-accent-primary)",
-          border: "1px solid rgba(30, 212, 168, 0.3)",
-          boxShadow: "0 0 12px rgba(30, 212, 168, 0.1)",
-        }}
-      >
-        {isDemoLoading ? <Loader2 size={18} className="animate-spin" /> : <Play size={14} fill="currentColor" />}
-        Instant YC Partner Demo Login
-      </button>
 
       <button
         type="button"

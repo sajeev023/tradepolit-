@@ -1,13 +1,28 @@
 import { POST } from "../app/api/v1/trades/route";
 import { PATCH } from "../app/api/v1/trades/[id]/route";
 import { NextRequest } from "next/server";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { memoryDb } from "./prisma-mock";
+import { MOCK_USER } from "./supabase/mock";
+
+vi.mock("@/lib/auth", async () => {
+  const { MOCK_USER } = await vi.importActual("@/lib/supabase/mock");
+  return {
+    getAuthenticatedUser: vi.fn(async () => ({ user: MOCK_USER, error: null })),
+    getAuthUser: vi.fn(async () => ({ user: MOCK_USER, error: null })),
+    ensurePrismaUser: vi.fn(async () => MOCK_USER),
+  };
+});
+
+vi.mock("@/lib/prisma", async () => ({
+  prisma: (await vi.importActual("./prisma-mock")).prismaMock,
+}));
 
 describe("Trades P/L Calculation & Quote Conversion", () => {
   beforeEach(() => {
     // Clear in-memory trades before each test
     memoryDb.trades = [];
+    vi.clearAllMocks();
   });
 
   it("calculates BTC/USD LONG trade P/L correctly", async () => {
@@ -91,7 +106,7 @@ describe("Trades P/L Calculation & Quote Conversion", () => {
     // 1. First insert a trade with open status (no exit price)
     const seedTrade = {
       id: "t_test_jpy",
-      userId: "12345678-1234-1234-1234-123456789012",
+      userId: MOCK_USER.id,
       instrument: "USD/JPY",
       assetClass: "FOREX",
       direction: "LONG",

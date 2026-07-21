@@ -8,7 +8,7 @@ import Decimal from "decimal.js";
 
 Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_EVEN });
 
-export type AssetClass = "CRYPTO" | "FOREX" | "COMMODITY";
+export type AssetClass = "CRYPTO" | "FOREX" | "COMMODITY" | "INDEX";
 export type Direction = "LONG" | "SHORT";
 export type CalculationMode = "STANDARD" | "MAX" | "MIN";
 
@@ -53,6 +53,13 @@ interface InstrumentSpec {
   isJpyQuote: boolean;
 }
 
+const DEFAULT_MAX_LEVERAGE: Record<AssetClass, number> = {
+  CRYPTO: 20,
+  FOREX: 30,
+  COMMODITY: 10,
+  INDEX: 5,
+};
+
 const INSTRUMENT_SPECS: Record<string, InstrumentSpec> = {
   "BTC/USD": { assetClass: "CRYPTO",    contractSize: 1,       pipSize: 1,      minTradable: 0.001, isJpyQuote: false },
   "ETH/USD": { assetClass: "CRYPTO",    contractSize: 1,       pipSize: 0.01,   minTradable: 0.01,  isJpyQuote: false },
@@ -63,12 +70,19 @@ const INSTRUMENT_SPECS: Record<string, InstrumentSpec> = {
   "EUR/JPY": { assetClass: "FOREX",     contractSize: 100000,  pipSize: 0.01,   minTradable: 1000,  isJpyQuote: true  },
   "GBP/JPY": { assetClass: "FOREX",     contractSize: 100000,  pipSize: 0.01,   minTradable: 1000,  isJpyQuote: true  },
   "XAU/USD": { assetClass: "COMMODITY", contractSize: 1,       pipSize: 0.01,   minTradable: 0.01,  isJpyQuote: false },
-  "NASDAQ":  { assetClass: "CRYPTO",    contractSize: 1,       pipSize: 1,      minTradable: 0.01,  isJpyQuote: false },
-  "S&P500":  { assetClass: "CRYPTO",    contractSize: 1,       pipSize: 1,      minTradable: 0.01,  isJpyQuote: false },
+  "NASDAQ":  { assetClass: "INDEX",     contractSize: 1,       pipSize: 1,      minTradable: 0.01,  isJpyQuote: false },
+  "S&P500":  { assetClass: "INDEX",     contractSize: 1,       pipSize: 1,      minTradable: 0.01,  isJpyQuote: false },
 };
 
 function getSpec(symbol: string): InstrumentSpec {
   return INSTRUMENT_SPECS[symbol] ?? { assetClass: "CRYPTO", contractSize: 1, pipSize: 1, minTradable: 0.001, isJpyQuote: false };
+}
+
+export function getMaxLeverage(symbol: string, requestedLeverage?: number): number {
+  const spec = getSpec(symbol);
+  const max = DEFAULT_MAX_LEVERAGE[spec.assetClass] ?? 1;
+  if (requestedLeverage === undefined || isNaN(requestedLeverage)) return max;
+  return Math.min(Math.max(requestedLeverage, 1), max);
 }
 
 export interface ValidationError {
@@ -148,8 +162,12 @@ export function calculate(params: RiskEngineParams): RiskEngineResult {
   const balance  = new Decimal(rawBalance);
   const entry    = new Decimal(rawEntry);
   const stop     = new Decimal(rawStop);
-  const leverage = new Decimal(Math.max(rawLeverage || 1, 1));
-  const spec     = getSpec(symbol);
+  const spec = getSpec(symbol);
+  const cappedLeverage = getMaxLeverage(symbol, rawLeverage);
+  const leverage = new Decimal(cappedLeverage);
+  if (rawLeverage > cappedLeverage) {
+    warnings.push(`Leverage capped to ${cappedLeverage}x for ${spec.assetClass} assets`);
+  }
 
   // Dollar risk capital
   let riskCapital: Decimal;

@@ -8,6 +8,7 @@ import {
   validateAnalysisConsistency,
   getRSIInterpretation,
   appendTelemetryMetadata,
+  calculateEMA,
 } from "@/lib/indicators";
 import {
   successResponse,
@@ -65,9 +66,11 @@ const analyzeChartSchema = z.object({
   symbol: z.string().min(1, "Asset symbol is required"),
   timeframe: z.enum(["1m", "5m", "15m", "1h", "4h", "1d", "1W"]).default("1h"),
   bypassCache: z.boolean().optional(),
+  // Client telemetry is ignored; all indicators are computed server-side.
+  // The field is accepted for backwards compatibility but discarded immediately.
   telemetry: telemetrySchema.optional(),
-  // WebSocket live price from client — overrides stale last-candle close in telemetry.
-  // Accepted only if within 5% of telemetry.currentPrice to catch bad data.
+  // WebSocket live price from client may be used as a price sanity cross-check,
+  // but it never drives indicator calculations.
   livePrice: z.number().positive().optional(),
 });
 
@@ -260,38 +263,35 @@ COACHING MANDATE:
     let lastCandleTime: string;
     let candles: any[] = [];
 
-    if (telemetry) {
-      console.log(`[STEP 3 & 4: Telemetry supplied by client] Bypassing independent OHLCV fetches. price=${telemetry.currentPrice}`);
-      // Assert symbol and timeframe match
-      if (telemetry.symbol !== symbol || telemetry.timeframe !== timeframe) {
-        return errorResponse("VALIDATION_ERROR", "Telemetry symbol or timeframe mismatch", 400);
-      }
-      tech = telemetry;
-      lastCandleTime = telemetry.lastCandleTime;
-      console.log(`[STEP 5 & 6: Indicators/Support loaded from client telemetry]`);
-    } else {
-      // Fetch candles (OHLC fetch)
-      console.log(`[STEP 3: Market API response] Fetching candles for ${symbol} ${timeframe}`);
-      const fetchedCandles = await getOHLCV(symbol, timeframe, 100);
-      if (fetchedCandles.length === 0) {
-        return errorResponse("INTERNAL_ERROR", "No historical data available for selected asset", 500);
-      }
-      candles = fetchedCandles;
-      console.log(`[STEP 4: OHLCV fetched] candleCount=${candles.length} | lastPrice=${candles[candles.length - 1]?.close}`);
-
-      const lastCandle = candles[candles.length - 1];
-      lastCandleTime = lastCandle ? new Date(lastCandle.timestamp).toISOString() : new Date().toISOString();
-
-      // Verify data freshness
-      const lastCandleTimestamp = lastCandle ? lastCandle.timestamp : Date.now();
-      isDataFresh(lastCandleTimestamp, timeframe);
-
-      // Compile Technical Context (Market data compilation)
-      tech = compileTechnicalContext(symbol, timeframe, candles);
-      validateAnalysisConsistency(tech);
-      console.log(`[STEP 5: Indicators calculated] RSI=${tech.rsi.toFixed(2)} | MACD=${tech.macdValue.toFixed(4)}`);
-      console.log(`[STEP 6: Support calculated] Support=$${tech.support} | Resistance=$${tech.resistance} | Invalidation=$${tech.invalidationLevel}`);
+    // All technical context is computed server-side from exchange OHLCV data.
+    // Client-supplied telemetry is intentionally ignored to prevent manipulation.
+    console.log(`[STEP 3: Market API response] Fetching candles for ${symbol} ${timeframe}`);
+    const fetchedCandles = await getOHLCV(symbol, timeframe, 100);
+    if (fetchedCandles.length === 0) {
+      return errorResponse("INTERNAL_ERROR", "No historical data available for selected asset", 500);
     }
+    candles = fetchedCandles;
+    console.log(`[STEP 4: OHLCV fetched] candleCount=${candles.length} | lastPrice=${candles[candles.length - 1]?.close}`);
+
+    const lastCandle = candles[candles.length - 1];
+    lastCandleTime = lastCandle ? new Date(lastCandle.timestamp).toISOString() : new Date().toISOString();
+
+    // Verify data freshness and reject stale data
+    const lastCandleTimestamp = lastCandle ? lastCandle.timestamp : Date.now();
+    const dataIsFresh = isDataFresh(lastCandleTimestamp, timeframe);
+    if (!dataIsFresh) {
+      return errorResponse(
+        "UPSTREAM_UNAVAILABLE",
+        "Market telemetry is stale. Please refresh chart data and try again.",
+        503
+      );
+    }
+
+    // Compile Technical Context (Market data compilation)
+    tech = compileTechnicalContext(symbol, timeframe, candles);
+    validateAnalysisConsistency(tech);
+    console.log(`[STEP 5: Indicators calculated] RSI=${tech.rsi.toFixed(2)} | MACD=${tech.macdValue.toFixed(4)}`);
+    console.log(`[STEP 6: Support calculated] Support=$${tech.support} | Resistance=$${tech.resistance} | Invalidation=$${tech.invalidationLevel}`);
 
     // ── Live Price Override ────────────────────────────────────────────────────
     // The client sends the Binance WebSocket price (sub-100ms latency).
@@ -331,8 +331,8 @@ COACHING MANDATE:
     const indicatorErrors = validateIndicators({
       rsi: tech.rsi,
       macd: { macd: tech.macdValue, signal: tech.macdSignal },
-      ema9: tech.currentPrice,
-      ema21: tech.currentPrice,
+      ema9: candles.length >= 9 ? calculateEMA(candles.map(c => c.close), 9).pop() ?? NaN : NaN,
+      ema21: candles.length >= 21 ? calculateEMA(candles.map(c => c.close), 21).pop() ?? NaN : NaN,
       atr: tech.atr
     });
     dataErrors.push(...indicatorErrors);

@@ -2,8 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Activity, RefreshCw, TrendingUp, Clock, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
-import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
-import { useIsDemoUser } from "@/hooks/useIsDemoUser";
 
 interface MarketPulseData {
   fearGreed: {
@@ -96,7 +94,6 @@ function FearGreedRing({ value }: { value: number }) {
 }
 
 export default function MarketPulsePage() {
-  const { isDemo } = useIsDemoUser();
   const { data: pulseData, isLoading, refetch, isFetching } = useQuery<MarketPulseData>({
     queryKey: ["market-pulse"],
     queryFn: async () => {
@@ -128,14 +125,6 @@ export default function MarketPulsePage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      {isDemo && (
-        <LockedFeatureBanner
-          feature="marketPulse"
-          title="Market Pulse"
-          description="Preview mode: Market Overview is a Pro feature. Upgrade to access Fear & Greed Index, funding rates, and trending assets."
-        />
-      )}
-
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
         <div>

@@ -1,23 +1,26 @@
-export const getMockUser = (email: string = "trader@tradepilot.app") => {
-  const isPartner = email === "partner@tradepilot.ai";
+/**
+ * Supabase mock utilities are retained ONLY for unit tests.
+ * They must never be used in production code or API routes.
+ */
+export const getMockUser = (email: string = "demo@example.com") => {
   return {
-    id: isPartner ? "partner-1234-1234-1234-123456789012" : "12345678-1234-1234-1234-123456789012",
+    id: "00000000-0000-0000-0000-000000000000",
     email: email,
     user_metadata: {
-      full_name: isPartner ? "YC Partner" : "John Doe",
+      full_name: "Demo User",
       avatar_url: "",
     },
     app_metadata: {
       provider: "email",
       providers: ["email"],
-      role: "ADMIN",
+      role: "USER",
     },
     aud: "authenticated",
     created_at: new Date().toISOString(),
   };
 };
 
-export const getMockSession = (email: string = "trader@tradepilot.app") => {
+export const getMockSession = (email: string = "demo@example.com") => {
   return {
     access_token: "mock-access-token",
     refresh_token: "mock-refresh-token",
@@ -28,55 +31,30 @@ export const getMockSession = (email: string = "trader@tradepilot.app") => {
   };
 };
 
-export const MOCK_USER = getMockUser("trader@tradepilot.app");
-export const MOCK_SESSION = getMockSession("trader@tradepilot.app");
+export const MOCK_USER = getMockUser("demo@example.com");
+export const MOCK_SESSION = getMockSession("demo@example.com");
 
-export function createMockSupabaseClient(defaultEmail: string = "trader@tradepilot.app") {
-  const getEmail = () => {
-    if (typeof window !== "undefined") {
-      const match = document.cookie.match(/sb-mock-email=([^;]+)/);
-      if (match) return decodeURIComponent(match[1]);
-    }
-    return defaultEmail;
-  };
-
+export function createMockSupabaseClient(defaultEmail: string = "demo@example.com") {
   return {
     auth: {
       getUser: async () => {
-        const email = getEmail();
-        return { data: { user: getMockUser(email) }, error: null };
+        return { data: { user: getMockUser(defaultEmail) }, error: null };
       },
       getSession: async () => {
-        const email = getEmail();
-        return { data: { session: getMockSession(email) }, error: null };
+        return { data: { session: getMockSession(defaultEmail) }, error: null };
       },
-      signInWithPassword: async (credentials: any) => {
-        const email = credentials?.email || getEmail();
-        if (typeof window !== "undefined") {
-          document.cookie = "sb-mock-session=true; path=/; max-age=3600";
-          document.cookie = `sb-mock-email=${encodeURIComponent(email)}; path=/; max-age=3600`;
-        }
-        return { data: { user: getMockUser(email), session: getMockSession(email) }, error: null };
+      signInWithPassword: async () => {
+        return { data: { user: getMockUser(defaultEmail), session: getMockSession(defaultEmail) }, error: null };
       },
-      signUp: async (credentials: any) => {
-        const email = credentials?.email || getEmail();
-        if (typeof window !== "undefined") {
-          document.cookie = "sb-mock-session=true; path=/; max-age=3600";
-          document.cookie = `sb-mock-email=${encodeURIComponent(email)}; path=/; max-age=3600`;
-        }
-        return { data: { user: getMockUser(email), session: getMockSession(email) }, error: null };
+      signUp: async () => {
+        return { data: { user: getMockUser(defaultEmail), session: getMockSession(defaultEmail) }, error: null };
       },
       signOut: async () => {
-        if (typeof window !== "undefined") {
-          document.cookie = "sb-mock-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-          document.cookie = "sb-mock-email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        }
         return { error: null };
       },
       onAuthStateChange: (callback: any) => {
-        const email = getEmail();
         setTimeout(() => {
-          callback("SIGNED_IN", getMockSession(email));
+          callback("SIGNED_IN", getMockSession(defaultEmail));
         }, 0);
         return {
           data: {
@@ -86,25 +64,19 @@ export function createMockSupabaseClient(defaultEmail: string = "trader@tradepil
           },
         };
       },
-      resetPasswordForEmail: async (email: string) => {
+      resetPasswordForEmail: async () => {
         return { data: {}, error: null };
       },
-      updateUser: async (attributes: any) => {
-        const email = getEmail();
-        return { data: { user: getMockUser(email) }, error: null };
+      updateUser: async () => {
+        return { data: { user: getMockUser(defaultEmail) }, error: null };
       },
-      signInWithOAuth: async (options: any) => {
-        const email = getEmail();
-        if (typeof window !== "undefined") {
-          document.cookie = "sb-mock-session=true; path=/; max-age=3600";
-          document.cookie = `sb-mock-email=${encodeURIComponent(email)}; path=/; max-age=3600`;
-        }
-        return { data: { provider: options.provider, url: "/auth/callback?code=mock" }, error: null };
+      signInWithOAuth: async () => {
+        return { data: { provider: "email", url: "/auth/callback?code=mock" }, error: null };
       },
     },
     storage: {
       from: (bucket: string) => ({
-        upload: async (path: string, file: any) => {
+        upload: async (path: string) => {
           return { data: { path }, error: null };
         },
         getPublicUrl: (path: string) => {

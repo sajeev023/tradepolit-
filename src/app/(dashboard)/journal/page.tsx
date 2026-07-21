@@ -26,9 +26,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
-import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
 import { toast } from "sonner";
-import { useIsDemoUser } from "@/hooks/useIsDemoUser";
 
 // Enums and tags list
 const EMOTIONS = ["CONFIDENT", "FEARFUL", "GREEDY", "REVENGE", "FOMO", "DISCIPLINED", "NEUTRAL"];
@@ -37,7 +35,7 @@ const SUPPORTED_ASSETS = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD",
 
 const tradeFormSchema = z.object({
   instrument: z.string().min(1, "Asset symbol is required"),
-  assetClass: z.enum(["CRYPTO", "FOREX"]),
+  assetClass: z.enum(["CRYPTO", "FOREX", "COMMODITY", "INDEX"]),
   direction: z.enum(["LONG", "SHORT"]),
   entryPrice: z.coerce.number().positive("Entry price must be positive"),
   exitPrice: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.number().positive("Exit price must be positive").optional()),
@@ -56,7 +54,6 @@ const tradeFormSchema = z.object({
 type TradeFormData = z.infer<typeof tradeFormSchema>;
 
 function JournalPageContent() {
-  const { isDemo } = useIsDemoUser();
   const queryClient = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterSymbol, setFilterSymbol] = useState<string>("");
@@ -69,12 +66,7 @@ function JournalPageContent() {
   const [isUploading, setIsUploading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Demo users can't create trades
   const handleCreateClick = () => {
-    if (isDemo) {
-      setIsCreateOpen(false);
-      return;
-    }
     reset();
     setIsCreateOpen(true);
   };
@@ -195,7 +187,11 @@ function JournalPageContent() {
       const size = searchParams.get("size") || "";
       const leverage = searchParams.get("leverage") || "1";
 
-      const assetClass = ["EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD"].includes(instrument) ? "FOREX" : "CRYPTO";
+      const assetClass =
+        ["EUR/USD", "GBP/USD", "USD/JPY"].includes(instrument) ? "FOREX" :
+        ["XAU/USD"].includes(instrument) ? "COMMODITY" :
+        ["NASDAQ", "S&P500"].includes(instrument) ? "INDEX" :
+        "CRYPTO";
 
       setValue("instrument", instrument);
       setValue("assetClass", assetClass);
@@ -216,8 +212,12 @@ function JournalPageContent() {
 
   useEffect(() => {
     if (watchInstrument) {
-      const isForex = ["EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ", "S&P500"].includes(watchInstrument);
-      setValue("assetClass", isForex ? "FOREX" : "CRYPTO");
+      const assetClass =
+        ["EUR/USD", "GBP/USD", "USD/JPY"].includes(watchInstrument) ? "FOREX" :
+        ["XAU/USD"].includes(watchInstrument) ? "COMMODITY" :
+        ["NASDAQ", "S&P500"].includes(watchInstrument) ? "INDEX" :
+        "CRYPTO";
+      setValue("assetClass", assetClass);
     }
   }, [watchInstrument, setValue]);
 
@@ -288,14 +288,6 @@ function JournalPageContent() {
 
   return (
     <div className="flex flex-col gap-6">
-      {isDemo && (
-        <LockedFeatureBanner
-          feature="journal"
-          title="Trade Journal"
-          description="Preview mode: Journal is read-only. Create a free account to log, edit, and reflect on trades."
-        />
-      )}
-
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -308,21 +300,18 @@ function JournalPageContent() {
         </div>
 
         <button
-          onClick={isDemo ? undefined : () => {
+          onClick={() => {
             reset();
             setIsCreateOpen(true);
           }}
-          disabled={isDemo}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold self-start md:self-auto transition-all"
           style={{
-            backgroundColor: isDemo ? "var(--color-bg-tertiary)" : "var(--color-accent-primary)",
-            color: isDemo ? "var(--color-text-tertiary)" : "#0A0A0B",
-            cursor: isDemo ? "not-allowed" : "pointer",
-            opacity: isDemo ? 0.5 : 1,
-            border: isDemo ? "1px dashed var(--color-border-subtle)" : "none",
+            backgroundColor: "var(--color-accent-primary)",
+            color: "#0A0A0B",
+            cursor: "pointer",
           }}
         >
-          <Plus size={16} /> {isDemo ? "Create Free Account to Log Trades" : "Log a Trade"}
+          <Plus size={16} /> Log a Trade
         </button>
       </div>
 

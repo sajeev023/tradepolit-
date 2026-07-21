@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { getNewsFeed } from "@/lib/news";
 import { successResponse, internalError } from "@/lib/api-helpers";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

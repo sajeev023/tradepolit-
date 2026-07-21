@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { SearchCommandPalette } from "@/components/layout/command-palette";
@@ -28,8 +30,6 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
-const DEMO_EMAILS = ["partner@tradepilot.ai", "trader@tradepilot.app"];
-
 const MORE_ITEMS = [
   { label: "Watchlist", icon: Eye, href: "/watchlist" },
   { label: "News", icon: Newspaper, href: "/news" },
@@ -40,7 +40,7 @@ const MORE_ITEMS = [
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 
-function MobileBottomNav({ isDemo }: { isDemo: boolean }) {
+function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -329,30 +329,19 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const [isDemoUser, setIsDemoUser] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }: any) => {
-      const u = data.user;
-      setUser(u);
-      if (u?.email && DEMO_EMAILS.includes(u.email)) {
-        setIsDemoUser(true);
-      }
+      setUser(data.user);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u?.email && DEMO_EMAILS.includes(u.email)) {
-        setIsDemoUser(true);
-      } else {
-        setIsDemoUser(false);
-      }
+      setUser(session?.user ?? null);
     });
 
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -413,7 +402,7 @@ export default function DashboardLayout({
       </main>
 
       {/* Premium Mobile Bottom Navigation */}
-      {isMobile && <MobileBottomNav isDemo={isDemoUser} />}
+      {isMobile && <MobileBottomNav />}
 
       <SearchCommandPalette />
       <NotificationPanel />

@@ -1,25 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { createMockSupabaseClient } from "./mock";
 
 export async function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const isMock = !url || !key || url.includes("mockproject.supabase.co");
-
-  if (isMock) {
-    return createMockSupabaseClient() as any;
+  if (!url || !key) {
+    throw new Error(
+      "Missing Supabase server environment variables. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+    );
   }
 
   const cookieStore = await cookies();
-
-  if (cookieStore.get("sb-mock-session")?.value === "true") {
-    const email = cookieStore.get("sb-mock-email")?.value
-      ? decodeURIComponent(cookieStore.get("sb-mock-email")!.value)
-      : "trader@tradepilot.app";
-    return createMockSupabaseClient(email) as any;
-  }
 
   return createServerClient(url, key, {
     cookies: {

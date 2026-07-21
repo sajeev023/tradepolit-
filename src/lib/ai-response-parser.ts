@@ -234,7 +234,7 @@ export function safeParseAIResponse(
     };
   }
 
-  let cleaned = cleanAndExtractJSON(rawContent);
+  const cleaned = cleanAndExtractJSON(rawContent);
   let parsedObj: any = null;
   let isRepaired = false;
 

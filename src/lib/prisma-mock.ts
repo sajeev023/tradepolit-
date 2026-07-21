@@ -310,7 +310,7 @@ export const prismaMock = {
       return updated;
     },
     upsert: async ({ where, update, create }: any) => {
-      let idx = memoryDb.users.findIndex((u) => u.id === where.id || u.email === where.email);
+      const idx = memoryDb.users.findIndex((u) => u.id === where.id || u.email === where.email);
       if (idx === -1) {
         const user = { id: where.id || `u_${Date.now()}`, ...create, createdAt: new Date(), updatedAt: new Date(), isActive: true, role: create.role || "USER" };
         memoryDb.users.push(user);
@@ -655,7 +655,7 @@ export const prismaMock = {
   },
   setting: {
     upsert: async ({ where, update, create }: any) => {
-      let idx = memoryDb.settings.findIndex((s) => s.userId === where.userId);
+      const idx = memoryDb.settings.findIndex((s) => s.userId === where.userId);
       if (idx === -1) {
         const item = { id: `set_${Date.now()}`, userId: where.userId, ...create };
         memoryDb.settings.push(item);
@@ -712,7 +712,7 @@ export const prismaMock = {
       return p;
     },
     upsert: async ({ where, update, create }: any) => {
-      let idx = memoryDb.userProfiles.findIndex((p) => p.userId === where.userId);
+      const idx = memoryDb.userProfiles.findIndex((p) => p.userId === where.userId);
       if (idx === -1) {
         const profile = { id: `p_${Date.now()}`, ...create, updatedAt: new Date() };
         memoryDb.userProfiles.push(profile);

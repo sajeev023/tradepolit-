@@ -171,7 +171,7 @@ describe("Risk Calculator — Crypto Scenarios (Expert Trader Validation)", () =
   // Scenario 6: High leverage (100x) — crypto futures
   // Account: $500, Risk: 2%, Entry: $68000, SL: $67900
   // -----------------------------------------------------------
-  it("100x leverage crypto futures scalp", async () => {
+  it("High leverage crypto futures scalp is capped to 20x", async () => {
     const { status, body } = await calcRisk({
       balance: 500,
       riskPercent: 2,
@@ -189,8 +189,11 @@ describe("Risk Calculator — Crypto Scenarios (Expert Trader Validation)", () =
     // stopDistance = 100
     // positionSize = 10 / 100 = 0.1 BTC
     expect(d.positionSize).toBeCloseTo(0.1, 4);
-    // margin = (0.1 * 68000) / 100 = $68
-    expect(d.marginRequired).toBeCloseTo(68, 0);
+    // Crypto max leverage = 20x, so margin = (0.1 * 68000) / 20 = $340
+    expect(d.marginRequired).toBeCloseTo(340, 0);
+    expect(d.warnings).toEqual(
+      expect.arrayContaining([expect.stringContaining("Leverage capped")])
+    );
   });
 
   // -----------------------------------------------------------
@@ -249,8 +252,11 @@ describe("Risk Calculator — Forex Scenarios (Expert Trader Validation)", () =>
     expect(d.positionSize).toBeCloseTo(20000, 0);
     // Standard lots = 20000 / 100000 = 0.20
     expect(d.standardLots).toBeCloseTo(0.2, 3);
-    // marginRequired = (20000 * 1.085) / 50 = $434
-    expect(d.marginRequired).toBeCloseTo(434, 0);
+    // Forex max leverage = 30x, so margin = (20000 * 1.085) / 30 = $723
+    expect(d.marginRequired).toBeCloseTo(723, 0);
+    expect(d.warnings).toEqual(
+      expect.arrayContaining([expect.stringContaining("Leverage capped")])
+    );
     // rewardDistance = 1.095 - 1.085 = 0.01
     // rewardAmount = 20000 * 0.01 = $200
     expect(d.rewardAmount).toBeCloseTo(200, 0);
@@ -306,24 +312,29 @@ describe("Risk Calculator — Forex Scenarios (Expert Trader Validation)", () =>
       direction: "LONG",
       assetClass: "FOREX",
       symbol: "USD/JPY",
-      leverage: 2500, // very high leverage so margin < balance
+      leverage: 30, // Forex max leverage
     });
     expect(status).toBe(200);
     const d = body.data;
-    // dollarRisk = 10000 * 0.01 = $100 target
-    // Engine: position = (100 * 157.5) / 0.5 = 31,500 units → rounded to 31000
-    // actual dollarRisk = (31000 * 0.5) / 157.5 ≈ $98.41
-    expect(d.dollarRisk).toBeGreaterThan(90);
-    expect(d.dollarRisk).toBeLessThanOrEqual(100.01);
-    expect(d.positionSize).toBeGreaterThan(28000);
-    expect(d.positionSize).toBeLessThanOrEqual(32000);
-    expect(d.standardLots).toBeGreaterThan(0.28);
-    expect(d.standardLots).toBeLessThanOrEqual(0.32);
-    // CORRECT margin formula: (positionSize × entry) / leverage
-    // With 2500x leverage: (31000 * 157.5) / 2500 = $1953
-    expect(d.marginRequired).toBeLessThanOrEqual(10001);
+    // With Forex capped at 30x, margin required for a $100-risk JPY position far
+    // exceeds the $10K balance, so the engine caps the position to fit balance.
+    expect(d.warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Margin required"),
+        expect.stringContaining("position capped"),
+      ])
+    );
+    // Capped units = floor((balance * leverage / entry) / 1000) * 1000
+    //              = floor((10000 * 30 / 157.5) / 1000) * 1000 = 1000 units
+    // actual dollarRisk = (1000 * 0.5) / 157.5 ≈ $3.17
+    expect(d.dollarRisk).toBeGreaterThan(0);
+    expect(d.dollarRisk).toBeLessThanOrEqual(10);
+    expect(d.positionSize).toBeCloseTo(1000, 0);
+    expect(d.standardLots).toBeCloseTo(0.01, 3);
+    // Margin should be capped right at the account balance
+    expect(d.marginRequired).toBeLessThanOrEqual(10000);
     expect(d.rewardAmount).toBeGreaterThan(0);
-    expect(d.rMultiple).toBeGreaterThan(2.5);
+    expect(d.rMultiple).toBeCloseTo(3.0, 2);
   });
 
   // -----------------------------------------------------------
@@ -344,15 +355,19 @@ describe("Risk Calculator — Forex Scenarios (Expert Trader Validation)", () =>
     });
     expect(status).toBe(200);
     const d = body.data;
-    // dollarRisk = 50000 * 0.01 = $500 (engine rounds 16.67→16.67 oz, 0.01 increment)
+    // XAU/USD is normalized to COMMODITY; max leverage = 10x
+    expect(d.warnings).toEqual(
+      expect.arrayContaining([expect.stringContaining("Leverage capped")])
+    );
+    // dollarRisk = 50000 * 0.01 = $500 target (rounded to 16.66 oz)
     expect(d.dollarRisk).toBeGreaterThan(498);
     expect(d.dollarRisk).toBeLessThanOrEqual(500.1);
-    // positionSize = 500 / 30 = 16.667 oz
+    // positionSize = 500 / 30 = 16.66 oz
     expect(d.positionSize).toBeGreaterThan(16.6);
     expect(d.positionSize).toBeLessThanOrEqual(16.7);
-    // margin = (16.67 * 2340) / 20 = $1950
-    expect(d.marginRequired).toBeGreaterThan(1900);
-    expect(d.marginRequired).toBeLessThanOrEqual(1960);
+    // margin = (16.66 * 2340) / 10 = $3898
+    expect(d.marginRequired).toBeGreaterThan(3850);
+    expect(d.marginRequired).toBeLessThanOrEqual(3920);
     expect(d.rewardAmount).toBeGreaterThan(990);
     expect(d.rMultiple).toBeCloseTo(2.0, 1);
   });
@@ -381,6 +396,11 @@ describe("Risk Calculator — Forex Scenarios (Expert Trader Validation)", () =>
     // positionSize = 100 / 0.005 = 20000 units
     expect(d.positionSize).toBeCloseTo(20000, 0);
     expect(d.standardLots).toBeCloseTo(0.2, 3);
+    // Forex max leverage = 30x, margin = (20000 * 1.09) / 30 = $727
+    expect(d.marginRequired).toBeCloseTo(727, 0);
+    expect(d.warnings).toEqual(
+      expect.arrayContaining([expect.stringContaining("Leverage capped")])
+    );
     // rewardDistance = |1.075 - 1.09| = 0.015
     // rewardAmount = 20000 * 0.015 = $300
     expect(d.rewardAmount).toBeCloseTo(300, 0);

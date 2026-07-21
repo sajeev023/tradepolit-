@@ -4,8 +4,6 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bot, Send, User, Trash2, Plus, MessageSquare, Loader2, Sparkles, Copy, Check, X } from "lucide-react";
 import { toast } from "sonner";
-import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
-import { useIsDemoUser } from "@/hooks/useIsDemoUser";
 
 const SUGGESTED_PROMPTS = [
   "Analyze my most recent losing trade.",
@@ -21,7 +19,6 @@ interface Message {
 }
 
 export default function AIAssistantPage() {
-  const { isDemo } = useIsDemoUser();
   const queryClient = useQueryClient();
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [inputText, setInputText] = useState("");
@@ -149,14 +146,6 @@ export default function AIAssistantPage() {
   };
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-140px)] gap-6 items-stretch relative">
-      {isDemo && (
-        <LockedFeatureBanner
-          feature="chatHistory"
-          title="AI Coach Chat History"
-          description="Preview mode: Chat history is not saved. Create a free account to persist your AI Coach conversations."
-        />
-      )}
-
       {/* Mobile Sidebar backdrop */}
       {showMobileSidebar && (
         <div
@@ -183,12 +172,10 @@ export default function AIAssistantPage() {
             </button>
           </div>
           <button
-            onClick={isDemo ? undefined : () => { handleStartNewChat(); setShowMobileSidebar(false); }}
-            disabled={isDemo}
+            onClick={() => { handleStartNewChat(); setShowMobileSidebar(false); }}
             className="btn-primary w-full text-xs"
-            style={{ opacity: isDemo ? 0.5 : 1, cursor: isDemo ? "not-allowed" : "pointer" }}
           >
-            <Plus size={14} /> {isDemo ? "Create Free Account for Chat History" : "New Conversation"}
+            <Plus size={14} /> New Conversation
           </button>
         </div>
 
@@ -403,17 +390,15 @@ export default function AIAssistantPage() {
             <input
               type="text"
               value={inputText}
-              onChange={isDemo ? undefined : (e) => setInputText(e.target.value)}
-              placeholder={isDemo ? "Create a free account to chat with the AI Coach" : "Ask the coach: 'Why did I lose on my EUR/USD trade?'"}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Ask the coach: 'Why did I lose on my EUR/USD trade?'"
               className="flex-1 px-4 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] transition-colors focus:border-teal-500/40"
-              disabled={sendMutation.isPending || isDemo}
-              style={{ opacity: isDemo ? 0.5 : 1, cursor: isDemo ? "not-allowed" : "text" }}
+              disabled={sendMutation.isPending}
             />
             <button
               type="submit"
-              disabled={!inputText.trim() || sendMutation.isPending || isDemo}
+              disabled={!inputText.trim() || sendMutation.isPending}
               className="btn-primary px-4"
-              style={{ opacity: isDemo ? 0.5 : 1, cursor: isDemo ? "not-allowed" : "pointer" }}
             >
               <Send size={16} />
             </button>

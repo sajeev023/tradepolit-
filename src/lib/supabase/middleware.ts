@@ -1,6 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { createMockSupabaseClient, getMockUser } from "./mock";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -10,15 +9,10 @@ export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const isMock = !url || !key || url.includes("mockproject.supabase.co");
-  const hasMockSession = request.cookies.get("sb-mock-session")?.value === "true";
-
-  if (isMock || hasMockSession) {
-    const mockEmail = request.cookies.get("sb-mock-email")?.value
-      ? decodeURIComponent(request.cookies.get("sb-mock-email")!.value)
-      : "trader@tradepilot.app";
-    const user = hasMockSession ? getMockUser(mockEmail) : null;
-    return { user, supabaseResponse };
+  if (!url || !key) {
+    throw new Error(
+      "Missing Supabase middleware environment variables. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
+    );
   }
 
   const supabase = createServerClient(url, key, {

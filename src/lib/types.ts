@@ -57,6 +57,7 @@ export interface PriceData {
   low24h: number;
   volume24h: number;
   updatedAt: string;
+  source?: "LIVE" | "SIMULATED";
 }
 
 export interface OHLCVCandle {
@@ -66,6 +67,7 @@ export interface OHLCVCandle {
   low: number;
   close: number;
   volume: number;
+  source?: "LIVE" | "SIMULATED";
 }
 
 // Risk calculator types

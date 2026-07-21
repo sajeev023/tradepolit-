@@ -3,6 +3,8 @@ import { z } from "zod";
 import { MarketDataService } from "@/lib/market-data-service";
 import { successResponse, validationError, internalError } from "@/lib/api-helpers";
 
+export const dynamic = "force-dynamic";
+
 const priceQuerySchema = z.object({
   symbol: z.string().min(1, "Symbol is required"),
 });
