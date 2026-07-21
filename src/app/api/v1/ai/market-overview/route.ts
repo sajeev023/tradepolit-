@@ -46,11 +46,8 @@ export async function GET(_request: NextRequest) {
       try {
         const parsed = JSON.parse(record.content);
         const analysis = parsed.analysis ?? parsed;
-        const symbolKey = record.chatId?.replace(/-[^-]+$/, "") ?? "";
 
         // chatId format is "BTC/USD-4h" — extract symbol
-        const parts = record.chatId?.split("-") ?? [];
-        const tfPart = parts[parts.length - 1];
         // symbol is everything except the last hyphen segment
         const sym = record.chatId?.slice(0, record.chatId.lastIndexOf("-")) ?? "";
 

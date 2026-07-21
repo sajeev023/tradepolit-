@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { encrypt, decrypt } from "@/lib/encryption";
+import { encrypt } from "@/lib/encryption";
 import {
   successResponse,
   unauthorizedError,
@@ -17,7 +17,7 @@ const settingsSchema = z.object({
   twelvedataKey: z.string().optional(),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
@@ -123,7 +123,7 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();

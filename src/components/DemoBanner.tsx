@@ -14,7 +14,7 @@ export function DemoBanner() {
   const [alertsUsed, setAlertsUsed] = useState(0);
   const [dismissed, setDismissed] = useState(false);
 
-  const fetchUsage = useCallback(async (userId: string) => {
+  const fetchUsage = useCallback(async (_userId: string) => {
     try {
       const res = await fetch("/api/v1/usage");
       if (res.ok) {

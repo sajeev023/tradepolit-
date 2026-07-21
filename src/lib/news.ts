@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { getCachedData, setCachedData } from "./cache";
-import { classifyArticle, ClassificationResult } from "./news-classifier";
+import { classifyArticle } from "./news-classifier";
 
 export interface NewsStory {
   id: string;
@@ -274,7 +274,7 @@ export async function getNewsFeed(
             publishedAt: new Date(story.publishedAt),
           },
         });
-      } catch (e) {
+      } catch (_e) {
         // Log clean or ignore constraint updates
       }
     }

@@ -296,6 +296,7 @@ export function useBinanceMultiStream(
     return () => {
       unsubscribers.forEach((u) => u());
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbolsKey]);
 
   return prices;

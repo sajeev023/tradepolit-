@@ -26,7 +26,7 @@ const strategySchema = z.object({
   }),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();

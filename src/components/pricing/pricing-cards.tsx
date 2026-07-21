@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Zap } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import Link from "next/link";
 
 function PricingCardsContent() {
   const router = useRouter();

@@ -22,7 +22,7 @@ const DEFAULT_METRICS: PerformanceMetrics = {
   totalPnL: 0,
 };
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) {

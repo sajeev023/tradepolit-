@@ -5,17 +5,13 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   TrendingUp,
-  TrendingDown,
   BookOpen,
-  Bot,
   Activity,
-  ArrowUpRight,
   RefreshCw,
   Plus,
   Target,
   Award,
   Flame,
-  BarChart3,
   Calendar,
   Sparkles,
   Clipboard,

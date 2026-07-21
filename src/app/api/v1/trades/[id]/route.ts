@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { getMaxLeverage } from "@/lib/risk-engine";
 import {
   successResponse,
   unauthorizedError,
@@ -109,6 +110,12 @@ export async function PATCH(
 
     // Build update payload
     const updateData: any = {};
+
+    // Cap leverage to the per-asset maximum defined by the risk engine.
+    if (data.leverage !== undefined) {
+      const instrument = data.instrument ?? existingTrade.instrument;
+      data.leverage = getMaxLeverage(instrument, data.leverage);
+    }
 
     // Copy primitive fields
     if (data.instrument !== undefined) updateData.instrument = data.instrument;

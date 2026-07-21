@@ -1,13 +1,5 @@
 "use client";
 
-interface AnalyticsEvent {
-  category: string;
-  action: string;
-  label?: string;
-  value?: number;
-  metadata?: Record<string, any>;
-}
-
 class ProductAnalytics {
   private isDev = process.env.NODE_ENV === "development";
 

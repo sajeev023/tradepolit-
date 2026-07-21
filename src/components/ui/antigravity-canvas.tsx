@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { Sparkles, Circle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface Particle {
   x: number;
@@ -18,13 +17,6 @@ interface Particle {
   spriteIndex: number;
 }
 
-const MONO_PARTICLE_COLORS = [
-  "rgba(255, 255, 255, 0.16)",
-  "rgba(226, 232, 240, 0.12)",
-  "rgba(148, 163, 184, 0.10)",
-  "rgba(71, 85, 105, 0.08)",
-];
-
 export function AntigravityCanvas({
   particleCount = 100,
   className = "",
@@ -33,7 +25,7 @@ export function AntigravityCanvas({
   className?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [morphMode, setMorphMode] = useState<"drift" | "orbit">("drift");
+  const [morphMode, _setMorphMode] = useState<"drift" | "orbit">("drift");
   const mouseRef = useRef<{ x: number; y: number; active: boolean }>({
     x: -9999,
     y: -9999,
@@ -44,10 +36,6 @@ export function AntigravityCanvas({
   useEffect(() => {
     morphModeRef.current = morphMode;
   }, [morphMode]);
-
-  const toggleMorphMode = useCallback(() => {
-    setMorphMode((prev) => (prev === "drift" ? "orbit" : "drift"));
-  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;

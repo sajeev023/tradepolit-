@@ -292,8 +292,9 @@ export default function NewsPage() {
                 {/* News Image Header */}
                 {story.image && (
                   <div className="h-40 w-full relative overflow-hidden bg-zinc-950 border-b border-[var(--color-border-subtle)]">
-                    <img 
-                      src={story.image} 
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={story.image}
                       alt={story.title}
                       loading="lazy"
                       className="w-full h-full object-cover opacity-85 hover:opacity-100 hover:scale-105 transition-all duration-300"
@@ -310,8 +311,9 @@ export default function NewsPage() {
                     <div className="flex items-center justify-between text-[11px] text-[var(--color-text-tertiary)]">
                       <div className="flex items-center gap-1.5">
                         {story.sourceLogo ? (
-                          <img 
-                            src={story.sourceLogo} 
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={story.sourceLogo}
                             alt={story.publisher} 
                             className="w-3.5 h-3.5 rounded-sm object-cover"
                             onError={(e) => {

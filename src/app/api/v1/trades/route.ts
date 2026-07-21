@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { getMaxLeverage } from "@/lib/risk-engine";
 import {
   successResponse,
   paginatedResponse,
@@ -54,6 +55,11 @@ export async function POST(request: NextRequest) {
 
     const data = validation.data;
 
+    // Cap leverage to the per-asset maximum defined by the risk engine.
+    // Prevents users from logging unrealistic leverage (e.g. 1000x) that would
+    // inflate PnL/R-multiple calculations and pollute analytics.
+    const cappedLeverage = getMaxLeverage(data.instrument, data.leverage);
+
     // Calculate auto-computed fields
     let pnl: number | null = null;
     let rMultiple: number | null = null;
@@ -63,14 +69,14 @@ export async function POST(request: NextRequest) {
       status = "CLOSED";
       const mult = data.direction === "LONG" ? 1 : -1;
       // pnl = mult * (exitPrice - entryPrice) * size * leverage
-      let computedPnl = mult * (data.exitPrice - data.entryPrice) * data.size * data.leverage;
-      
+      let computedPnl = mult * (data.exitPrice - data.entryPrice) * data.size * cappedLeverage;
+
       // USD/JPY quote conversion (convert JPY profit to USD)
       const isJpyQuote = data.instrument.toUpperCase().replace("-", "").replace("/", "") === "USDJPY";
       if (isJpyQuote) {
         computedPnl = computedPnl / data.exitPrice;
       }
-      
+
       pnl = computedPnl;
 
       // rMultiple calculation
@@ -97,7 +103,7 @@ export async function POST(request: NextRequest) {
         entryPrice: data.entryPrice,
         exitPrice: data.exitPrice !== undefined ? data.exitPrice : null,
         size: data.size,
-        leverage: data.leverage,
+        leverage: cappedLeverage,
         stopLoss: data.stopLoss !== undefined ? data.stopLoss : null,
         takeProfit: data.takeProfit !== undefined ? data.takeProfit : null,
         pnl,

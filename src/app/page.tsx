@@ -21,7 +21,7 @@ import { MobileMenu } from "@/components/landing/mobile-menu";
 import { MobileProductPreview, DesktopProductPreview } from "@/components/landing/product-preview";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { AnimatedSection } from "@/components/landing/scroll-animator";
-import { DesktopNavCTA, MobileNavCTA } from "@/components/landing/navbar-ctas";
+import { DesktopNavCTA } from "@/components/landing/navbar-ctas";
 import { HeroCTA } from "@/components/landing/hero-cta";
 
 const features = [

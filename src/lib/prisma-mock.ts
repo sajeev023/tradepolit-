@@ -413,7 +413,7 @@ export const prismaMock = {
       }
       return null;
     },
-    upsert: async ({ where, update, create }: any) => {
+    upsert: async () => {
       memoryDb.recomputePerformance();
       return memoryDb.performance;
     },
@@ -540,7 +540,7 @@ export const prismaMock = {
         expiresAt: cached.expiresAt,
       };
     },
-    upsert: async ({ where, update, create }: any) => {
+    upsert: async ({ where, create }: any) => {
       memoryDb.marketCache.set(where.cacheKey, {
         data: create.data,
         expiresAt: create.expiresAt,
@@ -829,7 +829,7 @@ export const prismaMock = {
     },
   },
   featureFlag: {
-    findMany: async ({ orderBy }: any) => {
+    findMany: async () => {
       return [...(memoryDb as any).featureFlags || []];
     },
     findFirst: async ({ where }: any) => {

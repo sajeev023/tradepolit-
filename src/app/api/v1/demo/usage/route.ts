@@ -4,7 +4,7 @@ import { getCurrentUsage } from "@/lib/limit-checker";
 import { getEntitlementForUser, getSessionExpiry, isSessionExpired } from "@/lib/entitlements";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();

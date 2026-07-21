@@ -3,7 +3,20 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError, validationError, internalError, errorResponse } from "@/lib/api-helpers";
-import { isDemoUser } from "@/lib/demo-limits";
+import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
+import { getEntitlementForUser } from "@/lib/entitlements";
+
+function demoLockedResponse() {
+  const e = getDemoFeatureLockedError("savedAnalyses");
+  return errorResponse(e.error, e.message, 403, { cta: e.cta, ctaLink: e.ctaLink });
+}
+
+async function requireCanSaveAnalyses(userId: string, email?: string) {
+  if (isDemoUser(userId, email)) return demoLockedResponse();
+  const ent = getEntitlementForUser(userId, email);
+  if (!ent.canSaveAnalyses) return demoLockedResponse();
+  return null;
+}
 
 const saveSchema = z.object({
   symbol: z.string().min(1),
@@ -21,21 +34,9 @@ export async function GET(_request: NextRequest) {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
 
-    // Demo users can't access saved analyses
-    if (isDemoUser(user.id, user.email)) {
-      return errorResponse("FEATURE_LOCKED", "Saved Analyses require a free account.", 403, {
-        cta: "Create Free Account",
-        ctaLink: "/signup",
-      });
-    }
-
-    const userProfile = await prisma.userProfile.findUnique({
-      where: { userId: user.id },
-      select: { plan: true },
-    });
-    if (userProfile?.plan !== "PRO") {
-      return new Response(JSON.stringify({ error: { message: "Upgrade to Pro to access this feature" } }), { status: 403, headers: { "Content-Type": "application/json" } });
-    }
+    // Demo users can't access saved analyses; FREE and PRO can (per entitlements.ts).
+    const locked = await requireCanSaveAnalyses(user.id, user.email ?? undefined);
+    if (locked) return locked;
 
     const analyses = await prisma.savedAnalysis.findMany({
       where: { userId: user.id },
@@ -56,21 +57,9 @@ export async function POST(request: NextRequest) {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
 
-    // Demo users can't save analyses
-    if (isDemoUser(user.id, user.email)) {
-      return errorResponse("FEATURE_LOCKED", "Saved Analyses require a free account.", 403, {
-        cta: "Create Free Account",
-        ctaLink: "/signup",
-      });
-    }
-
-    const userProfile = await prisma.userProfile.findUnique({
-      where: { userId: user.id },
-      select: { plan: true },
-    });
-    if (userProfile?.plan !== "PRO") {
-      return new Response(JSON.stringify({ error: { message: "Upgrade to Pro to access this feature" } }), { status: 403, headers: { "Content-Type": "application/json" } });
-    }
+    // Demo users can't save analyses; FREE and PRO can (per entitlements.ts).
+    const locked = await requireCanSaveAnalyses(user.id, user.email ?? undefined);
+    if (locked) return locked;
 
     const json = await request.json().catch(() => ({}));
     const validation = saveSchema.safeParse(json);

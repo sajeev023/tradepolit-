@@ -3,7 +3,7 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError, forbiddenError, internalError } from "@/lib/api-helpers";
 import { getProviderHealth } from "@/lib/ai-providers";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();

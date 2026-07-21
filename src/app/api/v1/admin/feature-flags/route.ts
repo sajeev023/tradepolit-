@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { successResponse, internalError } from "@/lib/api-helpers";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { successResponse, unauthorizedError, forbiddenError, internalError, validationError } from "@/lib/api-helpers";
+import { z } from "zod";
 
 const DEFAULT_FLAGS = [
   { key: "live_ws", name: "Live Crypto Websockets", description: "Enable high-speed direct feeds from Binance Websocket streams", isActive: false },
@@ -8,18 +10,24 @@ const DEFAULT_FLAGS = [
   { key: "paper_execution", name: "Instant Paper Execution", description: "Permit virtual trade orders to execute directly on chart event triggers", isActive: false },
 ];
 
-export async function GET(request: NextRequest) {
+async function requireAdmin() {
+  const { user, error } = await getAuthenticatedUser();
+  if (error || !user) return { user: null, response: error ?? unauthorizedError() };
+  if (user.role !== "ADMIN") return { user: null, response: forbiddenError() };
+  return { user, response: null };
+}
+
+export async function GET(_request: NextRequest) {
   try {
+    const { response } = await requireAdmin();
+    if (response) return response;
+
     let flags = await prisma.featureFlag.findMany({
       orderBy: { name: "asc" },
     });
 
     if (flags.length === 0) {
-      // Seed default flags if table is empty
-      await prisma.$executeRawUnsafe("SELECT 1"); // Verify connection first
-      await prisma.featureFlag.createMany({
-        data: DEFAULT_FLAGS,
-      });
+      await prisma.featureFlag.createMany({ data: DEFAULT_FLAGS });
       flags = await prisma.featureFlag.findMany({
         orderBy: { name: "asc" },
       });
@@ -32,13 +40,21 @@ export async function GET(request: NextRequest) {
   }
 }
 
+const patchSchema = z.object({
+  key: z.string().min(1, "Feature flag key is required"),
+  isActive: z.boolean(),
+});
+
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { key, isActive } = body;
-    if (!key) {
-      return internalError("Feature flag key is required");
-    }
+    const { response } = await requireAdmin();
+    if (response) return response;
+
+    const json = await request.json();
+    const validation = patchSchema.safeParse(json);
+    if (!validation.success) return validationError(validation.error);
+
+    const { key, isActive } = validation.data;
 
     const flag = await prisma.featureFlag.update({
       where: { key },

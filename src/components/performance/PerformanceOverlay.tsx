@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { profiler, PerformanceStats } from "@/lib/performance-profiler";
-import { Activity, X, ChevronRight, RefreshCw, Cpu, Database, Network } from "lucide-react";
+import { Activity, X, Cpu, Database, Network } from "lucide-react";
 
 export function PerformanceOverlay() {
   const [stats, setStats] = useState<PerformanceStats | null>(null);

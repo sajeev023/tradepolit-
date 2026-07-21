@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { getMarketPulse } from "@/lib/market-pulse";
 import { successResponse, internalError } from "@/lib/api-helpers";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const pulse = await getMarketPulse();
     return successResponse(pulse);

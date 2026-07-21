@@ -6,7 +6,6 @@ import { getOHLCV } from "@/lib/market";
 import {
   compileTechnicalContext,
   validateAnalysisConsistency,
-  getRSIInterpretation,
   appendTelemetryMetadata,
   calculateEMA,
 } from "@/lib/indicators";
@@ -17,7 +16,7 @@ import {
   errorResponse,
   aiUnavailableError,
 } from "@/lib/api-helpers";
-import { checkUsageLimit, recordUsage, getCurrentUsage } from "@/lib/limit-checker";
+import { checkUsageLimit, recordUsage } from "@/lib/limit-checker";
 import { getEntitlementForUser, getAnalysisLimitError } from "@/lib/entitlements";
 import { callFastestModel } from "@/lib/nvidia-ai";
 import { getAnalyzeChartSystemPrompt } from "@/lib/prompt-cache";
@@ -157,7 +156,7 @@ export async function POST(request: NextRequest) {
       return validationError(validation.error);
     }
 
-    const { symbol, timeframe, bypassCache, telemetry, livePrice } = validation.data;
+    const { symbol, timeframe, bypassCache, livePrice } = validation.data;
 
     const getExchangeForSymbol = (sym: string): string => {
       if (["BTC/USD", "ETH/USD", "SOL/USD"].includes(sym)) return "BINANCE";
@@ -197,8 +196,8 @@ export async function POST(request: NextRequest) {
       const openTrades = userTrades.filter((t: any) => t.status === "OPEN");
       const winningTrades = closedTrades.filter((t: any) => Number(t.pnl) > 0);
       const losingTrades = closedTrades.filter((t: any) => Number(t.pnl) < 0);
-      const avgWin = winningTrades.length ? winningTrades.reduce((a: number, t: any) => a + Number(t.pnl), 0) / winningTrades.length : 0;
-      const avgLoss = losingTrades.length ? losingTrades.reduce((a: number, t: any) => a + Math.abs(Number(t.pnl)), 0) / losingTrades.length : 0;
+      const _avgWin = winningTrades.length ? winningTrades.reduce((a: number, t: any) => a + Number(t.pnl), 0) / winningTrades.length : 0;
+      const _avgLoss = losingTrades.length ? losingTrades.reduce((a: number, t: any) => a + Math.abs(Number(t.pnl)), 0) / losingTrades.length : 0;
 
       const today = new Date();
       const tradesToday = userTrades.filter((t: any) => {
@@ -260,7 +259,6 @@ COACHING MANDATE:
     }
 
     let tech: any;
-    let lastCandleTime: string;
     let candles: any[] = [];
 
     // All technical context is computed server-side from exchange OHLCV data.
@@ -274,7 +272,7 @@ COACHING MANDATE:
     console.log(`[STEP 4: OHLCV fetched] candleCount=${candles.length} | lastPrice=${candles[candles.length - 1]?.close}`);
 
     const lastCandle = candles[candles.length - 1];
-    lastCandleTime = lastCandle ? new Date(lastCandle.timestamp).toISOString() : new Date().toISOString();
+    const lastCandleTime: string = lastCandle ? new Date(lastCandle.timestamp).toISOString() : new Date().toISOString();
 
     // Verify data freshness and reject stale data
     const lastCandleTimestamp = lastCandle ? lastCandle.timestamp : Date.now();
@@ -318,15 +316,15 @@ COACHING MANDATE:
     // VALIDATION: Reject if price, indicators, or pivot levels are incomplete/NaN
     const dataErrors: string[] = [];
 
-    // Run structural validator functions
-    if (!telemetry) {
-      const marketErrors = validateMarketData({
-        symbol,
-        currentPrice: tech.currentPrice,
-        ohlcv: candles
-      }, symbol, timeframe);
-      dataErrors.push(...marketErrors);
-    }
+    // Always validate server-computed market data. Client-supplied telemetry is
+    // ignored for indicator calculation, so validation must not be skipped when
+    // it is present.
+    const marketErrors = validateMarketData({
+      symbol,
+      currentPrice: tech.currentPrice,
+      ohlcv: candles
+    }, symbol, timeframe);
+    dataErrors.push(...marketErrors);
 
     const indicatorErrors = validateIndicators({
       rsi: tech.rsi,

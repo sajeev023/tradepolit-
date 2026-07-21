@@ -3,35 +3,48 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError, forbiddenError, internalError } from "@/lib/api-helpers";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
 
-    // Enforce Admin Role
     if (user.role !== "ADMIN") {
       return forbiddenError();
     }
 
-    const totalUsers = await prisma.user.count();
+    // Compute real metrics from the database. No fabricated data.
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // Mock realistic dashboard statistics for Founders/Ops
-    const signupTrend = [
-      { date: "Mon", count: 2 },
-      { date: "Tue", count: 4 },
-      { date: "Wed", count: 3 },
-      { date: "Thu", count: 7 },
-      { date: "Fri", count: 5 },
-      { date: "Sat", count: 9 },
-      { date: "Sun", count: 12 },
-    ];
+    const [totalUsers, recentSignups] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.findMany({
+        where: { createdAt: { gte: sevenDaysAgo } },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
+
+    // Build a real 7-day signup trend from actual signup timestamps.
+    const dayBuckets: { date: string; count: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(now);
+      dayStart.setHours(0, 0, 0, 0);
+      dayStart.setDate(dayStart.getDate() - i);
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      const count = recentSignups.filter((u: { createdAt: Date }) => {
+        const t = new Date(u.createdAt).getTime();
+        return t >= dayStart.getTime() && t < dayEnd.getTime();
+      }).length;
+      dayBuckets.push({
+        date: dayStart.toLocaleDateString("en-US", { weekday: "short" }),
+        count,
+      });
+    }
 
     return successResponse({
       totalUsers,
-      dau: Math.max(1, Math.round(totalUsers * 0.4)),
-      wau: Math.max(1, Math.round(totalUsers * 0.7)),
-      apiErrorRate: "0.04%",
-      signupTrend,
+      signupTrend: dayBuckets,
     });
   } catch (error) {
     console.error("Admin metrics API error:", error);

@@ -1,8 +1,15 @@
 export function validateMarketData(data: any, symbol: string, timeframe: string): string[] {
   const errors: string[] = [];
-  
-  // 1. Check symbol format
-  if (!data.symbol || !data.symbol.includes('/')) {
+
+  // 1. Check symbol format. Accept "BASE/QUOTE" pair notation (BTC/USD) OR a known
+  // bare index ticker (NASDAQ, S&P500, DJI, NIKKEI). Concatenated forms like
+  // "BTCUSD" are rejected — callers should use "BTC/USD" instead.
+  const PAIR_PATTERN = /^[A-Z0-9.\-]+\/[A-Z0-9]+$/;
+  const KNOWN_BARE_INDICES = new Set(["NASDAQ", "S&P500", "DJI", "NIKKEI", "FTSE", "DAX"]);
+  const sym = typeof data.symbol === "string" ? data.symbol.toUpperCase() : "";
+  const isPair = PAIR_PATTERN.test(sym);
+  const isKnownIndex = KNOWN_BARE_INDICES.has(sym);
+  if (!sym || (!isPair && !isKnownIndex)) {
     errors.push(`Invalid symbol format: ${data.symbol}`);
   }
   

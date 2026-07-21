@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getEntitlementForUser, getRemainingAnalyses as calcRemaining, getRemainingAlerts as calcRemainingAlerts } from "@/lib/entitlements";
+import { getEntitlementForUser } from "@/lib/entitlements";
 
 export const FREE_LIMITS = {
   dailyAnalyses: 5,

@@ -8,7 +8,14 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_|^err[0-9]*$",
+        },
+      ],
       "prefer-const": "warn",
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/incompatible-library": "off",

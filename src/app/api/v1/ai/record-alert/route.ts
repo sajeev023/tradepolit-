@@ -5,7 +5,7 @@ import { successResponse, unauthorizedError, internalError } from "@/lib/api-hel
 
 // POST /api/v1/ai/record-alert
 // Checks if alert count is within bounds, increments it, and returns status.
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();

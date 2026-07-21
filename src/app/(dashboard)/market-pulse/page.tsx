@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Activity, RefreshCw, TrendingUp, Clock, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import { Activity, RefreshCw, TrendingUp, Clock, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface MarketPulseData {
   fearGreed: {

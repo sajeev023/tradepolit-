@@ -5,7 +5,7 @@ import { getAuthenticatedUser } from "@/lib/auth";
 
 // POST /api/stripe/create-checkout
 // Creates a Stripe Checkout Session for the PRO Plan ($7.49/month)
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) {

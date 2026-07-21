@@ -109,9 +109,11 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Total Accounts", value: stats.totalUsers, sub: "Registered users in system" },
-            { label: "Daily Actives (DAU)", value: stats.dau, sub: "Daily session count" },
-            { label: "Weekly Actives (WAU)", value: stats.wau, sub: "Rolling 7d engagement" },
-            { label: "API error rate", value: stats.apiErrorRate, sub: "Error logs ratio (24h)" },
+            {
+              label: "New This Week",
+              value: (stats.signupTrend || []).reduce((sum: number, d: { count: number }) => sum + d.count, 0),
+              sub: "Signups in last 7 days",
+            },
           ].map((stat, idx) => (
             <div key={idx} className="card p-5">
               <span className="text-[10px] uppercase font-bold tracking-wider mb-1 block" style={{ color: "var(--color-text-tertiary)" }}>

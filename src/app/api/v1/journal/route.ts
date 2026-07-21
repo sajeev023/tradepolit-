@@ -9,7 +9,14 @@ import {
   validationError,
   internalError,
   notFoundError,
+  errorResponse,
 } from "@/lib/api-helpers";
+import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
+
+function demoJournalLocked() {
+  const e = getDemoFeatureLockedError("journal");
+  return errorResponse(e.error, e.message, 403, { cta: e.cta, ctaLink: e.ctaLink });
+}
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +39,11 @@ export async function POST(request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    // Demo users can't use the journal (per entitlements).
+    if (isDemoUser(user.id, user.email ?? undefined)) {
+      return demoJournalLocked();
+    }
 
     const json = await request.json();
     const validation = journalEntrySchema.safeParse(json);
@@ -72,6 +84,11 @@ export async function GET(request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    // Demo users can't use the journal (per entitlements).
+    if (isDemoUser(user.id, user.email ?? undefined)) {
+      return demoJournalLocked();
+    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);

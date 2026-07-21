@@ -15,7 +15,6 @@ import { PerformanceOverlay } from "@/components/performance/PerformanceOverlay"
 import { profiler } from "@/lib/performance-profiler";
 import {
   TrendingUp,
-  TrendingDown,
   RefreshCw,
   Bot,
   BrainCircuit,
@@ -28,7 +27,6 @@ import {
   ChevronDown,
   Clock,
   Bookmark,
-  BookmarkCheck,
   X,
   Zap,
   Maximize2,
@@ -171,11 +169,11 @@ export function ChartsClientPage() {
   // Subscription Plan & Usage counts
   const [subscriptionStatus, setSubscriptionStatus] = useState("FREE");
   const [analysesCountToday, setAnalysesCountToday] = useState(0);
-  const [alertsCountToday, setAlertsCountToday] = useState(0);
+  const [_alertsCountToday, setAlertsCountToday] = useState(0);
   const [analysisLimit, setAnalysisLimit] = useState(5);
-  const [alertLimit, setAlertLimit] = useState(3);
+  const [_alertLimit, setAlertLimit] = useState(3);
   const [isDemoMode, setIsDemoMode] = useState(false);
-  const [analysisReady, setAnalysisReady] = useState(false);
+  const [_analysisReady, setAnalysisReady] = useState(false);
 
   // Chat state
   const [chatId, setChatId] = useState<string | null>(null);
@@ -186,7 +184,7 @@ export function ChartsClientPage() {
   const [showFollowUps, setShowFollowUps] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [_shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [mobileTab, setMobileTab] = useState<"watchlist" | "chart" | "copilot">("chart");
   const [isMobile, setIsMobile] = useState(false);
 

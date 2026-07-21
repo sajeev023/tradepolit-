@@ -208,6 +208,7 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
               }}
             >
               {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarUrl} alt={userName || "Avatar"} className="w-full h-full object-cover" />
               ) : (
                 initials

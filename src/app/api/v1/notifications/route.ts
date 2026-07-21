@@ -7,7 +7,7 @@ import {
   internalError,
 } from "@/lib/api-helpers";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();

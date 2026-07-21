@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Settings, Shield, Bell, RefreshCw, Key, Lock, AlertTriangle, Loader2, User, Palette, Check, CreditCard, Zap } from "lucide-react";
+import { Bell, RefreshCw, Key, Lock, AlertTriangle, Loader2, User, Palette, CreditCard, Zap } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -92,7 +92,7 @@ export default function SettingsPage() {
   });
 
   // Fetch current user profile with subscription status
-  const { data: profileData, isLoading: profileLoading, refetch: refetchProfile } = useQuery<any>({
+  const { data: profileData, isLoading: profileLoading, refetch: _refetchProfile } = useQuery<any>({
     queryKey: ["profile"],
     queryFn: async () => {
       const res = await fetch("/api/v1/profile");

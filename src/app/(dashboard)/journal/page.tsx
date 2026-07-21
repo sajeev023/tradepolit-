@@ -7,20 +7,14 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  Filter,
   Plus,
   Trash2,
   Edit2,
   X,
-  FileText,
   Upload,
   ChevronLeft,
   ChevronRight,
   Smile,
-  AlertTriangle,
   Loader2,
   ExternalLink,
   BookOpen,
@@ -65,11 +59,6 @@ function JournalPageContent() {
   const [viewingTrade, setViewingTrade] = useState<any | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  const handleCreateClick = () => {
-    reset();
-    setIsCreateOpen(true);
-  };
 
   // 1. Fetch trades
   const { data: tradesResponse, isLoading } = useQuery({
@@ -208,7 +197,6 @@ function JournalPageContent() {
   }, [searchParams, setValue]);
 
   const watchInstrument = watch("instrument");
-  const watchDirection = watch("direction");
 
   useEffect(() => {
     if (watchInstrument) {
@@ -879,6 +867,7 @@ function JournalPageContent() {
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {viewingTrade.screenshots?.map((url: string, index: number) => (
                   <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-[var(--color-border-subtle)] bg-[var(--color-bg-tertiary)] group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={url} alt="Screenshot" className="w-full h-full object-cover" />
                     <a
                       href={url}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, ToggleLeft, ToggleRight, Trash2, Plus, RefreshCw, Volume2, ShieldAlert } from "lucide-react";
+import { Bell, ToggleRight, Trash2, Plus, RefreshCw, Volume2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
 
@@ -117,7 +117,6 @@ export default function AlertsPage() {
   };
 
   const activeAlertsList = alerts?.filter((a) => a.isActive) || [];
-  const triggeredAlertsList = alerts?.filter((a) => !a.isActive) || [];
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">

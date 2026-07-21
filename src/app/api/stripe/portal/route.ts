@@ -5,7 +5,7 @@ import { getAuthenticatedUser } from "@/lib/auth";
 
 // POST /api/stripe/portal
 // Redirects a logged-in user to their Stripe Billing Portal
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) {

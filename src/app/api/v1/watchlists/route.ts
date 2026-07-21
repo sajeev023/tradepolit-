@@ -7,14 +7,21 @@ import {
   unauthorizedError,
   validationError,
   internalError,
+  errorResponse,
 } from "@/lib/api-helpers";
+import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
+
+function demoWatchlistLocked() {
+  const e = getDemoFeatureLockedError("watchlistEdit");
+  return errorResponse(e.error, e.message, 403, { cta: e.cta, ctaLink: e.ctaLink });
+}
 
 const createWatchlistSchema = z.object({
   name: z.string().min(1, "Watchlist name is required"),
   instruments: z.array(z.string()).default([]),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
@@ -35,6 +42,11 @@ export async function POST(request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    // Demo users can't edit watchlists (per entitlements).
+    if (isDemoUser(user.id, user.email ?? undefined)) {
+      return demoWatchlistLocked();
+    }
 
     const json = await request.json();
     const validation = createWatchlistSchema.safeParse(json);

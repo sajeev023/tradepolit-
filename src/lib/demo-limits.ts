@@ -61,7 +61,7 @@ export function getDemoAlertLimitError() {
 
 export function getDemoSessionExpiredError() {
   return {
-    error: "DEMO_SESSION_EXPIRED",
+    error: "DEMO_SESSION_EXPIRED" as const,
     message: "Your 15-minute preview session has expired. Create a free account to continue.",
     cta: "Create Free Account",
     ctaLink: "/signup?expired=demo",
@@ -78,7 +78,7 @@ export function getDemoFeatureLockedError(feature: string) {
     chatHistory: "Chat history is saved with a free account.",
   };
   return {
-    error: "FEATURE_LOCKED",
+    error: "FEATURE_LOCKED" as const,
     message: featureMessages[feature] || "This feature requires a free account.",
     cta: "Create Free Account",
     ctaLink: "/signup",

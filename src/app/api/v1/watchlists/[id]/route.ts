@@ -8,7 +8,14 @@ import {
   notFoundError,
   validationError,
   internalError,
+  errorResponse,
 } from "@/lib/api-helpers";
+import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
+
+function demoWatchlistLocked() {
+  const e = getDemoFeatureLockedError("watchlistEdit");
+  return errorResponse(e.error, e.message, 403, { cta: e.cta, ctaLink: e.ctaLink });
+}
 
 const updateWatchlistSchema = z.object({
   name: z.string().min(1).optional(),
@@ -22,6 +29,11 @@ export async function PATCH(
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    // Demo users can't edit watchlists (per entitlements).
+    if (isDemoUser(user.id, user.email ?? undefined)) {
+      return demoWatchlistLocked();
+    }
 
     const { id } = await params;
     const watchlist = await prisma.watchlist.findFirst({
@@ -62,6 +74,11 @@ export async function DELETE(
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    // Demo users can't edit watchlists (per entitlements).
+    if (isDemoUser(user.id, user.email ?? undefined)) {
+      return demoWatchlistLocked();
+    }
 
     const { id } = await params;
     const watchlist = await prisma.watchlist.findFirst({

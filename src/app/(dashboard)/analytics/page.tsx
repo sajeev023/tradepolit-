@@ -3,7 +3,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   TrendingUp,
-  TrendingDown,
   BarChart3,
   RefreshCw,
   Award,

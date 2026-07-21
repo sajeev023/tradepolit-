@@ -58,14 +58,6 @@ function MobileBottomNav() {
     }
   }, [moreOpen]);
 
-  const tabs = [
-    { label: "Markets", icon: TrendingUp, href: "/charts" },
-    { label: "Journal", icon: BookOpen, href: "/journal" },
-    null,
-    { label: "Tools", icon: Grid3X3, href: "/risk-calculator" },
-    { label: "More", icon: MoreHorizontal, href: "#more" },
-  ];
-
   return (
     <nav
       className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center border-t select-none"
@@ -329,8 +321,6 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
-  const pathname = usePathname();
-  const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, ReactNode } from "react";
+import { useState, ReactNode } from "react";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 
 export function StickyHeader({ children, className = "" }: { children: ReactNode; className?: string }) {

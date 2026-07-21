@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUIStore } from "@/lib/stores/ui-store";
-import { Bell, X, Check, Trash2, Volume2, ShieldAlert } from "lucide-react";
+import { Bell, X, Check, Volume2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 export function NotificationPanel() {

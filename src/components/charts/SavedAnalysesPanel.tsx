@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, memo, Profiler } from "react";
 import { profiler } from "@/lib/performance-profiler";
-import { X, Bookmark, Trash2, TrendingUp, TrendingDown, Minus, Copy, Check } from "lucide-react";
+import { X, Bookmark, Trash2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 interface SavedAnalysis {

@@ -158,7 +158,7 @@ export function getFeatureLockedError(feature: string) {
     chatHistory: "Chat history is saved with a free account.",
   };
   return {
-    error: "FEATURE_LOCKED",
+    error: "FEATURE_LOCKED" as const,
     message: featureMessages[feature] || "This feature requires a free account.",
     cta: "Create Free Account",
     ctaLink: "/signup",

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FlaskConical, Play, CheckCircle, XCircle, RefreshCw, Layers, TrendingUp, Info } from "lucide-react";
+import { FlaskConical, Play, XCircle, RefreshCw, Info } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
