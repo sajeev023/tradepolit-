@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { getInstantFallbackAnalysis } from "@/lib/fallback-analysis";
 import { SnapshotExportCard } from "@/components/charts/SnapshotExportCard";
+import { formatPrice } from "@/lib/format-price";
 
 const SYMBOLS = [
   { group: "Crypto", items: ["BTC/USD", "ETH/USD", "SOL/USD"] },
@@ -123,8 +124,16 @@ const generateProactiveAlerts = (data: any, symbol: string) => {
 
 export function ChartsClientPage() {
   const router = useRouter();
-  const [selectedSymbol, setSelectedSymbol] = useState("BTC/USD");
-  const [selectedTimeframe, setSelectedTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W">("4h");
+  const [selectedSymbol, setSelectedSymbol] = useState<string>(() => {
+    if (typeof window === "undefined") return "BTC/USD";
+    return localStorage.getItem("tradepilot-default-symbol") || "BTC/USD";
+  });
+  const [selectedTimeframe, setSelectedTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W">(() => {
+    if (typeof window === "undefined") return "4h";
+    const tf = localStorage.getItem("tradepilot-default-timeframe");
+    const valid: Array<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W"> = ["1m", "5m", "15m", "1h", "4h", "1d", "1W"];
+    return valid.includes(tf as any) ? (tf as any) : "4h";
+  });
   const [isBackgroundUpdating, setIsBackgroundUpdating] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [analysisData, setAnalysisData] = useState<any | null>(null);
@@ -218,11 +227,14 @@ export function ChartsClientPage() {
         if (profileRes.ok && profileBody.data) {
           const { lastSymbol, lastTimeframe, plan, subscriptionStatus: rawStatus, dailyAnalysisCount, dailyAlertCount, analysisLimit: profileLimit, alertLimit: profileAlertLimit, isDemo: profileIsDemo } = profileBody.data;
 
-          const defaultSym = (typeof window !== "undefined" && localStorage.getItem("tradepilot-default-symbol")) || lastSymbol || "BTC/USD";
-          const defaultTf = (typeof window !== "undefined" && localStorage.getItem("tradepilot-default-timeframe")) || lastTimeframe || "4h";
-
-          setSelectedSymbol(defaultSym);
-          setSelectedTimeframe(defaultTf as any);
+          // Initial state is already seeded from localStorage synchronously; only
+          // override if the server profile has a *different* persisted preference.
+          const localSym = (typeof window !== "undefined" && localStorage.getItem("tradepilot-default-symbol")) || null;
+          const localTf = (typeof window !== "undefined" && localStorage.getItem("tradepilot-default-timeframe")) || null;
+          const serverSym = lastSymbol || localSym || "BTC/USD";
+          const serverTf = lastTimeframe || localTf || "4h";
+          if (serverSym !== selectedSymbol) setSelectedSymbol(serverSym);
+          if (serverTf !== selectedTimeframe) setSelectedTimeframe(serverTf as any);
 
           const isUserPro = plan === "PRO" || rawStatus === "ACTIVE";
           activeStatus = isUserPro ? "PRO_ACTIVE" : "FREE";
@@ -233,13 +245,6 @@ export function ChartsClientPage() {
           if (profileLimit !== undefined) setAnalysisLimit(profileLimit);
           if (profileAlertLimit !== undefined) setAlertLimit(profileAlertLimit);
           if (profileIsDemo !== undefined) setIsDemoMode(profileIsDemo);
-        } else {
-          if (typeof window !== "undefined") {
-            const defaultSym = localStorage.getItem("tradepilot-default-symbol");
-            const defaultTf = localStorage.getItem("tradepilot-default-timeframe");
-            if (defaultSym) setSelectedSymbol(defaultSym);
-            if (defaultTf) setSelectedTimeframe(defaultTf as any);
-          }
         }
 
         const isPro = activeStatus === "PRO_ACTIVE";
@@ -284,6 +289,7 @@ export function ChartsClientPage() {
       }
     };
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -377,7 +383,7 @@ export function ChartsClientPage() {
     fullText: string,
     suffix: ChatMessage[] = [],
     onComplete?: () => void,
-    delayMs = 8,
+    delayMs = 40,
   ) => {
     const msgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const newMsg: ChatMessage = {
@@ -402,7 +408,7 @@ export function ChartsClientPage() {
               : m
           )
         );
-        i += 2; // reveal 2 words per frame for snappy speed
+        i += 1; // reveal one word per tick for smooth, readable streaming
         setTimeout(reveal, delayMs);
       } else {
         // Streaming done — append alert suffixes and call completion cb
@@ -768,6 +774,7 @@ Timestamp: ${new Date().toISOString()}
       if (isRestoredForCurrent) {
         // Keep restored analysis intact; just mark the panel ready.
         setAnalysisReady(true);
+        restoredAnalysisRef.current = null;
         return;
       }
 
@@ -810,8 +817,8 @@ Timestamp: ${new Date().toISOString()}
         }
       }
 
-      // F: toggle fullscreen chart
-      if (e.key.toLowerCase() === "f") {
+      // F: toggle fullscreen chart (ignore if any modifier is held)
+      if (e.key.toLowerCase() === "f" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
         e.preventDefault();
         setIsChartMaximized(prev => !prev);
       }
@@ -1062,9 +1069,7 @@ Timestamp: ${new Date().toISOString()}
                             <div className="flex items-center gap-1.5">
                               {info && (
                                 <span className="font-medium text-right text-[var(--color-text-secondary)] tabular-nums text-[10px]">
-                                  ${info.price >= 1000
-                                    ? info.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                                    : info.price.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+                                  {formatPrice(item, info.price)}
                                 </span>
                               )}
                               {info && (

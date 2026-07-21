@@ -2,6 +2,7 @@
 
 import { useBinanceStream } from "@/hooks/useBinanceStream";
 import type { PriceData } from "@/lib/types";
+import { formatPrice } from "@/lib/format-price";
 import { TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import { memo } from "react";
 
@@ -38,9 +39,7 @@ export const LivePriceCard = memo(function LivePriceCard({
           {activePriceData.symbol}
         </p>
         <p className="text-xl font-bold font-mono tabular-nums mt-1 whitespace-nowrap" style={{ color: "var(--color-text-primary)" }}>
-          {symbol.includes("JPY") || symbol.includes("NASDAQ") || symbol.includes("S&P500") || symbol.includes("XAU")
-            ? activePriceData.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-            : activePriceData.price.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+          {formatPrice(activePriceData.symbol, activePriceData.price)}
         </p>
       </div>
       <div>

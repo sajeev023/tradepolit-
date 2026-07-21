@@ -38,7 +38,15 @@ jobs:
       - name: Check for hardcoded API keys
         run: |
           echo "Checking for hardcoded API keys..."
-          ! grep -r "sk-[a-zA-Z0-9]" --include="*.ts" --include="*.tsx" --include="*.js" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.github --exclude="*config*" src/ | grep -v ".env" | grep -v "process.env" && echo "No hardcoded API keys found"
+          # Look for actual OpenAI-style secret keys (sk-proj-, sk-[0-9a-f]{48}, etc.)
+          # while avoiding false positives on words like risk-* or disk-*.
+          matches=$(grep -rEn "sk-[a-zA-Z0-9_-]{20,}" --include="*.ts" --include="*.tsx" --include="*.js" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.github --exclude="*config*" src/ | grep -v "\.env" | grep -v "process\.env" | grep -v "//.*sk-" | grep -v "risk-" | grep -v "task-" | grep -v "disk-" || true)
+          if [ -n "$matches" ]; then
+            echo "Possible hardcoded key-like strings found:"
+            echo "$matches"
+            exit 1
+          fi
+          echo "No hardcoded API keys found"
 
       - name: Check for console.log with error dumps
         run: |

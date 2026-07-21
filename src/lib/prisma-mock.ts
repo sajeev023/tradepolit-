@@ -1,6 +1,7 @@
 // In-memory mock database for TradePilot when real Postgres is offline
 import { MOCK_USER } from "./supabase/mock";
 
+let backtestIdCounter = 0;
 
 function getStandardDeviation(values: number[]): number {
   if (values.length <= 1) return 0;
@@ -505,8 +506,12 @@ export const prismaMock = {
       return bt;
     },
     create: async ({ data }: any) => {
+      // Use a monotonic counter + random suffix to avoid id collisions when many
+      // backtests are created in rapid succession during parallel test runs.
+      const counter = ++backtestIdCounter;
+      const suffix = Math.random().toString(36).slice(2, 8);
       const bt = {
-        id: `bt_${Date.now()}`,
+        id: `bt_${Date.now()}_${counter}_${suffix}`,
         ...data,
         status: data.status || "PENDING",
         createdAt: new Date(),

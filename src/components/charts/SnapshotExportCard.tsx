@@ -1,4 +1,5 @@
 import React from "react";
+import { formatPrice } from "@/lib/format-price";
 
 interface SnapshotExportCardProps {
   symbol: string;
@@ -66,7 +67,7 @@ export const SnapshotExportCard: React.FC<SnapshotExportCardProps> = ({
         <div>
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold block">Live Market Price</span>
           <span className="text-3xl font-mono font-bold text-white mt-1 block">
-            {priceData ? `$${priceData.price.toLocaleString(undefined, { minimumFractionDigits: symbol.includes("JPY") || symbol.includes("USD") && !symbol.includes("/") ? 2 : 2 })}` : "N/A"}
+            {priceData ? formatPrice(symbol, priceData.price) : "N/A"}
           </span>
         </div>
         <div className="text-right">

@@ -1125,7 +1125,7 @@ iframe {
 @media (max-width: 767px) {
   /* Prevent tiny text — nothing below 12px on mobile */
   p, span:not(.badge span), li, td, th, div.text-xs, div.text-\[11px\], div.text-\[10px\] {
-    min-font-size: 12px;
+    font-size: max(12px, inherit);
   }
 }
 

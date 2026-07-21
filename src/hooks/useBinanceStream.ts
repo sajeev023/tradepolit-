@@ -7,7 +7,7 @@
  * to receive live prices. Only ONE WebSocket is opened per symbol
  * across the entire application via a shared subscription registry.
  *
- * Supported symbols: BTC/USD, ETH/USD, SOL/USD
+ * Supported symbols: BTC/USD, ETH/USD, SOL/USD, EUR/USD, GBP/USD
  * Non-crypto symbols return null — callers fall back to REST polling.
  */
 
@@ -27,6 +27,17 @@ interface StreamEntry {
   reconnectTimer: ReturnType<typeof setTimeout> | null;
   active: boolean;
   reconnectCount: number;
+  statusListeners: Set<(status: "connected" | "reconnecting" | "disconnected") => void>;
+  currentStatus: "connected" | "reconnecting" | "disconnected";
+}
+
+function setEntryStatus(
+  entry: StreamEntry,
+  status: "connected" | "reconnecting" | "disconnected"
+) {
+  if (entry.currentStatus === status) return;
+  entry.currentStatus = status;
+  entry.statusListeners.forEach((cb) => cb(status));
 }
 
 const registry = new Map<string, StreamEntry>();
@@ -62,10 +73,20 @@ function openStream(streamName: string) {
     );
   } catch (err) {
     console.error(`[useBinanceStream] Failed to open WebSocket for ${streamName}:`, err);
+    setEntryStatus(entry, "reconnecting");
+    const delay = Math.min(1000 * Math.pow(2, entry.reconnectCount), 10000);
+    entry.reconnectCount = entry.reconnectCount + 1;
+    if (entry.reconnectTimer) clearTimeout(entry.reconnectTimer);
+    entry.reconnectTimer = setTimeout(() => {
+      if (registry.get(streamName)?.active) {
+        openStream(streamName);
+      }
+    }, delay);
     return;
   }
 
   entry.ws = ws;
+  setEntryStatus(entry, "reconnecting");
   const symbol =
     Object.keys(BINANCE_SYMBOL_MAP).find(
       (k) => BINANCE_SYMBOL_MAP[k] === streamName
@@ -73,7 +94,9 @@ function openStream(streamName: string) {
 
   ws.onopen = () => {
     const current = registry.get(streamName);
-    if (current) current.reconnectCount = 0;
+    if (!current) return;
+    current.reconnectCount = 0;
+    setEntryStatus(current, "connected");
   };
 
   ws.onmessage = (event) => {
@@ -83,21 +106,31 @@ function openStream(streamName: string) {
       const data = JSON.parse(event.data);
       if (data?.c) {
         current.reconnectCount = 0;
-        const price: PriceData = {
+        const price = parseFloat(data.c);
+        const change24h = parseFloat(data.p);
+        const changePercent24h = parseFloat(data.P);
+        const high24h = parseFloat(data.h);
+        const low24h = parseFloat(data.l);
+        const volume24h = parseFloat(data.v);
+        if (!Number.isFinite(price) || price <= 0) {
+          // Drop malformed ticker frames rather than broadcasting NaN
+          return;
+        }
+        const priceData: PriceData = {
           symbol,
-          price: parseFloat(data.c),
-          change24h: parseFloat(data.p),
-          changePercent24h: parseFloat(data.P),
-          high24h: parseFloat(data.h),
-          low24h: parseFloat(data.l),
-          volume24h: parseFloat(data.v),
+          price,
+          change24h: Number.isFinite(change24h) ? change24h : 0,
+          changePercent24h: Number.isFinite(changePercent24h) ? changePercent24h : 0,
+          high24h: Number.isFinite(high24h) ? high24h : price,
+          low24h: Number.isFinite(low24h) ? low24h : price,
+          volume24h: Number.isFinite(volume24h) ? volume24h : 0,
           updatedAt: new Date().toISOString(),
         };
         if (data?.E) {
           profiler.recordWebSocketTick(symbol, data.E);
         }
-        current.lastPrice = price;
-        current.subscribers.forEach((cb) => cb(price));
+        current.lastPrice = priceData;
+        current.subscribers.forEach((cb) => cb(priceData));
       }
     } catch {
       // malformed frame — ignore
@@ -111,7 +144,9 @@ function openStream(streamName: string) {
   ws.onclose = () => {
     const current = registry.get(streamName);
     if (!current || !current.active) return;
-    
+
+    setEntryStatus(current, "reconnecting");
+
     const count = current.reconnectCount;
     // Attempt immediate reconnect on first disconnect (0ms delay), then backoff
     const delay = count === 0 ? 0 : Math.min(1000 * Math.pow(2, count - 1), 10000);
@@ -139,6 +174,8 @@ function subscribe(
       reconnectTimer: null,
       active: true,
       reconnectCount: 0,
+      statusListeners: new Set(),
+      currentStatus: "disconnected",
     };
     registry.set(streamName, entry);
     openStream(streamName);
@@ -166,6 +203,7 @@ function subscribe(
         const still = registry.get(streamName);
         if (still && still.subscribers.size === 0) {
           still.active = false;
+          setEntryStatus(still, "disconnected");
           still.ws?.close();
           still.ws = null;
         }
@@ -275,11 +313,8 @@ export function useBinanceStreamStatus(
     // is undefined, so return a safe default.
     if (typeof window === "undefined" || !streamName) return "disconnected";
     const entry = registry.get(streamName);
-    if (!entry || !entry.active) return "disconnected";
-    // Use numeric readyState 1 (OPEN) to be safe from ReferenceError during SSR (WebSocket is not defined on server)
-    if (entry.ws?.readyState === 1) return "connected";
-    if (entry.reconnectCount > 0) return "reconnecting";
-    return "disconnected";
+    if (!entry) return "disconnected";
+    return entry.currentStatus;
   });
 
   useEffect(() => {
@@ -288,22 +323,20 @@ export function useBinanceStreamStatus(
       return;
     }
 
-    const updateStatus = () => {
-      const entry = registry.get(streamName);
-      if (!entry || !entry.active) {
-        setStatus("disconnected");
-      } else if (entry.ws?.readyState === 1) { // 1 = OPEN
-        setStatus("connected");
-      } else if (entry.reconnectCount > 0) {
-        setStatus("reconnecting");
-      } else {
-        setStatus("disconnected");
-      }
-    };
+    const entry = registry.get(streamName);
+    if (!entry) {
+      setStatus("disconnected");
+      return;
+    }
 
-    updateStatus();
-    const interval = setInterval(updateStatus, 1000);
-    return () => clearInterval(interval);
+    setStatus(entry.currentStatus);
+    const listener = (newStatus: "connected" | "reconnecting" | "disconnected") => {
+      setStatus(newStatus);
+    };
+    entry.statusListeners.add(listener);
+    return () => {
+      entry.statusListeners.delete(listener);
+    };
   }, [streamName]);
 
   return status;

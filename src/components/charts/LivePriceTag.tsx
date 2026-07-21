@@ -2,6 +2,7 @@
 
 import { useBinanceStream } from "@/hooks/useBinanceStream";
 import type { PriceData } from "@/lib/types";
+import { formatPrice } from "@/lib/format-price";
 import { memo } from "react";
 
 interface LivePriceTagProps {
@@ -25,9 +26,7 @@ export const LivePriceTag = memo(function LivePriceTag({
   return (
     <div className="flex items-baseline gap-1.5 bg-[var(--color-bg-tertiary)] px-2.5 py-1 rounded-md border border-[var(--color-border-default)]">
       <span className="text-xs font-semibold font-mono text-[var(--color-text-primary)] tabular-nums" style={{ letterSpacing: "-0.02em" }}>
-        ${symbol.includes("JPY") || symbol.includes("NASDAQ") || symbol.includes("S&P500") || symbol.includes("XAU")
-          ? activePriceData.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          : activePriceData.price.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+        {formatPrice(activePriceData.symbol, activePriceData.price)}
       </span>
       <span className={`text-[10px] font-semibold font-mono tabular-nums ${isProfit ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
         {isProfit ? "+" : ""}{activePriceData.changePercent24h.toFixed(2)}%

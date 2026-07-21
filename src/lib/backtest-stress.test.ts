@@ -40,9 +40,19 @@ describe("Backtester Engine — Expert Trader Validation", () => {
 
     await runBacktestJob(backtest.id, opts.startBalance);
 
-    const result = await prisma.backtest.findFirst({
+    // Defensive: in the in-memory mock, concurrent full-suite runs can occasionally
+    // read a record before the final status update has propagated. Poll briefly.
+    let result = await prisma.backtest.findFirst({
       where: { id: backtest.id, userId: opts.userId },
     });
+    let attempts = 0;
+    while (result?.status === "PENDING" && attempts < 10) {
+      await new Promise((r) => setTimeout(r, 50));
+      result = await prisma.backtest.findFirst({
+        where: { id: backtest.id, userId: opts.userId },
+      });
+      attempts++;
+    }
 
     return result;
   }

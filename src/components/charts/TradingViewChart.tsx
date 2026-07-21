@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, memo } from "react";
+import { useEffect, useRef, useState, memo, useId } from "react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { profiler } from "@/lib/performance-profiler";
 
@@ -39,12 +39,14 @@ export const TradingViewChart = memo(function TradingViewChart({
 }: TradingViewChartProps) {
   const renderStart = performance.now();
 
-  const containerId = "tv-chart-container";
+  const reactId = useId().replace(/:/g, "");
+  const containerId = `tv-chart-container-${reactId}`;
   const widgetRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [widgetRetryKey, setWidgetRetryKey] = useState(0);
   const [wsReconnecting, setWsReconnecting] = useState(false);
   
   const isWidgetReadyRef = useRef(false);
@@ -180,7 +182,7 @@ export const TradingViewChart = memo(function TradingViewChart({
       }
       isWidgetReadyRef.current = false;
     };
-  }, [scriptLoaded, tvSymbol, tvInterval]);
+  }, [scriptLoaded, tvSymbol, tvInterval, widgetRetryKey, containerId]);
 
   // ResizeObserver for responsive chart container. The tv.js iframe is
   // width:100%/height:100%, so it auto-resizes with its container — we just
@@ -190,21 +192,18 @@ export const TradingViewChart = memo(function TradingViewChart({
     const container = containerRef.current;
     if (!container || typeof window === "undefined") return;
 
-    let rafId: number | null = null;
+    // The TradingView iframe fills its container via CSS width/height:100%.
+    // We observe the container for telemetry only; no synthetic resize events
+    // are needed because the embed widget recalculates on its own reflow.
     const observer = new ResizeObserver(() => {
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        window.dispatchEvent(new Event("resize"));
-      });
+      // no-op: the widget handles its own resize
     });
     observer.observe(container);
 
     return () => {
       observer.disconnect();
-      if (rafId) cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [containerId]);
 
   // Event-driven WebSocket status (no polling)
   useEffect(() => {
@@ -231,7 +230,15 @@ export const TradingViewChart = memo(function TradingViewChart({
         const w = widgetRef.current;
         if (w && isWidgetReadyRef.current && typeof w.reload === "function") {
           try {
-            w.reload();
+            const maybeNew = w.reload();
+            // tv.js reload() may return a new widget instance; capture it when it does.
+            if (maybeNew && typeof maybeNew.remove === "function") {
+              widgetRef.current = maybeNew;
+              isWidgetReadyRef.current = false;
+              maybeNew.ready(() => {
+                isWidgetReadyRef.current = true;
+              });
+            }
           } catch (_) {}
         }
       }
@@ -244,6 +251,9 @@ export const TradingViewChart = memo(function TradingViewChart({
   const handleManualRetry = () => {
     setLoadError(null);
     setRetryCount(0);
+    // Force the widget init effect to re-run even if symbol/timeframe/scriptLoaded
+    // have not changed, so both script and widget init failures can recover.
+    setWidgetRetryKey(k => k + 1);
   };
 
   return (
