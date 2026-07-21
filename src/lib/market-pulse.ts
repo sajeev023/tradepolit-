@@ -55,7 +55,9 @@ export async function getMarketPulse(): Promise<MarketPulseResponse> {
 
   try {
     // Fetch Fear & Greed Index
-    const fngRes = await fetch("https://api.alternative.me/fng/?limit=1");
+    const fngRes = await fetch("https://api.alternative.me/fng/?limit=1", {
+      signal: AbortSignal.timeout(4000),
+    });
     if (fngRes.ok) {
       const data = await fngRes.json();
       if (data.data && data.data.length > 0) {
@@ -69,7 +71,9 @@ export async function getMarketPulse(): Promise<MarketPulseResponse> {
     }
 
     // Fetch Binance Futures Funding Rate
-    const fundingRes = await fetch("https://fapi.binance.com/fapi/v1/premiumIndex");
+    const fundingRes = await fetch("https://fapi.binance.com/fapi/v1/premiumIndex", {
+      signal: AbortSignal.timeout(4000),
+    });
     if (fundingRes.ok) {
       const data = await fundingRes.json();
       if (Array.isArray(data)) {

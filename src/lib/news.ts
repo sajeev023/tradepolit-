@@ -207,7 +207,7 @@ export async function getNewsFeed(
       
       const fetchPromises = categories.map(async (cat) => {
         const url = `https://finnhub.io/api/v1/news?category=${cat}&token=${finnhubKey}`;
-        const res = await fetch(url, { cache: "no-store" });
+        const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
         if (!res.ok) throw new Error(`Finnhub returned ${res.status}`);
         const items = await res.json();
         return Array.isArray(items) ? items : [];
@@ -232,7 +232,7 @@ export async function getNewsFeed(
         console.log(`[NEWS FEED] Falling back to NewsAPI for symbol ${cleanSymbol || "ALL"}`);
         const query = getNewsAPIQueryForSymbol(cleanSymbol);
         const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=30&apiKey=${newsApiKey}`;
-        const res = await fetch(url, { cache: "no-store" });
+        const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
         if (!res.ok) throw new Error(`NewsAPI returned ${res.status}`);
         const data = await res.json();
         

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(`[INVALIDATE CACHE] Invalidated cache for user ${user.id} | ${symbol} ${timeframe}`);
+    console.log(`[INVALIDATE CACHE] Invalidated cache for ${symbol} ${timeframe}`);
     return successResponse({ invalidated: true, symbol, timeframe });
   } catch (err: any) {
     console.error("Cache invalidation error:", err?.message);

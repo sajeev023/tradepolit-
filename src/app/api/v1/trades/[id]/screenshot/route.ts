@@ -77,15 +77,24 @@ export async function POST(
       return internalError("Failed to upload screenshot to storage");
     }
 
-    // Retrieve public or signed URL
-    const { data: urlData } = supabase.storage
+    // Generate a signed URL (1-hour expiry) instead of a public URL. The
+    // screenshots bucket should NOT be made public — signed URLs prevent
+    // enumeration attacks where anyone who guesses a path could view another
+    // user's trade screenshot. The 1-hour window matches a typical viewing
+    // session; users who reload later can re-upload.
+    const { data: signedData, error: signedError } = await supabase.storage
       .from("screenshots")
-      .getPublicUrl(filePath);
+      .createSignedUrl(filePath, 3600);
 
-    const publicUrl = urlData.publicUrl;
+    if (signedError || !signedData?.signedUrl) {
+      console.error("Supabase signed URL generation error:", signedError);
+      return internalError("Failed to generate screenshot URL");
+    }
+
+    const screenshotUrl = signedData.signedUrl;
 
     // Update trade screenshots array
-    const updatedScreenshots = [...existingTrade.screenshots, publicUrl];
+    const updatedScreenshots = [...existingTrade.screenshots, screenshotUrl];
 
     const updatedTrade = await prisma.trade.update({
       where: { id },

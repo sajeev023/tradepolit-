@@ -406,7 +406,8 @@ export async function getOHLCV(
         timeframe === "1d" ? "1day" :
         timeframe === "1W" ? "1week" : "1h";
       const res = await fetch(
-        `https://api.twelvedata.com/time_series?symbol=${normSymbol}&interval=${tdInterval}&outputsize=${limit}&apikey=${process.env.TWELVEDATA_API_KEY}`
+        `https://api.twelvedata.com/time_series?symbol=${normSymbol}&interval=${tdInterval}&outputsize=${limit}&apikey=${process.env.TWELVEDATA_API_KEY}`,
+        { signal: AbortSignal.timeout(5000) }
       );
       if (res.ok) {
         const data = await res.json();

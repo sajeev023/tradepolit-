@@ -106,7 +106,7 @@ function DashboardContent() {
   });
 
   // 1. Fetch Performance Summary from our new endpoint
-  const { data: summaryResponse, isLoading: summaryLoading, refetch: refetchSummary } = useQuery({
+  const { data: summaryResponse, isLoading: summaryLoading, isError: summaryIsError, refetch: refetchSummary } = useQuery({
     queryKey: ["dashboard-performance-summary"],
     queryFn: async () => {
       const res = await fetch("/api/v1/performance/summary");
@@ -256,7 +256,22 @@ function DashboardContent() {
       </div>
 
       {/* KPI stats section */}
-      {summaryLoading ? (
+      {summaryIsError ? (
+        <div className="card p-5 flex flex-col items-start gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-rose-400">
+            Couldn&apos;t load metrics
+          </span>
+          <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+            Your performance summary failed to load. Check your connection and retry.
+          </p>
+          <button
+            onClick={() => refetchSummary()}
+            className="px-3 py-1.5 rounded text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500/20 transition"
+          >
+            Retry
+          </button>
+        </div>
+      ) : summaryLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => <KPISkeleton key={i} />)}
         </div>

@@ -18,7 +18,7 @@ function parseDbUrl(url?: string) {
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL;
   const meta = parseDbUrl(connectionString);
-  console.log(`[PRISMA RUNTIME] DATABASE_URL loaded | exists=${meta.exists} | host=${meta.host} | port=${meta.port}`);
+  console.log(`[PRISMA RUNTIME] DATABASE_URL loaded | exists=${meta.exists}`);
 
   const pool = new pg.Pool({ connectionString });
   const adapter = new PrismaPg(pool);
@@ -40,8 +40,7 @@ const isLocalhostDb =
 if (isLocalhostDb) {
   console.log(`[PRISMA RUNTIME] Using fallback in-memory database mock (isLocalhostDb=true)`);
 } else {
-  const meta = parseDbUrl(process.env.DATABASE_URL);
-  console.log(`[PRISMA RUNTIME] Supabase PostgreSQL active | host=${meta.host} | port=${meta.port}`);
+  console.log(`[PRISMA RUNTIME] Supabase PostgreSQL active`);
 }
 
 export const prisma = isLocalhostDb

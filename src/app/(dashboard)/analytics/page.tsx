@@ -85,7 +85,7 @@ function MetricRow({
 export default function AnalyticsPage() {
   const queryClient = useQueryClient();
 
-  const { data: performanceResponse, isLoading, isFetching } = useQuery({
+  const { data: performanceResponse, isLoading, isFetching, isError, error, refetch } = useQuery({
     queryKey: ["dashboard-performance"],
     queryFn: async () => {
       const res = await fetch("/api/v1/performance");
@@ -131,6 +131,35 @@ export default function AnalyticsPage() {
 
   const equityCurveData = performanceResponse?.equityCurve || [];
   const isProfit = metrics.totalPnL >= 0;
+
+  // Render error state — show explicit error card instead of falling through
+  // to zeroed metrics, which previously masked fetch failures from the user.
+  if (isError) {
+    return (
+      <div className="flex flex-col gap-6 max-w-5xl mx-auto">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Performance Analytics</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+            We couldn&apos;t load your performance data.
+          </p>
+        </div>
+        <div className="card p-6 flex flex-col items-start gap-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-rose-400">
+            Loading failed
+          </span>
+          <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+            {error instanceof Error ? error.message : "Unknown error"}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-3 py-1.5 rounded text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500/20 transition"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Render loading state
   if (isLoading) {

@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
     // Check user auth first
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
-    console.log(`[STEP 2: Environment loaded] authUser=${user.id} | NVIDIA_KEY=${!!process.env.NVIDIA_API_KEY} | GROQ_KEY=${!!process.env.GROQ_API_KEY}`);
+    console.log(`[STEP 2: Environment loaded] authUser=verified | NVIDIA_KEY=${!!process.env.NVIDIA_API_KEY} | GROQ_KEY=${!!process.env.GROQ_API_KEY}`);
 
     // ─── STEP 2b: Load behavioral context for personalized analysis ──────
     let userName = "Trader";

@@ -56,6 +56,23 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isApiRoute(pathname)) {
+    // CSRF hardening: reject cross-origin mutations. Same-origin POST/PATCH/DELETE
+    // is allowed; same-site (subdomain) is allowed. Browsers without an Origin
+    // header (older clients) fall back to Referer; if neither is present we
+    // reject to be safe. GET/HEAD/OPTIONS are exempt.
+    const method = request.method.toUpperCase();
+    if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+      const origin = request.headers.get("origin");
+      const referer = request.headers.get("referer");
+      const host = request.headers.get("host");
+      const allowedOrigin = origin ?? (referer ? new URL(referer).origin : null);
+      if (!allowedOrigin || !host || !allowedOrigin.endsWith(host)) {
+        return NextResponse.json(
+          { error: { message: "Cross-origin requests are not allowed for this endpoint" } },
+          { status: 403 }
+        );
+      }
+    }
     return supabaseResponse;
   }
 

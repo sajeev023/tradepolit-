@@ -150,28 +150,33 @@ export async function recordUsage(
   // Pro users: no tracking needed
   if (entitlement.isUnlimitedAnalyses && entitlement.isUnlimitedAlerts) return true;
 
-  // Check limit before recording
+  // Reset day if needed (idempotent across concurrent requests)
   const { analysesCount, alertsCount } = await ensureDailyReset(userId, dbUser);
 
-  const currentCount = type === "analyses" ? analysesCount : alertsCount;
   const limit = type === "analyses" ? entitlement.analysisLimit : entitlement.alertLimit;
+  const currentCount = type === "analyses" ? analysesCount : alertsCount;
 
+  // Fast path: if already over limit, skip the conditional update.
   if (currentCount >= limit) return false;
 
-  // Atomic increment (race-condition safe)
-  if (type === "analyses") {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { analysesCountToday: { increment: 1 } },
-    });
-  } else {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { alertsCountToday: { increment: 1 } },
-    });
-  }
+  // Atomic conditional increment — only increments if the current DB value is
+  // still below the limit. Two concurrent requests that both passed the
+  // fast-path check above are serialized at the row level by Prisma's
+  // updateMany; only one will see count === 1 when the limit is exactly hit.
+  // This replaces the prior read-then-write pattern that allowed concurrent
+  // requests to both pass the check and both increment, bypassing the quota.
+  const countField = type === "analyses" ? "analysesCountToday" : "alertsCountToday";
+  const result = await prisma.user.updateMany({
+    where: {
+      id: userId,
+      [countField]: { lt: limit },
+    },
+    data: {
+      [countField]: { increment: 1 },
+    },
+  });
 
-  return true;
+  return result.count === 1;
 }
 
 export async function getCurrentUsage(

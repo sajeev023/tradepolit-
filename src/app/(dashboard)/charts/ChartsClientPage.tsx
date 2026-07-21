@@ -453,6 +453,11 @@ export function ChartsClientPage() {
   }, [isChartMaximized]);
 
   // ─── Dynamic fallback helper ──────────────────────────────────────────────────
+  // Stored in a ref so the analyze effect below doesn't list getDynamicFallback
+  // in its dep array — that callback changes identity on every WebSocket price
+  // tick (~100ms) because its own deps include `priceData`, which would re-run
+  // the analyze effect body on every tick. The ref lets the effect read the
+  // latest fallback without subscribing to its identity changes.
   const getDynamicFallback = useCallback((sym: string, tf: string) => {
     const fallbackData: any = {};
     const wsPriceVal = getLatestWebSocketPrice(selectedSymbol);
@@ -473,6 +478,10 @@ export function ChartsClientPage() {
     }
     return getInstantFallbackAnalysis(sym, tf, fallbackData);
   }, [priceData, liveIndicators, selectedSymbol]);
+  const getDynamicFallbackRef = useRef(getDynamicFallback);
+  useEffect(() => {
+    getDynamicFallbackRef.current = getDynamicFallback;
+  }, [getDynamicFallback]);
 
   // ─── Chart analysis mutation ──────────────────────────────────────────────────
   const analyzeMutation = useMutation({
@@ -777,12 +786,12 @@ Timestamp: ${new Date().toISOString()}
       }
 
       // Immediately clear stale analysis state for previous symbol
-      setAnalysisData(getDynamicFallback(selectedSymbol, selectedTimeframe));
+      setAnalysisData(getDynamicFallbackRef.current(selectedSymbol, selectedTimeframe));
       setAnalysisReady(false);
 
       analyzeMutate({ symbol: selectedSymbol, timeframe: selectedTimeframe });
     }
-  }, [selectedSymbol, selectedTimeframe, getDynamicFallback, analyzeMutate]);
+  }, [selectedSymbol, selectedTimeframe, analyzeMutate]);
 
   // Keyboard shortcuts
   useEffect(() => {

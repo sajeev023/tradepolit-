@@ -34,8 +34,9 @@ export function decrypt(hash: string): string {
     decrypted += decipher.final("utf8");
     
     return decrypted;
-  } catch (err) {
-    console.error("Decryption failed:", err);
+  } catch {
+    // Don't log err — it may include ciphertext fragments. Caller checks for
+    // the DECRYPTION_ERROR sentinel and handles the failure explicitly.
     return "DECRYPTION_ERROR";
   }
 }

@@ -33,7 +33,14 @@ export default function ForgotPasswordPage() {
     const { error: authError } = await supabase.auth.resetPasswordForEmail(data.email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    if (authError) { setError(authError.message); return; }
+    if (authError) {
+      // Supabase error messages can reveal account existence (e.g. "Email not
+      // confirmed"). Surface a single generic message to the user; log the
+      // real reason server-side only.
+      console.error("Password reset failed:", authError.code ?? authError.status);
+      setError("If an account exists for that email, a reset link is on its way.");
+      return;
+    }
     setSuccess(true);
   };
 

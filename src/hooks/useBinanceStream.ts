@@ -27,13 +27,13 @@ interface StreamEntry {
   reconnectTimer: ReturnType<typeof setTimeout> | null;
   active: boolean;
   reconnectCount: number;
-  statusListeners: Set<(status: "connected" | "reconnecting" | "disconnected") => void>;
-  currentStatus: "connected" | "reconnecting" | "disconnected";
+  statusListeners: Set<(status: "connected" | "reconnecting" | "disconnected" | "error") => void>;
+  currentStatus: "connected" | "reconnecting" | "disconnected" | "error";
 }
 
 function setEntryStatus(
   entry: StreamEntry,
-  status: "connected" | "reconnecting" | "disconnected"
+  status: "connected" | "reconnecting" | "disconnected" | "error"
 ) {
   if (entry.currentStatus === status) return;
   entry.currentStatus = status;
@@ -148,8 +148,15 @@ function openStream(streamName: string) {
     setEntryStatus(current, "reconnecting");
 
     const count = current.reconnectCount;
-    // Attempt immediate reconnect on first disconnect (0ms delay), then backoff
-    const delay = count === 0 ? 0 : Math.min(1000 * Math.pow(2, count - 1), 10000);
+    // Cap reconnect attempts at 20 to avoid hammering Binance on a persistent
+    // outage. Backoff is exponential with a 1s floor and 10s ceiling — the
+    // first retry waits 1s (not 0ms) so a refused connection doesn't tight-loop.
+    const MAX_RECONNECT = 20;
+    if (count >= MAX_RECONNECT) {
+      setEntryStatus(current, "error");
+      return;
+    }
+    const delay = Math.min(1000 * Math.pow(2, count), 10000);
     current.reconnectCount = count + 1;
 
     if (current.reconnectTimer) clearTimeout(current.reconnectTimer);
@@ -307,9 +314,9 @@ export function useBinanceMultiStream(
  */
 export function useBinanceStreamStatus(
   symbol: string
-): "connected" | "reconnecting" | "disconnected" {
+): "connected" | "reconnecting" | "disconnected" | "error" {
   const streamName = getStreamName(symbol);
-  const [status, setStatus] = useState<"connected" | "reconnecting" | "disconnected">(() => {
+  const [status, setStatus] = useState<"connected" | "reconnecting" | "disconnected" | "error">(() => {
     // Guard: only run on the client. On the server, registry is empty and WebSocket
     // is undefined, so return a safe default.
     if (typeof window === "undefined" || !streamName) return "disconnected";
@@ -331,7 +338,7 @@ export function useBinanceStreamStatus(
     }
 
     setStatus(entry.currentStatus);
-    const listener = (newStatus: "connected" | "reconnecting" | "disconnected") => {
+    const listener = (newStatus: "connected" | "reconnecting" | "disconnected" | "error") => {
       setStatus(newStatus);
     };
     entry.statusListeners.add(listener);
