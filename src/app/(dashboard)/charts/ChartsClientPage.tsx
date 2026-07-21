@@ -473,6 +473,7 @@ export function ChartsClientPage() {
   // ─── Chart analysis mutation ──────────────────────────────────────────────────
   const analyzeMutation = useMutation({
     mutationFn: async (variables?: { symbol: string; timeframe: "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W"; bypassCache?: boolean }) => {
+      console.log(`[CLIENT] analyzeMutation start`, variables);
       const sym = variables?.symbol ?? selectedSymbol;
       const tf = variables?.timeframe ?? selectedTimeframe;
       const bypass = variables?.bypassCache ?? false;
@@ -735,6 +736,10 @@ Timestamp: ${new Date().toISOString()}
     };
   }, [isPending, selectedSymbol, selectedTimeframe]);
 
+  // Stable reference to the mutate function so the effect below doesn't
+  // re-run every time the useMutation object changes (isPending toggles).
+  const analyzeMutate = analyzeMutation.mutate;
+
   // Run analysis ONLY on symbol/timeframe change or first mount
   useEffect(() => {
     const hasSymbolChanged = lastAnalyzedSymbolRef.current !== selectedSymbol;
@@ -743,11 +748,11 @@ Timestamp: ${new Date().toISOString()}
     if (hasSymbolChanged || hasTimeframeChanged) {
       console.log(`[SYNC] Symbol/timeframe changed: ${lastAnalyzedSymbolRef.current} -> ${selectedSymbol} (${selectedTimeframe})`);
       const prevSym = lastAnalyzedSymbolRef.current;
-      
-      setTimeout(() => {
-        lastAnalyzedSymbolRef.current = selectedSymbol;
-        lastAnalyzedTimeframeRef.current = selectedTimeframe;
-      }, 0);
+
+      // Update refs synchronously so a rapid second effect run won't see the
+      // same pair as "changed" and fire another analysis.
+      lastAnalyzedSymbolRef.current = selectedSymbol;
+      lastAnalyzedTimeframeRef.current = selectedTimeframe;
 
       if (prevSym && prevSym !== selectedSymbol) {
         fetch("/api/v1/ai/invalidate-cache", {
@@ -770,9 +775,9 @@ Timestamp: ${new Date().toISOString()}
       setAnalysisData(getDynamicFallback(selectedSymbol, selectedTimeframe));
       setAnalysisReady(false);
 
-      analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe });
+      analyzeMutate({ symbol: selectedSymbol, timeframe: selectedTimeframe });
     }
-  }, [selectedSymbol, selectedTimeframe, getDynamicFallback, analyzeMutation]);
+  }, [selectedSymbol, selectedTimeframe, getDynamicFallback, analyzeMutate]);
 
   // Keyboard shortcuts
   useEffect(() => {
