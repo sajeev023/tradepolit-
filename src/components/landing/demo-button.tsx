@@ -1,0 +1,20 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+
+export function useDemoLogin() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleDemo = useCallback(async () => {
+    setIsLoading(true);
+    document.cookie = "sb-mock-session=true; path=/; max-age=3600; SameSite=Lax";
+    document.cookie = "sb-mock-email=partner%40tradepilot.ai; path=/; max-age=3600; SameSite=Lax";
+    router.push("/charts");
+    router.refresh();
+  }, [router]);
+
+  return { isLoading, handleDemo };
+}
+
