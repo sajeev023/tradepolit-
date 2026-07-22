@@ -361,14 +361,26 @@ async function callSingleModel(
       }
     }
 
+    const fallbackReason =
+      status === 401 || status === 403
+        ? "AUTHENTICATION_FAILURE (Invalid API key)"
+        : status === 429
+        ? "QUOTA_EXHAUSTED / RATE_LIMITED"
+        : status === 400
+        ? "BAD_REQUEST (Invalid model or request payload)"
+        : status === 504 || timedOut
+        ? "TIMEOUT (Model response exceeded timeout)"
+        : `SERVER_ERROR (${status})`;
+
     console.error(
-      `\n${modelDef.provider.toUpperCase()} Request Failed:` +
-      `\nStatus: ${status}` +
+      `\n[PROVIDER FAILURE]` +
+      `\nProvider: ${modelDef.provider.toUpperCase()}` +
       `\nModel: ${modelDef.name}` +
       `\nEndpoint: ${endpoint}` +
-      `\nTimedOut: ${timedOut}` +
-      `\nTime Taken: ${totalMs}ms` +
-      `\nError: ${body}\n`
+      `\nHTTP Status: ${status}` +
+      `\nLatency: ${totalMs}ms` +
+      `\nFallback Reason: ${fallbackReason}` +
+      `\nResponse Body: ${body}\n`
     );
 
     // On 401/403/429, surface WHICH env var the app actually loaded so an
@@ -567,13 +579,6 @@ export async function callFastestModel(
     `  Active models: ${activeModels.map(m => `[${m.provider}]${m.name}`).join(' | ')}\n` +
     `  Total active: ${activeModels.length}`
   );
-
-  // If Gemini is in the active race, probe it now with a real API call
-  // so the server log shows the exact failure reason (auth/quota/endpoint/other)
-  // before the full race fires. Non-blocking — we do not await the result.
-  if (geminiKey && activeModels.some(m => m.provider === "gemini")) {
-    probeGeminiKey(geminiKey).catch(() => {});
-  }
 
   if (activeModels.length === 0) {
     const errorReport = formatProviderCheckReport([]);
