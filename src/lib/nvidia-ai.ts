@@ -309,7 +309,7 @@ async function callSingleModel(
 
     const parseStart = Date.now();
     const data = await response.json();
-    const parseMs = Date.now() - parseStart;
+    const _parseMs = Date.now() - parseStart;
 
     let content = "";
     if (modelDef.provider === "gemini") {
@@ -450,7 +450,7 @@ function isKeyValid(key?: string, _provider?: Provider): boolean {
  * quota, endpoint, request-body, model, or other) is visible in the
  * server console without making any inference about key format.
  */
-async function probeGeminiKey(apiKey: string): Promise<void> {
+export async function probeGeminiKey(apiKey: string): Promise<void> {
   const probeUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
   const probeStart = Date.now();
   try {

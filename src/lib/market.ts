@@ -1,5 +1,5 @@
 import { getCachedData, setCachedData } from "./cache";
-import { redactKey, envNameForProvider } from "./startup";
+import { redactKey } from "./startup";
 import type { PriceData, OHLCVCandle } from "./types";
 
 // Supported instrument mapping

@@ -360,7 +360,7 @@ export function getExtendedProviderHealth() {
   // this file's exports). Only the admin route will pay this cost.
   let groqKeyHealth: Record<string, unknown> = {};
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getGroqKeyHealth } = require("./nvidia-ai") as typeof import("./nvidia-ai");
     groqKeyHealth = getGroqKeyHealth();
   } catch {

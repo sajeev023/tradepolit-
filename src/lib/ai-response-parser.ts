@@ -341,8 +341,8 @@ export function safeParseAIResponse(
     parsed: finalParsed,
     isRepaired,
     isFallback: false,
-    jsonParseSuccess: true,
-    schemaValid: true,
+    jsonParseSuccess,
+    schemaValid,
     rejectionReason: undefined,
   };
 }

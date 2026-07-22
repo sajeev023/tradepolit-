@@ -674,7 +674,7 @@ REQUIRED JSON RESPONSE SCHEMA:
       `\nHTTP Status: 200` +
       `\nLatency: ${raceResult.duration}ms` +
       `\nResponse Length: ${raceResult.content.length} bytes` +
-      `\nJSON Parsing Succeeded: ${jsonParseSuccess}` +
+      `\nJSON Parsing Succeeded: ${jsonParseSuccess} (Repaired: ${isRepaired})` +
       `\nSchema Validation Succeeded: ${schemaValid}` +
       `\nResponse Accepted: ${isAccepted}` +
       `\nRejection Reason: ${rejectionReason || "NONE"}\n`
