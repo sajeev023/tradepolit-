@@ -418,17 +418,45 @@ async function callSingleModel(
  *  wins, all others are aborted immediately via their AbortControllers.
  *  Groq almost always wins (1-3s) because NVIDIA free tier queues.
  */
-function isKeyValid(key?: string, provider?: Provider): boolean {
+function isKeyValid(key?: string, _provider?: Provider): boolean {
   if (!key) return false;
   const trimmed = key.trim();
-  if (!trimmed || trimmed === "mock-key" || trimmed === "placeholder-key") return false;
-  // Gemini API keys from Google AI Studio always start with 'AIza'.
-  // Keys starting with 'AQ.' are OAuth access tokens — invalid for direct API calls.
-  if (provider === "gemini" && !trimmed.startsWith("AIza")) {
-    console.warn(`[RACE] [GEMINI] Key rejected: does not start with 'AIza' (got prefix '${trimmed.substring(0, 4)}...'). Use a key from https://aistudio.google.com/app/apikey`);
-    return false;
+  // Only reject clearly invalid placeholder strings. Do NOT validate by prefix —
+  // key format is determined by the issuing provider and may change at any time.
+  // Actual validity is confirmed by making a real API request.
+  return trimmed.length > 0 && trimmed !== "mock-key" && trimmed !== "placeholder-key";
+}
+
+/**
+ * Probe the Gemini API with a lightweight GET /v1beta/models request.
+ * Logs HTTP status + response body so the exact failure reason (auth,
+ * quota, endpoint, request-body, model, or other) is visible in the
+ * server console without making any inference about key format.
+ */
+async function probeGeminiKey(apiKey: string): Promise<void> {
+  const probeUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+  const probeStart = Date.now();
+  try {
+    const res = await fetch(probeUrl, {
+      method: "GET",
+      signal: AbortSignal.timeout(5000),
+    });
+    const body = await res.text().catch(() => "(could not read body)");
+    const ms = Date.now() - probeStart;
+    if (res.status === 200) {
+      console.log(`[GEMINI-PROBE] ✓ Key valid | HTTP 200 | ${ms}ms`);
+    } else if (res.status === 401 || res.status === 403) {
+      console.error(`[GEMINI-PROBE] ✗ Authentication failure | HTTP ${res.status} | ${ms}ms\nResponse: ${body}`);
+    } else if (res.status === 429) {
+      console.error(`[GEMINI-PROBE] ✗ Quota exhausted | HTTP 429 | ${ms}ms\nResponse: ${body}`);
+    } else if (res.status === 400) {
+      console.error(`[GEMINI-PROBE] ✗ Bad request | HTTP 400 | ${ms}ms\nResponse: ${body}`);
+    } else {
+      console.error(`[GEMINI-PROBE] ✗ Unexpected status | HTTP ${res.status} | ${ms}ms\nResponse: ${body}`);
+    }
+  } catch (err: any) {
+    console.error(`[GEMINI-PROBE] ✗ Network/timeout error | ${Date.now() - probeStart}ms | ${err?.message ?? err}`);
   }
-  return true;
 }
 
 function getApiKey(provider: Provider): string | undefined {
@@ -480,10 +508,7 @@ function formatProviderCheckReport(errors: any[]): string {
     } else {
       let reasonExcluded = "Missing environment variable";
       if (keyExists && !isKeyValid(key, prov)) {
-        const isGeminiOAuth = prov === "gemini" && key?.startsWith("AQ.");
-        reasonExcluded = isGeminiOAuth
-          ? `Invalid key format: OAuth token detected (starts with 'AQ.'). Generate a real key at https://aistudio.google.com/app/apikey`
-          : `Placeholder or mock value detected ("${key?.trim()}")`;
+        reasonExcluded = `Placeholder or mock value detected ("${key?.trim()}"). Set a real key in environment variables.`;
       }
       report += `  Reason excluded:\n    ${reasonExcluded}\n`;
     }
@@ -534,14 +559,21 @@ export async function callFastestModel(
   const groqKey2  = process.env.GROQ_API_KEY_2  || "";
   const nvidiaKey = process.env.NVIDIA_API_KEY  || "";
   console.log(
-    `[RACE-DIAG] Provider status per request:\n` +
-    `  GROQ  key1=${groqKey  ? `valid(${groqKey.substring(0,8)}...)` : 'MISSING'} | usable=${isGroqKeyUsable(0)}\n` +
-    `  GROQ  key2=${groqKey2 ? `valid(${groqKey2.substring(0,8)}...)` : 'MISSING'} | usable=${isGroqKeyUsable(1)}\n` +
-    `  NVIDIA=${nvidiaKey ? `valid(${nvidiaKey.substring(0,8)}...)` : 'MISSING'}\n` +
-    `  GEMINI=${geminiKey ? (geminiKey.startsWith('AIza') ? `valid(${geminiKey.substring(0,8)}...)` : `INVALID_FORMAT(${geminiKey.substring(0,4)}...)`) : 'MISSING'}\n` +
+    `[RACE-DIAG] Provider key state:\n` +
+    `  GROQ  key1=${groqKey  ? `set(${groqKey.substring(0,8)}...)` : 'MISSING'} | usable=${isGroqKeyUsable(0)}\n` +
+    `  GROQ  key2=${groqKey2 ? `set(${groqKey2.substring(0,8)}...)` : 'MISSING'} | usable=${isGroqKeyUsable(1)}\n` +
+    `  NVIDIA=${nvidiaKey ? `set(${nvidiaKey.substring(0,8)}...)` : 'MISSING'}\n` +
+    `  GEMINI=${geminiKey ? `set(${geminiKey.substring(0,8)}...)` : 'MISSING'}\n` +
     `  Active models: ${activeModels.map(m => `[${m.provider}]${m.name}`).join(' | ')}\n` +
     `  Total active: ${activeModels.length}`
   );
+
+  // If Gemini is in the active race, probe it now with a real API call
+  // so the server log shows the exact failure reason (auth/quota/endpoint/other)
+  // before the full race fires. Non-blocking — we do not await the result.
+  if (geminiKey && activeModels.some(m => m.provider === "gemini")) {
+    probeGeminiKey(geminiKey).catch(() => {});
+  }
 
   if (activeModels.length === 0) {
     const errorReport = formatProviderCheckReport([]);
