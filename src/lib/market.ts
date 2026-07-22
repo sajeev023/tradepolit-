@@ -1,4 +1,5 @@
 import { getCachedData, setCachedData } from "./cache";
+import { redactKey, envNameForProvider } from "./startup";
 import type { PriceData, OHLCVCandle } from "./types";
 
 // Supported instrument mapping
@@ -128,6 +129,14 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
           }
         } else {
           console.warn(`[Market] TwelveData ✗ ${normSymbol}: HTTP ${res.status}`);
+          if (res.status === 401 || res.status === 403 || res.status === 429) {
+            console.error(
+              `[Market-Key-Loaded] env=TWELVEDATA_API_KEY provider=twelvedata` +
+              ` redacted=${redactKey(process.env.TWELVEDATA_API_KEY)}` +
+              ` status=${res.status} symbol=${normSymbol}` +
+              ` | Verify: (1) Vercel env, (2) TwelveData dashboard, (3) request shape.`
+            );
+          }
         }
       } catch (tdErr) {
         console.warn(`[Market] TwelveData ✗ ${normSymbol}: ${(tdErr as Error).message}`);
@@ -391,6 +400,14 @@ export async function getOHLCV(
           }
         } else {
           console.warn(`[Market] TwelveData ✗ OHLCV ${normSymbol}: HTTP ${res.status}`);
+          if (res.status === 401 || res.status === 403 || res.status === 429) {
+            console.error(
+              `[Market-Key-Loaded] env=TWELVEDATA_API_KEY provider=twelvedata` +
+              ` redacted=${redactKey(process.env.TWELVEDATA_API_KEY)}` +
+              ` status=${res.status} symbol=${normSymbol} interval=${tdInterval}` +
+              ` | Verify: (1) Vercel env, (2) TwelveData dashboard, (3) request shape.`
+            );
+          }
         }
       } catch (tdErr) {
         console.warn(`[Market] TwelveData ✗ OHLCV ${normSymbol}: ${(tdErr as Error).message}`);

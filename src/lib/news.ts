@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { getCachedData, setCachedData } from "./cache";
 import { classifyArticle } from "./news-classifier";
+import { redactKey } from "./startup";
 
 export interface NewsStory {
   id: string;
@@ -240,7 +241,17 @@ export async function getNewsFeed(
       const fetchPromises = categories.map(async (cat) => {
         const url = `https://finnhub.io/api/v1/news?category=${cat}&token=${finnhubKey}`;
         const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
-        if (!res.ok) throw new Error(`Finnhub returned ${res.status}`);
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403 || res.status === 429) {
+            console.error(
+              `[News-Key-Loaded] env=FINNHUB_API_KEY provider=finnhub` +
+              ` redacted=${redactKey(process.env.FINNHUB_API_KEY)}` +
+              ` status=${res.status} category=${cat}` +
+              ` | Verify: (1) Vercel env, (2) Finnhub dashboard, (3) request shape.`
+            );
+          }
+          throw new Error(`Finnhub returned ${res.status}`);
+        }
         const items = await res.json();
         return Array.isArray(items) ? items : [];
       });
@@ -265,7 +276,17 @@ export async function getNewsFeed(
       const query = getNewsAPIQueryForSymbol(cleanSymbol);
       const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=30&apiKey=${newsApiKey}`;
       const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
-      if (!res.ok) throw new Error(`NewsAPI returned ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403 || res.status === 429) {
+          console.error(
+            `[News-Key-Loaded] env=NEWS_API_KEY provider=newsapi` +
+            ` redacted=${redactKey(process.env.NEWS_API_KEY ?? process.env.NEWSAPI_API_KEY)}` +
+            ` status=${res.status} query=${query}` +
+            ` | Verify: (1) Vercel env, (2) NewsAPI dashboard, (3) request shape.`
+          );
+        }
+        throw new Error(`NewsAPI returned ${res.status}`);
+      }
       const data = await res.json();
       if (data.articles && Array.isArray(data.articles)) {
         const parsed = data.articles.map((item: any, idx: number) => parseNewsAPIArticle(item, idx));

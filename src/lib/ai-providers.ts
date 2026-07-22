@@ -5,6 +5,8 @@
  * Each provider is retried with exponential backoff before falling to the next.
  */
 
+import { redactKey, envNameForProvider } from "./startup";
+
 interface ProviderStatus {
   status: "online" | "offline" | "rate_limited";
   lastResponseTime: number;
@@ -201,6 +203,25 @@ async function callSingleProvider(
         }
       }
       state.lastError = `HTTP ${status}: ${text}`;
+
+      // Surface which env var was loaded so the operator can match it
+      // against Vercel and the provider dashboard. The key value is
+      // redacted to first-6 + last-4 chars, never full.
+      if (status === 401 || status === 403 || status === 429) {
+        const envName = envNameForProvider(name);
+        const rawValue = (() => {
+          if (name === "groq") return process.env.GROQ_API_KEY;
+          if (name === "nvidia") return process.env.NVIDIA_API_KEY;
+          if (name === "gemini") return process.env.GEMINI_API_KEY;
+          return undefined;
+        })();
+        console.error(
+          `[AI-KEY-LOADED] env=${envName} provider=${name}` +
+          ` redacted=${redactKey(rawValue)} status=${status}` +
+          ` | Verify: (1) Vercel env, (2) provider dashboard, (3) request shape.`
+        );
+      }
+
       throw { status, body: text, provider: name };
     }
 

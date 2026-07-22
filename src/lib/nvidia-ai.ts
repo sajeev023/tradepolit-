@@ -18,7 +18,7 @@
  */
 
 import OpenAI from "openai";
-import { logStartupBanner } from "./startup";
+import { logStartupBanner, redactKey, envNameForProvider } from "./startup";
 
 /* ─── Provider types ─────────────────────────────────────────────────── */
 type Provider = "groq" | "nvidia" | "openai" | "gemini";
@@ -370,6 +370,34 @@ async function callSingleModel(
       `\nTime Taken: ${totalMs}ms` +
       `\nError: ${body}\n`
     );
+
+    // On 401/403/429, surface WHICH env var the app actually loaded so an
+    // operator can compare against Vercel and the provider dashboard. The
+    // key is redacted to first-6 + last-4 chars — never the full value.
+    if (status === 401 || status === 403 || status === 429) {
+      const envName = envNameForProvider(
+        modelDef.provider,
+        modelDef.provider === "groq" ? modelDef.groqKeyIndex : undefined
+      );
+      const rawValue = (() => {
+        if (modelDef.provider === "groq") {
+          const idx = modelDef.groqKeyIndex === 1 ? 1 : 0;
+          return idx === 0 ? process.env.GROQ_API_KEY : process.env.GROQ_API_KEY_2;
+        }
+        if (modelDef.provider === "nvidia") return process.env.NVIDIA_API_KEY;
+        if (modelDef.provider === "openai") return process.env.OPENAI_API_KEY;
+        if (modelDef.provider === "gemini") return process.env.GEMINI_API_KEY;
+        return undefined;
+      })();
+      console.error(
+        `[RACE-KEY-LOADED] env=${envName} provider=${modelDef.provider}` +
+        ` keyIndex=${modelDef.provider === "groq" ? (modelDef.groqKeyIndex ?? 0) : "n/a"}` +
+        ` redacted=${redactKey(rawValue)} status=${status}` +
+        ` | If this is unexpected: (1) confirm the key on Vercel env,` +
+        ` (2) confirm it matches the provider dashboard,` +
+        ` (3) confirm the request shape (model name, endpoint).`
+      );
+    }
 
     throw {
       provider: modelDef.provider,
