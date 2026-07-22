@@ -5,8 +5,8 @@ import {
   successResponse,
   unauthorizedError,
   notFoundError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function PATCH(
   request: NextRequest,
@@ -33,6 +33,6 @@ export async function PATCH(
     return successResponse(updated);
   } catch (error) {
     console.error("Mark notification read API error:", error);
-    return internalError("Failed to mark notification as read");
+    return dispatchCaughtError("Failed to mark notification as read", error);
   }
 }

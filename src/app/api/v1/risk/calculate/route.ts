@@ -1,7 +1,8 @@
 ﻿import { NextRequest } from "next/server";
 import { z } from "zod";
 import { calculate, validateInputs, type CalculationMode } from "@/lib/risk-engine";
-import { successResponse, validationError, internalError } from "@/lib/api-helpers";
+import { successResponse, validationError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const calculateSchema = z.object({
   balance:     z.number().positive("Account balance must be positive"),
@@ -52,7 +53,6 @@ export async function POST(request: NextRequest) {
     return successResponse(result);
   } catch (error) {
     console.error("Risk calculator API error:", error);
-    const msg = error instanceof Error ? error.message : "Failed to calculate position size";
-    return internalError(msg);
+    return dispatchCaughtError("Failed to calculate position size", error);
   }
 }

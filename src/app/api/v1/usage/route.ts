@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getCurrentUsage } from "@/lib/limit-checker";
-import { successResponse, unauthorizedError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(_request: NextRequest) {
   try {
@@ -13,6 +14,6 @@ export async function GET(_request: NextRequest) {
     return successResponse(usage);
   } catch (err) {
     console.error("Usage API error:", err);
-    return internalError("Failed to fetch usage data");
+    return dispatchCaughtError("Failed to fetch usage data", err);
   }
 }

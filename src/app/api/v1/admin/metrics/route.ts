@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, forbiddenError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError, forbiddenError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(_request: NextRequest) {
   try {
@@ -48,6 +49,6 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error) {
     console.error("Admin metrics API error:", error);
-    return internalError("Failed to fetch admin stats metrics");
+    return dispatchCaughtError("Failed to fetch admin stats metrics", error);
   }
 }

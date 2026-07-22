@@ -6,8 +6,8 @@ import {
   successResponse,
   unauthorizedError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const strategySchema = z.object({
   name: z.string().min(1, "Strategy name is required"),
@@ -39,7 +39,7 @@ export async function GET(_request: NextRequest) {
     return successResponse(strategies);
   } catch (error) {
     console.error("List strategies API error:", error);
-    return internalError("Failed to list strategies");
+    return dispatchCaughtError("Failed to list strategies", error);
   }
 }
 
@@ -68,6 +68,6 @@ export async function POST(request: NextRequest) {
     return successResponse(strategy, 201);
   } catch (error) {
     console.error("Create strategy API error:", error);
-    return internalError("Failed to create strategy");
+    return dispatchCaughtError("Failed to create strategy", error);
   }
 }

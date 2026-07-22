@@ -2,14 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { checkUserRateLimit } from "@/lib/rate-limit";
+import { rateLimitedError } from "@/lib/typed-errors";
 
 // POST /api/stripe/portal
 // Redirects a logged-in user to their Stripe Billing Portal
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) {
       return NextResponse.json({ error: { message: "Unauthorized" } }, { status: 401 });
+    }
+
+    // Per-user rate limit: 5 / min — same reasoning as checkout.
+    const rl = checkUserRateLimit(user.id, request, "stripe-portal", 5, 60_000);
+    if (!rl.result.allowed) {
+      return rateLimitedError((rl.result.resetAt - Date.now()), "Too many portal requests. Please slow down.");
     }
 
     const profile = await prisma.userProfile.findUnique({

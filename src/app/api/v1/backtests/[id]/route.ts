@@ -5,8 +5,8 @@ import {
   successResponse,
   unauthorizedError,
   notFoundError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(
   request: NextRequest,
@@ -35,6 +35,6 @@ export async function GET(
     return successResponse(backtest);
   } catch (error) {
     console.error("Get backtest details API error:", error);
-    return internalError("Failed to fetch backtest details");
+    return dispatchCaughtError("Failed to fetch backtest details", error);
   }
 }

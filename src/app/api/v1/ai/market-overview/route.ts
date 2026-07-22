@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const ALL_SYMBOLS = [
   "BTC/USD", "ETH/USD", "SOL/USD",
@@ -81,6 +82,6 @@ export async function GET(_request: NextRequest) {
     return successResponse(overview);
   } catch (err) {
     console.error("Market overview error:", err);
-    return internalError("Failed to load market overview");
+    return dispatchCaughtError("Failed to load market overview", err);
   }
 }

@@ -6,10 +6,10 @@ import {
   successResponse,
   unauthorizedError,
   validationError,
-  internalError,
   errorResponse,
 } from "@/lib/api-helpers";
 import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 function demoWatchlistLocked() {
   const e = getDemoFeatureLockedError("watchlistEdit");
@@ -34,7 +34,7 @@ export async function GET(_request: NextRequest) {
     return successResponse(watchlists);
   } catch (error) {
     console.error("List watchlists API error:", error);
-    return internalError("Failed to list watchlists");
+    return dispatchCaughtError("Failed to list watchlists", error);
   }
 }
 
@@ -68,6 +68,6 @@ export async function POST(request: NextRequest) {
     return successResponse(watchlist, 201);
   } catch (error) {
     console.error("Create watchlist API error:", error);
-    return internalError("Failed to create watchlist");
+    return dispatchCaughtError("Failed to create watchlist", error);
   }
 }

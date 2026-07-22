@@ -7,8 +7,8 @@ import {
   unauthorizedError,
   notFoundError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const updateStrategySchema = z.object({
   name: z.string().min(1, "Strategy name is required").optional(),
@@ -63,7 +63,7 @@ export async function PATCH(
     return successResponse(updated);
   } catch (error) {
     console.error("Update strategy API error:", error);
-    return internalError("Failed to update strategy");
+    return dispatchCaughtError("Failed to update strategy", error);
   }
 }
 
@@ -99,6 +99,6 @@ export async function DELETE(
     return successResponse({ deleted: true });
   } catch (error) {
     console.error("Delete strategy API error:", error);
-    return internalError("Failed to delete strategy");
+    return dispatchCaughtError("Failed to delete strategy", error);
   }
 }

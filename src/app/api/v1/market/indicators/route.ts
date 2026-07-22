@@ -2,7 +2,9 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { MarketDataService } from "@/lib/market-data-service";
 import { compileTechnicalContext } from "@/lib/indicators";
-import { successResponse, validationError, internalError } from "@/lib/api-helpers";
+import { successResponse, validationError } from "@/lib/api-helpers";
+import { checkIpRateLimit } from "@/lib/rate-limit";
+import { rateLimitedError, dispatchCaughtError, upstreamError } from "@/lib/typed-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,13 @@ const indicatorsQuerySchema = z.object({
 export async function GET(request: NextRequest) {
   const apiStart = performance.now();
   try {
+    // IP rate limit: 60 / min. Indicators run the same fetch + calc path
+    // as OHLCV plus heavy math; the charts page polls this every 20s.
+    const rl = checkIpRateLimit(request, "market-indicators", 60, 60_000);
+    if (!rl.allowed) {
+      return rateLimitedError((rl.resetAt - Date.now()), "Too many indicator requests. Please slow down.");
+    }
+
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get("symbol");
     const tf = searchParams.get("tf") || undefined;
@@ -30,7 +39,7 @@ export async function GET(request: NextRequest) {
     const fetchDuration = performance.now() - fetchStart;
 
     if (!candles || candles.length === 0) {
-      return internalError("No candle data available for selected asset");
+      return upstreamError("market_data", "No candle data available for selected asset");
     }
 
     const calcStart = performance.now();
@@ -45,6 +54,6 @@ export async function GET(request: NextRequest) {
     return successResponse(tech, 200, headers);
   } catch (error) {
     console.error("Indicators API route error:", error);
-    return internalError("Failed to fetch indicators context");
+    return dispatchCaughtError("Failed to fetch indicators context", error);
   }
 }

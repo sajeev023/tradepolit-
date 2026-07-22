@@ -29,7 +29,12 @@ class FeatureFlagsManager {
 
   public async refreshFlags(): Promise<void> {
     try {
-      const res = await fetch("/api/v1/admin/feature-flags");
+      // Hard-cap telemetry fetches — a hung admin route must never block
+      // the client UI. 2s is enough for a healthy endpoint; if it's slow
+      // we keep the in-memory defaults and try again next TTL cycle.
+      const res = await fetch("/api/v1/admin/feature-flags", {
+        signal: AbortSignal.timeout(2000),
+      });
       if (res.ok) {
         const body = await res.json();
         if (Array.isArray(body.data)) {
@@ -42,6 +47,9 @@ class FeatureFlagsManager {
         }
       }
     } catch (err) {
+      // Non-fatal: feature flags default to safe values (live_ws=false,
+      // ai_monitoring=true, paper_execution=false). A failed refresh
+      // keeps the existing cache rather than blanking it.
       console.warn("[Feature Flags] Failed to refresh flags. Using in-memory defaults.", err);
     }
   }

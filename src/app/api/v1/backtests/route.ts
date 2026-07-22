@@ -7,8 +7,8 @@ import {
   successResponse,
   unauthorizedError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const runBacktestSchema = z.object({
   strategyId: z.string().min(1, "Strategy ID is required"),
@@ -64,6 +64,6 @@ export async function POST(request: NextRequest) {
     return successResponse(backtest, 202); // 202 Accepted
   } catch (error) {
     console.error("Trigger backtest API error:", error);
-    return internalError("Failed to trigger backtest run");
+    return dispatchCaughtError("Failed to trigger backtest run", error);
   }
 }

@@ -7,11 +7,11 @@ import {
   paginatedResponse,
   unauthorizedError,
   validationError,
-  internalError,
   notFoundError,
   errorResponse,
 } from "@/lib/api-helpers";
 import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 function demoJournalLocked() {
   const e = getDemoFeatureLockedError("journal");
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     return successResponse(entry, 201);
   } catch (error) {
     console.error("Create journal entry API error:", error);
-    return internalError("Failed to create journal entry");
+    return dispatchCaughtError("Failed to create journal entry", error);
   }
 }
 
@@ -124,6 +124,6 @@ export async function GET(request: NextRequest) {
     return paginatedResponse(entries, page, limit, total);
   } catch (error) {
     console.error("List journal entries API error:", error);
-    return internalError("Failed to list journal entries");
+    return dispatchCaughtError("Failed to list journal entries", error);
   }
 }

@@ -56,3 +56,44 @@ export function getClientIdentifier(request: Request): string {
   }
   return request.headers.get("x-real-ip") || "unknown";
 }
+
+/**
+ * User-aware rate limit. Prefers the authenticated user ID (stable across
+ * IP rotation / VPN / mobile network handoffs), falling back to IP. Use
+ * this in authenticated routes so an attacker rotating IPs cannot bypass
+ * the limit. Returns the identifier used so callers can log/audit.
+ *
+ * NOTE: still in-memory per-process. For multi-instance production this
+ * must be backed by Redis / Upstash / Vercel KV — flagged as Phase 8.
+ */
+export function checkUserRateLimit(
+  userId: string | null | undefined,
+  request: Request,
+  prefix: string,
+  maxRequests: number,
+  windowMs: number
+): { result: RateLimitResult; identifier: string } {
+  const ip = getClientIdentifier(request);
+  const identifier = userId || `ip:${ip}`;
+  // Prefix is namespaced by user vs IP so the same identifier string can't
+  // collide across auth states.
+  const namespacedPrefix = userId ? `${prefix}:user` : `${prefix}:anon`;
+  const result = checkRateLimit(identifier, namespacedPrefix, maxRequests, windowMs);
+  return { result, identifier };
+}
+
+/**
+ * IP-only rate limit for public/unauthenticated routes (market data, news,
+ * search). Returns null when the request is allowed, or a 429 NextResponse
+ * with Retry-After when blocked. Callers do `if (blocked) return blocked;`
+ * at the top of their handler.
+ */
+export function checkIpRateLimit(
+  request: Request,
+  prefix: string,
+  maxRequests: number,
+  windowMs: number
+): RateLimitResult {
+  const ip = getClientIdentifier(request);
+  return checkRateLimit(ip, `${prefix}:ip`, maxRequests, windowMs);
+}

@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, forbiddenError, internalError, validationError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError, forbiddenError, validationError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 import { z } from "zod";
 
 const DEFAULT_FLAGS = [
@@ -36,7 +37,7 @@ export async function GET(_request: NextRequest) {
     return successResponse(flags);
   } catch (error) {
     console.error("Failed to fetch feature flags:", error);
-    return internalError("Failed to fetch feature flags");
+    return dispatchCaughtError("Failed to fetch feature flags", error);
   }
 }
 
@@ -64,6 +65,6 @@ export async function PATCH(request: NextRequest) {
     return successResponse(flag);
   } catch (error) {
     console.error("Failed to update feature flag:", error);
-    return internalError("Failed to update feature flag");
+    return dispatchCaughtError("Failed to update feature flag", error);
   }
 }

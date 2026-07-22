@@ -8,8 +8,8 @@ import {
   forbiddenError,
   notFoundError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const toggleUserSchema = z.object({
   isActive: z.boolean(),
@@ -61,6 +61,6 @@ export async function PATCH(
     return successResponse(updated);
   } catch (error) {
     console.error("Admin toggle user API error:", error);
-    return internalError("Failed to update user status");
+    return dispatchCaughtError("Failed to update user status", error);
   }
 }

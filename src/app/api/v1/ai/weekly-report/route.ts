@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { handleNvidiaError } from "@/lib/nvidia-ai";
 import { callFastestAIModel } from "@/lib/ai-providers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 // POST /api/v1/ai/weekly-report
 export async function POST(_request: NextRequest) {
@@ -93,6 +94,9 @@ Provide a concise, impact-oriented 1-page report detailing patterns and tactical
   } catch (err: any) {
     console.error("Weekly report generation failed:", err);
     const errDetails = handleNvidiaError(err);
-    return internalError(errDetails.message || "Failed to generate weekly report");
+    if (errDetails?.message) {
+      return dispatchCaughtError(errDetails.message, err);
+    }
+    return dispatchCaughtError("Failed to generate weekly report", err);
   }
 }

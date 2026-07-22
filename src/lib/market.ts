@@ -270,6 +270,7 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
       volume24h: (BASELINE_PRICES[normSymbol] || 100.0) * 1000 + Math.random() * 500,
       updatedAt: new Date().toISOString(),
       source: "SIMULATED",
+      warning: `Live market data for ${normSymbol} is temporarily unavailable. Showing a simulated price — do not trade on this value.`,
     };
     
     // Save mock price back to cache for persistent walk (TTL: 1 hour)
@@ -494,8 +495,9 @@ export async function getOHLCV(
   await setCachedData(cacheKey, candles, ttl);
 
   if (isSimulated) {
-    // Simulated candles are not cached; mark them for callers.
-    return candles.map(c => ({ ...c, source: "SIMULATED" as const }));
+    // Simulated candles are not cached; mark them for callers and surface
+    // a single top-level warning so the frontend can render a banner.
+    return candles.map(c => ({ ...c, source: "SIMULATED" as const, warning: `Live OHLCV for ${normSymbol} is temporarily unavailable. Showing simulated candles — do not trade on these values.` }));
   }
 
   return candles;

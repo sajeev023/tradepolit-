@@ -32,7 +32,9 @@ class ProductAnalytics {
 
   private async sendToBackend(type: string, payload: Record<string, any>) {
     try {
-      // Send anonymous request to backend admin/metrics endpoint
+      // Fire-and-forget analytics: a 2s hard cap means a slow metrics
+      // endpoint can never block the user's UI. The outer catch already
+      // silences failures; the timeout covers the silent-hang case.
       fetch("/api/v1/admin/metrics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -42,6 +44,7 @@ class ProductAnalytics {
           anonymousId: this.getAnonymousId(),
           payload,
         }),
+        signal: AbortSignal.timeout(2000),
       }).catch(() => {}); // Omit catching to prevent loops
     } catch (_) {}
   }

@@ -8,8 +8,8 @@ import {
   paginatedResponse,
   unauthorizedError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 // Zod schema for trade creation
 const createTradeSchema = z.object({
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     return successResponse(trade, 201);
   } catch (error) {
     console.error("Create trade API error:", error);
-    return internalError("Failed to create trade");
+    return dispatchCaughtError("Failed to create trade", error);
   }
 }
 
@@ -181,6 +181,6 @@ export async function GET(request: NextRequest) {
     return paginatedResponse(trades, page, limit, total);
   } catch (error) {
     console.error("List trades API error:", error);
-    return internalError("Failed to list trades");
+    return dispatchCaughtError("Failed to list trades", error);
   }
 }

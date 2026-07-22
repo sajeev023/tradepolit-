@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 import type { PerformanceMetrics } from "@/lib/types";
 
 const DEFAULT_METRICS: PerformanceMetrics = {
@@ -50,6 +51,6 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error) {
     console.error("Performance API error:", error);
-    return internalError("Failed to fetch performance analytics");
+    return dispatchCaughtError("Failed to fetch performance analytics", error);
   }
 }

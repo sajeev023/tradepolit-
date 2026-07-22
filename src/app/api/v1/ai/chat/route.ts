@@ -8,7 +8,6 @@ import {
   successResponse,
   unauthorizedError,
   validationError,
-  internalError,
   errorResponse,
   rateLimitError as rateLimitResponse,
 } from "@/lib/api-helpers";
@@ -20,7 +19,8 @@ import { safeParseAIResponse } from "@/lib/ai-response-parser";
 import { validateMarketData, validateIndicators, validateLevels, isDataFresh } from "@/lib/validate-market-data";
 import { checkTokenBudget } from "@/lib/token-budget";
 import { getEntitlementForUser } from "@/lib/entitlements";
-import { checkRateLimit, getClientIdentifier } from "@/lib/rate-limit";
+import { checkUserRateLimit } from "@/lib/rate-limit";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const chatMessageSchema = z.object({
   chatId: z.string().uuid().optional(),
@@ -46,13 +46,17 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    const rateLimit = checkRateLimit(getClientIdentifier(request), "ai-chat", 20, 60_000);
-    if (!rateLimit.allowed) {
-      return rateLimitResponse("AI chat rate limit exceeded. Please slow down.");
-    }
-
+    // Auth-gate first so the rate limit can use the user ID (stable across
+    // IP rotation) instead of just IP — an attacker rotating IPs cannot
+    // bypass this limit.
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    const rl = checkUserRateLimit(user.id, request, "ai-chat", 20, 60_000);
+    if (!rl.result.allowed) {
+      const retryAfterSec = Math.ceil((rl.result.resetAt - Date.now()) / 1000);
+      return rateLimitResponse(`AI chat rate limit exceeded. Please slow down. Retry in ${retryAfterSec}s.`);
+    }
 
     const json = await request.json();
     const validation = chatMessageSchema.safeParse(json);
@@ -479,6 +483,6 @@ REQUIRED JSON RESPONSE SCHEMA:
     }, 200, headers);
   } catch (error) {
     console.error("AI chat assistant endpoint error:", error);
-    return internalError("Failed to communicate with AI Coach");
+    return dispatchCaughtError("Failed to communicate with AI Coach", error);
   }
 }

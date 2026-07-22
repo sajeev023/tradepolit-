@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, forbiddenError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError, forbiddenError } from "@/lib/api-helpers";
 import { getProviderHealth } from "@/lib/ai-providers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(_request: NextRequest) {
   try {
@@ -17,6 +18,6 @@ export async function GET(_request: NextRequest) {
     return successResponse(health);
   } catch (err: any) {
     console.error("AI health check failed:", err);
-    return internalError(err?.message || "Failed to check AI health status");
+    return dispatchCaughtError("Failed to check AI health status", err);
   }
 }

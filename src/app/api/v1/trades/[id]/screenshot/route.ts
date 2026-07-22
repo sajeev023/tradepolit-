@@ -7,8 +7,8 @@ import {
   unauthorizedError,
   notFoundError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError, upstreamError } from "@/lib/typed-errors";
 
 export async function POST(
   request: NextRequest,
@@ -74,7 +74,7 @@ export async function POST(
 
     if (uploadError) {
       console.error("Supabase storage upload error:", uploadError);
-      return internalError("Failed to upload screenshot to storage");
+      return upstreamError("storage", "Failed to upload screenshot to storage");
     }
 
     // Generate a signed URL (1-hour expiry) instead of a public URL. The
@@ -88,7 +88,7 @@ export async function POST(
 
     if (signedError || !signedData?.signedUrl) {
       console.error("Supabase signed URL generation error:", signedError);
-      return internalError("Failed to generate screenshot URL");
+      return upstreamError("storage", "Failed to generate screenshot URL");
     }
 
     const screenshotUrl = signedData.signedUrl;
@@ -108,6 +108,6 @@ export async function POST(
     });
   } catch (error) {
     console.error("Trade screenshot upload API error:", error);
-    return internalError("Failed to upload screenshot");
+    return dispatchCaughtError("Failed to upload screenshot", error);
   }
 }

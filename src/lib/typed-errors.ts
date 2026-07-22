@@ -1,0 +1,138 @@
+import { NextResponse } from "next/server";
+import type { ApiError, ErrorCode } from "./types";
+
+function jsonError(
+  code: ErrorCode,
+  message: string,
+  status: number,
+  details?: Record<string, unknown>,
+  headers?: HeadersInit
+): NextResponse<ApiError> {
+  return NextResponse.json(
+    { error: { code, message, details } },
+    { status, headers }
+  );
+}
+
+/**
+ * 503 — database is unreachable. Include retryAfterMs so the client can
+ * implement exponential backoff and surface a "we'll retry in Ns" toast
+ * instead of a generic failure.
+ */
+export function dbError(retryAfterMs = 30_000, details?: Record<string, unknown>) {
+  return jsonError(
+    "DB_UNAVAILABLE",
+    "We're having brief trouble reaching our database. Your action will retry automatically.",
+    503,
+    { layer: "database", retryAfterMs, ...details },
+    { "Retry-After": String(Math.ceil(retryAfterMs / 1000)) }
+  );
+}
+
+/**
+ * 502 — an upstream provider (Binance, TwelveData, Groq, NVIDIA, OpenAI,
+ * Stripe, Finnhub, NewsAPI, Supabase) is unavailable. Use `provider` to
+ * distinguish failures in logs and on the client.
+ */
+export function upstreamError(
+  provider: string,
+  message?: string,
+  retryAfterMs?: number,
+  details?: Record<string, unknown>
+) {
+  const headers: Record<string, string> = {};
+  if (retryAfterMs) headers["Retry-After"] = String(Math.ceil(retryAfterMs / 1000));
+  return jsonError(
+    "UPSTREAM_UNAVAILABLE",
+    message || `${provider} is temporarily unavailable. Falling back where possible.`,
+    502,
+    { provider, retryAfterMs, ...details },
+    Object.keys(headers).length ? headers : undefined
+  );
+}
+
+/**
+ * 503 — market data is stale but a (clearly-labelled) simulated or cached
+ * payload is included so the client can still render. The details field
+ * carries `dataQuality` so the frontend can show a banner.
+ */
+export function marketDataStaleError(symbol: string, details?: Record<string, unknown>) {
+  return jsonError(
+    "MARKET_DATA_STALE",
+    `Live market data for ${symbol} is momentarily delayed. Showing cached values.`,
+    503,
+    { symbol, dataQuality: "cached", ...details }
+  );
+}
+
+/**
+ * 429 — rate limited. Always include Retry-After so the client can
+ * schedule the next request instead of failing silently.
+ */
+export function rateLimitedError(retryAfterMs = 60_000, message?: string) {
+  return jsonError(
+    "RATE_LIMITED",
+    message || "Too many requests. Please slow down.",
+    429,
+    { retryAfterMs },
+    { "Retry-After": String(Math.ceil(retryAfterMs / 1000)) }
+  );
+}
+
+/**
+ * 401 — authentication failed (session expired, invalid token, missing user).
+ */
+export function authFailedError(message = "Your session has expired. Please sign in again.") {
+  return jsonError("AUTH_FAILED", message, 401);
+}
+
+/**
+ * 503 — partial upstream failure: one provider failed but a fallback
+ * succeeded. Useful for AI routes where e.g. Groq failed but NVIDIA won.
+ */
+export function partialUpstreamError(provider: string, message: string, details?: Record<string, unknown>) {
+  return jsonError(
+    "UPSTREAM_PARTIAL",
+    message,
+    200, // 200 because the request succeeded; details carry the warning
+    { degradedBy: provider, ...details }
+  );
+}
+
+/**
+ * Returns true if the given error looks like a transient Prisma
+ * connectivity error that should trigger a dbError response rather
+ * than a generic 500.
+ */
+export function isPrismaTransientError(err: any): boolean {
+  const code = err?.code;
+  if (!code) return false;
+  // P1001 connection lost, P1002 timed out, P1003 cannot reach, P1008 crashed,
+  // P1010 connection closed, P2024 transaction cancelled, P2034 race
+  return [
+    "P1001", "P1002", "P1003", "P1004", "P1006", "P1007", "P1008", "P1009", "P1010",
+    "P2024", "P2034",
+  ].includes(code);
+}
+
+/**
+ * Dispatch the right typed response from a caught error. Drop-in
+ * replacement for `internalError("Failed to X")` in route catch blocks.
+ *
+ * - Prisma transient → dbError (503 with Retry-After)
+ * - 401/403 in the error status → authFailedError (401)
+ * - Otherwise → internalError (500) with the supplied message
+ *
+ * Use this in any route whose outer catch currently lumps DB outages,
+ * auth failures, and programmer bugs into the same generic 500.
+ */
+export function dispatchCaughtError(message: string, err?: any) {
+  if (isPrismaTransientError(err)) {
+    return dbError(30_000);
+  }
+  const status = err?.status ?? err?.statusCode;
+  if (status === 401 || status === 403) {
+    return authFailedError();
+  }
+  return jsonError("INTERNAL_ERROR", message, 500);
+}

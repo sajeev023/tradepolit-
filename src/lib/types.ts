@@ -27,7 +27,11 @@ export type ErrorCode =
   | "INTERNAL_ERROR"
   | "PREVIEW_LIMIT_REACHED"
   | "DEMO_SESSION_EXPIRED"
-  | "FEATURE_LOCKED";
+  | "FEATURE_LOCKED"
+  | "DB_UNAVAILABLE"
+  | "AUTH_FAILED"
+  | "MARKET_DATA_STALE"
+  | "UPSTREAM_PARTIAL";
 
 // Mirror Prisma enums as string unions for client-side use
 export type AssetClass = "CRYPTO" | "FOREX";
@@ -58,6 +62,9 @@ export interface PriceData {
   volume24h: number;
   updatedAt: string;
   source?: "LIVE" | "SIMULATED";
+  // Surfaced when source === "SIMULATED". The frontend renders this as a
+  // banner so users never unknowingly trade on fabricated data.
+  warning?: string;
 }
 
 export interface OHLCVCandle {
@@ -68,6 +75,7 @@ export interface OHLCVCandle {
   close: number;
   volume: number;
   source?: "LIVE" | "SIMULATED";
+  warning?: string;
 }
 
 // Risk calculator types

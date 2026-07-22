@@ -7,10 +7,10 @@ import {
   successResponse,
   unauthorizedError,
   validationError,
-  internalError,
   errorResponse,
 } from "@/lib/api-helpers";
 import { getDemoAlertLimitError } from "@/lib/demo-limits";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const alertSchema = z.object({
   instrument: z.string().min(1, "Asset symbol is required"),
@@ -34,7 +34,7 @@ export async function GET(_request: NextRequest) {
     return successResponse(alerts);
   } catch (error) {
     console.error("List alerts API error:", error);
-    return internalError("Failed to list alerts");
+    return dispatchCaughtError("Failed to list alerts", error);
   }
 }
 
@@ -85,6 +85,6 @@ export async function POST(request: NextRequest) {
     return successResponse(alert, 201);
   } catch (error) {
     console.error("Create alert API error:", error);
-    return internalError("Failed to create alert");
+    return dispatchCaughtError("Failed to create alert", error);
   }
 }

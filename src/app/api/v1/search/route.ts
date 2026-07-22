@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Global search API error:", error);
-    return internalError("Failed to execute search queries");
+    return dispatchCaughtError("Failed to execute search queries", error);
   }
 }

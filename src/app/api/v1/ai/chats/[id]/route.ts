@@ -5,8 +5,8 @@ import {
   successResponse,
   unauthorizedError,
   notFoundError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(
   request: NextRequest,
@@ -46,7 +46,7 @@ export async function GET(
     });
   } catch (error) {
     console.error("Get AI chat API error:", error);
-    return internalError("Failed to fetch AI chat");
+    return dispatchCaughtError("Failed to fetch AI chat", error);
   }
 }
 
@@ -78,6 +78,6 @@ export async function DELETE(
     return successResponse({ deleted: true });
   } catch (error) {
     console.error("Delete AI chat API error:", error);
-    return internalError("Failed to delete AI chat");
+    return dispatchCaughtError("Failed to delete AI chat", error);
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prewarmDefaultChart } from "@/lib/prewarm";
-import { successResponse, internalError, unauthorizedError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +18,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error("Prewarm endpoint error:", error);
-    return internalError(`Prewarm failed: ${error?.message || error}`);
+    return dispatchCaughtError("Prewarm failed", error);
   }
 }

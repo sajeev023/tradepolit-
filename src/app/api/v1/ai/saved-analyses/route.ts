@@ -2,9 +2,10 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, validationError, internalError, errorResponse } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError, validationError, errorResponse } from "@/lib/api-helpers";
 import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
 import { getEntitlementForUser } from "@/lib/entitlements";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 function demoLockedResponse() {
   const e = getDemoFeatureLockedError("savedAnalyses");
@@ -47,7 +48,7 @@ export async function GET(_request: NextRequest) {
     return successResponse(analyses);
   } catch (err) {
     console.error("List saved analyses error:", err);
-    return internalError("Failed to list saved analyses");
+    return dispatchCaughtError("Failed to list saved analyses", err);
   }
 }
 
@@ -75,6 +76,6 @@ export async function POST(request: NextRequest) {
     return successResponse(saved, 201);
   } catch (err) {
     console.error("Save analysis error:", err);
-    return internalError("Failed to save analysis");
+    return dispatchCaughtError("Failed to save analysis", err);
   }
 }

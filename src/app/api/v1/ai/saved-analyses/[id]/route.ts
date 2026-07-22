@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, notFoundError, internalError, errorResponse } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError, notFoundError, errorResponse } from "@/lib/api-helpers";
 import { isDemoUser } from "@/lib/demo-limits";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 // DELETE /api/v1/ai/saved-analyses/[id]
 export async function DELETE(
@@ -34,6 +35,6 @@ export async function DELETE(
     return successResponse({ deleted: true });
   } catch (err) {
     console.error("Delete saved analysis error:", err);
-    return internalError("Failed to delete saved analysis");
+    return dispatchCaughtError("Failed to delete saved analysis", err);
   }
 }

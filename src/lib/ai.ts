@@ -4,6 +4,7 @@ import { callFastestAIModel } from "./ai-providers";
 import { classifyIntent, getIntentInstruction } from "./question-router";
 import { searchKnowledge, formatKnowledgeForPrompt } from "./knowledge/rag";
 import { updateSession, addResponse, addTopic, formatSessionContext } from "./ai-memory";
+import { buildChatFallbackFromChartState } from "./ai-fallback";
 
 export async function runAIChat(
   userId: string,
@@ -50,19 +51,19 @@ export async function runAIChat(
     lastIntent: intent.category,
   });
   if (intent.category !== "general_chat") {
-    addTopic(userId, intent.category);
+    try {
+      addTopic(userId, intent.category);
+    } catch (topicErr) {
+      console.warn(`[AI CHAT] addTopic failed (non-fatal):`, topicErr);
+    }
   }
 
   // ─── STEPS 2-4+7+8: Parallel DB fetches + RAG + behavioral events ─────────
+  // Promise.allSettled — a single transient DB miss must not abort the whole
+  // chat. Missing data degrades to empty arrays; the AI still gets a coherent
+  // (if thinner) context and the user still gets a reply.
   lap("Steps 2-8 — Parallel fetch START (userProfile + journal + trades + RAG + behavioral events)");
-  const [
-    dbUser,
-    rawProfile,
-    journalEntries,
-    trades,
-    recentEvents,
-    knowledgeResult,
-  ] = await Promise.all([
+  const settled = await Promise.allSettled([
     prisma.user.findUnique({ where: { id: userId }, select: { displayName: true, email: true } }),
     prisma.userProfile.findUnique({ where: { userId } }),
     prisma.journalEntry.findMany({
@@ -80,6 +81,20 @@ export async function runAIChat(
       ? searchKnowledge(lastUserMessage, 3)
       : Promise.resolve([]),
   ]);
+  const pick = <T,>(idx: number, fallback: T): T =>
+    settled[idx].status === "fulfilled" ? (settled[idx] as PromiseFulfilledResult<T>).value : fallback;
+  const dbUser = pick<any>(0, null);
+  const rawProfile = pick<any>(1, null);
+  const journalEntries = pick<any[]>(2, []);
+  const trades = pick<any[]>(3, []);
+  const recentEvents = pick<any[]>(4, []);
+  const knowledgeResult = pick<any[]>(5, []);
+  // Log which fetches degraded so DB outages are visible in logs but non-fatal.
+  settled.forEach((s, i) => {
+    if (s.status === "rejected") {
+      console.warn(`[AI CHAT] Parallel fetch ${i} degraded:`, (s.reason as any)?.message ?? s.reason);
+    }
+  });
   const userName = dbUser?.displayName || (dbUser?.email ? dbUser.email.split("@")[0].replace(/[._-]/g, " ") : "Trader");
   const userNameFormatted = userName.charAt(0).toUpperCase() + userName.slice(1);
   const userProfile = rawProfile ?? {
@@ -475,8 +490,12 @@ ${openTrades.length === 0 ? "None" : openTrades.map((t: any) => `- ${t.instrumen
       }
     }
 
-    // Store response in session memory
-    addResponse(userId, reply);
+    // Store response in session memory — never let persistence fail the reply
+    try {
+      addResponse(userId, reply);
+    } catch (persistErr) {
+      console.warn(`[AI CHAT] addResponse failed (non-fatal):`, persistErr);
+    }
 
     console.log(`[TIMING] ========== AI CHAT END — TOTAL: ${elapsed()} ==========\n`);
     return reply;
@@ -485,7 +504,21 @@ ${openTrades.length === 0 ? "None" : openTrades.map((t: any) => `- ${t.instrumen
     const errorDetails = handleNvidiaError(err);
     const failureReason = err?.message || errorDetails?.message || "Unknown AI provider error";
     console.error(`[TIMING] Step 11 — FAILED | duration=${nvMs}ms | total=${elapsed()} | err=${failureReason}`, err);
-    console.log(`[TIMING] ========== AI CHAT END — TOTAL: ${elapsed()} (FAILED) ==========\n`);
-    return `Not financial advice — for educational purposes.\n\nAI analysis is temporarily unavailable due to high demand. Please try again in a moment.`;
+
+    // Deterministic, chart-state-aware fallback. The user still gets a
+    // substantive, telemetry-grounded answer instead of a "try again" wall.
+    const fallbackReply = buildChatFallbackFromChartState({
+      chartState: activeChartContext?.chartState,
+      userMessage: lastUserMessage,
+      userName: userNameFormatted,
+    });
+    try {
+      addResponse(userId, fallbackReply);
+    } catch (persistErr) {
+      console.warn(`[AI CHAT] addResponse failed (non-fatal):`, persistErr);
+    }
+
+    console.log(`[TIMING] ========== AI CHAT END — TOTAL: ${elapsed()} (FALLBACK) ==========\n`);
+    return fallbackReply;
   }
 }

@@ -7,8 +7,8 @@ import {
   paginatedResponse,
   unauthorizedError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const createChatSchema = z.object({
   title: z.string().min(1, "Title is required").default("New Chat Session"),
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     return paginatedResponse(sessions, page, limit, total);
   } catch (error) {
     console.error("List AI chats API error:", error);
-    return internalError("Failed to list AI chats");
+    return dispatchCaughtError("Failed to list AI chats", error);
   }
 }
 
@@ -81,6 +81,6 @@ export async function POST(request: NextRequest) {
     return successResponse(chat, 201);
   } catch (error) {
     console.error("Create AI chat API error:", error);
-    return internalError("Failed to create AI chat");
+    return dispatchCaughtError("Failed to create AI chat", error);
   }
 }

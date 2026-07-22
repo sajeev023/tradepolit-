@@ -29,6 +29,12 @@ interface StreamEntry {
   reconnectCount: number;
   statusListeners: Set<(status: "connected" | "reconnecting" | "disconnected" | "error") => void>;
   currentStatus: "connected" | "reconnecting" | "disconnected" | "error";
+  // Stale-data watchdog: last tick timestamp + interval handle. Binance
+  // sometimes holds the socket open but stops delivering frames (silent
+  // stall). Without this guard, the UI keeps showing the last price
+  // forever and never falls back to REST polling.
+  lastTickAt: number;
+  staleWatchdog: ReturnType<typeof setInterval> | null;
 }
 
 function setEntryStatus(
@@ -96,7 +102,25 @@ function openStream(streamName: string) {
     const current = registry.get(streamName);
     if (!current) return;
     current.reconnectCount = 0;
+    current.lastTickAt = Date.now();
     setEntryStatus(current, "connected");
+
+    // Stale-data watchdog: check every 5s whether the feed has gone
+    // silent. If no tick in 30s while the socket reports OPEN, the
+    // feed is silently stalled — flip to "reconnecting" so consumers
+    // (topbar, charts) fall back to REST polling. The watchdog clears
+    // on close; the next tick after recovery resets lastTickAt.
+    if (current.staleWatchdog) clearInterval(current.staleWatchdog);
+    current.staleWatchdog = setInterval(() => {
+      const entry = registry.get(streamName);
+      if (!entry || !entry.active || !entry.ws || entry.ws.readyState !== 1) return;
+      if (entry.currentStatus !== "connected") return;
+      const silentForMs = Date.now() - entry.lastTickAt;
+      if (silentForMs > 30_000) {
+        console.warn(`[useBinanceStream] Stale feed on ${streamName}: silent for ${silentForMs}ms. Falling back to REST polling.`);
+        setEntryStatus(entry, "reconnecting");
+      }
+    }, 5_000);
   };
 
   ws.onmessage = (event) => {
@@ -106,6 +130,14 @@ function openStream(streamName: string) {
       const data = JSON.parse(event.data);
       if (data?.c) {
         current.reconnectCount = 0;
+        // Feed recovered — reset the stale watchdog and flip back to
+        // "connected" if the watchdog had demoted us. Consumers will
+        // see status change reconnecting → connected and stop REST
+        // polling in favor of the live WS feed.
+        current.lastTickAt = Date.now();
+        if (current.currentStatus === "reconnecting") {
+          setEntryStatus(current, "connected");
+        }
         const price = parseFloat(data.c);
         const change24h = parseFloat(data.p);
         const changePercent24h = parseFloat(data.P);
@@ -145,6 +177,13 @@ function openStream(streamName: string) {
     const current = registry.get(streamName);
     if (!current || !current.active) return;
 
+    // Stop the stale watchdog — the close handler already demotes the
+    // status, so we don't need the interval firing during reconnect.
+    if (current.staleWatchdog) {
+      clearInterval(current.staleWatchdog);
+      current.staleWatchdog = null;
+    }
+
     setEntryStatus(current, "reconnecting");
 
     const count = current.reconnectCount;
@@ -183,6 +222,8 @@ function subscribe(
       reconnectCount: 0,
       statusListeners: new Set(),
       currentStatus: "disconnected",
+      lastTickAt: 0,
+      staleWatchdog: null,
     };
     registry.set(streamName, entry);
     openStream(streamName);
@@ -210,6 +251,10 @@ function subscribe(
         const still = registry.get(streamName);
         if (still && still.subscribers.size === 0) {
           still.active = false;
+          if (still.staleWatchdog) {
+            clearInterval(still.staleWatchdog);
+            still.staleWatchdog = null;
+          }
           setEntryStatus(still, "disconnected");
           still.ws?.close();
           still.ws = null;

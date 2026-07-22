@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 import { getCurrentUsage } from "@/lib/limit-checker";
 
 export async function GET(_request: NextRequest) {
@@ -48,7 +49,7 @@ export async function GET(_request: NextRequest) {
     }, 200, headers);
   } catch (err: any) {
     console.error("Get profile API error:", err);
-    return internalError("Failed to fetch profile");
+    return dispatchCaughtError("Failed to fetch profile", err);
   }
 }
 
@@ -71,6 +72,6 @@ export async function PATCH(request: NextRequest) {
     return successResponse(profile);
   } catch (err: any) {
     console.error("Update profile API error:", err);
-    return internalError("Failed to update profile");
+    return dispatchCaughtError("Failed to update profile", err);
   }
 }

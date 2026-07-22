@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, forbiddenError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError, forbiddenError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,6 +32,6 @@ export async function GET(request: NextRequest) {
     return successResponse(users);
   } catch (error) {
     console.error("Admin user list API error:", error);
-    return internalError("Failed to list users");
+    return dispatchCaughtError("Failed to list users", error);
   }
 }

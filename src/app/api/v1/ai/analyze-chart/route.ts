@@ -16,6 +16,9 @@ import {
   errorResponse,
   aiUnavailableError,
 } from "@/lib/api-helpers";
+import { dbError, authFailedError, upstreamError, isPrismaTransientError } from "@/lib/typed-errors";
+import { checkUserRateLimit } from "@/lib/rate-limit";
+import { rateLimitedError } from "@/lib/typed-errors";
 import { checkUsageLimit, recordUsage } from "@/lib/limit-checker";
 import { getEntitlementForUser, getAnalysisLimitError } from "@/lib/entitlements";
 import { callFastestModel } from "@/lib/nvidia-ai";
@@ -138,6 +141,16 @@ export async function POST(request: NextRequest) {
   const t0 = Date.now();
   console.log(`[STEP 1: Request received] [0ms]`);
   let reservedUserId: string | null = null;
+  // Tracked outside the try block so the outer catch can build a best-effort
+  // fallback from whichever pieces of the pipeline did complete before the
+  // throw. `tech` populated means market data + indicators succeeded — we
+  // can still return buildFallbackAnalysis even if the AI race or DB writes
+  // blew up afterwards.
+  let tech: any = null;
+  let userName = "Trader";
+  let behavioralContext = "";
+  let validatedSymbol = "";
+  let validatedTimeframe: "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W" = "1h";
 
   const releaseReservation = async () => {
     if (reservedUserId) {
@@ -157,6 +170,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { symbol, timeframe, bypassCache, livePrice } = validation.data;
+    validatedSymbol = symbol;
+    validatedTimeframe = timeframe;
 
     const getExchangeForSymbol = (sym: string): string => {
       if (["BTC/USD", "ETH/USD", "SOL/USD"].includes(sym)) return "BINANCE";
@@ -171,11 +186,21 @@ export async function POST(request: NextRequest) {
     // Check user auth first
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    // Per-user rate limit: 20 analyses / minute. AI analysis is expensive
+    // (model race + market data + DB writes); an unauthenticated attacker
+    // or a script-kiddie loop can starve the providers and degrade the
+    // service for everyone. The 429 carries Retry-After so the client
+    // backs off cleanly instead of retrying into the same wall.
+    const rl = checkUserRateLimit(user.id, request, "analyze-chart", 20, 60_000);
+    if (!rl.result.allowed) {
+      const retryAfterSec = Math.ceil((rl.result.resetAt - Date.now()) / 1000);
+      return rateLimitedError(retryAfterSec * 1000, "Analysis rate limit reached. Please slow down.");
+    }
+
     console.log(`[STEP 2: Environment loaded] authUser=verified | NVIDIA_KEY=${!!process.env.NVIDIA_API_KEY} | GROQ_KEY=${!!process.env.GROQ_API_KEY}`);
 
     // ─── STEP 2b: Load behavioral context for personalized analysis ──────
-    let userName = "Trader";
-    let behavioralContext = "";
     try {
       const settled = await Promise.allSettled([
         prisma.user.findUnique({ where: { id: user.id }, select: { displayName: true, email: true } }),
@@ -258,7 +283,6 @@ COACHING MANDATE:
       behavioralContext = "\nTRADER IDENTITY:\n- Name: Valued Trader\n- Note: Behavioral data temporarily unavailable.\n";
     }
 
-    let tech: any;
     let candles: any[] = [];
 
     // All technical context is computed server-side from exchange OHLCV data.
@@ -363,24 +387,31 @@ COACHING MANDATE:
       );
     }
 
-    // Cache lookup: check if user or system pre-warm cache is available for instant response
+    // Cache lookup: check if user or system pre-warm cache is available for instant response.
+    // Wrapped — a transient DB miss degrades to "no cache" (slower path) rather than
+    // bubbling to the outer catch and returning a generic "AI unavailable" 503.
     if (!bypassCache) {
-      let cachedRecord = await prisma.conversationMemory.findFirst({
-        where: {
-          userId: user.id,
-          role: "cached_analysis",
-          chatId: `${symbol}-${timeframe}`,
-        }
-      });
-
-      // Fallback to system pre-warm cache if user hasn't analyzed this asset before
-      if (!cachedRecord) {
+      let cachedRecord: any = null;
+      try {
         cachedRecord = await prisma.conversationMemory.findFirst({
           where: {
+            userId: user.id,
             role: "cached_analysis",
             chatId: `${symbol}-${timeframe}`,
           }
         });
+
+        // Fallback to system pre-warm cache if user hasn't analyzed this asset before
+        if (!cachedRecord) {
+          cachedRecord = await prisma.conversationMemory.findFirst({
+            where: {
+              role: "cached_analysis",
+              chatId: `${symbol}-${timeframe}`,
+            }
+          });
+        }
+      } catch (cacheLookupErr) {
+        console.warn("[ANALYZE-CHART] Cache lookup failed (non-fatal, continuing without cache):", cacheLookupErr);
       }
 
       if (cachedRecord) {
@@ -444,17 +475,29 @@ COACHING MANDATE:
       }
     }
     
-    // Reserve one analysis slot atomically (race-condition safe)
-    // The slot is reserved BEFORE the AI call to prevent exceeding the limit
-    // If the AI call fails, the slot is released
-    const usageReserved = await recordUsage(user.id, "analyses", user.email);
-    if (!usageReserved) {
-      const limitResult = await checkUsageLimit(user.id, "analyses", user.email);
-      const entitlement = getEntitlementForUser(user.id, user.email);
-      const limitError = getAnalysisLimitError(entitlement, limitResult.analysesUsed);
-      return errorResponse(limitError.error as any, limitError.message, 403, {
-        cta: limitError.cta,
-        ctaLink: limitError.ctaLink,
+    // Reserve one analysis slot atomically (race-condition safe).
+    // The slot is reserved BEFORE the AI call to prevent exceeding the limit.
+    // If the AI call fails the reservation is kept (user is charged for the
+    // attempt); on DB outage we proceed without reservation and log the
+    // degradation — quota enforcement is best-effort, not a hard gate that
+    // should produce a generic "AI unavailable" 503.
+    let usageReserved = false;
+    let usageLimitError: any = null;
+    try {
+      usageReserved = await recordUsage(user.id, "analyses", user.email);
+      if (!usageReserved) {
+        const limitResult = await checkUsageLimit(user.id, "analyses", user.email);
+        const entitlement = getEntitlementForUser(user.id, user.email);
+        usageLimitError = getAnalysisLimitError(entitlement, limitResult.analysesUsed);
+      }
+    } catch (usageErr: any) {
+      console.warn("[ANALYZE-CHART] Usage reservation failed (non-fatal, proceeding without quota gate):", usageErr);
+      usageReserved = true; // proceed optimistically on DB outage
+    }
+    if (usageLimitError) {
+      return errorResponse(usageLimitError.error as any, usageLimitError.message, 403, {
+        cta: usageLimitError.cta,
+        ctaLink: usageLimitError.ctaLink,
       });
     }
     reservedUserId = user.id;
@@ -562,10 +605,13 @@ REQUIRED JSON RESPONSE SCHEMA:
     } catch (raceErr: any) {
       console.error(`[STEP 9 FAILED] Race error | duration=${Date.now() - raceStart}ms | err=${raceErr?.message}`);
 
-      // Fallback: compute indicator-based analysis when all AI providers are unavailable
+      // Fallback: compute indicator-based analysis when all AI providers are unavailable.
+      // Note: do NOT call recordUsage again here — the reservation at line ~450
+      // already incremented the count. Re-incrementing double-charges the user
+      // for the same failed analysis. We keep the reservation (user is charged
+      // for the attempt) and return the deterministic fallback.
       console.log(`[STEP 9 FALLBACK] Returning indicator-derived analysis for ${symbol} ${timeframe}`);
       const fallbackAnalysis = buildFallbackAnalysis(symbol, timeframe, tech, userName, behavioralContext);
-      await recordUsage(user.id, "analyses", user.email).catch(() => {});
       reservedUserId = null;
 
       console.log(`[STEP 11: Response returned] FALLBACK ANALYSIS SUCCESSFUL | totalDuration=${Date.now() - t0}ms`);
@@ -710,6 +756,53 @@ Timestamp: ${new Date().toISOString()}
   } catch (err: any) {
     console.error("Critical error in analyze-chart route:", err);
     await releaseReservation();
+
+    // Classify the failure so the user sees a specific, actionable error
+    // (or a best-effort fallback analysis) instead of a generic "AI
+    // temporarily unavailable" 503 that masks the real cause.
+    //
+    // 1. If `tech` is populated, market data + indicators succeeded — we can
+    //    still return a deterministic fallback analysis even if the AI race
+    //    or DB writes blew up afterwards. This is the same fallback the
+    //    race-failure path uses; the user gets a substantive answer.
+    // 2. If the failure is a transient Prisma connectivity error, return a
+    //    typed dbError(503) with Retry-After so the client can back off.
+    // 3. If auth failed, return 401 so the client redirects to sign-in.
+    // 4. If market data threw, return upstreamError so the client knows the
+    //    issue is upstream, not AI.
+    // 5. Only as a last resort (no tech, unknown cause) return aiUnavailableError.
+    if (tech) {
+      console.log(`[STEP 11: Response returned] OUTER-CATCH FALLBACK ANALYSIS | totalDuration=${Date.now() - t0}ms`);
+      return successResponse(
+        buildFallbackAnalysis(
+          validatedSymbol,
+          validatedTimeframe,
+          tech,
+          userName,
+          behavioralContext
+        )
+      );
+    }
+
+    if (isPrismaTransientError(err)) {
+      console.warn("[ANALYZE-CHART] DB transient error:", err?.code);
+      return dbError(30_000, { route: "analyze-chart" });
+    }
+
+    const status = err?.status ?? err?.statusCode;
+    if (status === 401 || status === 403) {
+      return authFailedError();
+    }
+
+    // Market data / OHLCV / indicator computation failures
+    if (
+      err?.message?.includes("historical data") ||
+      err?.message?.includes("telemetry") ||
+      err?.message?.includes("indicator")
+    ) {
+      return upstreamError("market_data", err?.message, 5_000);
+    }
+
     return aiUnavailableError();
   }
 }

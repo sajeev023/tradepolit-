@@ -8,8 +8,8 @@ import {
   unauthorizedError,
   notFoundError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const updateTradeSchema = z.object({
   instrument: z.string().min(1).optional(),
@@ -74,7 +74,7 @@ export async function GET(
     return successResponse(trade);
   } catch (error) {
     console.error("Get trade API error:", error);
-    return internalError("Failed to fetch trade");
+    return dispatchCaughtError("Failed to fetch trade", error);
   }
 }
 
@@ -208,7 +208,7 @@ export async function PATCH(
     return successResponse(updatedTrade);
   } catch (error) {
     console.error("Update trade API error:", error);
-    return internalError("Failed to update trade");
+    return dispatchCaughtError("Failed to update trade", error);
   }
 }
 
@@ -241,6 +241,6 @@ export async function DELETE(
     return successResponse({ deleted: true });
   } catch (error) {
     console.error("Delete trade API error:", error);
-    return internalError("Failed to delete trade");
+    return dispatchCaughtError("Failed to delete trade", error);
   }
 }

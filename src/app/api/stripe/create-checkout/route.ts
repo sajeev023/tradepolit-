@@ -2,14 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { checkUserRateLimit } from "@/lib/rate-limit";
+import { rateLimitedError } from "@/lib/typed-errors";
 
 // POST /api/stripe/create-checkout
 // Creates a Stripe Checkout Session for the PRO Plan ($7.49/month)
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) {
       return NextResponse.json({ error: { message: "Unauthorized" } }, { status: 401 });
+    }
+
+    // Per-user rate limit: 5 / min. Checkout session creation hits the
+    // Stripe API (slow, quota'd). Repeated clicks from a stuck UI should
+    // not flood Stripe.
+    const rl = checkUserRateLimit(user.id, request, "stripe-checkout", 5, 60_000);
+    if (!rl.result.allowed) {
+      return rateLimitedError((rl.result.resetAt - Date.now()), "Too many checkout attempts. Please slow down.");
     }
 
     // Fetch user profile from DB to check for Stripe Customer ID

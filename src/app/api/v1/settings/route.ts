@@ -7,8 +7,8 @@ import {
   successResponse,
   unauthorizedError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const settingsSchema = z.object({
   notifyEmail: z.boolean().optional(),
@@ -49,7 +49,7 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error) {
     console.error("Get settings API error:", error);
-    return internalError("Failed to fetch settings");
+    return dispatchCaughtError("Failed to fetch settings", error);
   }
 }
 
@@ -82,33 +82,39 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
-    // Update API keys if provided
+    // Update API keys if provided. Each rotation is atomic: deleteMany + create
+    // run in a single transaction so a partial failure (delete succeeds, create
+    // fails) can't leave the user with no API key at all.
     if (coinmarketcapKey && coinmarketcapKey !== "••••••••••••••••") {
       const encrypted = encrypt(coinmarketcapKey);
-      await prisma.userApiKey.deleteMany({
-        where: { userId: user.id, provider: "coinmarketcap" },
-      });
-      await prisma.userApiKey.create({
-        data: {
-          userId: user.id,
-          provider: "coinmarketcap",
-          encryptedKey: encrypted,
-        },
-      });
+      await prisma.$transaction([
+        prisma.userApiKey.deleteMany({
+          where: { userId: user.id, provider: "coinmarketcap" },
+        }),
+        prisma.userApiKey.create({
+          data: {
+            userId: user.id,
+            provider: "coinmarketcap",
+            encryptedKey: encrypted,
+          },
+        }),
+      ]);
     }
 
     if (twelvedataKey && twelvedataKey !== "••••••••••••••••") {
       const encrypted = encrypt(twelvedataKey);
-      await prisma.userApiKey.deleteMany({
-        where: { userId: user.id, provider: "twelvedata" },
-      });
-      await prisma.userApiKey.create({
-        data: {
-          userId: user.id,
-          provider: "twelvedata",
-          encryptedKey: encrypted,
-        },
-      });
+      await prisma.$transaction([
+        prisma.userApiKey.deleteMany({
+          where: { userId: user.id, provider: "twelvedata" },
+        }),
+        prisma.userApiKey.create({
+          data: {
+            userId: user.id,
+            provider: "twelvedata",
+            encryptedKey: encrypted,
+          },
+        }),
+      ]);
     }
 
     return successResponse({
@@ -119,7 +125,7 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error) {
     console.error("Update settings API error:", error);
-    return internalError("Failed to update settings");
+    return dispatchCaughtError("Failed to update settings", error);
   }
 }
 
@@ -136,6 +142,6 @@ export async function DELETE(_request: NextRequest) {
     return successResponse({ deleted: true });
   } catch (error) {
     console.error("Delete account API error:", error);
-    return internalError("Failed to delete account");
+    return dispatchCaughtError("Failed to delete account", error);
   }
 }

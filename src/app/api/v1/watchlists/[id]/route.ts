@@ -7,10 +7,10 @@ import {
   unauthorizedError,
   notFoundError,
   validationError,
-  internalError,
   errorResponse,
 } from "@/lib/api-helpers";
 import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 function demoWatchlistLocked() {
   const e = getDemoFeatureLockedError("watchlistEdit");
@@ -63,7 +63,7 @@ export async function PATCH(
     return successResponse(updated);
   } catch (error) {
     console.error("Update watchlist API error:", error);
-    return internalError("Failed to update watchlist");
+    return dispatchCaughtError("Failed to update watchlist", error);
   }
 }
 
@@ -96,6 +96,6 @@ export async function DELETE(
     return successResponse({ deleted: true });
   } catch (error) {
     console.error("Delete watchlist API error:", error);
-    return internalError("Failed to delete watchlist");
+    return dispatchCaughtError("Failed to delete watchlist", error);
   }
 }

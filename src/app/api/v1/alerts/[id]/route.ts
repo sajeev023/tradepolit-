@@ -7,8 +7,8 @@ import {
   unauthorizedError,
   notFoundError,
   validationError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 const updateAlertSchema = z.object({
   isActive: z.boolean().optional(),
@@ -45,7 +45,7 @@ export async function PATCH(
     return successResponse(updated);
   } catch (error) {
     console.error("Update alert API error:", error);
-    return internalError("Failed to update alert");
+    return dispatchCaughtError("Failed to update alert", error);
   }
 }
 
@@ -73,6 +73,6 @@ export async function DELETE(
     return successResponse({ deleted: true });
   } catch (error) {
     console.error("Delete alert API error:", error);
-    return internalError("Failed to delete alert");
+    return dispatchCaughtError("Failed to delete alert", error);
   }
 }

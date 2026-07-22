@@ -4,8 +4,8 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import {
   successResponse,
   unauthorizedError,
-  internalError,
 } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(_request: NextRequest) {
   try {
@@ -21,6 +21,6 @@ export async function GET(_request: NextRequest) {
     return successResponse(notifications);
   } catch (error) {
     console.error("List notifications API error:", error);
-    return internalError("Failed to list notifications");
+    return dispatchCaughtError("Failed to list notifications", error);
   }
 }

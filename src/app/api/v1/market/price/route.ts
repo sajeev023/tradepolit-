@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { MarketDataService } from "@/lib/market-data-service";
-import { successResponse, validationError, internalError } from "@/lib/api-helpers";
+import { successResponse, validationError } from "@/lib/api-helpers";
+import { checkIpRateLimit } from "@/lib/rate-limit";
+import { rateLimitedError, dispatchCaughtError } from "@/lib/typed-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,14 @@ const priceQuerySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    // IP rate limit: 60 / min. Market price proxies expensive upstream
+    // API calls (Binance / TwelveData); an unauthenticated scraper loop
+    // would burn our quota and degrade the service for real users.
+    const rl = checkIpRateLimit(request, "market-price", 60, 60_000);
+    if (!rl.allowed) {
+      return rateLimitedError((rl.resetAt - Date.now()), "Too many price requests. Please slow down.");
+    }
+
     const { searchParams } = new URL(request.url);
     const symbol = searchParams.get("symbol");
 
@@ -23,6 +33,6 @@ export async function GET(request: NextRequest) {
     return successResponse(price);
   } catch (error) {
     console.error("Live price API route error:", error);
-    return internalError("Failed to fetch live price");
+    return dispatchCaughtError("Failed to fetch live price", error);
   }
 }

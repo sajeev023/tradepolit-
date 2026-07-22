@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { checkAlertLimit, incrementAlertCount } from "@/lib/usage-limits";
-import { successResponse, unauthorizedError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 // POST /api/v1/ai/record-alert
 // Checks if alert count is within bounds, increments it, and returns status.
@@ -21,6 +22,6 @@ export async function POST(_request: NextRequest) {
     return successResponse({ allowed: true });
   } catch (err) {
     console.error("Record alert error:", err);
-    return internalError("Failed to verify and record alert usage");
+    return dispatchCaughtError("Failed to verify and record alert usage", err);
   }
 }

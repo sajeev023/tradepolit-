@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { MarketDataService } from "@/lib/market-data-service";
 import { calculateEMA, calculateRSI, calculateVolatility } from "@/lib/indicators";
-import { successResponse, internalError, unauthorizedError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,24 +82,27 @@ export async function GET(request: NextRequest) {
         }
 
         if (triggered) {
-          // Deactivate triggered alert
-          await prisma.alert.update({
-            where: { id: alert.id },
-            data: {
-              isActive: false,
-              triggeredAt: new Date(),
-            },
-          });
-
-          // Log database Notification
-          await prisma.notification.create({
-            data: {
-              userId: alert.userId,
-              type: "ALERT_TRIGGER",
-              title: `${alert.instrument} Indicator Cross`,
-              body: triggerReason,
-            },
-          });
+          // Atomic: deactivate the alert AND create the notification in a
+          // single transaction. If either write fails, both roll back —
+          // the alert stays active and will re-fire on the next cron tick,
+          // rather than being silently deactivated with no notification.
+          await prisma.$transaction([
+            prisma.alert.update({
+              where: { id: alert.id },
+              data: {
+                isActive: false,
+                triggeredAt: new Date(),
+              },
+            }),
+            prisma.notification.create({
+              data: {
+                userId: alert.userId,
+                type: "ALERT_TRIGGER",
+                title: `${alert.instrument} Indicator Cross`,
+                body: triggerReason,
+              },
+            }),
+          ]);
 
           triggeredCount++;
         }
@@ -185,6 +189,6 @@ export async function GET(request: NextRequest) {
     return successResponse({ evaluated: activeAlerts.length, triggered: triggeredCount });
   } catch (error) {
     console.error("Alert evaluation cron error:", error);
-    return internalError("Failed to evaluate active alerts");
+    return dispatchCaughtError("Failed to evaluate active alerts", error);
   }
 }

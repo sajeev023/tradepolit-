@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, internalError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { dispatchCaughtError } from "@/lib/typed-errors";
 
 // GET /api/v1/performance/summary
 export async function GET(_request: NextRequest) {
@@ -124,6 +125,6 @@ export async function GET(_request: NextRequest) {
     });
   } catch (err) {
     console.error("Summary statistics error:", err);
-    return internalError("Failed to fetch performance summary");
+    return dispatchCaughtError("Failed to fetch performance summary", err);
   }
 }
