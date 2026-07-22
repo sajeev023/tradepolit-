@@ -637,7 +637,7 @@ REQUIRED JSON RESPONSE SCHEMA:
     }
 
     // 5. Parse & repair AI output with safe parsing engine
-    const { parsed: parsedData, isRepaired, isFallback } = safeParseAIResponse(
+    const parseResult = safeParseAIResponse(
       raceResult.content,
       {
         symbol,
@@ -655,7 +655,30 @@ REQUIRED JSON RESPONSE SCHEMA:
         sourceMetadata: tech.sourceMetadata,
       }
     );
-    console.log(`[STEP 10: JSON parsed] repaired=${isRepaired} | fallback=${isFallback}`);
+
+    const {
+      parsed: parsedData,
+      isRepaired,
+      isFallback,
+      jsonParseSuccess,
+      schemaValid,
+      rejectionReason,
+    } = parseResult;
+
+    const isAccepted = !isFallback;
+
+    console.log(
+      `\n[RESPONSE EVALUATION SUMMARY]` +
+      `\nProvider: ${raceResult.provider.toUpperCase()}` +
+      `\nModel: ${raceResult.model}` +
+      `\nHTTP Status: 200` +
+      `\nLatency: ${raceResult.duration}ms` +
+      `\nResponse Length: ${raceResult.content.length} bytes` +
+      `\nJSON Parsing Succeeded: ${jsonParseSuccess}` +
+      `\nSchema Validation Succeeded: ${schemaValid}` +
+      `\nResponse Accepted: ${isAccepted}` +
+      `\nRejection Reason: ${rejectionReason || "NONE"}\n`
+    );
 
     const analyzedAtStr = new Date().toISOString();
     const formattedNarrative = appendTelemetryMetadata(
@@ -691,7 +714,26 @@ REQUIRED JSON RESPONSE SCHEMA:
       },
     };
 
-    validateAnalysisConsistency(finalResponse);
+    const consistency = validateAnalysisConsistency(finalResponse);
+    if (!consistency.isValid) {
+      console.error(
+        `\n[ROUTER REJECTED RESPONSE]` +
+        `\nProvider: ${raceResult.provider.toUpperCase()}` +
+        `\nModel: ${raceResult.model}` +
+        `\nStage: ROUTER CONSISTENCY` +
+        `\nRejection Reason: ${consistency.issues.join("; ")}` +
+        `\nFallback Triggered: YES (Indicator-Only)\n`
+      );
+    } else {
+      console.log(
+        `\n[ROUTER ACCEPTED RESPONSE]` +
+        `\nProvider: ${raceResult.provider.toUpperCase()}` +
+        `\nModel: ${raceResult.model}` +
+        `\nStage: PASSED ALL CHECKS (Provider -> Parser -> Schema -> Router)` +
+        `\nAction: Returning live AI analysis to client\n`
+      );
+    }
+
     reservedUserId = null; // Analysis completed successfully — keep the reservation
 
     // Save fresh analysis to cache

@@ -197,6 +197,15 @@ function cleanAndExtractJSON(raw: string): string {
  * Robust JSON parser for AI responses. Guaranteed never to throw.
  * Returns a fully populated AIAnalysisSchema object.
  */
+export interface SafeParseResult {
+  parsed: AIAnalysisSchema;
+  isRepaired: boolean;
+  isFallback: boolean;
+  jsonParseSuccess: boolean;
+  schemaValid: boolean;
+  rejectionReason?: string;
+}
+
 export function safeParseAIResponse(
   rawContent: string,
   techTelemetry: {
@@ -214,23 +223,31 @@ export function safeParseAIResponse(
     trend: string;
     sourceMetadata: any;
   }
-): { parsed: AIAnalysisSchema; isRepaired: boolean; isFallback: boolean } {
+): SafeParseResult {
   const symbol = techTelemetry.symbol;
   const timeframe = techTelemetry.timeframe;
   const priceStr = `$${techTelemetry.currentPrice.toLocaleString()}`;
 
-  // Log raw AI response before attempting parsing
+  let jsonParseSuccess = false;
+  let schemaValid = false;
+  let rejectionReason: string | undefined = undefined;
+
+  // Log raw AI response snippet
   console.log(
     `[AI PARSER] Raw response received (${rawContent ? rawContent.length : 0} chars): ` +
       `${rawContent ? rawContent.substring(0, 300).replace(/\n/g, " ") : "(empty)"}...`
   );
 
   if (!rawContent || rawContent.trim().length === 0) {
-    console.warn(`[AI PARSER] Received empty response from AI. Using telemetry fallback.`);
+    rejectionReason = "EMPTY_AI_RESPONSE";
+    console.warn(`[AI PARSER EVALUATION] Rejection Reason: ${rejectionReason}`);
     return {
       parsed: buildTelemetryFallback(techTelemetry),
       isRepaired: false,
       isFallback: true,
+      jsonParseSuccess: false,
+      schemaValid: false,
+      rejectionReason,
     };
   }
 
@@ -241,26 +258,34 @@ export function safeParseAIResponse(
   // Attempt 1: Direct JSON.parse
   try {
     parsedObj = JSON.parse(cleaned);
-  } catch (err1) {
+    jsonParseSuccess = true;
+  } catch (err1: any) {
     // Attempt 2: Auto-repair truncated JSON
     console.log(`[AI PARSER] Standard JSON.parse failed. Attempting truncated JSON repair...`);
     try {
       const repairedStr = repairTruncatedJSON(cleaned);
       parsedObj = JSON.parse(repairedStr);
       isRepaired = true;
+      jsonParseSuccess = true;
       console.log(`[AI PARSER] Truncated JSON repair SUCCESSFUL.`);
     } catch (err2) {
+      jsonParseSuccess = false;
+      rejectionReason = `JSON_PARSE_FAILED: ${err1?.message || String(err1)}`;
       console.error(`[AI PARSER] JSON parse & repair failed. Error:`, err1);
     }
   }
 
   // If parsing failed completely, build structured fallback from telemetry
   if (!parsedObj || typeof parsedObj !== "object") {
-    console.warn(`[AI PARSER] Using structured telemetry fallback for ${symbol}.`);
+    if (!rejectionReason) rejectionReason = "PARSED_JSON_NOT_AN_OBJECT";
+    console.warn(`[AI PARSER EVALUATION] Rejection Reason: ${rejectionReason}`);
     return {
       parsed: buildTelemetryFallback(techTelemetry),
       isRepaired: false,
       isFallback: true,
+      jsonParseSuccess: false,
+      schemaValid: false,
+      rejectionReason,
     };
   }
 
@@ -298,18 +323,27 @@ export function safeParseAIResponse(
 
   const consistency = validateAnalysisConsistency(finalParsed as any);
   if (!consistency.isValid) {
-    console.warn(`[AI PARSER] Final parsed analysis failed consistency checks: ${consistency.issues.join(", ")}. Falling back to deterministic telemetry.`);
+    schemaValid = false;
+    rejectionReason = `CONSISTENCY_CHECK_FAILED: ${consistency.issues.join("; ")}`;
+    console.warn(`[AI PARSER EVALUATION] ${rejectionReason}. Falling back to deterministic telemetry.`);
     return {
       parsed: buildTelemetryFallback(techTelemetry),
       isRepaired: false,
       isFallback: true,
+      jsonParseSuccess: true,
+      schemaValid: false,
+      rejectionReason,
     };
   }
 
+  schemaValid = true;
   return {
     parsed: finalParsed,
     isRepaired,
     isFallback: false,
+    jsonParseSuccess: true,
+    schemaValid: true,
+    rejectionReason: undefined,
   };
 }
 

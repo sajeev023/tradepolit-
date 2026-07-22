@@ -327,7 +327,12 @@ async function callSingleModel(
 
     const totalMs = Date.now() - startTime;
     console.log(
-      `[RACE] ✓ [${providerTag}] ${modelDef.name} | json=${parseMs}ms | total=${totalMs}ms | chars=${content.length}`
+      `\n[PROVIDER SUCCESS]` +
+      `\nProvider: ${modelDef.provider.toUpperCase()}` +
+      `\nModel: ${modelDef.name}` +
+      `\nHTTP Status: ${response.status}` +
+      `\nLatency: ${totalMs}ms` +
+      `\nResponse Length: ${content.length} bytes\n`
     );
 
     return {
