@@ -31,7 +31,8 @@ export type ErrorCode =
   | "DB_UNAVAILABLE"
   | "AUTH_FAILED"
   | "MARKET_DATA_STALE"
-  | "UPSTREAM_PARTIAL";
+  | "UPSTREAM_PARTIAL"
+  | "TELEMETRY_UNAVAILABLE";
 
 // Mirror Prisma enums as string unions for client-side use
 export type AssetClass = "CRYPTO" | "FOREX";

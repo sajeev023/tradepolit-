@@ -12,32 +12,30 @@ export interface FallbackLiveData {
 }
 
 export function getInstantFallbackAnalysis(symbol: string, timeframe: string, liveData?: FallbackLiveData) {
-  const price = liveData?.currentPrice || 0;
-  
-  // Calculate dynamic default levels if not provided based on price
-  const defaultSupport = price ? price * 0.97 : null;
-  const defaultResistance = price ? price * 1.03 : null;
-  const defaultInvalidation = price ? price * 0.96 : null;
+  if (!liveData || !liveData.currentPrice || !liveData.support || !liveData.resistance || liveData.rsi === undefined || isNaN(liveData.rsi)) {
+    return null;
+  }
 
-  const supportVal = liveData?.support ?? defaultSupport;
-  const resistanceVal = liveData?.resistance ?? defaultResistance;
-  const invalidationVal = liveData?.invalidationLevel ?? defaultInvalidation;
+  const price = liveData.currentPrice;
+  const supportVal = liveData.support;
+  const resistanceVal = liveData.resistance;
+  const invalidationVal = liveData.invalidationLevel ?? supportVal * 0.98;
 
-  const supportStr = supportVal ? supportVal.toLocaleString() : "0.00";
-  const resistanceStr = resistanceVal ? resistanceVal.toLocaleString() : "0.00";
+  const supportStr = supportVal.toLocaleString();
+  const resistanceStr = resistanceVal.toLocaleString();
 
-  const rsiVal = liveData?.rsi ?? 50;
-  const rsiLbl = liveData?.rsiLabel ?? "Neutral";
-  const biasVal = liveData?.bias ?? "NEUTRAL";
-  const setupVal = liveData?.setupQuality ?? "HIGH GRADE";
-  const confVal = liveData?.confidence ?? "MEDIUM";
+  const rsiVal = liveData.rsi;
+  const rsiLbl = liveData.rsiLabel ?? "Neutral";
+  const biasVal = liveData.bias ?? "NEUTRAL";
+  const setupVal = liveData.setupQuality ?? "HIGH GRADE";
+  const confVal = liveData.confidence ?? "MEDIUM";
 
   return {
     symbol,
     timeframe,
     cached: false,
-    loading: true,
-    marketRegime: liveData?.trend ? `${liveData.trend} continuation favored.` : `Synchronizing live telemetry for ${symbol} on ${timeframe}...`,
+    loading: false,
+    marketRegime: liveData.trend ? `${liveData.trend} continuation favored.` : `Active telemetry for ${symbol} on ${timeframe}.`,
     bias: biasVal,
     support: supportVal,
     resistance: resistanceVal,
@@ -46,14 +44,14 @@ export function getInstantFallbackAnalysis(symbol: string, timeframe: string, li
     confidence: confVal,
     invalidationLevel: invalidationVal,
     whyItMatters: `Defended key local structure with indicator alignment backing the active bias.`,
-    entryIdeas: price ? `Limit entry orders near support at $${supportStr}` : "Calculating limit entry levels...",
+    entryIdeas: `Limit entry orders near support at $${supportStr}`,
     stopLossIdea: invalidationVal ? invalidationVal.toString() : null,
     takeProfitIdea: resistanceVal ? resistanceVal.toString() : null,
-    shortTermScenario: price ? `Price action is expected to respect support at $${supportStr} and build momentum towards resistance at $${resistanceStr}.` : "Syncing latest candles...",
-    coachNarrative: `Analysis Source: TradePilot Telemetry | Symbol: ${symbol} | TF: ${timeframe} | Price: $${price ? price.toLocaleString() : "N/A"} | Status: Synchronized
+    shortTermScenario: `Price action is expected to respect support at $${supportStr} and build momentum towards resistance at $${resistanceStr}.`,
+    coachNarrative: `Analysis Source: TradePilot Telemetry | Symbol: ${symbol} | TF: ${timeframe} | Price: $${price.toLocaleString()} | Status: Synchronized
 
 ## Market Structure
-Live telemetry data is available from the exchange feed. ${symbol} is trading at $${price ? price.toLocaleString() : "N/A"} on the ${timeframe} timeframe, with swing-low pivot support at $${supportStr} and swing-high pivot resistance at $${resistanceStr}.
+Live telemetry data is available from the exchange feed. ${symbol} is trading at $${price.toLocaleString()} on the ${timeframe} timeframe, with swing-low pivot support at $${supportStr} and swing-high pivot resistance at $${resistanceStr}.
 
 ## Momentum
 The RSI(14) is at ${rsiVal.toFixed(2)} (${rsiLbl}), indicating momentum is currently in a ${rsiLbl.toLowerCase()} state. Volume and trend indicators are validating this baseline.
@@ -65,7 +63,7 @@ Key pivot points stand at $${supportStr} (Support) and $${resistanceStr} (Resist
 The technical alignment supports a ${biasVal} bias. If support at $${supportStr} holds, momentum favors expansion toward resistance at $${resistanceStr}.
 
 ## Invalidation
-A structural candle close on the ${timeframe} timeframe below $${invalidationVal ? invalidationVal.toLocaleString() : "N/A"} invalidates the active thesis.
+A structural candle close on the ${timeframe} timeframe below $${invalidationVal.toLocaleString()} invalidates the active thesis.
 
 ## Risk Assessment
 Risk parameters are defined by potential volatility swings. Tighten position sizing if macro indicators diverge from the current structure.
@@ -85,7 +83,7 @@ Highest probability path is trend resolution within the key swing levels at $${s
     sourceMetadata: {
       symbolSource: `User active selection (${symbol})`,
       timeframeSource: `Selected chart interval (${timeframe})`,
-      priceSource: price ? `Binance spot real-time ticker ($${price.toLocaleString()})` : "Connecting to Binance spot feed...",
+      priceSource: `Binance spot real-time ticker ($${price.toLocaleString()})`,
       rsiSource: `RSI(14) calculated from close prices (${rsiVal.toFixed(2)})`,
       supportSource: "Swing-low detector",
       resistanceSource: "Swing-high detector",

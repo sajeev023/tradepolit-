@@ -54,7 +54,7 @@ export function calculateEMA(data: number[], period: number): number[] {
  */
 export function calculateRSI(closes: number[], period = 14): number[] {
   const rsi: number[] = [];
-  if (closes.length <= period) return closes.map(() => 50); // Default neutral
+  if (closes.length <= period) return closes.map(() => NaN);
 
   let avgGain = 0;
   let avgLoss = 0;
@@ -223,7 +223,7 @@ export interface KeyLevelsResult {
 
 export function calculateKeyLevels(candles: OHLCVCandle[]): KeyLevelsResult {
   const closes = candles.map((c) => c.close);
-  if (closes.length === 0) return { support: 0, resistance: 0 };
+  if (closes.length === 0) return { support: NaN, resistance: NaN };
 
   const recentCloses = closes.slice(-50);
   const min = Math.min(...recentCloses);
@@ -402,13 +402,21 @@ export function compileTechnicalContext(
   const levels = calculateKeyLevels(candles);
   const vol = calculateVolatility(candles);
 
-  const currentEma20 = ema20[ema20.length - 1] || 0;
-  const currentEma50 = ema50[ema50.length - 1] || 0;
-  const currentRsi = rsiArr[rsiArr.length - 1] || 50;
+  const currentEma20 = ema20[ema20.length - 1];
+  const currentEma50 = ema50[ema50.length - 1];
+  const currentRsi = rsiArr[rsiArr.length - 1];
 
-  const currentMacd = macdRes.macd[macdRes.macd.length - 1] || 0;
-  const currentSignal = macdRes.signal[macdRes.signal.length - 1] || 0;
-  const currentHist = macdRes.histogram[macdRes.histogram.length - 1] || 0;
+  const currentMacd = macdRes.macd[macdRes.macd.length - 1];
+  const currentSignal = macdRes.signal[macdRes.signal.length - 1];
+  const currentHist = macdRes.histogram[macdRes.histogram.length - 1];
+
+  console.log('[TELEMETRY-2] Indicators calculated:', {
+    rsi: currentRsi,
+    macd: currentMacd,
+    support: levels.support,
+    resistance: levels.resistance,
+    currentPrice,
+  });
 
   let trend: "BULLISH" | "BEARISH" | "SIDEWAYS" = "SIDEWAYS";
   if (currentPrice > currentEma20 && currentEma20 > currentEma50) {

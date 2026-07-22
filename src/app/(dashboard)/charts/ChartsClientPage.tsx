@@ -508,23 +508,28 @@ export function ChartsClientPage() {
         setLiveIndicators(telemetry);
       }
 
-      console.log(`[SYNC] Triggering analysis for: ${sym} ${tf} at price $${telemetry.currentPrice}`);
+      console.log(`[SYNC] Triggering analysis for: ${sym} ${tf} at price $${telemetry?.currentPrice}`);
 
-      // Instant UI Fallback (<100ms rendering)
-      setAnalysisData(getDynamicFallback(sym, tf));
+      const instantFallback = getDynamicFallback(sym, tf);
+      if (instantFallback) {
+        setAnalysisData(instantFallback);
+      }
 
       // livePrice: send the WebSocket price so the backend can override the stale candle price
       const livePriceForAI = getLatestWebSocketPrice(sym) || priceData?.price;
+
+      const payload = { symbol: sym, timeframe: tf, bypassCache: bypass, telemetry, livePrice: livePriceForAI };
+      console.log("[TELEMETRY-3] Payload to API:", payload);
 
       try {
         const res = await fetch("/api/v1/ai/analyze-chart", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ symbol: sym, timeframe: tf, bypassCache: bypass, telemetry, livePrice: livePriceForAI }),
+          body: JSON.stringify(payload),
           signal: AbortSignal.timeout(30000), // 30s fetch timeout matching serverless capacity
         });
         const body = await res.json();
-        if (!res.ok) throw new Error(body.error?.message || "Analysis failed");
+        if (!res.ok) throw new Error(body.error?.message || body.message || "Analysis failed");
         return body.data;
       } catch (err: any) {
         console.error(`[SYNC] Client analysis fetch error: ${err?.message}`);
@@ -543,6 +548,7 @@ export function ChartsClientPage() {
       }
 
       const readyData = { ...data, loading: false };
+      console.log("[TELEMETRY-6] AI response text:", readyData.coachNarrative);
       setAnalysisData(readyData);
       setChatId(null);
       setShowFollowUps(false);
@@ -786,7 +792,7 @@ Timestamp: ${new Date().toISOString()}
       }
 
       // Immediately clear stale analysis state for previous symbol
-      setAnalysisData(getDynamicFallbackRef.current(selectedSymbol, selectedTimeframe));
+      setAnalysisData(null);
       setAnalysisReady(false);
 
       analyzeMutate({ symbol: selectedSymbol, timeframe: selectedTimeframe });

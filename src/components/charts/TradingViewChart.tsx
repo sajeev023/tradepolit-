@@ -168,6 +168,7 @@ export const TradingViewChart = memo(function TradingViewChart({
       const loadTime = performance.now() - initStart;
       profiler.recordChartLoad(loadTime);
       isWidgetReadyRef.current = true;
+      console.log("[TELEMETRY-1] Raw widget data:", { symbol, tvSymbol, timeframe, tvInterval, status: "READY" });
     });
 
     widgetRef.current = widget;

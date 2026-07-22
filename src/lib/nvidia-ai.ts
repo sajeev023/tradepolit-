@@ -20,7 +20,7 @@
 import OpenAI from "openai";
 
 /* ─── Provider types ─────────────────────────────────────────────────── */
-type Provider = "groq" | "nvidia" | "openai";
+type Provider = "groq" | "nvidia" | "openai" | "gemini";
 
 interface ModelDef {
   id: number;
@@ -47,6 +47,14 @@ export const MODELS: ModelDef[] = [
     provider: "groq",
     quality: "fast",
     timeout: 12_000,
+  },
+  {
+    // Gemini 2.0 Flash
+    id: 5,
+    name: "gemini-2.0-flash",
+    provider: "gemini",
+    quality: "good",
+    timeout: 10_000,
   },
   {
     // NVIDIA fastest small model
@@ -124,6 +132,10 @@ async function callSingleModel(
     apiKey = (process.env.GROQ_API_KEY || "").trim().replace(/^["']|["']$/g, "");
     endpoint = GROQ_ENDPOINT;
     if (!apiKey) throw new Error("GROQ_API_KEY not set");
+  } else if (modelDef.provider === "gemini") {
+    apiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    if (!apiKey) throw new Error("GEMINI_API_KEY not set");
   } else if (modelDef.provider === "openai") {
     apiKey = (process.env.OPENAI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
     endpoint = OPENAI_ENDPOINT;
@@ -136,13 +148,31 @@ async function callSingleModel(
 
   const providerTag = modelDef.provider.toUpperCase();
 
-  const bodyJson = JSON.stringify({
-    model: modelDef.name,
-    messages,
-    max_tokens: options.maxTokens ?? 350,
-    temperature: options.temperature ?? 0.25,
-    stream: false,
-  });
+  let bodyJson: string;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+  if (modelDef.provider === "gemini") {
+    const systemMsg = messages.find(m => m.role === "system");
+    const rest = messages.filter(m => m.role !== "system");
+    const contents = rest.map(m => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }]
+    }));
+    const geminiBody: any = { contents };
+    if (systemMsg) {
+      geminiBody.systemInstruction = { parts: [{ text: systemMsg.content }] };
+    }
+    bodyJson = JSON.stringify(geminiBody);
+  } else {
+    headers["Authorization"] = `Bearer ${apiKey}`;
+    bodyJson = JSON.stringify({
+      model: modelDef.name,
+      messages,
+      max_tokens: options.maxTokens ?? 350,
+      temperature: options.temperature ?? 0.25,
+      stream: false,
+    });
+  }
 
   const modelTimeout = setTimeout(() => {
     console.log(
@@ -160,16 +190,14 @@ async function callSingleModel(
 
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       body: bodyJson,
       signal: controller.signal,
     });
 
     clearTimeout(modelTimeout);
     const httpMs = Date.now() - startTime;
+    console.log(`[TELEMETRY-5] AI call – status: ${response.status}, model: ${modelDef.name}, provider: ${modelDef.provider}, duration: ${httpMs}ms`);
     console.log(
       `[RACE] ← [${providerTag}] ${modelDef.name} | HTTP ${response.status} | ${httpMs}ms`
     );
@@ -186,7 +214,13 @@ async function callSingleModel(
     const data = await response.json();
     const parseMs = Date.now() - parseStart;
 
-    const content: string = data.choices?.[0]?.message?.content ?? "";
+    let content = "";
+    if (modelDef.provider === "gemini") {
+      content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    } else {
+      content = data.choices?.[0]?.message?.content ?? "";
+    }
+
     if (!content) throw new Error("Empty content in response");
 
     const totalMs = Date.now() - startTime;
@@ -249,6 +283,7 @@ function getApiKey(provider: Provider): string | undefined {
   if (provider === "groq") return process.env.GROQ_API_KEY;
   if (provider === "nvidia") return process.env.NVIDIA_API_KEY;
   if (provider === "openai") return process.env.OPENAI_API_KEY;
+  if (provider === "gemini") return process.env.GEMINI_API_KEY;
   return undefined;
 }
 
@@ -262,7 +297,7 @@ function getKeyLogInfo(key?: string): string {
 }
 
 function formatProviderCheckReport(errors: any[]): string {
-  const providers = ["groq", "nvidia", "openai"] as const;
+  const providers = ["groq", "nvidia", "openai", "gemini"] as const;
   let report = "=== PROVIDER CHECK ===\n";
 
   providers.forEach((prov) => {
@@ -270,7 +305,7 @@ function formatProviderCheckReport(errors: any[]): string {
     const isEnabled = MODELS.some((m) => m.provider === prov && isKeyValid(key));
     const keyExists = !!key?.trim();
     const keyPrefix = keyExists ? key!.trim().substring(0, 6) + "..." : "NONE";
-    const endpoint = prov === "groq" ? GROQ_ENDPOINT : prov === "openai" ? OPENAI_ENDPOINT : NVIDIA_ENDPOINT;
+    const endpoint = prov === "groq" ? GROQ_ENDPOINT : prov === "openai" ? OPENAI_ENDPOINT : prov === "gemini" ? "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" : NVIDIA_ENDPOINT;
     const modelSample = MODELS.find((m) => m.provider === prov)?.name || "unknown";
 
     const err = errors.find((e) => e.provider === prov);
@@ -307,6 +342,7 @@ console.log(
   `\n[AI MODULE INITIALIZATION]` +
   `\nGROQ_API_KEY loaded = ${getKeyLogInfo(process.env.GROQ_API_KEY)}` +
   `\nNVIDIA_API_KEY loaded = ${getKeyLogInfo(process.env.NVIDIA_API_KEY)}` +
+  `\nGEMINI_API_KEY loaded = ${getKeyLogInfo(process.env.GEMINI_API_KEY)}` +
   `\nOPENAI_API_KEY loaded = ${getKeyLogInfo(process.env.OPENAI_API_KEY)}\n`
 );
 
@@ -321,6 +357,7 @@ export async function callFastestModel(
     if (m.provider === "groq") return isKeyValid(process.env.GROQ_API_KEY);
     if (m.provider === "nvidia") return isKeyValid(process.env.NVIDIA_API_KEY);
     if (m.provider === "openai") return isKeyValid(process.env.OPENAI_API_KEY);
+    if (m.provider === "gemini") return isKeyValid(process.env.GEMINI_API_KEY);
     return false;
   });
 

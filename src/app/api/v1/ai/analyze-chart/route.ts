@@ -171,6 +171,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { symbol, timeframe, bypassCache, livePrice } = validation.data;
+    console.log('[TELEMETRY-4] Backend received:', { symbol, timeframe, bypassCache, livePrice, telemetry: validation.data.telemetry });
     validatedSymbol = symbol;
     validatedTimeframe = timeframe;
 
@@ -366,24 +367,17 @@ COACHING MANDATE:
     }, tech.currentPrice);
     dataErrors.push(...levelErrors);
 
-    if (!tech.currentPrice || isNaN(tech.currentPrice) || tech.currentPrice <= 0) {
-      dataErrors.push("Market data not ready — price is invalid or N/A");
-    }
-    if (tech.rsi === undefined || isNaN(tech.rsi)) {
-      dataErrors.push("Indicators not ready — RSI is NaN");
-    }
-    if (!tech.support || isNaN(tech.support) || tech.support <= 0) {
-      dataErrors.push("Levels not ready — support level is NaN");
-    }
-    if (!tech.resistance || isNaN(tech.resistance) || tech.resistance <= 0) {
-      dataErrors.push("Levels not ready — resistance level is NaN");
-    }
+    const requiredFields = ['currentPrice', 'rsi', 'support', 'resistance'];
+    const missing = requiredFields.filter(f => {
+      const val = tech[f];
+      return val === undefined || val === null || (typeof val === 'number' && (isNaN(val) || val === 0));
+    });
 
-    if (dataErrors.length > 0) {
-      console.error(`[ANALYSIS REJECTED] Telemetry validation failed for ${symbol} ${timeframe}:`, dataErrors);
+    if (missing.length > 0 || dataErrors.length > 0) {
+      console.error('[TELEMETRY] Missing required fields or validation failed:', { missing, dataErrors });
       return errorResponse(
-        "UPSTREAM_UNAVAILABLE",
-        "Market telemetry is still synchronizing. Please wait for indicator pipeline to finish.",
+        "TELEMETRY_UNAVAILABLE",
+        "Live market data is temporarily unavailable. Please try again in a moment.",
         503
       );
     }
