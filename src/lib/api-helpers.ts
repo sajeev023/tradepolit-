@@ -72,7 +72,7 @@ export function upstreamError(message = "External service unavailable") {
 export function aiUnavailableError() {
   return errorResponse(
     "UPSTREAM_UNAVAILABLE",
-    "AI analysis is temporarily unavailable due to high demand. Please try again in a moment.",
+    "Market telemetry fallback active. Please refresh and try again.",
     503
   );
 }
