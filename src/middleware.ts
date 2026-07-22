@@ -44,9 +44,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const { user, supabaseResponse } = await updateSession(request);
-
   if (isPublicRoute(pathname)) {
+    // Fast path for public routes (e.g. Meta Ads landing page traffic):
+    // If no Supabase session cookies exist, return response immediately without remote auth network call.
+    const hasAuthCookie = request.cookies.getAll().some((c) => c.name.startsWith("sb-"));
+    if (!hasAuthCookie) {
+      return NextResponse.next();
+    }
+    const { user, supabaseResponse } = await updateSession(request);
     if (user && ["/", "/login", "/signup"].includes(pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = "/charts";
@@ -54,6 +59,8 @@ export async function middleware(request: NextRequest) {
     }
     return supabaseResponse;
   }
+
+  const { user, supabaseResponse } = await updateSession(request);
 
   if (isApiRoute(pathname)) {
     // CSRF hardening: reject cross-origin mutations. Same-origin POST/PATCH/DELETE

@@ -60,16 +60,20 @@ function TypedResponse() {
     let index = 0;
     let timeout: ReturnType<typeof setTimeout>;
     const tick = () => {
+      if (document.hidden) {
+        timeout = setTimeout(tick, 200);
+        return;
+      }
       if (index < fullAiResponse.length) {
         setTypedText(fullAiResponse.substring(0, index + 1));
         index++;
-        timeout = setTimeout(tick, 18);
+        timeout = setTimeout(tick, 45);
       } else {
         timeout = setTimeout(() => {
           index = 0;
           setTypedText("");
-          timeout = setTimeout(tick, 6000);
-        }, 6000);
+          timeout = setTimeout(tick, 5000);
+        }, 5000);
       }
     };
     tick();

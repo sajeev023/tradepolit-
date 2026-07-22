@@ -59,10 +59,14 @@ export function AntigravityCanvas({
     window.addEventListener("resize", handleResize);
 
     // ── Initialize Particles ──
+    const isMobile = window.innerWidth < 768 || window.matchMedia("(pointer: coarse)").matches;
+    const effectiveParticleCount = isMobile ? Math.min(particleCount, 35) : particleCount;
+    const enableShadow = !isMobile;
+
     const particles: Particle[] = [];
     const shapes: ("circle" | "square" | "triangle")[] = ["circle", "square", "triangle"];
-    for (let i = 0; i < particleCount; i++) {
-      const theta = (i / particleCount) * Math.PI * 2;
+    for (let i = 0; i < effectiveParticleCount; i++) {
+      const theta = (i / effectiveParticleCount) * Math.PI * 2;
       const x = Math.random() * width;
       const y = Math.random() * height;
       const shape = shapes[i % shapes.length];
@@ -96,8 +100,10 @@ export function AntigravityCanvas({
       mouseRef.current.y = -9999;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseleave", handleMouseLeave);
+    if (!isMobile) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseleave", handleMouseLeave);
+    }
 
     // ── Main Physics Loop ──
     let time = 0;
@@ -107,6 +113,10 @@ export function AntigravityCanvas({
     const kappa = 0.6;
 
     const render = () => {
+      if (document.hidden) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
       time += 0.016;
       ctx.clearRect(0, 0, width, height);
 
@@ -168,8 +178,10 @@ export function AntigravityCanvas({
 
         const color = colors[i % colors.length];
         ctx.fillStyle = color;
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 3;
+        if (enableShadow) {
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 3;
+        }
 
         ctx.beginPath();
         if (p.shape === "circle") {

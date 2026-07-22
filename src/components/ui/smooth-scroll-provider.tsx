@@ -9,9 +9,10 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
-    // Check prefers-reduced-motion
+    // Check prefers-reduced-motion & touch device (mobile)
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) return;
+    const isTouch = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
+    if (prefersReducedMotion || isTouch) return;
 
     gsap.registerPlugin(ScrollTrigger);
 

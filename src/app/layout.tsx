@@ -69,6 +69,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.__TP_START = performance.now();
+              if (window.gtag) { window.gtag('event', 'page_view'); }
+            `,
+          }}
+        />
+      </head>
       <body className="antialiased selection:bg-emerald-500/20 selection:text-emerald-300">
         <JsonLd />
         <ErrorBoundary>

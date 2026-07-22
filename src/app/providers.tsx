@@ -3,14 +3,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { Toaster } from "sonner";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
-
-// Initialize Stripe on client using publishable key (gracefully fall back to dummy test key if undefined to avoid client-side crash)
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
-  "pk_test_51OpPjSJ2y8b6rFkK99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g99g"
-);
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -28,9 +20,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Elements stripe={stripePromise}>
-        {children}
-      </Elements>
+      {children}
       <Toaster
         theme="dark"
         position="bottom-right"

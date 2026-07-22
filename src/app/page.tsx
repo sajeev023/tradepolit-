@@ -12,17 +12,26 @@ import {
   BarChart3,
   MessageSquare,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { StickyHeader } from "@/components/layout/sticky-header";
-import { InfiniteMarquee } from "@/components/ui/infinite-marquee";
 import { ElasticCard } from "@/components/ui/elastic-card";
-import { AntigravityCanvas } from "@/components/ui/antigravity-canvas";
 import { SvgTracedLine } from "@/components/ui/svg-traced-line";
 import { MobileMenu } from "@/components/landing/mobile-menu";
-import { MobileProductPreview, DesktopProductPreview } from "@/components/landing/product-preview";
+import { MobileProductPreview } from "@/components/landing/product-preview";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { AnimatedSection } from "@/components/landing/scroll-animator";
 import { DesktopNavCTA } from "@/components/landing/navbar-ctas";
 import { HeroCTA } from "@/components/landing/hero-cta";
+
+const AntigravityCanvas = dynamic(
+  () => import("@/components/ui/antigravity-canvas").then((m) => m.AntigravityCanvas)
+);
+const DesktopProductPreview = dynamic(
+  () => import("@/components/landing/product-preview").then((m) => m.DesktopProductPreview)
+);
+const InfiniteMarquee = dynamic(
+  () => import("@/components/ui/infinite-marquee").then((m) => m.InfiniteMarquee)
+);
 
 const features = [
   { icon: <Sparkles size={18} />, title: "Proactive AI Analysis", desc: "Charts auto-analyzed on selection. Indicators, bias, and levels loaded into the prompt pipeline instantly." },
