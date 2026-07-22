@@ -298,6 +298,8 @@ export function generateSourceMetadata(
   };
 }
 
+import { validateTradeAnalysis } from "./trade-validator";
+
 /**
  * Consistency Validation Function
  */
@@ -340,13 +342,43 @@ export function validateAnalysisConsistency(analysisData: any): AnalysisConsiste
     }
   }
 
-  if (issues.length > 0) {
-    console.error("[CONSISTENCY CHECK] FAILED:", issues);
+  // If telemetry or narrative object is present, run full trade validator
+  if (analysisData.currentPrice || analysisData.symbol || analysisData.coachNarrative) {
+    const techContext = {
+      symbol: analysisData.symbol || "UNKNOWN",
+      timeframe: analysisData.timeframe || "1h",
+      currentPrice: parseNum(analysisData.currentPrice),
+      support: support,
+      resistance: resistance,
+      invalidationLevel: invalidation,
+      rsi: rsi,
+      macdValue: parseNum(analysisData.macdValue ?? analysisData.indicators?.macd?.macd),
+      macdSignal: parseNum(analysisData.macdSignal ?? analysisData.indicators?.macd?.signal),
+      macdHistogram: parseNum(analysisData.macdHistogram ?? analysisData.indicators?.macd?.histogram ?? 0),
+      trend: analysisData.trend || "SIDEWAYS",
+      bias: analysisData.bias || "NEUTRAL",
+      confidence: analysisData.confidence || "MEDIUM",
+      volumeSurgeRatio: analysisData.volumeSurgeRatio,
+      volatility: analysisData.volatility,
+      isVolatilitySpike: analysisData.isVolatilitySpike,
+      atr: analysisData.atr,
+    };
+    const fullRes = validateTradeAnalysis(analysisData, techContext);
+    if (!fullRes.isValid) {
+      issues.push(...fullRes.issues);
+    }
+  }
+
+  // De-duplicate issue list
+  const uniqueIssues = [...new Set(issues)];
+
+  if (uniqueIssues.length > 0) {
+    console.error("[CONSISTENCY CHECK] FAILED:", uniqueIssues);
   } else {
     console.log("[CONSISTENCY CHECK] PASSED");
   }
 
-  return { isValid: issues.length === 0, issues };
+  return { isValid: uniqueIssues.length === 0, issues: uniqueIssues };
 }
 
 export interface TechnicalContext {

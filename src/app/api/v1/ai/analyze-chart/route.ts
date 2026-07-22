@@ -636,25 +636,69 @@ REQUIRED JSON RESPONSE SCHEMA:
       return successResponse(fallbackAnalysis);
     }
 
-    // 5. Parse & repair AI output with safe parsing engine
-    const parseResult = safeParseAIResponse(
-      raceResult.content,
-      {
-        symbol,
-        timeframe,
-        currentPrice: tech.currentPrice,
-        support: tech.support,
-        resistance: tech.resistance,
-        invalidationLevel: tech.invalidationLevel,
-        rsi: tech.rsi,
-        rsiLabel: tech.rsiLabel,
-        bias: tech.bias,
-        setupQuality: tech.setupQuality,
-        confidence: tech.confidence,
-        trend: tech.trend,
-        sourceMetadata: tech.sourceMetadata,
+    // 5. Parse & validate AI output with post-analysis validation engine
+    const techTelemetryData = {
+      symbol,
+      timeframe,
+      currentPrice: tech.currentPrice,
+      support: tech.support,
+      resistance: tech.resistance,
+      invalidationLevel: tech.invalidationLevel,
+      rsi: tech.rsi,
+      rsiLabel: tech.rsiLabel,
+      bias: tech.bias,
+      setupQuality: tech.setupQuality,
+      confidence: tech.confidence,
+      trend: tech.trend,
+      sourceMetadata: tech.sourceMetadata,
+      macdValue: tech.macdValue,
+      macdSignal: tech.macdSignal,
+      macdHistogram: tech.macdHistogram,
+      volumeSurgeRatio: tech.volumeSurgeRatio,
+      volatility: tech.volatility,
+      isVolatilitySpike: tech.isVolatilitySpike,
+      atr: tech.atr,
+    };
+
+    let activeContent = raceResult.content;
+    let parseResult = safeParseAIResponse(activeContent, techTelemetryData);
+
+    // AI REGENERATION LOOP (Attempt 1 Retry if validation fails)
+    if (!parseResult.schemaValid || (parseResult.validationResult && !parseResult.validationResult.isValid)) {
+      const issues = parseResult.validationResult?.issues || [parseResult.rejectionReason || "Validation failed"];
+      console.warn(`[AI VALIDATION REJECTED ATTEMPT 1] Issues:\n${issues.map(i => `  - ${i}`).join("\n")}\nTriggering 1 AI Regeneration attempt...`);
+
+      const retryUserPrompt = `CRITICAL LOGICAL CONTRADICTION DETECTED IN PREVIOUS ATTEMPT:
+Your previous response contained the following errors and contradictions:
+${issues.map(i => `- ${i}`).join("\n")}
+
+REQUIREMENTS TO FIX:
+1. MACD: MACD Value ${tech.macdValue.toFixed(4)}, Signal ${tech.macdSignal.toFixed(4)}. If MACD > Signal, describe MACD as BULLISH. If MACD < Signal, describe MACD as BEARISH.
+2. STOP LOSS: For ${tech.bias}, Stop Loss MUST be strictly ${tech.bias.includes("BUY") || tech.bias.includes("LONG") ? `below Entry ($${tech.currentPrice}) and <= Support ($${tech.support})` : `above Entry ($${tech.currentPrice}) and >= Resistance ($${tech.resistance})`}.
+3. RSI: RSI is ${tech.rsi.toFixed(2)}. Narrative must describe it as "${parseResult.validationResult?.rsiClassification || tech.rsiLabel}".
+4. RISK LEVEL: Dynamic telemetry risk is calculated as ${parseResult.validationResult?.calculatedRisk || "Medium"}. Set JSON riskLevel and narrative to reflect this.
+5. REWARD TO RISK: Ensure Take Profit is positioned to achieve R:R ratio >= 1.5.
+
+Return a PERFECT, logically consistent JSON payload matching the required schema.`;
+
+      try {
+        const regenResult = await callFastestModel([
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+          { role: "assistant", content: activeContent },
+          { role: "user", content: retryUserPrompt }
+        ], {
+          temperature: 0.1,
+          maxTokens: 600,
+        });
+
+        console.log(`[AI REGENERATION COMPLETED] Latency: ${regenResult.duration}ms`);
+        activeContent = regenResult.content;
+        parseResult = safeParseAIResponse(activeContent, techTelemetryData);
+      } catch (retryErr: any) {
+        console.error(`[AI REGENERATION ATTEMPT FAILED] Error:`, retryErr);
       }
-    );
+    }
 
     const {
       parsed: parsedData,
@@ -663,9 +707,34 @@ REQUIRED JSON RESPONSE SCHEMA:
       jsonParseSuccess,
       schemaValid,
       rejectionReason,
+      validationResult,
     } = parseResult;
 
-    const isAccepted = !isFallback;
+    // Structured Error Response if validation fails even after regeneration
+    if (!schemaValid || (validationResult && !validationResult.isValid)) {
+      const finalIssues = validationResult?.issues || [rejectionReason || "Analysis failed post-analysis validation checks"];
+      console.error(`[ROUTER REJECTED RESPONSE AFTER REGENERATION] Issues:`, finalIssues);
+      reservedUserId = null;
+
+      return errorResponse(
+        "VALIDATION_FAILED",
+        `AI trade analysis contained internal logical contradictions: ${finalIssues.join("; ")}`,
+        422,
+        {
+          validationIssues: finalIssues,
+          attemptedRegeneration: true,
+          telemetry: {
+            symbol,
+            timeframe,
+            currentPrice: tech.currentPrice,
+            support: tech.support,
+            resistance: tech.resistance,
+            rsi: tech.rsi,
+            bias: tech.bias,
+          }
+        }
+      );
+    }
 
     console.log(
       `\n[RESPONSE EVALUATION SUMMARY]` +
@@ -676,8 +745,7 @@ REQUIRED JSON RESPONSE SCHEMA:
       `\nResponse Length: ${raceResult.content.length} bytes` +
       `\nJSON Parsing Succeeded: ${jsonParseSuccess} (Repaired: ${isRepaired})` +
       `\nSchema Validation Succeeded: ${schemaValid}` +
-      `\nResponse Accepted: ${isAccepted}` +
-      `\nRejection Reason: ${rejectionReason || "NONE"}\n`
+      `\nResponse Accepted: TRUE\n`
     );
 
     const analyzedAtStr = new Date().toISOString();
@@ -713,26 +781,6 @@ REQUIRED JSON RESPONSE SCHEMA:
         invalidation: tech.invalidationLevel,
       },
     };
-
-    const consistency = validateAnalysisConsistency(finalResponse);
-    if (!consistency.isValid) {
-      console.error(
-        `\n[ROUTER REJECTED RESPONSE]` +
-        `\nProvider: ${raceResult.provider.toUpperCase()}` +
-        `\nModel: ${raceResult.model}` +
-        `\nStage: ROUTER CONSISTENCY` +
-        `\nRejection Reason: ${consistency.issues.join("; ")}` +
-        `\nFallback Triggered: YES (Indicator-Only)\n`
-      );
-    } else {
-      console.log(
-        `\n[ROUTER ACCEPTED RESPONSE]` +
-        `\nProvider: ${raceResult.provider.toUpperCase()}` +
-        `\nModel: ${raceResult.model}` +
-        `\nStage: PASSED ALL CHECKS (Provider -> Parser -> Schema -> Router)` +
-        `\nAction: Returning live AI analysis to client\n`
-      );
-    }
 
     reservedUserId = null; // Analysis completed successfully — keep the reservation
 

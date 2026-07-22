@@ -13,6 +13,7 @@
  */
 
 import { validateAnalysisConsistency } from "./indicators";
+import { validateTradeAnalysis, ValidationResult, calculateDynamicRisk } from "./trade-validator";
 
 export interface AIAnalysisSchema {
   marketRegime: string;
@@ -204,6 +205,7 @@ export interface SafeParseResult {
   jsonParseSuccess: boolean;
   schemaValid: boolean;
   rejectionReason?: string;
+  validationResult?: ValidationResult;
 }
 
 export function safeParseAIResponse(
@@ -222,6 +224,13 @@ export function safeParseAIResponse(
     confidence: string;
     trend: string;
     sourceMetadata: any;
+    macdValue?: number;
+    macdSignal?: number;
+    macdHistogram?: number;
+    volumeSurgeRatio?: number;
+    volatility?: number;
+    isVolatilitySpike?: boolean;
+    atr?: number;
   }
 ): SafeParseResult {
   const symbol = techTelemetry.symbol;
@@ -298,6 +307,9 @@ export function safeParseAIResponse(
     coachNarrative = `${headerLine}\n\n${coachNarrative.trim()}`;
   }
 
+  // Dynamic Risk Engine Calculation
+  const dynamicRisk = calculateDynamicRisk(techTelemetry as any);
+
   const finalParsed: AIAnalysisSchema = {
     marketRegime: parsedObj.marketRegime || `${techTelemetry.trend} Market Structure`,
     bias: parsedObj.bias || techTelemetry.bias,
@@ -307,32 +319,34 @@ export function safeParseAIResponse(
     rsi: techTelemetry.rsi,
     rsiLabel: techTelemetry.rsiLabel,
     setupQuality: parsedObj.setupQuality || techTelemetry.setupQuality,
-    riskLevel: parsedObj.riskLevel || "Medium",
+    riskLevel: parsedObj.riskLevel || dynamicRisk.calculatedRisk,
     confidence: parsedObj.confidence || techTelemetry.confidence,
     whyItMatters:
       parsedObj.whyItMatters ||
       `${symbol} is trading in a ${techTelemetry.trend.toLowerCase()} regime on the ${timeframe} interval. RSI is ${techTelemetry.rsi.toFixed(1)} (${techTelemetry.rsiLabel}).`,
-    entryIdeas: `Limit entry near support level $${techTelemetry.support.toLocaleString()}`,
-    stopLossIdea: `Hard stop at invalidation level $${techTelemetry.invalidationLevel.toLocaleString()}`,
-    takeProfitIdea: `Target resistance level $${techTelemetry.resistance.toLocaleString()}`,
+    entryIdeas: parsedObj.entryIdeas || `Limit entry near support level $${techTelemetry.support.toLocaleString()}`,
+    stopLossIdea: parsedObj.stopLossIdea || `$${techTelemetry.invalidationLevel.toLocaleString()}`,
+    takeProfitIdea: parsedObj.takeProfitIdea || `$${techTelemetry.resistance.toLocaleString()}`,
     shortTermScenario:
       parsedObj.shortTermScenario ||
       `Monitor key structural levels at $${techTelemetry.support.toLocaleString()} (support) and $${techTelemetry.resistance.toLocaleString()} (resistance).`,
     coachNarrative: coachNarrative,
   };
 
-  const consistency = validateAnalysisConsistency(finalParsed as any);
-  if (!consistency.isValid) {
+  const validationRes = validateTradeAnalysis(finalParsed, techTelemetry as any);
+
+  if (!validationRes.isValid) {
     schemaValid = false;
-    rejectionReason = `CONSISTENCY_CHECK_FAILED: ${consistency.issues.join("; ")}`;
-    console.warn(`[AI PARSER EVALUATION] ${rejectionReason}. Falling back to deterministic telemetry.`);
+    rejectionReason = `CONSISTENCY_CHECK_FAILED: ${validationRes.issues.join("; ")}`;
+    console.warn(`[AI PARSER EVALUATION] ${rejectionReason}. Marking invalid.`);
     return {
-      parsed: buildTelemetryFallback(techTelemetry),
-      isRepaired: false,
-      isFallback: true,
+      parsed: finalParsed,
+      isRepaired,
+      isFallback: false,
       jsonParseSuccess: true,
       schemaValid: false,
       rejectionReason,
+      validationResult: validationRes,
     };
   }
 
@@ -344,6 +358,7 @@ export function safeParseAIResponse(
     jsonParseSuccess,
     schemaValid,
     rejectionReason: undefined,
+    validationResult: validationRes,
   };
 }
 
