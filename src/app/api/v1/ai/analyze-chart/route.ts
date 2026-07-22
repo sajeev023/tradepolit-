@@ -78,47 +78,59 @@ const analyzeChartSchema = z.object({
 // Allow up to 60s for AI model race — overrides Next.js default 10s timeout
 export const maxDuration = 60;
 
-function buildFallbackAnalysis(symbol: string, timeframe: string, tech: any, traderName = "Trader", behavioralCtx = "") {
-  const price = tech?.currentPrice || 0;
-  const supportVal = tech?.support || (price ? price * 0.97 : 0);
-  const resistanceVal = tech?.resistance || (price ? price * 1.03 : 0);
-  const invalidationVal = tech?.invalidationLevel || (price ? price * 0.96 : 0);
+function buildFallbackAnalysis(symbol: string, timeframe: string, tech: any, exchange: string, traderName = "Trader", behavioralCtx = "", aiOffline: boolean = false) {
+  // Hard guard: if no verified telemetry, refuse to fabricate a Synchronized narrative.
+  // Callers MUST handle the null return (e.g. 503 upstream-unavailable).
+  if (!tech || !tech.currentPrice || tech.currentPrice <= 0 || !tech.support || !tech.resistance) {
+    return null;
+  }
 
-  const supportStr = supportVal ? supportVal.toLocaleString() : "0.00";
-  const resistanceStr = resistanceVal ? resistanceVal.toLocaleString() : "0.00";
+  const price = tech.currentPrice;
+  const supportVal = tech.support;
+  const resistanceVal = tech.resistance;
+  const invalidationVal = tech.invalidationLevel && tech.invalidationLevel > 0
+    ? tech.invalidationLevel
+    : (tech.bias === "BUY/LONG" ? supportVal * 0.98 : tech.bias === "SELL/SHORT" ? resistanceVal * 1.02 : price * 0.98);
 
-  const biasLabel = tech?.bias || "NEUTRAL";
-  const rsiVal = tech?.rsi ?? 50;
-  const rsiLbl = tech?.rsiLabel || "Neutral";
+  const supportStr = supportVal.toLocaleString();
+  const resistanceStr = resistanceVal.toLocaleString();
+
+  const biasLabel = tech.bias || "NEUTRAL";
+  const rsiVal = typeof tech.rsi === "number" && !isNaN(tech.rsi) ? tech.rsi : 50;
+  const rsiLbl = tech.rsiLabel || "Neutral";
 
   // Extract key behavioral flags for the narrative
   const overtradingNotice = behavioralCtx.includes("OVERTRADING") ? `\n\n⚠️ **Behavioral Alert:** ${traderName}, you're at risk of overtrading today. Consider this analysis a moment to pause and reflect, not a signal to enter.` : "";
   const revengeNotice = behavioralCtx.includes("Revenge Trading Detected: YES") ? `\n\n⚠️ **Behavioral Alert:** ${traderName}, I notice a revenge trading pattern in your recent history. After your last loss, you entered another trade within minutes. Take a 30-minute break before making any decisions.` : "";
 
-  const isMacdBullish = (tech?.macdValue ?? 0) > (tech?.macdSignal ?? 0);
+  const isMacdBullish = (tech.macdValue ?? 0) > (tech.macdSignal ?? 0);
+  const sourceTag = aiOffline
+    ? "Analysis Source: TradePilot Telemetry (Indicators Only) | "
+    : "Analysis Source: TradePilot Telemetry | ";
+  const statusTag = aiOffline ? "Status: Indicator-Only (AI unavailable)" : "Status: Synchronized";
 
   return {
     symbol,
     timeframe,
     cached: false,
-    marketRegime: tech?.trend ? `${tech.trend} momentum favored.` : `Range-bound structure on ${timeframe}.`,
+    marketRegime: tech.trend ? `${tech.trend} momentum favored.` : `Range-bound structure on ${timeframe}.`,
     bias: biasLabel,
     support: supportVal,
     resistance: resistanceVal,
     invalidationLevel: invalidationVal,
-    setupQuality: tech?.setupQuality || "SPECULATIVE",
+    setupQuality: tech.setupQuality || "SPECULATIVE",
     riskLevel: "Medium",
-    confidence: tech?.confidence || "MEDIUM",
+    confidence: tech.confidence || "MEDIUM",
     whyItMatters: `Key local structure at $${supportStr} / $${resistanceStr} with ${rsiLbl.toLowerCase()} RSI.`,
-    entryIdeas: price ? `Limit near support at $${supportStr}.` : "Awaiting telemetry synchronization...",
+    entryIdeas: `Limit near support at $${supportStr}.`,
     stopLossIdea: invalidationVal ? invalidationVal.toString() : null,
     takeProfitIdea: resistanceVal ? resistanceVal.toString() : null,
-    shortTermScenario: price ? `Price respecting support at $${supportStr} with momentum toward $${resistanceStr}.` : "Awaiting telemetry synchronization...",
-    coachNarrative: `Analysis Source: TradePilot Telemetry (AI Offline) | Symbol: ${symbol} | Exchange: AUTO | TF: ${timeframe} | Price: $${price ? price.toLocaleString() : "N/A"} | Status: Synchronized\n\n## Executive Summary\n${traderName}, ${symbol} is in a ${tech?.trend || "neutral"} regime on the ${timeframe} timeframe. Price is at $${price ? price.toLocaleString() : "N/A"}, with support at $${supportStr} and resistance at $${resistanceStr}.${overtradingNotice}${revengeNotice}\n\n## Market Structure\nTechnical indicators show ${symbol} in a ${tech?.trend || "neutral"} regime. ${price > supportVal * 1.01 ? "Price is holding above key support, suggesting buyers are still in control." : "Price is near support — this is a decision zone."}\n\n## Momentum Analysis\nRSI(14) at ${rsiVal.toFixed(2)} (${rsiLbl}). ${rsiVal >= 70 ? "Overbought — caution on longs." : rsiVal <= 30 ? "Oversold — watch for reversal." : "Momentum neutral to directional."} ${isMacdBullish ? "MACD is bullish (signal line above)." : "MACD is bearish (signal line below)."}\n\n## Key Levels\nSupport: $${supportStr} | Resistance: $${resistanceStr} | Invalidation: $${invalidationVal.toLocaleString()}\n\n## Trade Thesis\n${biasLabel} bias favored while support at $${supportStr} holds. ${tech?.setupQuality === "A+ SELECT" ? "This is a high-conviction setup — clear levels, aligned momentum." : tech?.setupQuality === "HIGH GRADE" ? "Decent setup with manageable risk." : "Enter only if you have a specific catalyst or additional confluence."}\n\n## Risk Assessment\nVolatility: ${tech?.volatility ? tech.volatility.toFixed(2) + "%" : "normal"}. Position size accordingly. Risk from current price to invalidation is ${price > 0 && invalidationVal > 0 ? `$${Math.abs(price - invalidationVal).toFixed(2)}` : "standard"}.\n\n## Invalidation\nA close below $${invalidationVal.toLocaleString()} invalidates the thesis.\n\n## Bottom Line\n${price > supportVal * 1.02 ? "WAIT for a pullback to support or a confirmed breakout above resistance before entering." : "HOLDING support — watch for confirmation before committing capital."}`,
+    shortTermScenario: `Price respecting support at $${supportStr} with momentum toward $${resistanceStr}.`,
+    coachNarrative: `${sourceTag}Symbol: ${symbol} | Exchange: ${exchange} | TF: ${timeframe} | Price: $${price.toLocaleString()} | ${statusTag}\n\n## Executive Summary\n${traderName}, ${symbol} is in a ${tech.trend || "neutral"} regime on the ${timeframe} timeframe. Price is at $${price.toLocaleString()}, with support at $${supportStr} and resistance at $${resistanceStr}.${overtradingNotice}${revengeNotice}\n\n## Market Structure\nTechnical indicators show ${symbol} in a ${tech.trend || "neutral"} regime. ${price > supportVal * 1.01 ? "Price is holding above key support, suggesting buyers are still in control." : "Price is near support — this is a decision zone."}\n\n## Momentum Analysis\nRSI(14) at ${rsiVal.toFixed(2)} (${rsiLbl}). ${rsiVal >= 70 ? "Overbought — caution on longs." : rsiVal <= 30 ? "Oversold — watch for reversal." : "Momentum neutral to directional."} ${isMacdBullish ? "MACD is bullish (signal line above)." : "MACD is bearish (signal line below)."}\n\n## Key Levels\nSupport: $${supportStr} | Resistance: $${resistanceStr} | Invalidation: $${invalidationVal.toLocaleString()}\n\n## Trade Thesis\n${biasLabel} bias favored while support at $${supportStr} holds. ${tech.setupQuality === "A+ SELECT" ? "This is a high-conviction setup — clear levels, aligned momentum." : tech.setupQuality === "HIGH GRADE" ? "Decent setup with manageable risk." : "Enter only if you have a specific catalyst or additional confluence."}\n\n## Risk Assessment\nVolatility: ${tech.volatility ? tech.volatility.toFixed(2) + "%" : "normal"}. Position size accordingly. Risk from current price to invalidation is $${Math.abs(price - invalidationVal).toFixed(2)}.\n\n## Invalidation\nA close below $${invalidationVal.toLocaleString()} invalidates the thesis.\n\n## Bottom Line\n${price > supportVal * 1.02 ? "WAIT for a pullback to support or a confirmed breakout above resistance before entering." : "HOLDING support — watch for confirmation before committing capital."}`,
     indicators: {
       rsi: rsiVal,
       rsiLabel: rsiLbl,
-      macd: { macd: tech?.macdValue || 0, signal: tech?.macdSignal || 0 },
+      macd: { macd: tech.macdValue || 0, signal: tech.macdSignal || 0 },
     },
     levels: {
       support: supportVal,
@@ -128,13 +140,15 @@ function buildFallbackAnalysis(symbol: string, timeframe: string, tech: any, tra
     sourceMetadata: {
       symbolSource: `User selection (${symbol})`,
       timeframeSource: `Chart interval (${timeframe})`,
-      priceSource: price ? `Binance spot ($${price.toLocaleString()})` : "N/A",
+      priceSource: `${exchange} spot ($${price.toLocaleString()})`,
       rsiSource: `RSI(14) from close prices (${rsiVal.toFixed(2)})`,
       supportSource: "Swing-low detector",
       resistanceSource: "Swing-high detector",
-      aiModelSource: "Fallback — technical indicators (AI offline)",
+      aiModelSource: aiOffline
+        ? "Indicators-only fallback (AI providers unavailable)"
+        : "Groq / NVIDIA Multi-Model Race",
     },
-    _aiFallback: true,
+    _aiFallback: aiOffline,
   };
 }
 
@@ -502,8 +516,12 @@ COACHING MANDATE:
 
     const budget = checkTokenBudget("chart analysis", systemPrompt, [], "FREE");
     if (!budget.isWithinLimit) {
+      const fallback = buildFallbackAnalysis(symbol, timeframe, tech, exchangeName, userName, behavioralContext, true);
+      if (!fallback) {
+        return errorResponse("TELEMETRY_UNAVAILABLE", "Live market data is temporarily unavailable. Please try again in a moment.", 503);
+      }
       return successResponse({
-        ...buildFallbackAnalysis(symbol, timeframe, tech, userName, behavioralContext),
+        ...fallback,
         budget,
         _aiSkipped: true,
       });
@@ -606,7 +624,12 @@ REQUIRED JSON RESPONSE SCHEMA:
       // for the same failed analysis. We keep the reservation (user is charged
       // for the attempt) and return the deterministic fallback.
       console.log(`[STEP 9 FALLBACK] Returning indicator-derived analysis for ${symbol} ${timeframe}`);
-      const fallbackAnalysis = buildFallbackAnalysis(symbol, timeframe, tech, userName, behavioralContext);
+      const fallbackAnalysis = buildFallbackAnalysis(symbol, timeframe, tech, exchangeName, userName, behavioralContext, true);
+      if (!fallbackAnalysis) {
+        // No verified telemetry reached the AI race — surface the upstream error
+        // rather than fabricating a Synchronized narrative with N/A values.
+        return errorResponse("TELEMETRY_UNAVAILABLE", "Live market data is temporarily unavailable. Please try again in a moment.", 503);
+      }
       reservedUserId = null;
 
       console.log(`[STEP 11: Response returned] FALLBACK ANALYSIS SUCCESSFUL | totalDuration=${Date.now() - t0}ms`);
@@ -777,14 +800,27 @@ Timestamp: ${new Date().toISOString()}
     }
 
     console.log(`[STEP 11: Response returned] OUTER-CATCH FALLBACK ANALYSIS | totalDuration=${Date.now() - t0}ms`);
-    return successResponse(
-      buildFallbackAnalysis(
-        validatedSymbol || "BTC/USD",
-        validatedTimeframe || "4h",
-        tech || { currentPrice: 0 },
-        userName || "Trader",
-        behavioralContext || ""
-      )
+    // Only return 200 + fallback if we have verified telemetry. Otherwise the
+    // caller never got a real price, so fabricating a Synchronized narrative
+    // with N/A values would be a lie — surface the failure as 503.
+    const catchFallback = tech
+      ? buildFallbackAnalysis(
+          validatedSymbol || "BTC/USD",
+          validatedTimeframe || "4h",
+          tech,
+          "AUTO",
+          userName || "Trader",
+          behavioralContext || "",
+          true
+        )
+      : null;
+    if (catchFallback) {
+      return successResponse(catchFallback);
+    }
+    return errorResponse(
+      "TELEMETRY_UNAVAILABLE",
+      "Live market data is temporarily unavailable. Please try again in a moment.",
+      503
     );
   }
 }

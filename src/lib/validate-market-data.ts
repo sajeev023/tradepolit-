@@ -124,28 +124,36 @@ export function validateLevels(levels: any, currentPrice: number): string[] {
 export function isDataFresh(timestamp: number, timeframe: string): boolean {
   const now = Date.now();
   const age = now - timestamp;
-  
-  const maxAge: Record<string, number> = {
-    '1m': 60 * 1000,        // 1 minute
-    '5m': 2 * 60 * 1000,    // 2 minutes
-    '15m': 5 * 60 * 1000,   // 5 minutes
-    '30m': 10 * 60 * 1000,  // 10 minutes
-    '1h': 10 * 60 * 1000,   // 10 minutes
-    '1H': 10 * 60 * 1000,   // 10 minutes
-    '4h': 15 * 60 * 1000,   // 15 minutes
-    '4H': 15 * 60 * 1000,   // 15 minutes
-    '1d': 30 * 60 * 1000,   // 30 minutes
-    '1D': 30 * 60 * 1000,   // 30 minutes
-    '1w': 60 * 60 * 1000,   // 1 hour
-    '1W': 60 * 60 * 1000,   // 1 hour
+
+  // Max-age must accommodate the candle's full duration PLUS a small grace
+  // period for clock skew, request latency, and exchange close-time reporting
+  // delay. The previous hardcoded table (4h: 15min) rejected 100% of >=1h
+  // candle fetches because a 4h candle is up to 4h old at the time of read.
+  // Grace = min(5min, 50% of candle duration) so sub-hour TFs stay tight
+  // (1m candle is at most 1m old, 2min-old is stale) while long TFs are
+  // accepted.
+  const candleDurationMs: Record<string, number> = {
+    '1m': 60 * 1000,
+    '5m': 5 * 60 * 1000,
+    '15m': 15 * 60 * 1000,
+    '30m': 30 * 60 * 1000,
+    '1h': 60 * 60 * 1000,
+    '1H': 60 * 60 * 1000,
+    '4h': 4 * 60 * 60 * 1000,
+    '4H': 4 * 60 * 60 * 1000,
+    '1d': 24 * 60 * 60 * 1000,
+    '1D': 24 * 60 * 60 * 1000,
+    '1w': 7 * 24 * 60 * 60 * 1000,
+    '1W': 7 * 24 * 60 * 60 * 1000,
   };
-  
-  const max = maxAge[timeframe] || 5 * 60 * 1000;
-  
+  const duration = candleDurationMs[timeframe] || 60 * 60 * 1000;
+  const grace = Math.min(5 * 60 * 1000, duration * 0.5);
+  const max = duration + grace;
+
   if (age > max) {
     console.warn(`[DATA FRESHNESS] Data is ${age}ms old. Max for ${timeframe} is ${max}ms. Refreshing...`);
     return false;
   }
-  
+
   return true;
 }

@@ -133,7 +133,7 @@ describe("Market Data & Indicator Validation Engines", () => {
 
   it("should correctly verify data freshness on various timeframes", () => {
     const now = Date.now();
-    
+
     // Fresh 1m timeframe (last candle 30s ago)
     expect(isDataFresh(now - 30 * 1000, "1m")).toBe(true);
 
@@ -142,5 +142,14 @@ describe("Market Data & Indicator Validation Engines", () => {
 
     // Fresh 4h timeframe (last candle 10 minutes ago)
     expect(isDataFresh(now - 10 * 60 * 1000, "4h")).toBe(true);
+
+    // 4h candle is legitimately up to 4h old — must NOT be rejected as stale.
+    // Regression: previous hardcoded 15min cap on 4h rejected 100% of 4h fetches
+    // and forced the analyze-chart route into the placeholder fallback path.
+    expect(isDataFresh(now - 3 * 60 * 60 * 1000, "4h")).toBe(true);
+    expect(isDataFresh(now - 23 * 60 * 60 * 1000, "1d")).toBe(true);
+
+    // A 4h candle older than 4h + grace is still stale.
+    expect(isDataFresh(now - 10 * 60 * 60 * 1000, "4h")).toBe(false);
   });
 });
