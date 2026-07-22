@@ -8,6 +8,23 @@ const INDEX_SYMBOLS = ["NASDAQ", "S&P500"];
 
 const ALL_SYMBOLS = [...CRYPTO_SYMBOLS, ...FOREX_SYMBOLS, ...INDEX_SYMBOLS];
 
+// TwelveData's symbol universe uses tickers like NDX/SPX rather than the
+// display names. Map app symbols to upstream tickers before calling.
+const TWELVEDATA_SYMBOL_MAP: Record<string, string> = {
+  "NASDAQ": "NDX",
+  "S&P500": "SPX",
+  "XAU/USD": "XAU/USD",
+};
+
+function twelvedataSymbolFor(symbol: string): string {
+  return TWELVEDATA_SYMBOL_MAP[symbol] ?? symbol;
+}
+
+function isTwelvedataKeyValid(): boolean {
+  const k = process.env.TWELVEDATA_API_KEY;
+  return !!k && k.trim() !== "" && k.trim() !== "mock-key" && k.trim() !== "placeholder-key";
+}
+
 // Mock baseline values for realistic pricing when API is unconfigured/fails
 const BASELINE_PRICES: Record<string, number> = {
   "BTC/USD": 68250.0,
@@ -75,7 +92,83 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
   const cachedStats = await getCachedData<Partial<PriceData>>(statsCacheKey);
 
   try {
-    if (CRYPTO_SYMBOLS.includes(normSymbol) || ["EUR/USD", "GBP/USD"].includes(normSymbol)) {
+    // ── Provider priority chain ─────────────────────────────────────────
+    //
+    //   1. TwelveData  — primary for forex, indices, XAU. Always try first
+    //                    when the key is configured; the key covers EUR/GBP/
+    //                    USD/JPY/XAU/NASDAQ/S&P500 reliably.
+    //   2. Binance     — primary for crypto (BTC/ETH/SOL) and EUR/GBP as
+    //                    high-frequency fallback.
+    //   3. Coinbase    — last-resort fallback for crypto.
+    //
+    // Provider selection is symbol-driven:
+    //   - Crypto & supported forex pairs → Binance (then Coinbase).
+    //   - All other forex, indices, XAU  → TwelveData (if key set).
+    //
+    // Each provider returns silently on failure so the next one can run.
+    const isPrimaryForex = FOREX_SYMBOLS.includes(normSymbol);
+    const isIndex = INDEX_SYMBOLS.includes(normSymbol);
+    const isXau = normSymbol === "XAU/USD";
+    const isCrypto = CRYPTO_SYMBOLS.includes(normSymbol);
+    const wantsTwelveData = isIndex || isXau || (isPrimaryForex && isTwelvedataKeyValid());
+    const wantsBinance = isCrypto || ["EUR/USD", "GBP/USD"].includes(normSymbol);
+
+    if (wantsTwelveData && isTwelvedataKeyValid()) {
+      const tdSymbol = twelvedataSymbolFor(normSymbol);
+      const url = `https://api.twelvedata.com/price?symbol=${tdSymbol}&apikey=${process.env.TWELVEDATA_API_KEY}`;
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(3000), cache: "no-store" });
+        if (res.ok) {
+          const tdData = await res.json();
+          if (tdData.price && !isNaN(parseFloat(tdData.price))) {
+            price = parseFloat(tdData.price);
+            console.log(`[Market] TwelveData ← ${normSymbol} (${tdSymbol}) = $${price}`);
+          } else if (tdData.status === "error") {
+            console.warn(`[Market] TwelveData ✗ ${normSymbol}: ${tdData.message}`);
+          }
+        } else {
+          console.warn(`[Market] TwelveData ✗ ${normSymbol}: HTTP ${res.status}`);
+        }
+      } catch (tdErr) {
+        console.warn(`[Market] TwelveData ✗ ${normSymbol}: ${(tdErr as Error).message}`);
+      }
+
+      if (price) {
+        // Fetch 24h stats from TwelveData time series
+        const tdStatsSymbol = twelvedataSymbolFor(normSymbol);
+        try {
+          const res = await fetch(
+            `https://api.twelvedata.com/time_series?symbol=${tdStatsSymbol}&interval=1min&outputsize=2&apikey=${process.env.TWELVEDATA_API_KEY}`,
+            { signal: AbortSignal.timeout(3000), cache: "no-store" }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            if (data.values && data.values.length > 0) {
+              const latest = data.values[0];
+              const open = parseFloat(latest.open);
+              stats = {
+                change24h: price - open,
+                changePercent24h: open > 0 ? ((price - open) / open) * 100 : 0,
+                high24h: parseFloat(latest.high),
+                low24h: parseFloat(latest.low),
+                volume24h: parseFloat(latest.volume || "0"),
+              };
+              await setCachedData(statsCacheKey, stats, 15);
+            }
+          }
+        } catch (_) {}
+      }
+    } else if (wantsTwelveData && !isTwelvedataKeyValid()) {
+      // The symbol requires TwelveData (forex/indices/XAU) and the key
+      // is missing — log explicitly so the operator sees it. We do NOT
+      // hard-error 503 here; the call falls through to SIMULATED and
+      // the existing P0 fix surfaces missing telemetry to the user.
+      console.warn(
+        `[Market] TwelveData ✗ key missing for ${normSymbol} — falling back to SIMULATED`
+      );
+    }
+
+    if (!price && wantsBinance) {
       const binanceSymbol = normSymbol.replace("/USD", "USDT"); // BTC/USD -> BTCUSDT, EUR/USD -> EURUSDT
 
       // ── Step A: Fetch absolute real-time transaction price (120ms latency, zero lag)
@@ -88,16 +181,17 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
           const data = await res.json();
           if (data.price && !isNaN(parseFloat(data.price))) {
             price = parseFloat(data.price);
+            console.log(`[Market] Binance ← ${normSymbol} (${binanceSymbol}) = $${price}`);
           }
         }
       } catch (err) {
-        console.warn(`Binance ticker/price fetch failed:`, err);
+        console.warn(`[Market] Binance ✗ ${normSymbol}: ${(err as Error).message}`);
       }
 
       // ── Step B: Fetch or retrieve cached 24h stats (15s cache TTL to avoid rate-limiting and lag)
       if (cachedStats) {
         stats = cachedStats;
-      } else {
+      } else if (price) {
         const endpoints = [
           `https://api.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`,
           `https://api1.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`,
@@ -141,6 +235,7 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
             const data = await res.json();
             if (data.price && !isNaN(parseFloat(data.price))) {
               price = parseFloat(data.price);
+              console.log(`[Market] Coinbase ← ${normSymbol} (${coinbaseSymbol}) = $${price}`);
             }
           }
         } catch (_) {}
@@ -173,56 +268,6 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
           }
         }
       }
-    } else if (
-      (FOREX_SYMBOLS.includes(normSymbol) || INDEX_SYMBOLS.includes(normSymbol)) &&
-      process.env.TWELVEDATA_API_KEY &&
-      process.env.TWELVEDATA_API_KEY !== "mock-key"
-    ) {
-      const tdSymbol = normSymbol === "XAU/USD" ? "XAU/USD" : normSymbol;
-      
-      // Fetch TwelveData lightweight price
-      try {
-        const res = await fetch(
-          `https://api.twelvedata.com/price?symbol=${tdSymbol}&apikey=${process.env.TWELVEDATA_API_KEY}`,
-          { signal: AbortSignal.timeout(3000), cache: "no-store" }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (data.price && !isNaN(parseFloat(data.price))) {
-            price = parseFloat(data.price);
-          }
-        }
-      } catch (_) {}
-
-      if (price) {
-        if (cachedStats) {
-          stats = cachedStats;
-        } else {
-          try {
-            const res = await fetch(
-              `https://api.twelvedata.com/time_series?symbol=${tdSymbol}&interval=1min&outputsize=2&apikey=${process.env.TWELVEDATA_API_KEY}`,
-              { signal: AbortSignal.timeout(3000), cache: "no-store" }
-            );
-            if (res.ok) {
-              const data = await res.json();
-              if (data.values && data.values.length > 0) {
-                const latest = data.values[0];
-                const open = parseFloat(latest.open);
-                const change = price - open;
-                const pct = open > 0 ? (change / open) * 100 : 0;
-                stats = {
-                  change24h: change,
-                  changePercent24h: pct,
-                  high24h: parseFloat(latest.high),
-                  low24h: parseFloat(latest.low),
-                  volume24h: parseFloat(latest.volume || "0"),
-                };
-                await setCachedData(statsCacheKey, stats, 15);
-              }
-            }
-          } catch (_) {}
-        }
-      }
     }
   } catch (err) {
     console.error(`Upstream fetch failed for ${normSymbol}, falling back to mock:`, err);
@@ -252,13 +297,15 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
     const cacheKeyMock = `mock:price:${normSymbol}`;
     const lastMockPriceObj = await getCachedData<{ price: number }>(cacheKeyMock);
     const basePrice = lastMockPriceObj?.price || BASELINE_PRICES[normSymbol] || 100.0;
-    
+
     const vol = VOLATILITIES[normSymbol] || 0.01;
     // Walk step: small continuous random step between -0.05% and +0.05%
     const stepPct = (Math.random() * 2 - 1) * (vol * 0.05) * 100;
     const walkedPrice = basePrice * (1 + stepPct / 100);
     const change = walkedPrice - (BASELINE_PRICES[normSymbol] || 100.0);
     const changePercent = ((walkedPrice - (BASELINE_PRICES[normSymbol] || 100.0)) / (BASELINE_PRICES[normSymbol] || 100.0)) * 100;
+
+    console.warn(`[Market] SIMULATED ← ${normSymbol} = $${walkedPrice.toFixed(4)} (all providers failed)`);
 
     priceData = {
       symbol: normSymbol,
@@ -272,7 +319,7 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
       source: "SIMULATED",
       warning: `Live market data for ${normSymbol} is temporarily unavailable. Showing a simulated price — do not trade on this value.`,
     };
-    
+
     // Save mock price back to cache for persistent walk (TTL: 1 hour)
     await setCachedData(cacheKeyMock, { price: walkedPrice }, 3600);
   }
@@ -301,7 +348,60 @@ export async function getOHLCV(
   let candles: OHLCVCandle[] = [];
 
   try {
-    if (CRYPTO_SYMBOLS.includes(normSymbol) || ["EUR/USD", "GBP/USD"].includes(normSymbol)) {
+    // TwelveData first when key is set and the symbol requires it
+    // (forex / indices / XAU). Crypto and EUR/GBP prefer Binance.
+    const isPrimaryForex = FOREX_SYMBOLS.includes(normSymbol);
+    const isIndex = INDEX_SYMBOLS.includes(normSymbol);
+    const isXau = normSymbol === "XAU/USD";
+    const isCrypto = CRYPTO_SYMBOLS.includes(normSymbol);
+    const wantsTwelveData = isIndex || isXau || (isPrimaryForex && isTwelvedataKeyValid());
+    const wantsBinance = isCrypto || ["EUR/USD", "GBP/USD"].includes(normSymbol);
+
+    if (wantsTwelveData && isTwelvedataKeyValid()) {
+      const tdInterval =
+        timeframe === "1m" ? "1min" :
+        timeframe === "5m" ? "5min" :
+        timeframe === "15m" ? "15min" :
+        timeframe === "1h" ? "1h" :
+        timeframe === "4h" ? "4h" :
+        timeframe === "1d" ? "1day" :
+        timeframe === "1W" ? "1week" : "1h";
+      const tdSymbol = twelvedataSymbolFor(normSymbol);
+      try {
+        const res = await fetch(
+          `https://api.twelvedata.com/time_series?symbol=${tdSymbol}&interval=${tdInterval}&outputsize=${limit}&apikey=${process.env.TWELVEDATA_API_KEY}`,
+          { signal: AbortSignal.timeout(5000) }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === "error") {
+            console.warn(`[Market] TwelveData ✗ OHLCV ${normSymbol} (${tdSymbol}): ${data.message}`);
+          } else if (data.values && data.values.length > 0) {
+            candles = data.values
+              .map((v: any) => ({
+                timestamp: new Date(v.datetime).getTime(),
+                open: parseFloat(v.open),
+                high: parseFloat(v.high),
+                low: parseFloat(v.low),
+                close: parseFloat(v.close),
+                volume: parseFloat(v.volume || "0"),
+              }))
+              .reverse();
+            console.log(`[Market] TwelveData ← OHLCV ${normSymbol} (${tdSymbol}, ${timeframe}) = ${candles.length} candles`);
+          }
+        } else {
+          console.warn(`[Market] TwelveData ✗ OHLCV ${normSymbol}: HTTP ${res.status}`);
+        }
+      } catch (tdErr) {
+        console.warn(`[Market] TwelveData ✗ OHLCV ${normSymbol}: ${(tdErr as Error).message}`);
+      }
+    } else if (wantsTwelveData && !isTwelvedataKeyValid()) {
+      console.warn(
+        `[Market] TwelveData ✗ key missing for OHLCV ${normSymbol} — falling back to SIMULATED`
+      );
+    }
+
+    if (candles.length === 0 && wantsBinance) {
       // Fetch crypto/forex klines from Binance multi-endpoints
       const binanceSymbol = normSymbol.replace("/USD", "USDT");
       const binanceInterval =
@@ -333,18 +433,19 @@ export async function getOHLCV(
                 close: parseFloat(c[4]),
                 volume: parseFloat(c[5]),
               }));
+              console.log(`[Market] Binance ← OHLCV ${normSymbol} (${binanceSymbol}, ${timeframe}) = ${candles.length} candles`);
               break;
             }
           }
         } catch (subErr) {
-          console.warn(`Binance OHLCV endpoint failed: ${endpoint}`, subErr);
+          console.warn(`[Market] Binance ✗ OHLCV ${normSymbol} on ${endpoint}: ${(subErr as Error).message}`);
         }
       }
 
-      // Fallback: Fetch from Coinbase public API if Binance failed
+      // Coinbase Fallback
       if (candles.length === 0) {
         try {
-          const coinbaseSymbol = normSymbol.replace("/", "-"); // BTC/USD -> BTC-USD
+          const coinbaseSymbol = normSymbol.replace("/", "-");
           let granularity = 3600;
           let factor = 1;
           if (timeframe === "1m") {
@@ -365,7 +466,6 @@ export async function getOHLCV(
             factor = 7;
           }
 
-          // Note: Coinbase candles returns [time, low, high, open, close, volume] sorted newest to oldest
           const res = await fetch(
             `https://api.exchange.coinbase.com/products/${coinbaseSymbol}/candles?granularity=${granularity}`,
             {
@@ -377,59 +477,25 @@ export async function getOHLCV(
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0) {
               const mapped = data.map((c: any) => ({
-                timestamp: c[0] * 1000, // Coinbase timestamp is in seconds, convert to ms
+                timestamp: c[0] * 1000,
                 open: parseFloat(c[3]),
                 high: parseFloat(c[2]),
                 low: parseFloat(c[1]),
                 close: parseFloat(c[4]),
                 volume: parseFloat(c[5]),
-              })).reverse(); // reverse to align oldest-to-newest
+              })).reverse();
 
               candles = factor > 1 ? downsampleCandles(mapped, factor) : mapped;
+              console.log(`[Market] Coinbase ← OHLCV ${normSymbol} (${coinbaseSymbol}, ${timeframe}) = ${candles.length} candles`);
             }
           }
         } catch (cbErr) {
-          console.warn(`Coinbase fallback OHLCV fetch failed for ${normSymbol}:`, cbErr);
-        }
-      }
-    } else if (
-      (FOREX_SYMBOLS.includes(normSymbol) || INDEX_SYMBOLS.includes(normSymbol)) &&
-      process.env.TWELVEDATA_API_KEY &&
-      process.env.TWELVEDATA_API_KEY !== "mock-key"
-    ) {
-      // Map timeframe to TwelveData interval (1min, 5min, 15min, 1h, 4h, 1day, 1week)
-      const tdInterval =
-        timeframe === "1m" ? "1min" :
-        timeframe === "5m" ? "5min" :
-        timeframe === "15m" ? "15min" :
-        timeframe === "1h" ? "1h" :
-        timeframe === "4h" ? "4h" :
-        timeframe === "1d" ? "1day" :
-        timeframe === "1W" ? "1week" : "1h";
-      const res = await fetch(
-        `https://api.twelvedata.com/time_series?symbol=${normSymbol}&interval=${tdInterval}&outputsize=${limit}&apikey=${process.env.TWELVEDATA_API_KEY}`,
-        { signal: AbortSignal.timeout(5000) }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (data.status === "error") {
-          console.warn(`TwelveData API returned error for ${normSymbol}: ${data.message}. Falling back to mock.`);
-        } else if (data.values && data.values.length > 0) {
-          candles = data.values
-            .map((v: any) => ({
-              timestamp: new Date(v.datetime).getTime(),
-              open: parseFloat(v.open),
-              high: parseFloat(v.high),
-              low: parseFloat(v.low),
-              close: parseFloat(v.close),
-              volume: parseFloat(v.volume || "0"),
-            }))
-            .reverse();
+          console.warn(`[Market] Coinbase ✗ OHLCV ${normSymbol}: ${(cbErr as Error).message}`);
         }
       }
     }
   } catch (err) {
-    console.error(`OHLCV upstream failed for ${normSymbol}, falling back to mock:`, err);
+    console.error(`[Market] OHLCV upstream failed for ${normSymbol}, falling back to mock:`, err);
   }
 
   // 2. Generate simulated historical candles if needed (clearly marked)

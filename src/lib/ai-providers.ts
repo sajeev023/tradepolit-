@@ -31,6 +31,15 @@ function getApiKey(name: string): string | undefined {
   return undefined;
 }
 
+function safeKeyInfo(raw: string | undefined): { present: boolean; prefix: string; length: number } {
+  if (!raw) return { present: false, prefix: "", length: 0 };
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed === "mock-key" || trimmed === "placeholder-key") {
+    return { present: false, prefix: "", length: 0 };
+  }
+  return { present: true, prefix: trimmed.substring(0, 6), length: trimmed.length };
+}
+
 function isKeyValid(key?: string): boolean {
   if (!key) return false;
   const trimmed = key.trim();
@@ -301,4 +310,56 @@ export function getProviderHealth() {
     (result[name] as any).hasPremiumKey = hasPremium;
   }
   return result;
+}
+
+/**
+ * Extended provider health used by the admin /provider-health route.
+ * Returns one entry per provider/key, including the data providers
+ * (TwelveData, Finnhub, NewsAPI) that don't participate in the AI race.
+ *
+ * Shape:
+ *   {
+ *     groq: { key1: {...}, key2: {...} },
+ *     nvidia: {...},
+ *     gemini: {...},
+ *     openai: {...},
+ *     twelvedata: { present, prefix, length },
+ *     finnhub: { present, prefix, length },
+ *     newsapi:  { present, prefix, length }
+ *   }
+ */
+export function getExtendedProviderHealth() {
+  const ai = getProviderHealth();
+
+  const twelvedata = safeKeyInfo(process.env.TWELVEDATA_API_KEY);
+  const finnhub = safeKeyInfo(process.env.FINNHUB_API_KEY);
+  const newsapi = safeKeyInfo(process.env.NEWS_API_KEY ?? process.env.NEWSAPI_API_KEY);
+
+  // Lazy import to avoid a circular dep with nvidia-ai.ts (which imports
+  // this file's exports). Only the admin route will pay this cost.
+  let groqKeyHealth: Record<string, unknown> = {};
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getGroqKeyHealth } = require("./nvidia-ai") as typeof import("./nvidia-ai");
+    groqKeyHealth = getGroqKeyHealth();
+  } catch {
+    // If nvidia-ai isn't loaded yet (rare), return empty rather than throw.
+  }
+
+  return {
+    groq: {
+      key1: { ...(ai.groq as object), ...(groqKeyHealth.key1 as object ?? {}), keyInfo: safeKeyInfo(process.env.GROQ_API_KEY) },
+      key2: { keyInfo: safeKeyInfo(process.env.GROQ_API_KEY_2), ...(groqKeyHealth.key2 as object ?? {}) },
+    },
+    nvidia: ai.nvidia,
+    gemini: ai.gemini,
+    openai: {
+      present: safeKeyInfo(process.env.OPENAI_API_KEY).present,
+      prefix: safeKeyInfo(process.env.OPENAI_API_KEY).prefix,
+      length: safeKeyInfo(process.env.OPENAI_API_KEY).length,
+    },
+    twelvedata: twelvedata,
+    finnhub: finnhub,
+    newsapi: newsapi,
+  };
 }

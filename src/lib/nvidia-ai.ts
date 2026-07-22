@@ -18,6 +18,7 @@
  */
 
 import OpenAI from "openai";
+import { logStartupBanner } from "./startup";
 
 /* ─── Provider types ─────────────────────────────────────────────────── */
 type Provider = "groq" | "nvidia" | "openai" | "gemini";
@@ -28,25 +29,38 @@ interface ModelDef {
   provider: Provider;
   quality: "fast" | "good" | "best";
   timeout: number;
+  /** When provider === "groq", index into the resolved keys array. */
+  groqKeyIndex?: number;
 }
 
 /* ─── Model registry ─────────────────────────────────────────────────── */
 export const MODELS: ModelDef[] = [
   {
-    // Groq LPU — flagship 70B model
+    // Groq Key #1 — flagship 70B model
     id: 0,
     name: "llama-3.3-70b-versatile",
     provider: "groq",
     quality: "good",
     timeout: 15_000,
+    groqKeyIndex: 0,
   },
   {
-    // Groq LPU — ultra-fast 8B model
+    // Groq Key #1 — ultra-fast 8B model
     id: 1,
     name: "llama-3.1-8b-instant",
     provider: "groq",
     quality: "fast",
     timeout: 12_000,
+    groqKeyIndex: 0,
+  },
+  {
+    // Groq Key #2 — flagship 70B (failover for key #1)
+    id: 6,
+    name: "llama-3.3-70b-versatile",
+    provider: "groq",
+    quality: "good",
+    timeout: 15_000,
+    groqKeyIndex: 1,
   },
   {
     // Gemini 2.0 Flash
@@ -93,6 +107,83 @@ const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 
 const HARD_CAP_MS = 25_000; // 25-second hard cap safety net matching maxDuration
 
+const GROQ_KEY_COOLDOWN_MS = 60_000; // after 429/401, skip this key for 60s
+
+/* ─── Groq multi-key resolver ────────────────────────────────────────── */
+interface GroqKeyHealth {
+  status: "online" | "offline" | "rate_limited" | "auth_failed";
+  lastErrorAt: number;
+  cooldownUntil: number;
+  consecutiveFailures: number;
+  lastError?: string;
+}
+
+const groqKeyHealth: Record<0 | 1, GroqKeyHealth> = {
+  0: { status: "online", lastErrorAt: 0, cooldownUntil: 0, consecutiveFailures: 0 },
+  1: { status: "online", lastErrorAt: 0, cooldownUntil: 0, consecutiveFailures: 0 },
+};
+
+/**
+ * Resolve the configured Groq keys in priority order. Always returns
+ * the index that points at GROQ_API_KEY, then the index for
+ * GROQ_API_KEY_2 (if set). Empty/placeholder keys are filtered out.
+ *
+ * Backward compat: if only GROQ_API_KEY is set, the array has length 1
+ * and the second Groq model in the registry (id=6) is filtered out by
+ * the activeModels check (its index won't exist).
+ */
+export function getGroqKeys(): Array<{ index: 0 | 1; key: string }> {
+  const keys: Array<{ index: 0 | 1; key: string }> = [];
+  const k1 = (process.env.GROQ_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+  if (k1 && k1 !== "mock-key" && k1 !== "placeholder-key") keys.push({ index: 0, key: k1 });
+  const k2 = (process.env.GROQ_API_KEY_2 || "").trim().replace(/^["']|["']$/g, "");
+  if (k2 && k2 !== "mock-key" && k2 !== "placeholder-key") keys.push({ index: 1, key: k2 });
+  return keys;
+}
+
+export function isGroqKeyUsable(index: 0 | 1): boolean {
+  const h = groqKeyHealth[index];
+  if (!h) return false;
+  if (h.status === "offline") return false;
+  if ((h.status === "rate_limited" || h.status === "auth_failed") && Date.now() < h.cooldownUntil) {
+    return false;
+  }
+  if (h.status === "rate_limited" || h.status === "auth_failed") {
+    h.status = "online";
+  }
+  return true;
+}
+
+export function markGroqKeyFailure(
+  index: 0 | 1,
+  status: 429 | 401 | 403 | 504 | 500,
+  message: string
+) {
+  const h = groqKeyHealth[index];
+  h.lastErrorAt = Date.now();
+  h.lastError = message;
+  h.consecutiveFailures++;
+  if (status === 429) {
+    h.status = "rate_limited";
+    h.cooldownUntil = Date.now() + GROQ_KEY_COOLDOWN_MS;
+  } else if (status === 401 || status === 403) {
+    h.status = "auth_failed";
+    h.cooldownUntil = Date.now() + GROQ_KEY_COOLDOWN_MS;
+  }
+}
+
+export function markGroqKeySuccess(index: 0 | 1) {
+  const h = groqKeyHealth[index];
+  h.status = "online";
+  h.consecutiveFailures = 0;
+  h.cooldownUntil = 0;
+  h.lastError = undefined;
+}
+
+export function getGroqKeyHealth(): Record<"key1" | "key2", GroqKeyHealth> {
+  return { key1: { ...groqKeyHealth[0] }, key2: { ...groqKeyHealth[1] } };
+}
+
 /* ─── OpenAI SDK client (kept for backward compat) ───────────────────── */
 export const nvidiaClient = new OpenAI({
   apiKey: process.env.NVIDIA_API_KEY || "placeholder-key",
@@ -129,9 +220,15 @@ async function callSingleModel(
   let apiKey: string;
 
   if (modelDef.provider === "groq") {
-    apiKey = (process.env.GROQ_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+    // Resolve the specific Groq key for this model slot. If a model
+    // references a key index that wasn't configured (e.g. model id=6
+    // when GROQ_API_KEY_2 is missing), the activeModels filter below
+    // would have already removed it; this is a defensive default.
+    const requestedIdx = (modelDef.groqKeyIndex ?? 0) as 0 | 1;
+    const resolved = getGroqKeys().find(k => k.index === requestedIdx);
+    if (!resolved) throw new Error(`GROQ key index ${requestedIdx} not configured`);
+    apiKey = resolved.key;
     endpoint = GROQ_ENDPOINT;
-    if (!apiKey) throw new Error("GROQ_API_KEY not set");
   } else if (modelDef.provider === "gemini") {
     apiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
     endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
@@ -223,6 +320,11 @@ async function callSingleModel(
 
     if (!content) throw new Error("Empty content in response");
 
+    // Reset Groq key health on any successful response.
+    if (modelDef.provider === "groq" && typeof modelDef.groqKeyIndex === "number") {
+      markGroqKeySuccess(modelDef.groqKeyIndex as 0 | 1);
+    }
+
     const totalMs = Date.now() - startTime;
     console.log(
       `[RACE] ✓ [${providerTag}] ${modelDef.name} | json=${parseMs}ms | total=${totalMs}ms | chars=${content.length}`
@@ -245,6 +347,20 @@ async function callSingleModel(
     const body = err?.body || err?.message || String(err);
     const timedOut = isAbort;
 
+    // Track per-key health for Groq so a recently-failed key is
+    // skipped in the next race (cooldown filter in activeModels).
+    if (modelDef.provider === "groq" && typeof modelDef.groqKeyIndex === "number") {
+      const idx = modelDef.groqKeyIndex as 0 | 1;
+      if (status === 429 || status === 401 || status === 403) {
+        markGroqKeyFailure(idx, status, body);
+        console.warn(
+          `[RACE] [GROQ] Key #${idx + 1} failing (${status}) — cooling down for ${GROQ_KEY_COOLDOWN_MS / 1000}s`
+        );
+      } else if (status === 504 || status === 500) {
+        markGroqKeyFailure(idx, 500, body);
+      }
+    }
+
     console.error(
       `\n${modelDef.provider.toUpperCase()} Request Failed:` +
       `\nStatus: ${status}` +
@@ -257,6 +373,7 @@ async function callSingleModel(
 
     throw {
       provider: modelDef.provider,
+      providerKeyIndex: modelDef.provider === "groq" ? (modelDef.groqKeyIndex ?? 0) : undefined,
       endpoint,
       model: modelDef.name,
       status,
@@ -338,9 +455,14 @@ function formatProviderCheckReport(errors: any[]): string {
   return report;
 }
 
+// Fires once per server process (first import of this module). Prints a
+// key-state banner for every provider + market-data + news source the app
+// depends on, without ever logging the key value itself.
+logStartupBanner();
+
 console.log(
   `\n[AI MODULE INITIALIZATION]` +
-  `\nGROQ_API_KEY loaded = ${getKeyLogInfo(process.env.GROQ_API_KEY)}` +
+  `\nGroq keys: ${getGroqKeys().length} configured` +
   `\nNVIDIA_API_KEY loaded = ${getKeyLogInfo(process.env.NVIDIA_API_KEY)}` +
   `\nGEMINI_API_KEY loaded = ${getKeyLogInfo(process.env.GEMINI_API_KEY)}` +
   `\nOPENAI_API_KEY loaded = ${getKeyLogInfo(process.env.OPENAI_API_KEY)}\n`
@@ -352,9 +474,16 @@ export async function callFastestModel(
 ): Promise<RaceResult> {
   const raceStart = Date.now();
 
-  // Filter to models whose API key is configured and not dummy/mock
+  // Filter to models whose API key is configured and not dummy/mock.
+  // For Groq, also honor per-key cooldown (key #1 just 429'd? skip it
+  // for the next 60s so we don't burn quota on a known-bad key).
   const activeModels = MODELS.filter((m) => {
-    if (m.provider === "groq") return isKeyValid(process.env.GROQ_API_KEY);
+    if (m.provider === "groq") {
+      if (!isKeyValid(process.env.GROQ_API_KEY) && m.groqKeyIndex === 0) return false;
+      if (!isKeyValid(process.env.GROQ_API_KEY_2) && m.groqKeyIndex === 1) return false;
+      if (!isGroqKeyUsable((m.groqKeyIndex ?? 0) as 0 | 1)) return false;
+      return true;
+    }
     if (m.provider === "nvidia") return isKeyValid(process.env.NVIDIA_API_KEY);
     if (m.provider === "openai") return isKeyValid(process.env.OPENAI_API_KEY);
     if (m.provider === "gemini") return isKeyValid(process.env.GEMINI_API_KEY);

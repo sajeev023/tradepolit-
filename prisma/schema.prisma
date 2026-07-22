@@ -245,6 +245,10 @@ model News {
   affectedAssets String[]
   publishedAt    DateTime
 
+  // Provenance — which upstream API the row was sourced from.
+  // Optional so legacy rows continue to load (parseDbArticle defaults to "DB").
+  provider       String?
+
   @@index([publishedAt])
 }
 

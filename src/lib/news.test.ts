@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { classifyArticle } from "./news-classifier";
 import { getNewsFeed } from "./news";
 import { prisma } from "./prisma";
@@ -18,6 +18,10 @@ vi.mock("./cache", () => ({
   getCachedData: vi.fn().mockResolvedValue(null),
   setCachedData: vi.fn().mockResolvedValue(undefined),
 }));
+
+// Save original fetch so the cross-source tests can swap it in/out
+// without permanently mutating the test environment.
+const originalFetch = globalThis.fetch;
 
 describe("Market Intelligence News Classifier Heuristics", () => {
   it("classifies bullish headlines correctly", () => {
@@ -114,7 +118,7 @@ describe("Market News Feed API & Fallback", () => {
 
     // Retrieve BTC/USD news feed
     const btcFeed = await getNewsFeed("BTC/USD", 1, 10);
-    
+
     expect(btcFeed.length).toBe(1);
     expect(btcFeed[0].id).toBe("db_1");
     expect(btcFeed[0].sentimentLabel).toBe("Bullish");
@@ -129,5 +133,125 @@ describe("Market News Feed API & Fallback", () => {
     // Pagination limit check
     const limitedFeed = await getNewsFeed(undefined, 1, 1);
     expect(limitedFeed.length).toBe(1);
+  });
+});
+
+describe("Cross-source news dedupe", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+  let persistedRows: any[];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubEnv("FINNHUB_API_KEY", "test-finnhub");
+    vi.stubEnv("NEWS_API_KEY", "test-newsapi");
+    persistedRows = [];
+    // The DB row surfaces what was upserted; the upsert payload has `url`
+    // and `headline` so findMany can re-read them.
+    vi.mocked(prisma.news.upsert).mockImplementation(async ({ where, create, update }: any) => {
+      const existing = persistedRows.find(r => r.url === where.url);
+      const row = { id: existing?.id ?? `db_${persistedRows.length + 1}`, ...create, ...update };
+      if (!existing) persistedRows.push(row);
+      else Object.assign(existing, row);
+      return row;
+    });
+    vi.mocked(prisma.news.findMany).mockImplementation(async () =>
+      [...persistedRows].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt))
+    );
+    fetchMock = vi.fn();
+    (globalThis as any).fetch = fetchMock;
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    (globalThis as any).fetch = originalFetch;
+  });
+
+  it("dedupes the same story from Finnhub and NewsAPI by title fingerprint", async () => {
+    const sharedHeadline = "Bitcoin Breaks 70k as ETF Inflows Hit Record";
+    fetchMock
+      // Finnhub call
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            id: 101,
+            headline: sharedHeadline,
+            summary: "BTC pushes higher on volume.",
+            source: "Finnhub Source",
+            url: "https://finnhub.example.com/btc-70k",
+            datetime: Math.floor(Date.now() / 1000),
+            image: "",
+            category: "crypto",
+          },
+        ],
+      })
+      // NewsAPI call
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          articles: [
+            {
+              title: sharedHeadline,
+              description: "Bitcoin rallied to 70k today.",
+              source: { name: "NewsAPI Source" },
+              url: "https://newsapi.example.com/bitcoin-70k-record",
+              urlToImage: "",
+              publishedAt: new Date().toISOString(),
+              content: "...",
+            },
+          ],
+        }),
+      });
+
+    const feed = await getNewsFeed("BTC/USD", 1, 10);
+    // Both fetches ran in parallel
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // Title-fingerprint dedupe collapsed them to one
+    expect(feed.length).toBe(1);
+  });
+
+  it("keeps stories with different titles even if they share assets", async () => {
+    // Stub the mock per call (don't share a mockResolvedValueOnce chain
+    // across tests — vitest 4 has a bug where queued implementations on
+    // a vi.fn() are consumed by tests in unexpected orders when the
+    // mock is reassigned via globalThis.fetch).
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes("finnhub")) {
+        return {
+          ok: true,
+          json: async () => [
+            {
+              id: 1,
+              headline: "Bitcoin ETF inflows surge",
+              summary: "BTC ETF flow.",
+              source: "Finnhub",
+              url: "https://a.example/1",
+              datetime: Math.floor(Date.now() / 1000),
+              image: "",
+              category: "crypto",
+            },
+          ],
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          articles: [
+            {
+              title: "Gold prices climb on inflation data",
+              description: "XAU/USD trading higher.",
+              source: { name: "NewsAPI" },
+              url: "https://b.example/2",
+              urlToImage: "",
+              publishedAt: new Date().toISOString(),
+              content: "...",
+            },
+          ],
+        }),
+      };
+    });
+
+    const feed = await getNewsFeed(undefined, 1, 10);
+    expect(feed.length).toBe(2);
   });
 });

@@ -24,6 +24,29 @@ export interface NewsStory {
   sourceLogo?: string;
   category: string;
   isCached?: boolean;
+
+  // Provenance — which upstream API the story was first sourced from.
+  // UI may surface this so users know the source. Defaults to "DB" for
+  // items served only from the persisted cache.
+  provider?: "FINNHUB" | "NEWSAPI" | "DB";
+}
+
+/**
+ * Normalize a headline for cross-source dedupe. Two stories with the same
+ * "shape" but different URLs (e.g. the same press release syndicated via
+ * Finnhub and NewsAPI) should collapse into one.
+ *
+ * Strategy: lowercase, strip non-alphanumeric, take the first 80 chars.
+ * Cheap and good-enough for headline-level dedupe; avoids the heavier
+ * Jaccard / shingle approach.
+ */
+function titleFingerprint(headline: string): string {
+  return headline
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .substring(0, 80);
 }
 
 function getDomain(url: string): string {
@@ -74,7 +97,7 @@ function parseFinnhubArticle(item: any): NewsStory {
     importance: classification.importance,
     affectedAssets,
     publishedAt,
-    
+
     title,
     publisher,
     publishedTime: publishedAt,
@@ -84,6 +107,7 @@ function parseFinnhubArticle(item: any): NewsStory {
     impactScore: classification.impactScore,
     sourceLogo: url ? `https://www.google.com/s2/favicons?sz=64&domain=${getDomain(url)}` : undefined,
     category: item.category || "general",
+    provider: "FINNHUB",
   };
 }
 
@@ -108,7 +132,7 @@ function parseNewsAPIArticle(item: any, idIndex: number): NewsStory {
     importance: classification.importance,
     affectedAssets,
     publishedAt,
-    
+
     title,
     publisher,
     publishedTime: publishedAt,
@@ -118,6 +142,7 @@ function parseNewsAPIArticle(item: any, idIndex: number): NewsStory {
     impactScore: classification.impactScore,
     sourceLogo: url ? `https://www.google.com/s2/favicons?sz=64&domain=${getDomain(url)}` : undefined,
     category: "general",
+    provider: "NEWSAPI",
   };
 }
 
@@ -143,7 +168,7 @@ function parseDbArticle(dbItem: any): NewsStory {
     importance,
     affectedAssets,
     publishedAt,
-    
+
     title,
     publisher,
     publishedTime: publishedAt,
@@ -153,6 +178,9 @@ function parseDbArticle(dbItem: any): NewsStory {
     sourceLogo: url ? `https://www.google.com/s2/favicons?sz=64&domain=${getDomain(url)}` : undefined,
     category: "general",
     isCached: true,
+    // DB-only items are tagged with the provider that originally wrote
+    // them, or "DB" if provenance is unknown (e.g. legacy rows).
+    provider: (dbItem as any).provider ?? "DB",
   };
 }
 
@@ -191,20 +219,24 @@ export async function getNewsFeed(
   // 1. Try cache (5 minutes TTL = 300 seconds)
   const cached = await getCachedData<NewsStory[]>(cacheKey);
   if (cached) {
-    console.log(`[NEWS FEED] Cache hit for ${cacheKey}`);
+    console.log(`[News] Cache hit for ${cacheKey}`);
     return cached;
   }
 
-  let liveStories: NewsStory[] = [];
-  let apiSucceeded = false;
-
-  // 2. Fetch from Finnhub API (Primary)
+  // 2. Fetch Finnhub + NewsAPI in PARALLEL. Each independently
+  // populates the live stories list; the two sources are merged
+  // and deduped (by URL + by title fingerprint) below.
   const finnhubKey = process.env.FINNHUB_API_KEY;
-  if (finnhubKey && finnhubKey !== "mock-key") {
+  const newsApiKey = process.env.NEWS_API_KEY || process.env.NEWSAPI_API_KEY;
+
+  const fetchFinnhub = async (): Promise<NewsStory[]> => {
+    if (!finnhubKey || finnhubKey === "mock-key" || finnhubKey === "placeholder-key") {
+      console.log(`[News] Finnhub ✗ key missing`);
+      return [];
+    }
     try {
-      console.log(`[NEWS FEED] Fetching from Finnhub for symbol ${cleanSymbol || "ALL"}`);
+      console.log(`[News] Finnhub → fetching for ${cleanSymbol || "ALL"}`);
       const categories = getFinnhubCategoriesForSymbol(cleanSymbol);
-      
       const fetchPromises = categories.map(async (cat) => {
         const url = `https://finnhub.io/api/v1/news?category=${cat}&token=${finnhubKey}`;
         const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
@@ -212,44 +244,62 @@ export async function getNewsFeed(
         const items = await res.json();
         return Array.isArray(items) ? items : [];
       });
-
       const results = await Promise.all(fetchPromises);
       const allItems = results.flat();
-      
-      liveStories = allItems.map((item) => parseFinnhubArticle(item));
-      apiSucceeded = true;
-      console.log(`[NEWS FEED] Finnhub returned ${liveStories.length} stories`);
+      const parsed = allItems.map((item) => parseFinnhubArticle(item));
+      console.log(`[News] Finnhub ← ${parsed.length} stories`);
+      return parsed;
     } catch (err) {
-      console.error("[NEWS FEED] Finnhub fetch failed:", err);
+      console.error(`[News] Finnhub ✗ ${(err as Error).message}`);
+      return [];
     }
-  }
+  };
 
-  // 3. Fallback to NewsAPI if Finnhub failed or returned no items
-  if (!apiSucceeded || liveStories.length === 0) {
-    const newsApiKey = process.env.NEWS_API_KEY || process.env.NEWSAPI_API_KEY;
-    if (newsApiKey && newsApiKey !== "mock-key") {
-      try {
-        console.log(`[NEWS FEED] Falling back to NewsAPI for symbol ${cleanSymbol || "ALL"}`);
-        const query = getNewsAPIQueryForSymbol(cleanSymbol);
-        const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=30&apiKey=${newsApiKey}`;
-        const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
-        if (!res.ok) throw new Error(`NewsAPI returned ${res.status}`);
-        const data = await res.json();
-        
-        if (data.articles && Array.isArray(data.articles)) {
-          liveStories = data.articles.map((item: any, idx: number) => parseNewsAPIArticle(item, idx));
-          apiSucceeded = true;
-          console.log(`[NEWS FEED] NewsAPI returned ${liveStories.length} stories`);
-        }
-      } catch (err) {
-        console.error("[NEWS FEED] NewsAPI fallback failed:", err);
+  const fetchNewsAPI = async (): Promise<NewsStory[]> => {
+    if (!newsApiKey || newsApiKey === "mock-key" || newsApiKey === "placeholder-key") {
+      console.log(`[News] NewsAPI ✗ key missing`);
+      return [];
+    }
+    try {
+      console.log(`[News] NewsAPI → fetching for ${cleanSymbol || "ALL"}`);
+      const query = getNewsAPIQueryForSymbol(cleanSymbol);
+      const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=30&apiKey=${newsApiKey}`;
+      const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
+      if (!res.ok) throw new Error(`NewsAPI returned ${res.status}`);
+      const data = await res.json();
+      if (data.articles && Array.isArray(data.articles)) {
+        const parsed = data.articles.map((item: any, idx: number) => parseNewsAPIArticle(item, idx));
+        console.log(`[News] NewsAPI ← ${parsed.length} stories`);
+        return parsed;
       }
+      return [];
+    } catch (err) {
+      console.error(`[News] NewsAPI ✗ ${(err as Error).message}`);
+      return [];
     }
+  };
+
+  const [finnhubStories, newsApiStories] = await Promise.all([fetchFinnhub(), fetchNewsAPI()]);
+
+  // 3. Cross-source dedupe. Two stories collide if they share the same
+  // URL (already unique-constrained in the DB) OR the same title
+  // fingerprint (catches syndication with different URLs).
+  const seenUrls = new Set<string>();
+  const seenFingerprints = new Set<string>();
+  const liveStories: NewsStory[] = [];
+  for (const story of [...finnhubStories, ...newsApiStories]) {
+    if (!story.url) continue;
+    if (seenUrls.has(story.url)) continue;
+    const fp = titleFingerprint(story.headline || story.title);
+    if (fp && seenFingerprints.has(fp)) continue;
+    seenUrls.add(story.url);
+    if (fp) seenFingerprints.add(fp);
+    liveStories.push(story);
   }
 
-  // 4. Save newly fetched articles to the News DB model (for persistence & fallback)
+  // 4. Persist newly fetched stories to the News DB model.
   if (liveStories.length > 0) {
-    console.log(`[NEWS FEED] Persisting ${liveStories.length} articles to database`);
+    console.log(`[News] Persisting ${liveStories.length} stories to database`);
     for (const story of liveStories) {
       try {
         await prisma.news.upsert({
@@ -262,7 +312,10 @@ export async function getNewsFeed(
             importance: story.importance,
             affectedAssets: story.affectedAssets,
             publishedAt: new Date(story.publishedAt),
-          },
+            // Persist provider on the DB row so historical provenance
+            // survives across cache refreshes.
+            ...(story.provider ? { provider: story.provider } : {}),
+          } as any,
           create: {
             source: story.source,
             headline: story.headline,
@@ -272,7 +325,8 @@ export async function getNewsFeed(
             importance: story.importance,
             affectedAssets: story.affectedAssets,
             publishedAt: new Date(story.publishedAt),
-          },
+            ...(story.provider ? { provider: story.provider } : {}),
+          } as any,
         });
       } catch (_e) {
         // Log clean or ignore constraint updates
@@ -280,17 +334,18 @@ export async function getNewsFeed(
     }
   }
 
-  // 5. Query consolidated news from the database (ensuring deduplication and clean fallback)
+  // 5. Always read from DB so deduplication is consistent across
+  // the live + persisted pool. The DB row has a unique constraint
+  // on `url`, so duplicates are already collapsed at the row level.
   const dbItems = await prisma.news.findMany({
     orderBy: { publishedAt: "desc" },
-    take: 100, // Limit historical pool size
+    take: 100,
   });
 
   let stories = dbItems.map((dbItem: any) => parseDbArticle(dbItem));
 
-  // 5b. No fallback — never fabricate news. Return empty if APIs and DB are both empty.
   if (stories.length === 0) {
-    console.log("[NEWS FEED] No news available from APIs or database. Returning empty feed.");
+    console.log(`[News] No news available from APIs or database. Returning empty feed.`);
   }
 
   // 6. Strict Asset Isolation (Asset Filtering)
