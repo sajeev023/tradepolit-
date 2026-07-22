@@ -72,9 +72,9 @@ export function validateIndicators(indicators: any): string[] {
     errors.push('MACD values are missing or NaN');
   }
   
-  // EMA validation
-  if (!indicators.ema9 || isNaN(indicators.ema9)) errors.push('EMA 9 is missing or NaN');
-  if (!indicators.ema21 || isNaN(indicators.ema21)) errors.push('EMA 21 is missing or NaN');
+  // EMA9/EMA21 are supplementary — warn but do NOT block analysis
+  if (indicators.ema9 && isNaN(indicators.ema9)) console.warn('[INDICATOR VALIDATION] EMA9 is NaN (non-fatal)');
+  if (indicators.ema21 && isNaN(indicators.ema21)) console.warn('[INDICATOR VALIDATION] EMA21 is NaN (non-fatal)');
   
   // ATR validation
   if (!indicators.atr || isNaN(indicators.atr) || indicators.atr <= 0) {

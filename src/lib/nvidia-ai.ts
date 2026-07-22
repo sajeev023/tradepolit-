@@ -418,10 +418,17 @@ async function callSingleModel(
  *  wins, all others are aborted immediately via their AbortControllers.
  *  Groq almost always wins (1-3s) because NVIDIA free tier queues.
  */
-function isKeyValid(key?: string): boolean {
+function isKeyValid(key?: string, provider?: Provider): boolean {
   if (!key) return false;
   const trimmed = key.trim();
-  return trimmed.length > 0 && trimmed !== "mock-key" && trimmed !== "placeholder-key";
+  if (!trimmed || trimmed === "mock-key" || trimmed === "placeholder-key") return false;
+  // Gemini API keys from Google AI Studio always start with 'AIza'.
+  // Keys starting with 'AQ.' are OAuth access tokens — invalid for direct API calls.
+  if (provider === "gemini" && !trimmed.startsWith("AIza")) {
+    console.warn(`[RACE] [GEMINI] Key rejected: does not start with 'AIza' (got prefix '${trimmed.substring(0, 4)}...'). Use a key from https://aistudio.google.com/app/apikey`);
+    return false;
+  }
+  return true;
 }
 
 function getApiKey(provider: Provider): string | undefined {
@@ -447,7 +454,7 @@ function formatProviderCheckReport(errors: any[]): string {
 
   providers.forEach((prov) => {
     const key = getApiKey(prov);
-    const isEnabled = MODELS.some((m) => m.provider === prov && isKeyValid(key));
+    const isEnabled = MODELS.some((m) => m.provider === prov && isKeyValid(key, prov));
     const keyExists = !!key?.trim();
     const keyPrefix = keyExists ? key!.trim().substring(0, 6) + "..." : "NONE";
     const endpoint = prov === "groq" ? GROQ_ENDPOINT : prov === "openai" ? OPENAI_ENDPOINT : prov === "gemini" ? "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" : NVIDIA_ENDPOINT;
@@ -472,8 +479,11 @@ function formatProviderCheckReport(errors: any[]): string {
       report += `  Response: No error registered (or aborted)\n`;
     } else {
       let reasonExcluded = "Missing environment variable";
-      if (keyExists && !isKeyValid(key)) {
-        reasonExcluded = `Placeholder or mock value detected ("${key?.trim()}")`;
+      if (keyExists && !isKeyValid(key, prov)) {
+        const isGeminiOAuth = prov === "gemini" && key?.startsWith("AQ.");
+        reasonExcluded = isGeminiOAuth
+          ? `Invalid key format: OAuth token detected (starts with 'AQ.'). Generate a real key at https://aistudio.google.com/app/apikey`
+          : `Placeholder or mock value detected ("${key?.trim()}")`;
       }
       report += `  Reason excluded:\n    ${reasonExcluded}\n`;
     }
@@ -507,16 +517,31 @@ export async function callFastestModel(
   // for the next 60s so we don't burn quota on a known-bad key).
   const activeModels = MODELS.filter((m) => {
     if (m.provider === "groq") {
-      if (!isKeyValid(process.env.GROQ_API_KEY) && m.groqKeyIndex === 0) return false;
-      if (!isKeyValid(process.env.GROQ_API_KEY_2) && m.groqKeyIndex === 1) return false;
+      if (!isKeyValid(process.env.GROQ_API_KEY, "groq") && m.groqKeyIndex === 0) return false;
+      if (!isKeyValid(process.env.GROQ_API_KEY_2, "groq") && m.groqKeyIndex === 1) return false;
       if (!isGroqKeyUsable((m.groqKeyIndex ?? 0) as 0 | 1)) return false;
       return true;
     }
-    if (m.provider === "nvidia") return isKeyValid(process.env.NVIDIA_API_KEY);
-    if (m.provider === "openai") return isKeyValid(process.env.OPENAI_API_KEY);
-    if (m.provider === "gemini") return isKeyValid(process.env.GEMINI_API_KEY);
+    if (m.provider === "nvidia") return isKeyValid(process.env.NVIDIA_API_KEY, "nvidia");
+    if (m.provider === "openai") return isKeyValid(process.env.OPENAI_API_KEY, "openai");
+    if (m.provider === "gemini") return isKeyValid(process.env.GEMINI_API_KEY, "gemini");
     return false;
   });
+
+  // ── Per-request provider diagnostic ──────────────────────────────────
+  const geminiKey = process.env.GEMINI_API_KEY || "";
+  const groqKey   = process.env.GROQ_API_KEY   || "";
+  const groqKey2  = process.env.GROQ_API_KEY_2  || "";
+  const nvidiaKey = process.env.NVIDIA_API_KEY  || "";
+  console.log(
+    `[RACE-DIAG] Provider status per request:\n` +
+    `  GROQ  key1=${groqKey  ? `valid(${groqKey.substring(0,8)}...)` : 'MISSING'} | usable=${isGroqKeyUsable(0)}\n` +
+    `  GROQ  key2=${groqKey2 ? `valid(${groqKey2.substring(0,8)}...)` : 'MISSING'} | usable=${isGroqKeyUsable(1)}\n` +
+    `  NVIDIA=${nvidiaKey ? `valid(${nvidiaKey.substring(0,8)}...)` : 'MISSING'}\n` +
+    `  GEMINI=${geminiKey ? (geminiKey.startsWith('AIza') ? `valid(${geminiKey.substring(0,8)}...)` : `INVALID_FORMAT(${geminiKey.substring(0,4)}...)`) : 'MISSING'}\n` +
+    `  Active models: ${activeModels.map(m => `[${m.provider}]${m.name}`).join(' | ')}\n` +
+    `  Total active: ${activeModels.length}`
+  );
 
   if (activeModels.length === 0) {
     const errorReport = formatProviderCheckReport([]);
