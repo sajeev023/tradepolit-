@@ -9,7 +9,6 @@ import type { PriceData } from "@/lib/types";
 import { ChatHistorySidebar } from "@/components/charts/ChatHistorySidebar";
 import { SavedAnalysesPanel } from "@/components/charts/SavedAnalysesPanel";
 import { DemoConversionModal } from "@/components/DemoConversionModal";
-import { createClient } from "@/lib/supabase/client";
 import { analytics } from "@/lib/analytics";
 import { useBinanceMultiStream, useBinanceStreamStatus, getLatestWebSocketPrice } from "@/hooks/useBinanceStream";
 import { LivePriceCard } from "@/components/charts/LivePriceCard";
@@ -178,7 +177,7 @@ export function ChartsClientPage() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [showDemoConversionModal, setShowDemoConversionModal] = useState(false);
   const [demoAnalysesCount, setDemoAnalysesCount] = useState(0);
-  const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
+  const [_showOnboardingBanner, _setShowOnboardingBanner] = useState(false);
   const [_analysisReady, setAnalysisReady] = useState(false);
 
   // Chat state

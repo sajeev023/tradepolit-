@@ -40,8 +40,8 @@ describe("resolvePlan", () => {
 describe("YC_DEMO entitlement", () => {
   const demoEntitlement = getEntitlement("YC_DEMO");
 
-  it("has exactly 3 analysis limit", () => {
-    expect(demoEntitlement.analysisLimit).toBe(3);
+  it("has exactly 2 analysis limit", () => {
+    expect(demoEntitlement.analysisLimit).toBe(2);
   });
 
   it("has exactly 1 alert limit", () => {
@@ -115,11 +115,10 @@ describe("PRO entitlement", () => {
 describe("getRemainingAnalyses", () => {
   it("returns correct remaining for YC_DEMO", () => {
     const entitlement = getEntitlement("YC_DEMO");
-    expect(getRemainingAnalyses(entitlement, 0)).toBe(3);
-    expect(getRemainingAnalyses(entitlement, 1)).toBe(2);
-    expect(getRemainingAnalyses(entitlement, 2)).toBe(1);
+    expect(getRemainingAnalyses(entitlement, 0)).toBe(2);
+    expect(getRemainingAnalyses(entitlement, 1)).toBe(1);
+    expect(getRemainingAnalyses(entitlement, 2)).toBe(0);
     expect(getRemainingAnalyses(entitlement, 3)).toBe(0);
-    expect(getRemainingAnalyses(entitlement, 5)).toBe(0);
   });
 
   it("returns Infinity for PRO", () => {

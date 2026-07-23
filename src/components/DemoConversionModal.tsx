@@ -50,7 +50,7 @@ export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoC
             YC Instant Demo
           </div>
           <h2 className="text-xl font-bold tracking-tight text-white">
-            You've used your {analysesUsed} free AI analyses
+            You&apos;ve used your {analysesUsed} free AI analyses
           </h2>
           <p className="text-xs text-zinc-400 leading-relaxed">
             Create your free account to unlock daily scans, persistent trade memory, and automatic risk guardrails.

@@ -703,7 +703,7 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
     const {
       parsed: parsedData,
       isRepaired,
-      isFallback,
+      isFallback: _isFallback,
       jsonParseSuccess,
       schemaValid,
       rejectionReason,
