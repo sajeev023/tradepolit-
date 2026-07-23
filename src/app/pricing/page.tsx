@@ -22,7 +22,7 @@ export default function PricingPage() {
             <TrendingUp size={13} color="#09090B" strokeWidth={2.5} />
           </div>
           <span className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">
-            TradePilot
+            TradCopilot
           </span>
         </Link>
         <div className="flex items-center gap-1">

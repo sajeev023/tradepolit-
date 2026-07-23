@@ -99,7 +99,7 @@ export function MobileProductPreview() {
             <span className="w-2 h-2 rounded-full bg-emerald-500/80" />
           </div>
           <div className="flex-1 mx-2 text-center">
-            <span className="text-[8px] font-mono text-zinc-500">tradepilot.ai/charts</span>
+            <span className="text-[8px] font-mono text-zinc-500">tradcopilot.com/charts</span>
           </div>
         </div>
         <div className="p-3 space-y-2">
@@ -160,7 +160,7 @@ export function DesktopProductPreview() {
           </div>
           <div className="flex-1 max-w-[240px] mx-auto flex items-center justify-center gap-1.5 h-6 rounded-md bg-zinc-900 border border-zinc-800 px-3">
             <Lock size={9} className="text-zinc-500" />
-            <span className="text-[10px] font-mono text-zinc-400">tradepilot.ai/charts</span>
+            <span className="text-[10px] font-mono text-zinc-400">tradcopilot.com/charts</span>
           </div>
           <div className="w-14" />
         </div>

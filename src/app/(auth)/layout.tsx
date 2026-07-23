@@ -327,7 +327,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 letterSpacing: "-0.015em",
               }}
             >
-              TradePilot
+              TradCopilot
             </span>
           </Link>
 
@@ -392,7 +392,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
           {/* Footer */}
           <p style={{ fontSize: 11, color: "#3F3F46", lineHeight: 1.6 }}>
-            TradePilot does not execute trades, hold funds, or provide financial advice.
+            TradCopilot does not execute trades, hold funds, or provide financial advice.
             Analytical tool for educational purposes only.
           </p>
         </div>

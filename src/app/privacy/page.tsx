@@ -4,7 +4,7 @@ import { ArrowLeft, Shield } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "TradePilot privacy policy — how we collect, use, and protect your personal data when you use our AI trading copilot.",
+  description: "TradCopilot privacy policy — how we collect, use, and protect your personal data when you use our AI trading copilot.",
 };
 
 export default function PrivacyPage() {
@@ -100,21 +100,21 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">9. International Data Transfers</h2>
             <p>
-              By accessing TradePilot, you acknowledge that your data may be processed in region-locked cloud environments outside of your home country (including servers hosted in the US, India, or Singapore). We ensure all database providers implement proper data privacy safeguards.
+              By accessing TradCopilot, you acknowledge that your data may be processed in region-locked cloud environments outside of your home country (including servers hosted in the US, India, or Singapore). We ensure all database providers implement proper data privacy safeguards.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-bold text-white mb-2">10. Contact Information</h2>
             <p>
-              For data access requests or questions about this Privacy Policy, please contact our privacy compliance lead at **support@tradepilot.com** or **ashok.msc2010@gmail.com**.
+              For data access requests or questions about this Privacy Policy, please contact our privacy compliance lead at **support@tradcopilot.com** or **ashok.msc2010@gmail.com**.
             </p>
           </section>
         </div>
       </div>
 
       <footer className="mt-16 pt-8 border-t border-zinc-800 text-[11px] text-zinc-500 text-center">
-        © 2026 TradePilot. Educational and analytical services only.
+        © 2026 TradCopilot. Educational and analytical services only.
       </footer>
     </div>
   );

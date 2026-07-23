@@ -60,7 +60,7 @@ export const ENTITLEMENTS: Record<Plan, Entitlement> = {
   },
 };
 
-export const DEMO_USER_EMAILS = ["partner@tradepilot.ai", "trader@tradepilot.app"] as const;
+export const DEMO_USER_EMAILS = ["partner@tradcopilot.com", "trader@tradcopilot.com"] as const;
 export const DEMO_USER_IDS = ["partner-1234-1234-1234-123456789012", "12345678-1234-1234-1234-123456789012"] as const;
 
 export function isDemoUser(userId: string, email?: string): boolean {

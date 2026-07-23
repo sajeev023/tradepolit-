@@ -90,7 +90,7 @@ function DashboardContent() {
 
   useEffect(() => {
     if (searchParams.get("upgrade") === "success") {
-      toast.success("Welcome to TradePilot Pro! 🎉");
+      toast.success("Welcome to TradCopilot Pro! 🎉");
     }
   }, [searchParams]);
 
@@ -232,7 +232,7 @@ function DashboardContent() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
-            {metrics.totalTrades > 0 ? "Workstation Dashboard" : "Welcome to TradePilot"}
+            {metrics.totalTrades > 0 ? "Workstation Dashboard" : "Welcome to TradCopilot"}
           </h1>
           <p className="text-sm mt-1 text-[var(--color-text-secondary)]">
             {metrics.totalTrades > 0

@@ -418,7 +418,7 @@ function LoginPageContent() {
             Welcome back
           </h1>
           <p style={{ fontSize: 13, color: "#71717A", margin: 0 }}>
-            Sign in to your TradePilot account
+            Sign in to your TradCopilot account
           </p>
         </div>
 

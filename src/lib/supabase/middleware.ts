@@ -33,7 +33,7 @@ export async function updateSession(request: NextRequest) {
   const isMockSession = request.cookies.get("sb-mock-session")?.value === "true";
 
   if (isMockSession) {
-    const mockEmail = request.cookies.get("sb-mock-email")?.value || "partner@tradepilot.ai";
+    const mockEmail = request.cookies.get("sb-mock-email")?.value || "partner@tradcopilot.com";
     user = {
       id: "partner-1234-1234-1234-123456789012",
       email: decodeURIComponent(mockEmail),

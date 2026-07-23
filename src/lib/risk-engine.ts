@@ -1,5 +1,5 @@
-﻿/**
- * TradePilot Risk Engine
+/**
+ * TradCopilot Risk Engine
  * =======================
  * Pure, stateless, mathematically-precise position sizing calculations.
  * Uses decimal.js to eliminate IEEE-754 floating-point errors.
@@ -184,7 +184,7 @@ export function calculate(params: RiskEngineParams): RiskEngineResult {
     riskCapital = balance;
   }
 
-  // Stop distance = |entry � stop| (always positive)
+  // Stop distance = |entry ? stop| (always positive)
   const stopDistance = entry.minus(stop).abs();
   if (stopDistance.isZero()) throw new Error("Entry price and stop loss cannot be equal");
 
@@ -192,7 +192,7 @@ export function calculate(params: RiskEngineParams): RiskEngineResult {
   let positionUnits: Decimal;
 
   if (mode === "MAX") {
-    // max_units = (balance � leverage) / entry_price
+    // max_units = (balance ? leverage) / entry_price
     positionUnits = balance.times(leverage).dividedBy(entry);
     riskCapital = positionUnits.times(stopDistance);
     if (spec.isJpyQuote) riskCapital = riskCapital.dividedBy(entry);
@@ -201,7 +201,7 @@ export function calculate(params: RiskEngineParams): RiskEngineResult {
   } else {
     // Standard:
     // Non-JPY: position_units = risk_capital / stop_distance
-    // JPY:     position_units = (risk_capital � entry) / stop_distance
+    // JPY:     position_units = (risk_capital ? entry) / stop_distance
     if (spec.isJpyQuote) {
       positionUnits = riskCapital.times(entry).dividedBy(stopDistance);
     } else {
@@ -220,12 +220,12 @@ export function calculate(params: RiskEngineParams): RiskEngineResult {
     actualDollarRisk = finalPosition.times(stopDistance);
   }
 
-  // Margin = (position � entry) / leverage
+  // Margin = (position ? entry) / leverage
   let finalMargin = finalPosition.times(entry).dividedBy(leverage);
 
   // Guard: margin must not exceed balance
   if (finalMargin.greaterThan(balance)) {
-    warnings.push(`Margin required ($${finalMargin.toFixed(2)}) exceeds account balance � position capped`);
+    warnings.push(`Margin required ($${finalMargin.toFixed(2)}) exceeds account balance ? position capped`);
     const cappedUnits = roundDown(balance.times(leverage).dividedBy(entry), spec);
     finalPosition = cappedUnits;
     finalMargin = finalPosition.times(entry).dividedBy(leverage);

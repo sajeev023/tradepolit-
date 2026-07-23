@@ -12,7 +12,7 @@ const steps = [
     n: "02",
     icon: <Sparkles size={16} />,
     title: "Get an AI-compiled setup",
-    body: "TradePilot assembles RSI, MACD, EMA, support/resistance, and volume into a bias, entry, stop, and take-profit with a confidence grade — so you can review the thesis before acting.",
+    body: "TradCopilot assembles RSI, MACD, EMA, support/resistance, and volume into a bias, entry, stop, and take-profit with a confidence grade — so you can review the thesis before acting.",
   },
   {
     n: "03",

@@ -34,7 +34,7 @@ export function DemoBanner() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }: any) => {
       const user = data.user;
-      const demoEmails = ["partner@tradepilot.ai", "trader@tradepilot.app"];
+      const demoEmails = ["partner@tradcopilot.com", "trader@tradcopilot.com"];
       if (user?.email && demoEmails.includes(user.email)) {
         setIsDemo(true);
         fetchUsage(user.id);

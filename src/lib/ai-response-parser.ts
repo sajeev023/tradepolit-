@@ -1,7 +1,7 @@
 /**
  * src/lib/ai-response-parser.ts
  *
- * Production-grade AI response parsing and repair engine for TradePilot.
+ * Production-grade AI response parsing and repair engine for TradCopilot.
  *
  * GUARANTEES:
  *   1. Logs raw response content before parsing.
@@ -299,7 +299,7 @@ export function safeParseAIResponse(
   }
 
   // Enforce required schema fields & default fallbacks
-  const headerLine = `Analysis Source: TradePilot Telemetry | Symbol: ${symbol} | TF: ${timeframe} | Price: ${priceStr} | Status: Synchronized`;
+  const headerLine = `Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | TF: ${timeframe} | Price: ${priceStr} | Status: Synchronized`;
 
   let coachNarrative = typeof parsedObj.coachNarrative === "string" ? parsedObj.coachNarrative.trim() : "";
   if (!coachNarrative.includes(`Symbol: ${symbol}`)) {
@@ -367,7 +367,7 @@ export function safeParseAIResponse(
  */
 function buildTelemetryFallback(tech: any): AIAnalysisSchema {
   const priceStr = `$${tech.currentPrice.toLocaleString()}`;
-  const headerLine = `Analysis Source: TradePilot Telemetry | Symbol: ${tech.symbol} | TF: ${tech.timeframe} | Price: ${priceStr} | Status: Synchronized`;
+  const headerLine = `Analysis Source: TradCopilot Telemetry | Symbol: ${tech.symbol} | TF: ${tech.timeframe} | Price: ${priceStr} | Status: Synchronized`;
 
   const narrative = `${headerLine}
 

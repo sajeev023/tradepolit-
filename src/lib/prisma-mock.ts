@@ -1,4 +1,4 @@
-// In-memory mock database for TradePilot when real Postgres is offline
+// In-memory mock database for TradCopilot when real Postgres is offline
 import { MOCK_USER } from "./supabase/mock";
 
 let backtestIdCounter = 0;

@@ -51,7 +51,7 @@ export const SnapshotExportCard: React.FC<SnapshotExportCardProps> = ({
             TP
           </div>
           <div>
-            <span className="text-sm font-extrabold tracking-tight text-white block">TradePilot</span>
+            <span className="text-sm font-extrabold tracking-tight text-white block">TradCopilot</span>
             <span className="text-[9px] text-zinc-500 uppercase tracking-wider block">Institutional Analytics</span>
           </div>
         </div>
@@ -144,7 +144,7 @@ export const SnapshotExportCard: React.FC<SnapshotExportCardProps> = ({
 
       {/* Footer */}
       <div className="flex items-center justify-between border-t border-zinc-800 pt-4 text-[9px] text-zinc-600 uppercase tracking-wider font-bold font-mono">
-        <span>Platform: tradepilot.live</span>
+        <span>Platform: TradCopilot.live</span>
         <span>Generated: {new Date().toLocaleString()}</span>
       </div>
     </div>

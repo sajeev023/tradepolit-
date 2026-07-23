@@ -238,7 +238,7 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
           const res = await fetch(`https://api.exchange.coinbase.com/products/${coinbaseSymbol}/ticker`, {
             signal: AbortSignal.timeout(3000),
             cache: "no-store",
-            headers: { "User-Agent": "TradePilot/1.0" },
+            headers: { "User-Agent": "TradCopilot/1.0" },
           });
           if (res.ok) {
             const data = await res.json();
@@ -257,7 +257,7 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
               const res = await fetch(`https://api.exchange.coinbase.com/products/${coinbaseSymbol}/stats`, {
                 signal: AbortSignal.timeout(3000),
                 cache: "no-store",
-                headers: { "User-Agent": "TradePilot/1.0" },
+                headers: { "User-Agent": "TradCopilot/1.0" },
               });
               if (res.ok) {
                 const data = await res.json();
@@ -487,7 +487,7 @@ export async function getOHLCV(
             `https://api.exchange.coinbase.com/products/${coinbaseSymbol}/candles?granularity=${granularity}`,
             {
               signal: AbortSignal.timeout(5000),
-              headers: { "User-Agent": "TradePilot/1.0" },
+              headers: { "User-Agent": "TradCopilot/1.0" },
             }
           );
           if (res.ok) {

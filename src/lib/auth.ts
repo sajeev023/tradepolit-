@@ -23,7 +23,7 @@ export async function getAuthUser() {
   try {
     const cookieStore = await cookies();
     if (cookieStore.get("sb-mock-session")?.value === "true") {
-      const mockEmail = cookieStore.get("sb-mock-email")?.value || "partner@tradepilot.ai";
+      const mockEmail = cookieStore.get("sb-mock-email")?.value || "partner@tradcopilot.com";
       return {
         user: {
           id: "partner-1234-1234-1234-123456789012",

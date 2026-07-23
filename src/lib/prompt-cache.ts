@@ -21,7 +21,7 @@ CRITICAL DATA INTEGRITY RULES — FOLLOW EXACTLY:
 ════════════════════════════════════════════`;
 
 /**
- * Returns the pre-built static preamble for the TradePilot system prompt.
+ * Returns the pre-built static preamble for the TradCopilot system prompt.
  * This is built once at module load time and reused across all requests.
  */
 export function getStaticPromptPreamble(): string {
@@ -33,7 +33,7 @@ export function getStaticPromptPreamble(): string {
  * Immutable. Safe to cache indefinitely.
  */
 export function getAnalyzeChartSystemPrompt(): string {
-  return `You are TradePilot's AI trading engine — a 30+ year veteran professional discretionary trader.
+  return `You are TradCopilot's AI trading engine — a 30+ year veteran professional discretionary trader.
 
 CORE PERSONA & BELIEFS:
 1. Capital preservation is the highest priority. Discipline beats intelligence in trading.

@@ -11,14 +11,14 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { JsonLd } from "@/components/JsonLd";
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://tradepilot.app";
-const siteName = "TradePilot";
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://tradcopilot.com";
+const siteName = "TradCopilot";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "TradePilot — AI-Powered Trading Copilot",
-    template: "%s | TradePilot",
+    default: "TradCopilot — AI-Powered Trading Copilot",
+    template: "%s | TradCopilot",
   },
   description:
     "The AI copilot that reads your charts, remembers every session, tracks behavioral patterns, and coaches you past emotional mistakes. Built for serious traders.",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     canonical: siteUrl,
   },
   openGraph: {
-    title: "TradePilot — AI-Powered Trading Copilot",
+    title: "TradCopilot — AI-Powered Trading Copilot",
     description: "The AI copilot that trades with your discipline. Charts, memory, behavioral detection, and coaching in one workspace.",
     siteName,
     type: "website",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TradePilot — AI-Powered Trading Copilot",
+    title: "TradCopilot — AI-Powered Trading Copilot",
     description: "The AI copilot that trades with your discipline.",
   },
   robots: {

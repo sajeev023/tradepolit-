@@ -55,7 +55,7 @@ export async function POST(_request: NextRequest) {
     const totalPnL = trades.reduce((acc: number, t: any) => acc + Number(t.pnl || 0), 0);
     const winRate = total > 0 ? (wins.length / total) * 100 : 0;
 
-    const systemPrompt = `You are TradePilot AI Copilot, a professional day-trading analyst. 
+    const systemPrompt = `You are TradCopilot AI Copilot, a professional day-trading analyst. 
 Generate a comprehensive, structured weekly performance report based on the trader's activity over the past 7 days.
 Make it insightful, direct, and trader-oriented.
 

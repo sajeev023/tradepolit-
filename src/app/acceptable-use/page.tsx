@@ -20,7 +20,7 @@ export default function AcceptableUsePage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">1. Lawful Use Only</h2>
             <p>
-              You agree to use TradePilot strictly in compliance with all applicable local, national, and international laws, regulations, and financial guidelines.
+              You agree to use TradCopilot strictly in compliance with all applicable local, national, and international laws, regulations, and financial guidelines.
             </p>
           </section>
 
@@ -34,14 +34,14 @@ export default function AcceptableUsePage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">3. No Account Sharing</h2>
             <p>
-              Your TradePilot account and Pro Terminal access are for your personal, individual use only. You may not share your login credentials, API session keys, or subscription access with third parties.
+              Your TradCopilot account and Pro Terminal access are for your personal, individual use only. You may not share your login credentials, API session keys, or subscription access with third parties.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-bold text-white mb-2">4. No Automated Trading Bots</h2>
             <p>
-              TradePilot is designed as an interactive copilot for human discretionary traders. **You are strictly prohibited from parsing or scraping TradePilot&apos;s API endpoints or AI outputs to power automated algorithmic trading bots, automated order routers, or automated execution scripts.**
+              TradCopilot is designed as an interactive copilot for human discretionary traders. **You are strictly prohibited from parsing or scraping TradCopilot&apos;s API endpoints or AI outputs to power automated algorithmic trading bots, automated order routers, or automated execution scripts.**
             </p>
           </section>
 
@@ -55,21 +55,21 @@ export default function AcceptableUsePage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">6. No Reverse Engineering</h2>
             <p>
-              You may not attempt to reverse engineer, decompile, disable, or bypass any security constraints, feature limits, telemetry modules, or subscription access checkpoints built into the TradePilot application.
+              You may not attempt to reverse engineer, decompile, disable, or bypass any security constraints, feature limits, telemetry modules, or subscription access checkpoints built into the TradCopilot application.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-bold text-white mb-2">7. Reporting Violations</h2>
             <p>
-              If you identify a violation of this Acceptable Use Policy, please report it immediately to our security compliance team at **security@tradepilot.com** or **ashok.msc2010@gmail.com**.
+              If you identify a violation of this Acceptable Use Policy, please report it immediately to our security compliance team at **security@tradcopilot.com** or **ashok.msc2010@gmail.com**.
             </p>
           </section>
         </div>
       </div>
 
       <footer className="mt-16 pt-8 border-t border-zinc-800 text-[11px] text-zinc-500 text-center">
-        © 2026 TradePilot. Educational and analytical services only.
+        © 2026 TradCopilot. Educational and analytical services only.
       </footer>
     </div>
   );

@@ -216,7 +216,7 @@ export function Sidebar() {
                 className="text-[14px] font-semibold whitespace-nowrap text-[var(--color-text-primary)]"
                 style={{ letterSpacing: "-0.01em" }}
               >
-                TradePilot
+                TradCopilot
               </motion.span>
             )}
           </AnimatePresence>

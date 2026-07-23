@@ -82,7 +82,7 @@ export const SavedAnalysesPanel = memo(function SavedAnalysesPanel({ isOpen, onC
   };
 
   const handleCopy = (analysis: SavedAnalysis, id: string) => {
-    const text = `TradePilot Analysis — ${analysis.symbol} ${analysis.timeframe}
+    const text = `TradCopilot Analysis — ${analysis.symbol} ${analysis.timeframe}
 Bias: ${analysis.bias} | Confidence: ${analysis.confidence}
 Support: $${analysis.support} | Resistance: $${analysis.resistance}
 ---

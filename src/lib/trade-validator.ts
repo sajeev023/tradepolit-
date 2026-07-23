@@ -1,7 +1,7 @@
 /**
  * src/lib/trade-validator.ts
  *
- * Deterministic Post-Analysis Reasoning & Validation Engine for TradePilot.
+ * Deterministic Post-Analysis Reasoning & Validation Engine for TradCopilot.
  * Guarantees mathematical, logical, and structural consistency across all assets and timeframes.
  */
 

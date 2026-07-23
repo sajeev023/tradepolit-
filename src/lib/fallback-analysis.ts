@@ -48,7 +48,7 @@ export function getInstantFallbackAnalysis(symbol: string, timeframe: string, li
     stopLossIdea: invalidationVal ? invalidationVal.toString() : null,
     takeProfitIdea: resistanceVal ? resistanceVal.toString() : null,
     shortTermScenario: `Price action is expected to respect support at $${supportStr} and build momentum towards resistance at $${resistanceStr}.`,
-    coachNarrative: `Analysis Source: TradePilot Telemetry | Symbol: ${symbol} | TF: ${timeframe} | Price: $${price.toLocaleString()} | Status: Synchronized
+    coachNarrative: `Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | TF: ${timeframe} | Price: $${price.toLocaleString()} | Status: Synchronized
 
 ## Market Structure
 Live telemetry data is available from the exchange feed. ${symbol} is trading at $${price.toLocaleString()} on the ${timeframe} timeframe, with swing-low pivot support at $${supportStr} and swing-high pivot resistance at $${resistanceStr}.

@@ -11,8 +11,8 @@ import { describe, it, expect } from "vitest";
 
 describe("resolvePlan", () => {
   it("returns YC_DEMO for known demo email", () => {
-    expect(resolvePlan("any-id", "partner@tradepilot.ai")).toBe("YC_DEMO");
-    expect(resolvePlan("any-id", "trader@tradepilot.app")).toBe("YC_DEMO");
+    expect(resolvePlan("any-id", "partner@tradcopilot.com")).toBe("YC_DEMO");
+    expect(resolvePlan("any-id", "trader@tradcopilot.com")).toBe("YC_DEMO");
   });
 
   it("returns YC_DEMO for known demo user ID", () => {
@@ -135,8 +135,8 @@ describe("getRemainingAnalyses", () => {
 
 describe("isDemoUser", () => {
   it("identifies demo users by email", () => {
-    expect(isDemoUser("any-id", "partner@tradepilot.ai")).toBe(true);
-    expect(isDemoUser("any-id", "trader@tradepilot.app")).toBe(true);
+    expect(isDemoUser("any-id", "partner@tradcopilot.com")).toBe(true);
+    expect(isDemoUser("any-id", "trader@tradcopilot.com")).toBe(true);
   });
 
   it("identifies demo users by ID", () => {

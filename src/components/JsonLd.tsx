@@ -1,9 +1,9 @@
-const siteUrl = "https://tradepilot.app";
+const siteUrl = "https://tradcopilot.com";
 
 const softwareSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "TradePilot",
+  name: "TradCopilot",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   description:
@@ -28,7 +28,7 @@ const softwareSchema = {
 const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "TradePilot",
+  name: "TradCopilot",
   url: siteUrl,
   description:
     "AI-powered trading copilot for crypto and forex traders.",
@@ -45,7 +45,7 @@ const websiteSchema = {
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "TradePilot Inc.",
+  name: "TradCopilot Inc.",
   url: siteUrl,
   description:
     "Builds AI-powered trading tools for retail traders.",
@@ -57,10 +57,10 @@ const faqSchema = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "How is TradePilot different from ChatGPT?",
+      name: "How is TradCopilot different from ChatGPT?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "TradePilot runs context-aware analysis on live candlestick data, indicators, and risk metrics. Unlike general LLMs, it retains persistent memory of your trades, journals, and behavioral patterns across sessions.",
+        text: "TradCopilot runs context-aware analysis on live candlestick data, indicators, and risk metrics. Unlike general LLMs, it retains persistent memory of your trades, journals, and behavioral patterns across sessions.",
       },
     },
     {
@@ -68,7 +68,7 @@ const faqSchema = {
       name: "Do I need to connect my brokerage?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "No. TradePilot operates as a standalone copilot. You import watchlists, review indicators, log entries, and receive real-time psychology coaching — all without connecting any trading account.",
+        text: "No. TradCopilot operates as a standalone copilot. You import watchlists, review indicators, log entries, and receive real-time psychology coaching — all without connecting any trading account.",
       },
     },
     {

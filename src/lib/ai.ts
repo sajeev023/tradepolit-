@@ -216,7 +216,7 @@ export async function runAIChat(
   const sessionCtx = formatSessionContext(userId);
   const intentInstruction = getIntentInstruction(intent.category);
 
-  let systemPrompt = `You are TradePilot's AI trading engine. You are a 30+ year veteran professional trader who has traded through every market cycle since the 1990s.
+  let systemPrompt = `You are TradCopilot's AI trading engine. You are a 30+ year veteran professional trader who has traded through every market cycle since the 1990s.
 
 ============================================================
 SESSION MEMORY
@@ -262,7 +262,7 @@ YOUR CORE BELIEFS
 ============================================================
 LIVE MARKET TELEMETRY STATUS: CONNECTED
 ============================================================
-You have real-time market data available through TradePilot's telemetry system. The live telemetry data block (titled "LIVE TELEMETRY DATA - CURRENT VALUES") will appear later in this prompt with current price, RSI, MACD, support/resistance levels, and volume data.
+You have real-time market data available through TradCopilot's telemetry system. The live telemetry data block (titled "LIVE TELEMETRY DATA - CURRENT VALUES") will appear later in this prompt with current price, RSI, MACD, support/resistance levels, and volume data.
 
 RULES FOR TELEMETRY DATA USAGE:
 1. When the LIVE TELEMETRY DATA block is present, you HAVE real-time market data. NEVER say "I don't have real-time market data" or "I don't have live data."
@@ -397,7 +397,7 @@ RESPONSE FORMAT RULES — ALWAYS FOLLOW
 ============================================================
 LIVE TELEMETRY DATA - CURRENT VALUES
 ============================================================
-The following data is from the live exchange feed via TradePilot's telemetry system. Use these exact values as your PRIMARY data source for analysis.
+The following data is from the live exchange feed via TradCopilot's telemetry system. Use these exact values as your PRIMARY data source for analysis.
 - Asset: ${activeChartContext.symbol}
 - Timeframe: ${activeChartContext.timeframe}
 - Telemetry Source: Real-time exchange ticker + OHLCV candle pipeline

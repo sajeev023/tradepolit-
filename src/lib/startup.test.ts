@@ -57,7 +57,7 @@ describe("getStartupReport", () => {
     expect(report.totalKeys).toBe(8);
     expect(logSpy).toHaveBeenCalled();
     const out = logSpy.mock.calls.map(c => String(c[0])).join("\n");
-    expect(out).toContain("[STARTUP] TradePilot provider configuration");
+    expect(out).toContain("[STARTUP] TradCopilot provider configuration");
     expect(out).toContain("Groq Key #1");
     expect(out).toContain("Loaded");
     logSpy.mockRestore();

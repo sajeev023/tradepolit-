@@ -1,4 +1,4 @@
-# TradePilot MVP
+# TradCopilot MVP
 
 A production-grade decision-support system for retail day and swing traders. Built using Next.js 15, Prisma, Supabase Auth/Storage, and OpenAI.
 

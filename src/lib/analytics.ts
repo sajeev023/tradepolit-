@@ -92,10 +92,10 @@ class ProductAnalytics {
 
   private getAnonymousId(): string {
     if (typeof window === "undefined") return "server";
-    let id = localStorage.getItem("tradepilot_anon_id");
+    let id = localStorage.getItem("TradCopilot_anon_id");
     if (!id) {
       id = "tp_anon_" + Math.random().toString(36).substring(2, 15);
-      localStorage.setItem("tradepilot_anon_id", id);
+      localStorage.setItem("TradCopilot_anon_id", id);
     }
     return id;
   }

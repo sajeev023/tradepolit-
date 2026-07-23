@@ -1,7 +1,7 @@
-# TradePilot MVP — Product Specification
+# TradCopilot MVP — Product Specification
 
 ## Core Value Proposition
-TradePilot is a "second brain" decision-support system for retail crypto and forex day/swing traders. The application does **not** manage capital, connect to execution brokerages, or direct money movement. Instead, it aggregates live market telemetry, computes statistical analytics, tracks performance logs, evaluates price thresholds, backtests indicator crossover rules, and runs RAG-grounded AI behavioral coaching.
+TradCopilot is a "second brain" decision-support system for retail crypto and forex day/swing traders. The application does **not** manage capital, connect to execution brokerages, or direct money movement. Instead, it aggregates live market telemetry, computes statistical analytics, tracks performance logs, evaluates price thresholds, backtests indicator crossover rules, and runs RAG-grounded AI behavioral coaching.
 
 ---
 

@@ -105,8 +105,8 @@ function buildFallbackAnalysis(symbol: string, timeframe: string, tech: any, exc
 
   const isMacdBullish = (tech.macdValue ?? 0) > (tech.macdSignal ?? 0);
   const sourceTag = aiOffline
-    ? "Analysis Source: TradePilot Telemetry (Indicators Only) | "
-    : "Analysis Source: TradePilot Telemetry | ";
+    ? "Analysis Source: TradCopilot Telemetry (Indicators Only) | "
+    : "Analysis Source: TradCopilot Telemetry | ";
   const statusTag = aiOffline ? "Status: Indicator-Only (AI unavailable)" : "Status: Synchronized";
 
   return {
@@ -448,7 +448,7 @@ COACHING MANDATE:
             let narrative = analysis.coachNarrative || "";
             const expectedHeader = `Symbol: ${symbol}`;
             if (!narrative.includes(expectedHeader)) {
-              const headerLine = `Analysis Source: TradePilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized`;
+              const headerLine = `Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized`;
               narrative = narrative.replace(/^Analysis Source:[^\n]*\n?/, "");
               narrative = `${headerLine}\n\n${narrative.trim()}`;
             }
@@ -593,7 +593,7 @@ REQUIRED JSON RESPONSE SCHEMA:
   "stopLossIdea": "string",
   "takeProfitIdea": "string",
   "shortTermScenario": "string",
-  "coachNarrative": "Analysis Source: TradePilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\\n\\n## Market Structure\\n[Provide institutional discretionary analysis of structure]\\n\\n## Momentum\\n[Synthesize RSI, MACD, volume, and trend together - no indicator lists]\\n\\n## Key Levels\\n[Explain importance of support/resistance pivots]\\n\\n## Trade Thesis\\n[Step-by-step thesis with telemetry backup]\\n\\n## Invalidation\\n[Exact structural invalidation close event]\\n\\n## Risk Assessment\\n[Detail uncertainties, conflicting signals, volatility risk]\\n\\n## Bottom Line\\n[Concise firm-level summary of highest probability path]"
+  "coachNarrative": "Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\\n\\n## Market Structure\\n[Provide institutional discretionary analysis of structure]\\n\\n## Momentum\\n[Synthesize RSI, MACD, volume, and trend together - no indicator lists]\\n\\n## Key Levels\\n[Explain importance of support/resistance pivots]\\n\\n## Trade Thesis\\n[Step-by-step thesis with telemetry backup]\\n\\n## Invalidation\\n[Exact structural invalidation close event]\\n\\n## Risk Assessment\\n[Detail uncertainties, conflicting signals, volatility risk]\\n\\n## Bottom Line\\n[Concise firm-level summary of highest probability path]"
 }`;
     console.log(`[STEP 7: Prompt generated] userPromptLength=${userPrompt.length}B`);
 

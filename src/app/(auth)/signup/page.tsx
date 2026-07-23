@@ -92,7 +92,7 @@ export default function SignupPage() {
           Start Trading Smarter
         </h1>
         <p className="text-xs text-zinc-400 leading-relaxed">
-          Create your free TradePilot account to get 5 daily AI chart scans, trade journal memory, and risk guardrails.
+          Create your free TradCopilot account to get 5 daily AI chart scans, trade journal memory, and risk guardrails.
         </p>
       </div>
 

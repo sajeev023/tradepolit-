@@ -24,7 +24,7 @@ export async function prewarmDefaultChart(): Promise<{ status: string; duration:
     validateAnalysisConsistency(tech);
 
     // 3. System & User prompt construction for fast pre-warm
-    const systemPrompt = `You are TradePilot AI.
+    const systemPrompt = `You are TradCopilot AI.
 Your purpose is to provide institutional-grade trading analysis that earns the trust of professional traders.
 Reason with the discipline, methodology, and analytical rigor expected from an elite discretionary trader and market analyst.
 Never claim personal trading experience, profits, or credentials. Demonstrate expertise through the quality of your reasoning.
@@ -57,7 +57,7 @@ Provide your response in EXACTLY this JSON schema format:
   "stopLossIdea": "${tech.invalidationLevel}",
   "takeProfitIdea": "${tech.resistance}",
   "shortTermScenario": "Consolidation above support followed by breakout drive.",
-  "coachNarrative": "Analysis Source: TradePilot Telemetry | Symbol: ${DEFAULT_SYMBOL} | TF: ${DEFAULT_TIMEFRAME} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\\n\\n${DEFAULT_SYMBOL} is consolidating above local support at $${tech.support.toLocaleString()} with bullish continuation favored. RSI(14) reading at ${tech.rsi.toFixed(2)} indicates ${tech.rsiLabel}. Watch for 4H candle close for trigger."
+  "coachNarrative": "Analysis Source: TradCopilot Telemetry | Symbol: ${DEFAULT_SYMBOL} | TF: ${DEFAULT_TIMEFRAME} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\\n\\n${DEFAULT_SYMBOL} is consolidating above local support at $${tech.support.toLocaleString()} with bullish continuation favored. RSI(14) reading at ${tech.rsi.toFixed(2)} indicates ${tech.rsiLabel}. Watch for 4H candle close for trigger."
 }`;
 
     // 4. Call multi-model race to warm model connections & parse safely
@@ -100,7 +100,7 @@ Provide your response in EXACTLY this JSON schema format:
         stopLossIdea: `${tech.invalidationLevel}`,
         takeProfitIdea: `${tech.resistance}`,
         shortTermScenario: `Minor consolidation above $${tech.support.toLocaleString()} followed by breakout drive towards $${tech.resistance.toLocaleString()}.`,
-        coachNarrative: `Analysis Source: TradePilot Telemetry | Symbol: ${DEFAULT_SYMBOL} | TF: ${DEFAULT_TIMEFRAME} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\n\nSUMMARY\n${DEFAULT_SYMBOL} is consolidating above local support at $${tech.support.toLocaleString()} with continuation favored.\n\nTECHNICALS\n- RSI(14): ${tech.rsi.toFixed(2)} — ${tech.rsiLabel}\n- MACD: Bullish momentum expanding\n\nKEY LEVELS\n- Support: $${tech.support.toLocaleString()}\n- Resistance: $${tech.resistance.toLocaleString()}\n\nWHAT TO WATCH\n- Watch for 4H candle close above trigger zone for entry conviction.`
+        coachNarrative: `Analysis Source: TradCopilot Telemetry | Symbol: ${DEFAULT_SYMBOL} | TF: ${DEFAULT_TIMEFRAME} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\n\nSUMMARY\n${DEFAULT_SYMBOL} is consolidating above local support at $${tech.support.toLocaleString()} with continuation favored.\n\nTECHNICALS\n- RSI(14): ${tech.rsi.toFixed(2)} — ${tech.rsiLabel}\n- MACD: Bullish momentum expanding\n\nKEY LEVELS\n- Support: $${tech.support.toLocaleString()}\n- Resistance: $${tech.resistance.toLocaleString()}\n\nWHAT TO WATCH\n- Watch for 4H candle close above trigger zone for entry conviction.`
       };
     }
 

@@ -247,7 +247,7 @@ REQUIRED JSON RESPONSE SCHEMA:
   "stopLossIdea": "string",
   "takeProfitIdea": "string",
   "shortTermScenario": "string",
-  "coachNarrative": "Analysis Source: TradePilot Telemetry | Symbol: ${resolvedSymbol} | Exchange: ${exchangeName} | TF: ${resolvedTimeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\\n\\n## Market Structure\\n[Provide institutional discretionary analysis of structure]\\n\\n## Momentum\\n[Synthesize RSI, MACD, volume, and trend together - no indicator lists]\\n\\n## Key Levels\\n[Explain importance of support/resistance pivots]\\n\\n## Trade Thesis\\n[Step-by-step thesis with telemetry backup]\\n\\n## Invalidation\\n[Exact structural invalidation close event]\\n\\n## Risk Assessment\\n[Detail uncertainties, conflicting signals, volatility risk]\\n\\n## Bottom Line\\n[Concise firm-level summary of highest probability path]"
+  "coachNarrative": "Analysis Source: TradCopilot Telemetry | Symbol: ${resolvedSymbol} | Exchange: ${exchangeName} | TF: ${resolvedTimeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\\n\\n## Market Structure\\n[Provide institutional discretionary analysis of structure]\\n\\n## Momentum\\n[Synthesize RSI, MACD, volume, and trend together - no indicator lists]\\n\\n## Key Levels\\n[Explain importance of support/resistance pivots]\\n\\n## Trade Thesis\\n[Step-by-step thesis with telemetry backup]\\n\\n## Invalidation\\n[Exact structural invalidation close event]\\n\\n## Risk Assessment\\n[Detail uncertainties, conflicting signals, volatility risk]\\n\\n## Bottom Line\\n[Concise firm-level summary of highest probability path]"
 }`;
 
         try {

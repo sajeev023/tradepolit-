@@ -5,12 +5,12 @@ import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
-    q: "How is TradePilot different from ChatGPT?",
-    a: "TradePilot runs context-aware analysis on live candlestick data, indicators, and risk metrics. Unlike general LLMs, it retains persistent memory of your trades, journals, and behavioral patterns across sessions.",
+    q: "How is TradCopilot different from ChatGPT?",
+    a: "TradCopilot runs context-aware analysis on live candlestick data, indicators, and risk metrics. Unlike general LLMs, it retains persistent memory of your trades, journals, and behavioral patterns across sessions.",
   },
   {
     q: "Do I need to connect my brokerage?",
-    a: "No. TradePilot operates as a standalone copilot. You import watchlists, review indicators, log entries, and receive real-time psychology coaching — all without connecting any trading account.",
+    a: "No. TradCopilot operates as a standalone copilot. You import watchlists, review indicators, log entries, and receive real-time psychology coaching — all without connecting any trading account.",
   },
   {
     q: "What markets do you support?",

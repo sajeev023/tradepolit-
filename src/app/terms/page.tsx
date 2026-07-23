@@ -4,7 +4,7 @@ import { ArrowLeft, FileText } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "TradePilot terms of service — the rules and guidelines for using our AI-powered trading copilot platform.",
+  description: "TradCopilot terms of service — the rules and guidelines for using our AI-powered trading copilot platform.",
 };
 
 export default function TermsPage() {
@@ -26,14 +26,14 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using TradePilot (the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, you must immediately cease using the platform.
+              By accessing or using TradCopilot (the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, you must immediately cease using the platform.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-bold text-white mb-2">2. Description of Service</h2>
             <p>
-              TradePilot is an AI-powered trading copilot and performance analysis platform offering trading journals, performance calculators, backtesting engines, and behavioral review tools. **TradePilot is NOT a financial broker, does NOT execute trades, does NOT manage client funds, and does NOT provide direct financial or investment advice.** All calculations, alerts, and AI insights are for educational and analytical purposes only.
+              TradCopilot is an AI-powered trading copilot and performance analysis platform offering trading journals, performance calculators, backtesting engines, and behavioral review tools. **TradCopilot is NOT a financial broker, does NOT execute trades, does NOT manage client funds, and does NOT provide direct financial or investment advice.** All calculations, alerts, and AI insights are for educational and analytical purposes only.
             </p>
           </section>
 
@@ -61,14 +61,14 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">6. Intellectual Property</h2>
             <p>
-              All proprietary content, source code, logo, brand assets, design systems, algorithms, graphics, and software constituting the TradePilot application are owned by TradePilot and are protected by copyright, trademark, and intellectual property laws.
+              All proprietary content, source code, logo, brand assets, design systems, algorithms, graphics, and software constituting the TradCopilot application are owned by TradCopilot and are protected by copyright, trademark, and intellectual property laws.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-bold text-white mb-2">7. User-Generated Content</h2>
             <p>
-              You retain ownership of any data, journal logs, notes, or screenshot configurations you input into the Service (&quot;User Content&quot;). By submitting User Content, you grant TradePilot a worldwide, non-exclusive, royalty-free license to store, process, host, and retrieve the data to provide the Service to you.
+              You retain ownership of any data, journal logs, notes, or screenshot configurations you input into the Service (&quot;User Content&quot;). By submitting User Content, you grant TradCopilot a worldwide, non-exclusive, royalty-free license to store, process, host, and retrieve the data to provide the Service to you.
             </p>
           </section>
 
@@ -82,7 +82,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">9. Limitation of Liability</h2>
             <p>
-              Trading financial markets involves substantial risk of loss. To the maximum extent permitted by law, TradePilot, its founders, and affiliates shall not be liable for any trading losses, financial damages, loss of profits, data errors, or system downtime resulting from your use of the platform.
+              Trading financial markets involves substantial risk of loss. To the maximum extent permitted by law, TradCopilot, its founders, and affiliates shall not be liable for any trading losses, financial damages, loss of profits, data errors, or system downtime resulting from your use of the platform.
             </p>
           </section>
 
@@ -117,14 +117,14 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">14. Contact Information</h2>
             <p>
-              If you have any questions about these Terms, please contact us at **support@tradepilot.com** or **ashok.msc2010@gmail.com**.
+              If you have any questions about these Terms, please contact us at **support@tradcopilot.com** or **ashok.msc2010@gmail.com**.
             </p>
           </section>
         </div>
       </div>
 
       <footer className="mt-16 pt-8 border-t border-zinc-800 text-[11px] text-zinc-500 text-center">
-        © 2026 TradePilot. Educational and analytical services only.
+        © 2026 TradCopilot. Educational and analytical services only.
       </footer>
     </div>
   );

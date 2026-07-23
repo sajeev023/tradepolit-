@@ -1,7 +1,7 @@
 /**
  * src/lib/market-data-service.ts
  *
- * Centralized MarketDataService for TradePilot.
+ * Centralized MarketDataService for TradCopilot.
  * Acts as the single source of truth for both live price fetches
  * and indicator candle calculations across all backend components
  * (API endpoints, AI analysis routes, cron jobs, alerts, risk calculator).

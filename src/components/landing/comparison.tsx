@@ -5,7 +5,7 @@ import { AnimatedSection } from "./scroll-animator";
 // "we win" framing. Each row is a verifiable capability of each platform.
 // Where a platform doesn't offer a feature, we leave the cell neutral
 // rather than marking it "missing" with a red X, which would imply
-// TradePilot is objectively better.
+// TradCopilot is objectively better.
 const rows: { label: string; tp: boolean; tv: boolean; gpt: boolean }[] = [
   { label: "Advanced charting", tp: true, tv: true, gpt: false },
   { label: "Technical indicators (RSI, MACD, EMA, ATR)", tp: true, tv: true, gpt: false },
@@ -39,7 +39,7 @@ export function Comparison() {
           A factual look at what each tool offers
         </h2>
         <p className="text-[14px] text-zinc-400 max-w-md mx-auto leading-relaxed">
-          TradePilot doesn't replace your charting platform — it adds an analysis, journaling, and coaching layer on top.
+          TradCopilot doesn't replace your charting platform — it adds an analysis, journaling, and coaching layer on top.
         </p>
       </AnimatedSection>
 
@@ -49,7 +49,7 @@ export function Comparison() {
             {/* Header */}
             <div className="p-4 sm:p-5 border-b border-border" />
             <div className="p-4 sm:p-5 border-b border-border text-center">
-              <div className="text-[13px] sm:text-[14px] font-bold text-foreground">TradePilot</div>
+              <div className="text-[13px] sm:text-[14px] font-bold text-foreground">TradCopilot</div>
               <div className="text-[10px] font-mono text-accent mt-0.5">Free to start</div>
             </div>
             <div className="p-4 sm:p-5 border-b border-border text-center">

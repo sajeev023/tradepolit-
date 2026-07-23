@@ -25,6 +25,7 @@ import { HeroCTA } from "@/components/landing/hero-cta";
 import { TrustBar } from "@/components/landing/trust-bar";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Comparison } from "@/components/landing/comparison";
+import { FounderStory } from "@/components/landing/founder-story";
 
 const AntigravityCanvas = dynamic(
   () => import("@/components/ui/antigravity-canvas").then((m) => m.AntigravityCanvas)
@@ -70,11 +71,11 @@ export default function LandingPage() {
       {/* ━━━ NAVBAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <StickyHeader className="sticky-header-shell">
         <div className="h-14 flex items-center justify-between px-4 sm:px-6 lg:px-10 select-none max-w-7xl mx-auto w-full">
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="TradePilot Home">
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="TradCopilot Home">
             <div className="flex items-center justify-center rounded-md w-7 h-7 shadow-lg shadow-emerald-500/20" style={{ background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)" }}>
               <TrendingUp size={14} color="#09090B" strokeWidth={2.5} />
             </div>
-            <span className="text-sm font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">TradePilot</span>
+            <span className="text-sm font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">TradCopilot</span>
           </Link>
 
           {/* Desktop nav */}
@@ -115,7 +116,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="hero-subtext animate-enter-delay-2 text-[14px] sm:text-[15px] leading-[1.6] text-zinc-300 max-w-[460px]">
-            TradePilot brings real-time chart analysis, a persistent trade journal, and behavioral coaching into one workspace — so every entry is prepared, reviewed, and consistent with your own rules.
+            TradCopilot brings real-time chart analysis, a persistent trade journal, and behavioral coaching into one workspace — so every entry is prepared, reviewed, and consistent with your own rules.
           </p>
 
           {/* CTA row */}
@@ -190,7 +191,7 @@ export default function LandingPage() {
             </ul>
           </ElasticCard>
           <ElasticCard className="space-y-5 bg-card text-card-foreground border border-border shadow-sm rounded-2xl">
-            <h3 className="text-[12px] font-semibold font-mono text-foreground tracking-wider uppercase">With TradePilot</h3>
+            <h3 className="text-[12px] font-semibold font-mono text-foreground tracking-wider uppercase">With TradCopilot</h3>
             <ul className="space-y-3.5">
               {["Analysis, journal, and coaching in one workspace", "Persistent memory of your last 20 trades and patterns", "Chat threads logged and saved across all sessions", "Behavioral heuristics flag revenge trading inside the workspace"].map((text, i) => (
                 <li key={i} className="flex items-start gap-3 text-[13px] text-foreground">
@@ -201,6 +202,11 @@ export default function LandingPage() {
           </ElasticCard>
         </AnimatedSection>
       </section>
+
+      <SvgTracedLine color="rgba(148, 163, 184, 0.25)" />
+
+      {/* ━━━ WHY WE BUILT TRADCOPILOT ━━━━━━━━━━━━━━━━━━ */}
+      <FounderStory />
 
       <SvgTracedLine color="rgba(148, 163, 184, 0.25)" />
 
@@ -321,22 +327,22 @@ export default function LandingPage() {
               <div className="flex items-center justify-center rounded-md w-6 h-6 bg-emerald-500">
                 <TrendingUp size={13} color="#09090B" strokeWidth={2.5} />
               </div>
-              <span className="text-sm font-semibold tracking-tight text-foreground">TradePilot</span>
+              <span className="text-sm font-semibold tracking-tight text-foreground">TradCopilot</span>
               <span className="text-[10px] font-mono text-muted-foreground/60 border border-border rounded px-1.5 py-0.5 ml-1">Read-only · No broker access</span>
             </div>
             <a
-              href="mailto:hello@tradepilot.ai"
+              href="mailto:hello@tradcopilot.com"
               className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
             >
               <Mail size={13} />
-              hello@tradepilot.ai
+              hello@tradcopilot.com
             </a>
           </div>
           <p className="text-[11px] text-muted-foreground/80 max-w-2xl leading-relaxed">
-            TradePilot is a read-only analysis copilot. It does not execute trades, custody funds, or connect to your brokerage. Nothing on this site is financial advice. Markets carry risk — trade your own plan.
+            TradCopilot is a read-only analysis copilot. It does not execute trades, custody funds, or connect to your brokerage. Nothing on this site is financial advice. Markets carry risk — trade your own plan.
           </p>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2 border-t border-border/60">
-            <p className="text-xs text-muted-foreground">© 2026 TradePilot Inc. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground">© 2026 TradCopilot Inc. All rights reserved.</p>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
               <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
               <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>

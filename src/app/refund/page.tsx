@@ -4,7 +4,7 @@ import { ArrowLeft, Landmark } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Refund Policy",
-  description: "TradePilot refund policy — 7-day money-back guarantee on Pro plan subscriptions. Terms and conditions for refunds and cancellations.",
+  description: "TradCopilot refund policy — 7-day money-back guarantee on Pro plan subscriptions. Terms and conditions for refunds and cancellations.",
 };
 
 export default function RefundPage() {
@@ -26,7 +26,7 @@ export default function RefundPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">1. Subscription Billing</h2>
             <p>
-              TradePilot Pro Terminal subscriptions are billed on a recurring monthly or annual basis depending on the plan selected during checkout. Charges are processed automatically via our secure payment partners (Stripe, Razorpay, or Gumroad).
+              TradCopilot Pro Terminal subscriptions are billed on a recurring monthly or annual basis depending on the plan selected during checkout. Charges are processed automatically via our secure payment partners (Stripe, Razorpay, or Gumroad).
             </p>
           </section>
 
@@ -40,14 +40,14 @@ export default function RefundPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">3. Refund Eligibility</h2>
             <p>
-              We stand by our product and offer a **7-day money-back guarantee** for first-time subscribers. If you are not satisfied with the TradePilot Pro Terminal, you can request a full refund within 7 calendar days of your initial purchase date.
+              We stand by our product and offer a **7-day money-back guarantee** for first-time subscribers. If you are not satisfied with the TradCopilot Pro Terminal, you can request a full refund within 7 calendar days of your initial purchase date.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-bold text-white mb-2">4. How to Request a Refund</h2>
             <p>
-              To request a refund, please send an email to **support@tradepilot.com** or **ashok.msc2010@gmail.com** with the subject line &quot;Refund Request&quot; and include the following:
+              To request a refund, please send an email to **support@tradcopilot.com** or **ashok.msc2010@gmail.com** with the subject line &quot;Refund Request&quot; and include the following:
             </p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li>Your account email address</li>
@@ -78,7 +78,7 @@ export default function RefundPage() {
       </div>
 
       <footer className="mt-16 pt-8 border-t border-zinc-800 text-[11px] text-zinc-500 text-center">
-        © 2026 TradePilot. Educational and analytical services only.
+        © 2026 TradCopilot. Educational and analytical services only.
       </footer>
     </div>
   );

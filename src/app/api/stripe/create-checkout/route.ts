@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
           price_data: !priceId.startsWith("price_") ? {
             currency: "usd",
             product_data: {
-              name: "TradePilot Pro Membership",
+              name: "TradCopilot Pro Membership",
               description: "Unlimited AI analyses, full behavioral insights, and automated reports.",
             },
             unit_amount: 749, // $7.49

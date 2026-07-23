@@ -59,7 +59,7 @@ describe("Trade Analysis Reasoning & Validation Engine Suite", () => {
         entryIdeas: "Limit near $95,000",
         stopLossIdea: "$93,500",
         takeProfitIdea: "$97,000",
-        coachNarrative: "Analysis Source: TradePilot Telemetry | Symbol: BTC/USD | Price: $95,000\n\nMACD is bearish and crossed below signal line.",
+        coachNarrative: "Analysis Source: TradCopilot Telemetry | Symbol: BTC/USD | Price: $95,000\n\nMACD is bearish and crossed below signal line.",
       };
 
       const result = validateTradeAnalysis(analysis, tech);
@@ -93,7 +93,7 @@ describe("Trade Analysis Reasoning & Validation Engine Suite", () => {
         entryIdeas: "Limit near $95,000",
         stopLossIdea: "$93,500",
         takeProfitIdea: "$98,000",
-        coachNarrative: "Analysis Source: TradePilot Telemetry | Symbol: BTC/USD | Price: $95,000\n\nMACD is bullish with expanding histogram.",
+        coachNarrative: "Analysis Source: TradCopilot Telemetry | Symbol: BTC/USD | Price: $95,000\n\nMACD is bullish with expanding histogram.",
       };
 
       const result = validateTradeAnalysis(analysis, tech);
@@ -326,7 +326,7 @@ describe("Trade Analysis Reasoning & Validation Engine Suite", () => {
               entryIdeas: `Limit at $${currentPrice}`,
               stopLossIdea: `$${stopLoss}`,
               takeProfitIdea: `$${takeProfit}`,
-              coachNarrative: `Analysis Source: TradePilot Telemetry | Symbol: ${asset} | TF: ${tf} | Price: $${currentPrice}\n\nTechnical analysis shows ${asset} in a ${isBullish ? "bullish" : "bearish"} regime. MACD is ${isBullish ? "bullish" : "bearish"}. RSI is ${rsi.toFixed(1)}.`,
+              coachNarrative: `Analysis Source: TradCopilot Telemetry | Symbol: ${asset} | TF: ${tf} | Price: $${currentPrice}\n\nTechnical analysis shows ${asset} in a ${isBullish ? "bullish" : "bearish"} regime. MACD is ${isBullish ? "bullish" : "bearish"}. RSI is ${rsi.toFixed(1)}.`,
             };
 
             const valResult = validateTradeAnalysis(analysis, tech, { allowBreakoutStructure: true });

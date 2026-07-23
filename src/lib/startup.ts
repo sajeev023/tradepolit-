@@ -124,7 +124,7 @@ export function logStartupBanner(): StartupReport {
 
   const lines: string[] = [];
   lines.push("================================================================");
-  lines.push("[STARTUP] TradePilot provider configuration");
+  lines.push("[STARTUP] TradCopilot provider configuration");
   lines.push("----------------------------------------------------------------");
   for (const c of [report.loaded, report.missing].flat()) lines.push(fmt(c));
   lines.push("----------------------------------------------------------------");

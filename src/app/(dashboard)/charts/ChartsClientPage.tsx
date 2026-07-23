@@ -126,11 +126,11 @@ export function ChartsClientPage() {
   const router = useRouter();
   const [selectedSymbol, setSelectedSymbol] = useState<string>(() => {
     if (typeof window === "undefined") return "BTC/USD";
-    return localStorage.getItem("tradepilot-default-symbol") || "BTC/USD";
+    return localStorage.getItem("TradCopilot-default-symbol") || "BTC/USD";
   });
   const [selectedTimeframe, setSelectedTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W">(() => {
     if (typeof window === "undefined") return "4h";
-    const tf = localStorage.getItem("tradepilot-default-timeframe");
+    const tf = localStorage.getItem("TradCopilot-default-timeframe");
     const valid: Array<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W"> = ["1m", "5m", "15m", "1h", "4h", "1d", "1W"];
     return valid.includes(tf as any) ? (tf as any) : "4h";
   });
@@ -234,8 +234,8 @@ export function ChartsClientPage() {
 
           // Initial state is already seeded from localStorage synchronously; only
           // override if the server profile has a *different* persisted preference.
-          const localSym = (typeof window !== "undefined" && localStorage.getItem("tradepilot-default-symbol")) || null;
-          const localTf = (typeof window !== "undefined" && localStorage.getItem("tradepilot-default-timeframe")) || null;
+          const localSym = (typeof window !== "undefined" && localStorage.getItem("TradCopilot-default-symbol")) || null;
+          const localTf = (typeof window !== "undefined" && localStorage.getItem("TradCopilot-default-timeframe")) || null;
           const serverSym = lastSymbol || localSym || "BTC/USD";
           const serverTf = lastTimeframe || localTf || "4h";
           if (serverSym !== selectedSymbol) setSelectedSymbol(serverSym);
@@ -954,7 +954,7 @@ Timestamp: ${new Date().toISOString()}
 
       const dataUrl = canvas.toDataURL("image/png");
       const link = document.createElement("a");
-      link.download = `tradepilot-${selectedSymbol.replace("/", "-")}-${selectedTimeframe}.png`;
+      link.download = `TradCopilot-${selectedSymbol.replace("/", "-")}-${selectedTimeframe}.png`;
       link.href = dataUrl;
       link.click();
 
@@ -1355,7 +1355,7 @@ Timestamp: ${new Date().toISOString()}
                   <BrainCircuit size={15} className="text-teal-400" />
                   <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse border border-zinc-900" />
                 </div>
-                <span className="text-sm font-bold tracking-tight text-[var(--color-text-primary)]">TradePilot</span>
+                <span className="text-sm font-bold tracking-tight text-[var(--color-text-primary)]">TradCopilot</span>
               </div>
               <div className="flex items-center gap-2">
                 {/* Bookmarks */}
@@ -1524,7 +1524,7 @@ Timestamp: ${new Date().toISOString()}
                   </div>
                   <h3 className="text-xs font-bold text-[var(--color-text-primary)] mb-1.5">Chart Analysis Inactive</h3>
                   <p className="text-[10px] leading-relaxed text-[var(--color-text-tertiary)] max-w-[200px] mb-4">
-                    Launch TradePilot AI indicators scanning to initiate technical review and messaging.
+                    Launch TradCopilot AI indicators scanning to initiate technical review and messaging.
                   </p>
                   {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && analysesCountToday >= analysisLimit ? (
                     <button
@@ -1846,7 +1846,7 @@ Timestamp: ${new Date().toISOString()}
                 type="text"
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
-                placeholder="Ask TradePilot about this chart..."
+                placeholder="Ask TradCopilot about this chart..."
                 className="flex-grow bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] rounded-lg px-4 py-2.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-teal-500/40 transition-colors"
                 disabled={chatMutation.isPending}
               />

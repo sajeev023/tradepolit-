@@ -125,10 +125,10 @@ export default function SettingsPage() {
     getUserData();
 
     if (typeof window !== "undefined") {
-      const tf = localStorage.getItem("tradepilot-default-timeframe") as any;
-      const sym = localStorage.getItem("tradepilot-default-symbol");
-      const behavior = localStorage.getItem("tradepilot-ai-behavior") as any;
-      const chart = localStorage.getItem("tradepilot-default-chart-type") as any;
+      const tf = localStorage.getItem("TradCopilot-default-timeframe") as any;
+      const sym = localStorage.getItem("TradCopilot-default-symbol");
+      const behavior = localStorage.getItem("TradCopilot-ai-behavior") as any;
+      const chart = localStorage.getItem("TradCopilot-default-chart-type") as any;
       if (tf) setDefaultTimeframe(tf);
       if (sym) setDefaultSymbol(sym);
       if (behavior) setAiBehavior(behavior);
@@ -246,10 +246,10 @@ export default function SettingsPage() {
   const handleSavePreferences = (e: React.FormEvent) => {
     e.preventDefault();
     if (typeof window !== "undefined") {
-      localStorage.setItem("tradepilot-default-timeframe", defaultTimeframe);
-      localStorage.setItem("tradepilot-default-symbol", defaultSymbol);
-      localStorage.setItem("tradepilot-ai-behavior", aiBehavior);
-      localStorage.setItem("tradepilot-default-chart-type", defaultChartType);
+      localStorage.setItem("TradCopilot-default-timeframe", defaultTimeframe);
+      localStorage.setItem("TradCopilot-default-symbol", defaultSymbol);
+      localStorage.setItem("TradCopilot-ai-behavior", aiBehavior);
+      localStorage.setItem("TradCopilot-default-chart-type", defaultChartType);
       toast.success("Trading preferences saved successfully");
     }
   };
@@ -530,7 +530,7 @@ export default function SettingsPage() {
                       className="rounded border-rose-900/60 bg-zinc-900 text-rose-500 focus:ring-0 w-4 h-4 mt-0.5"
                     />
                     <span className="text-xs font-semibold text-zinc-400 select-none">
-                      I understand that this will permanently destroy all TradePilot data.
+                      I understand that this will permanently destroy all TradCopilot data.
                     </span>
                   </label>
 
@@ -723,7 +723,7 @@ export default function SettingsPage() {
                     <div className="absolute top-0 right-0 w-24 h-24 bg-teal-400/5 blur-2xl rounded-full" />
                     <div>
                       <span className="text-[10px] uppercase font-bold tracking-widest text-teal-400 font-mono">Premium Access</span>
-                      <h4 className="text-lg font-black text-white mt-1">TradePilot Pro</h4>
+                      <h4 className="text-lg font-black text-white mt-1">TradCopilot Pro</h4>
                       <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
                         Become an institutional-grade day trader with complete contextual AI scanning, full journal persistence, and alerts.
                       </p>

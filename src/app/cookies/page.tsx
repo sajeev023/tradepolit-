@@ -4,7 +4,7 @@ import { ArrowLeft, Cookie } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Cookie Policy",
-  description: "TradePilot cookie policy — how we use cookies and similar tracking technologies on our trading platform.",
+  description: "TradCopilot cookie policy — how we use cookies and similar tracking technologies on our trading platform.",
 };
 
 export default function CookiesPage() {
@@ -44,7 +44,7 @@ export default function CookiesPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">3. No Advertising Cookies</h2>
             <p>
-              **TradePilot does not use any advertising cookies, marketing tracking scripts, or analytics scripts that monitor your behavior across other websites.** We respect your privacy and limit our client-side storage strictly to functional data.
+              **TradCopilot does not use any advertising cookies, marketing tracking scripts, or analytics scripts that monitor your behavior across other websites.** We respect your privacy and limit our client-side storage strictly to functional data.
             </p>
           </section>
 
@@ -62,7 +62,7 @@ export default function CookiesPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-2">5. How to Disable Cookies</h2>
             <p>
-              You can control or disable cookies by modifying your web browser settings. Please note that if you block all cookies, TradePilot will not be able to verify your login credentials, and the dashboard functions will become inaccessible.
+              You can control or disable cookies by modifying your web browser settings. Please note that if you block all cookies, TradCopilot will not be able to verify your login credentials, and the dashboard functions will become inaccessible.
             </p>
           </section>
 
@@ -76,7 +76,7 @@ export default function CookiesPage() {
       </div>
 
       <footer className="mt-16 pt-8 border-t border-zinc-800 text-[11px] text-zinc-500 text-center">
-        © 2026 TradePilot. Educational and analytical services only.
+        © 2026 TradCopilot. Educational and analytical services only.
       </footer>
     </div>
   );
