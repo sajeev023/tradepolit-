@@ -9,6 +9,16 @@ const publicRoutes = [
   "/reset-password",
   "/auth/callback",
   "/auth/confirm",
+  "/privacy",
+  "/terms",
+  "/refund",
+  "/disclaimer",
+  "/cookies",
+  "/acceptable-use",
+  "/pricing",
+  "/news",
+  "/market-pulse",
+  "/risk-calculator",
 ];
 
 const adminRoutes = ["/admin"];

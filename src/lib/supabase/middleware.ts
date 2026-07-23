@@ -30,11 +30,25 @@ export async function updateSession(request: NextRequest) {
 
   // Refresh session — important for Server Components
   let user = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  } catch (error) {
-    console.warn("Supabase auth middleware error:", error);
+  const isMockSession = request.cookies.get("sb-mock-session")?.value === "true";
+
+  if (isMockSession) {
+    const mockEmail = request.cookies.get("sb-mock-email")?.value || "partner@tradepilot.ai";
+    user = {
+      id: "partner-1234-1234-1234-123456789012",
+      email: decodeURIComponent(mockEmail),
+      user_metadata: { full_name: "YC Demo Trader" },
+      app_metadata: { role: "USER" },
+      aud: "authenticated",
+      created_at: new Date().toISOString(),
+    } as any;
+  } else {
+    try {
+      const { data } = await supabase.auth.getUser();
+      user = data.user;
+    } catch (error) {
+      console.warn("Supabase auth middleware error:", error);
+    }
   }
 
   return { user, supabaseResponse };

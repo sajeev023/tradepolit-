@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { unauthorizedError } from "@/lib/api-helpers";
+import { cookies } from "next/headers";
 
 /**
  * Get the authenticated user from the Supabase session.
@@ -14,11 +15,30 @@ export async function getAuthUser() {
     error,
   } = await supabase.auth.getUser();
 
-  if (error || !user) {
-    return { user: null, error: unauthorizedError() };
+  if (!error && user) {
+    return { user, error: null };
   }
 
-  return { user, error: null };
+  // Demo session fallback for YC Instant Demo mode
+  try {
+    const cookieStore = await cookies();
+    if (cookieStore.get("sb-mock-session")?.value === "true") {
+      const mockEmail = cookieStore.get("sb-mock-email")?.value || "partner@tradepilot.ai";
+      return {
+        user: {
+          id: "partner-1234-1234-1234-123456789012",
+          email: decodeURIComponent(mockEmail),
+          user_metadata: { full_name: "YC Demo Trader" },
+          app_metadata: { role: "USER" },
+          aud: "authenticated",
+          created_at: new Date().toISOString(),
+        } as any,
+        error: null,
+      };
+    }
+  } catch (_) {}
+
+  return { user: null, error: unauthorizedError() };
 }
 
 /**
