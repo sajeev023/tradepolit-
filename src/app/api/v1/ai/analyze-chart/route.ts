@@ -717,7 +717,7 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
       reservedUserId = null;
 
       return errorResponse(
-        "VALIDATION_FAILED",
+        "VALIDATION_ERROR",
         `AI trade analysis contained internal logical contradictions: ${finalIssues.join("; ")}`,
         422,
         {
