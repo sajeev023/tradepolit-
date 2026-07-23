@@ -5,13 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { X, AlertCircle, Crown } from "lucide-react";
 
-const DEMO_ANALYSIS_LIMIT = 2;
-const DEMO_ALERT_LIMIT = 1;
-
 export function DemoBanner() {
   const [isDemo, setIsDemo] = useState(false);
   const [analysesUsed, setAnalysesUsed] = useState(0);
   const [alertsUsed, setAlertsUsed] = useState(0);
+  // Quota comes from the server (/api/v1/usage -> entitlements.ts YC_DEMO).
+  // Never hardcode the demo limit here — single source of truth is the server.
+  const [analysisLimit, setAnalysisLimit] = useState<number | null>(null);
+  const [alertLimit, setAlertLimit] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
   const fetchUsage = useCallback(async (_userId: string) => {
@@ -21,6 +22,8 @@ export function DemoBanner() {
         const data = await res.json();
         setAnalysesUsed(data.data?.analysesUsed || 0);
         setAlertsUsed(data.data?.alertsUsed || 0);
+        if (typeof data.data?.limit === "number") setAnalysisLimit(data.data.limit);
+        if (typeof data.data?.alertLimit === "number") setAlertLimit(data.data.alertLimit);
       }
     } catch {
       // Silently fail
@@ -41,9 +44,9 @@ export function DemoBanner() {
 
   if (!isDemo || dismissed) return null;
 
-  const analysesRemaining = Math.max(0, DEMO_ANALYSIS_LIMIT - analysesUsed);
-  const alertsRemaining = Math.max(0, DEMO_ALERT_LIMIT - alertsUsed);
-  const limitReached = analysesRemaining === 0;
+  const analysesRemaining = analysisLimit !== null ? Math.max(0, analysisLimit - analysesUsed) : null;
+  const alertsRemaining = alertLimit !== null ? Math.max(0, alertLimit - alertsUsed) : null;
+  const limitReached = analysesRemaining !== null && analysesRemaining === 0;
 
   return (
     <div
@@ -88,11 +91,13 @@ export function DemoBanner() {
             }}
           >
             {limitReached
-              ? "You've completed all 2 demo analyses."
-              : `YC Demo · ${analysesRemaining} analysis${analysesRemaining !== 1 ? "es" : ""} remaining`
+              ? `You've completed all ${analysisLimit ?? ""} demo analyses.`
+              : analysesRemaining !== null
+                ? `YC Demo · ${analysesRemaining} analysis${analysesRemaining !== 1 ? "es" : ""} remaining`
+                : "YC Demo"
             }
           </span>
-          {alertsRemaining < 1 && (
+          {alertsRemaining !== null && alertsRemaining < 1 && (
             <span
               style={{
                 fontSize: 11,

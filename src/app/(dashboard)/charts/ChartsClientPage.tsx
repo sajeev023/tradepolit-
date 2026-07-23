@@ -172,8 +172,10 @@ export function ChartsClientPage() {
   const [subscriptionStatus, setSubscriptionStatus] = useState("FREE");
   const [analysesCountToday, setAnalysesCountToday] = useState(0);
   const [_alertsCountToday, setAlertsCountToday] = useState(0);
-  const [analysisLimit, setAnalysisLimit] = useState(5);
-  const [_alertLimit, setAlertLimit] = useState(3);
+  // Quota comes from the server (/api/v1/profile) — never hardcode a default.
+  // The server is the single source of truth (see entitlements.ts YC_DEMO).
+  const [analysisLimit, setAnalysisLimit] = useState<number | null>(null);
+  const [_alertLimit, setAlertLimit] = useState<number | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [showDemoConversionModal, setShowDemoConversionModal] = useState(false);
   const [demoAnalysesCount, setDemoAnalysesCount] = useState(0);
@@ -496,11 +498,11 @@ export function ChartsClientPage() {
       const tf = variables?.timeframe ?? selectedTimeframe;
       const bypass = variables?.bypassCache ?? false;
 
-      // Demo mode check: max 2 free analyses
-      if (isDemoMode && demoAnalysesCount >= 2) {
+      // Demo mode check: gate on the server-provided analysisLimit, not a hardcoded constant.
+      if (isDemoMode && analysisLimit !== null && demoAnalysesCount >= analysisLimit) {
         setShowDemoConversionModal(true);
         analytics.trackSignupModalOpened("demo_limit_reached");
-        throw new Error("You've used your 2 free demo AI analyses. Create a free account to continue.");
+        throw new Error(`You've used your ${analysisLimit} free demo AI analyses. Create a free account to continue.`);
       }
 
       // Reset scroll to top on fresh analysis
@@ -569,7 +571,8 @@ export function ChartsClientPage() {
         const nextCount = demoAnalysesCount + 1;
         setDemoAnalysesCount(nextCount);
         analytics.trackDemoAnalysis(nextCount, targetSym);
-        if (nextCount >= 2) {
+        const limit = analysisLimit ?? 0;
+        if (limit > 0 && nextCount >= limit) {
           setTimeout(() => {
             setShowDemoConversionModal(true);
             analytics.trackSignupModalOpened("demo_limit_reached");
@@ -1523,7 +1526,7 @@ Timestamp: ${new Date().toISOString()}
                   <p className="text-[10px] leading-relaxed text-[var(--color-text-tertiary)] max-w-[200px] mb-4">
                     Launch TradePilot AI indicators scanning to initiate technical review and messaging.
                   </p>
-                  {subscriptionStatus !== "PRO_ACTIVE" && analysesCountToday >= analysisLimit ? (
+                  {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && analysesCountToday >= analysisLimit ? (
                     <button
                       onClick={() => router.push("/pricing")}
                       className="btn-primary bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs w-full max-w-[180px] shadow-md cursor-pointer font-bold flex items-center justify-center gap-1.5"
@@ -1776,7 +1779,7 @@ Timestamp: ${new Date().toISOString()}
               )}
 
               <div className="p-3 pt-2.5">
-                {subscriptionStatus !== "PRO_ACTIVE" && (
+                {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && (
                   <div className="hidden lg:flex items-center gap-2 mb-1 px-0.5 select-none">
                     <span className={`text-[9px] font-mono font-bold ${analysesCountToday >= analysisLimit ? "text-rose-400" : "text-amber-400/80"}`}>
                       {Math.max(0, analysisLimit - analysesCountToday)}/{analysisLimit}
@@ -1829,7 +1832,7 @@ Timestamp: ${new Date().toISOString()}
       {analysisData && mobileTab === "copilot" && (
         <div className="lg:hidden fixed left-0 right-0 z-40 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)]" style={{ bottom: "calc(56px + env(safe-area-inset-bottom, 0px))" }}>
           <div className="p-3">
-            {subscriptionStatus !== "PRO_ACTIVE" && (
+            {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && (
               <div className="flex items-center justify-between px-1 pb-1.5 text-[9px] uppercase font-bold tracking-widest text-[var(--color-text-tertiary)] font-mono select-none">
                 <span>{isDemoMode ? "Demo" : "Daily"} limit</span>
                 <span className={analysesCountToday >= analysisLimit ? "text-rose-400" : "text-amber-400"}>
