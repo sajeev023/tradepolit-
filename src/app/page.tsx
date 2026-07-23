@@ -122,10 +122,11 @@ export default function LandingPage() {
           </p>
 
           {/* CTA row */}
-          <div className="hero-cta-row animate-enter-delay-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1 w-full">
+          <div className="hero-cta-row animate-enter-delay-3 flex flex-col sm:flex-row items-stretch sm:items-end gap-3 pt-1 w-full">
             <HeroCTA />
-            <Link href="/signup" className="group text-[14px] font-semibold text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer">
-              Create Free Account <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+            <Link href="/signup" className="group text-[13px] font-semibold text-zinc-300 hover:text-white bg-zinc-900/90 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-6 h-11 rounded-xl transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+              <span>Create Free Account</span>
+              <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
           </div>
 
