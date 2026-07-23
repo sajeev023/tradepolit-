@@ -18,7 +18,7 @@ export interface Entitlement {
 export const ENTITLEMENTS: Record<Plan, Entitlement> = {
   YC_DEMO: {
     plan: "YC_DEMO",
-    analysisLimit: 3,
+    analysisLimit: 2,
     alertLimit: 1,
     isUnlimitedAnalyses: false,
     isUnlimitedAlerts: false,
@@ -109,7 +109,7 @@ export function getAnalysisLimitError(entitlement: Entitlement, analysesUsed: nu
   if (entitlement.plan === "YC_DEMO") {
     return {
       error: "PREVIEW_LIMIT_REACHED" as const,
-      message: `You've used all ${analysesUsed} demo analyses. Create a free account for 5 analyses per day.`,
+      message: `You've used your 2 free AI analyses. Create a free account to continue.`,
       cta: "Create Free Account",
       ctaLink: "/signup",
     };

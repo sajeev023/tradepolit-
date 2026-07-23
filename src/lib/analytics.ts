@@ -5,8 +5,52 @@ class ProductAnalytics {
 
   public trackPageView(url: string) {
     this.log("PageView", { url });
-    // Connect to backend metrics endpoint
     this.sendToBackend("page_view", { url });
+  }
+
+  public trackLandingViewed(metadata?: Record<string, any>) {
+    this.log("Landing Viewed", metadata || {});
+    this.sendToBackend("landing_viewed", metadata || {});
+  }
+
+  public trackHeroCtaClicked(ctaType: string) {
+    this.log("Hero CTA Clicked", { ctaType });
+    this.sendToBackend("hero_cta_clicked", { ctaType });
+  }
+
+  public trackInstantDemoStarted() {
+    this.log("Instant Demo Started", { timestamp: new Date().toISOString() });
+    this.sendToBackend("instant_demo_started", {});
+  }
+
+  public trackDemoAnalysis(analysisNumber: number, symbol: string) {
+    this.log(`Demo Analysis #${analysisNumber}`, { analysisNumber, symbol });
+    this.sendToBackend("demo_analysis", { analysisNumber, symbol });
+  }
+
+  public trackSignupModalOpened(reason: string) {
+    this.log("Signup Modal Opened", { reason });
+    this.sendToBackend("signup_modal_opened", { reason });
+  }
+
+  public trackGoogleOAuthStarted(source?: string) {
+    this.log("Google OAuth Started", { source: source || "unknown" });
+    this.sendToBackend("google_oauth_started", { source: source || "unknown" });
+  }
+
+  public trackGoogleOAuthCompleted() {
+    this.log("Google OAuth Completed", {});
+    this.sendToBackend("google_oauth_completed", {});
+  }
+
+  public trackDashboardLoaded(isDemo: boolean) {
+    this.log("Dashboard Loaded", { isDemo });
+    this.sendToBackend("dashboard_loaded", { isDemo });
+  }
+
+  public trackFirstAIAnalysis(symbol: string) {
+    this.log("First AI Analysis", { symbol });
+    this.sendToBackend("first_ai_analysis", { symbol });
   }
 
   public trackFeatureUsage(feature: string, metadata?: Record<string, any>) {
@@ -32,9 +76,6 @@ class ProductAnalytics {
 
   private async sendToBackend(type: string, payload: Record<string, any>) {
     try {
-      // Fire-and-forget analytics: a 2s hard cap means a slow metrics
-      // endpoint can never block the user's UI. The outer catch already
-      // silences failures; the timeout covers the silent-hang case.
       fetch("/api/v1/admin/metrics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,7 +86,7 @@ class ProductAnalytics {
           payload,
         }),
         signal: AbortSignal.timeout(2000),
-      }).catch(() => {}); // Omit catching to prevent loops
+      }).catch(() => {});
     } catch (_) {}
   }
 
@@ -62,3 +103,4 @@ class ProductAnalytics {
 
 export const analytics = new ProductAnalytics();
 export default analytics;
+

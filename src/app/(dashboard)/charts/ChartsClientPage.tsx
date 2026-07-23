@@ -8,6 +8,9 @@ import { TradingViewChart } from "@/components/charts/TradingViewChart";
 import type { PriceData } from "@/lib/types";
 import { ChatHistorySidebar } from "@/components/charts/ChatHistorySidebar";
 import { SavedAnalysesPanel } from "@/components/charts/SavedAnalysesPanel";
+import { DemoConversionModal } from "@/components/DemoConversionModal";
+import { createClient } from "@/lib/supabase/client";
+import { analytics } from "@/lib/analytics";
 import { useBinanceMultiStream, useBinanceStreamStatus, getLatestWebSocketPrice } from "@/hooks/useBinanceStream";
 import { LivePriceCard } from "@/components/charts/LivePriceCard";
 import { LivePriceTag } from "@/components/charts/LivePriceTag";
@@ -173,6 +176,9 @@ export function ChartsClientPage() {
   const [analysisLimit, setAnalysisLimit] = useState(5);
   const [_alertLimit, setAlertLimit] = useState(3);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [showDemoConversionModal, setShowDemoConversionModal] = useState(false);
+  const [demoAnalysesCount, setDemoAnalysesCount] = useState(0);
+  const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const [_analysisReady, setAnalysisReady] = useState(false);
 
   // Chat state
@@ -491,6 +497,13 @@ export function ChartsClientPage() {
       const tf = variables?.timeframe ?? selectedTimeframe;
       const bypass = variables?.bypassCache ?? false;
 
+      // Demo mode check: max 2 free analyses
+      if (isDemoMode && demoAnalysesCount >= 2) {
+        setShowDemoConversionModal(true);
+        analytics.trackSignupModalOpened("demo_limit_reached");
+        throw new Error("You've used your 2 free demo AI analyses. Create a free account to continue.");
+      }
+
       // Reset scroll to top on fresh analysis
       requestAnimationFrame(() => {
         if (chatContainerRef.current) chatContainerRef.current.scrollTop = 0;
@@ -552,6 +565,18 @@ export function ChartsClientPage() {
       setAnalysisData(readyData);
       setChatId(null);
       setShowFollowUps(false);
+
+      if (isDemoMode) {
+        const nextCount = demoAnalysesCount + 1;
+        setDemoAnalysesCount(nextCount);
+        analytics.trackDemoAnalysis(nextCount, targetSym);
+        if (nextCount >= 2) {
+          setTimeout(() => {
+            setShowDemoConversionModal(true);
+            analytics.trackSignupModalOpened("demo_limit_reached");
+          }, 1500);
+        }
+      }
 
       // Perform validation log
       const wsPriceVal = getLatestWebSocketPrice(selectedSymbol);
@@ -1954,6 +1979,13 @@ Timestamp: ${new Date().toISOString()}
 
       {/* Floating Performance telemetry Dashboard */}
       <PerformanceOverlay />
+
+      {/* YC Instant Demo Conversion Gating Modal */}
+      <DemoConversionModal
+        isOpen={showDemoConversionModal}
+        onClose={() => setShowDemoConversionModal(false)}
+        analysesUsed={demoAnalysesCount || 2}
+      />
     </div>
     </Profiler>
   );

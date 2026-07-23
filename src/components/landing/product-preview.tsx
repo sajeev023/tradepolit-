@@ -91,68 +91,54 @@ function TypedResponse() {
 export function MobileProductPreview() {
   return (
     <div className="block lg:hidden pt-4 animate-enter-delay-5">
-      <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-deepest)]/90 backdrop-blur-2xl overflow-hidden shadow-xl shadow-black/60">
-        <div className="flex items-center px-3 border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)] h-8 select-none">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-950/90 backdrop-blur-2xl overflow-hidden shadow-xl shadow-black/60">
+        <div className="flex items-center px-3 border-b border-zinc-800 bg-zinc-950 h-8 select-none">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-rose-500/80" />
             <span className="w-2 h-2 rounded-full bg-amber-500/80" />
             <span className="w-2 h-2 rounded-full bg-emerald-500/80" />
           </div>
           <div className="flex-1 mx-2 text-center">
-            <span className="text-[8px] font-mono text-[var(--color-text-quaternary)]">tradepilot.ai</span>
+            <span className="text-[8px] font-mono text-zinc-500">tradepilot.ai/charts</span>
           </div>
         </div>
-        <div className="p-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className="p-3 space-y-2">
+          <div className="flex items-center justify-between pb-1 border-b border-zinc-800/60">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold font-mono text-[var(--color-text-primary)]">BTC/USD</span>
-              <span className="text-[8px] font-medium text-[var(--color-text-quaternary)] bg-[var(--color-bg-primary)] border border-[var(--color-border-subtle)] px-1 py-0.5 rounded font-mono">4H</span>
+              <span className="text-[11px] font-semibold font-mono text-white">BTC/USD</span>
+              <span className="text-[8px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1 py-0.5 rounded font-mono">4H</span>
             </div>
             <div className="text-right">
               <LivePriceDisplay />
-              <span className="text-[9px] text-[var(--color-profit)] font-mono ml-1.5">+1.85%</span>
+              <span className="text-[9px] text-emerald-400 font-mono ml-1.5">+1.85%</span>
             </div>
           </div>
-          <div className="relative flex items-end justify-between h-24 px-1 gap-[3px] rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-primary)] overflow-hidden mb-2">
-            <div className="absolute inset-x-0 top-1/4 h-px bg-[var(--color-border-subtle)] pointer-events-none" />
-            <div className="absolute inset-x-0 top-2/4 h-px bg-[var(--color-border-subtle)] pointer-events-none" />
-            <div className="absolute inset-x-0 top-3/4 h-px bg-[var(--color-border-subtle)] pointer-events-none" />
-            {candlesticks.map((c, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                <div
-                  className="w-px shrink-0"
-                  style={{
-                    height: `${c.w - c.h}px`,
-                    backgroundColor: `var(--color-${c.t})`,
-                  }}
-                />
-                <div
-                  className="w-full max-w-[6px] rounded-sm"
-                  style={{ height: `${c.h}px`, backgroundColor: `var(--color-${c.t})` }}
-                />
-                <div
-                  className="w-px shrink-0"
-                  style={{ height: "6px", backgroundColor: `var(--color-${c.t})` }}
-                />
+
+          {/* AI Completed Analysis Card */}
+          <div className="p-2.5 rounded-lg border border-emerald-500/30 bg-zinc-900/80 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] font-bold text-white uppercase tracking-wide">BULLISH / LONG</span>
               </div>
-            ))}
-            <div className="absolute right-2 bottom-[60%] flex items-center">
-              <span className="w-1 h-1 rounded-full bg-[var(--color-profit)] animate-ping absolute" />
-              <span className="w-1 h-1 rounded-full bg-[var(--color-profit)]" />
+              <span className="text-[9px] font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                88% Confidence
+              </span>
             </div>
-          </div>
-          <div className="flex items-start gap-2 p-2 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-primary)]">
-            <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent-primary)] mt-0.5 shrink-0" />
-            <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[10px] font-semibold text-[var(--color-text-primary)]">Bullish Bias</span>
-                <span className="text-[8px] font-mono text-emerald-400 bg-emerald-500/10 px-1 rounded">
-                  78% confidence
-                </span>
+
+            <div className="grid grid-cols-3 gap-1 pt-1 border-t border-zinc-800 text-[9px] font-mono">
+              <div>
+                <span className="text-zinc-500 block text-[8px]">ENTRY</span>
+                <span className="text-white font-semibold">$92,800</span>
               </div>
-              <p className="text-[9px] leading-relaxed text-[var(--color-text-tertiary)]">
-                Momentum strengthening above key support zone. Risk moderate.
-              </p>
+              <div>
+                <span className="text-zinc-500 block text-[8px]">STOP LOSS</span>
+                <span className="text-rose-400 font-semibold">$91,400</span>
+              </div>
+              <div>
+                <span className="text-zinc-500 block text-[8px]">TAKE PROFIT</span>
+                <span className="text-emerald-400 font-semibold">$95,600</span>
+              </div>
             </div>
           </div>
         </div>
@@ -164,53 +150,53 @@ export function MobileProductPreview() {
 export function DesktopProductPreview() {
   return (
     <div className="hero-mockup-desktop hidden sm:block lg:col-span-7 animate-enter-delay-2 relative z-10">
-      <div className="relative rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-deepest)]/90 backdrop-blur-2xl overflow-hidden shadow-2xl shadow-black/80">
-        <div className="absolute -top-20 -right-20 w-80 h-80 bg-[var(--color-accent-primary)] opacity-[0.08] rounded-full blur-[90px] pointer-events-none" />
-        <div className="flex items-center px-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)] h-9 select-none">
+      <div className="relative rounded-2xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-2xl overflow-hidden shadow-2xl shadow-black/80">
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-emerald-500 opacity-[0.08] rounded-full blur-[90px] pointer-events-none" />
+        <div className="flex items-center px-4 border-b border-zinc-800 bg-zinc-950 h-9 select-none">
           <div className="flex items-center gap-1.5 w-14">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
           </div>
-          <div className="flex-1 max-w-[240px] mx-auto flex items-center justify-center gap-1.5 h-6 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border-subtle)] px-3">
-            <Lock size={9} className="text-[var(--color-text-quaternary)]" />
-            <span className="text-[10px] font-mono text-[var(--color-text-quaternary)]">tradepilot.ai/charts</span>
+          <div className="flex-1 max-w-[240px] mx-auto flex items-center justify-center gap-1.5 h-6 rounded-md bg-zinc-900 border border-zinc-800 px-3">
+            <Lock size={9} className="text-zinc-500" />
+            <span className="text-[10px] font-mono text-zinc-400">tradepilot.ai/charts</span>
           </div>
           <div className="w-14" />
         </div>
         <div className="flex h-[360px]">
-          <div className="hidden sm:flex flex-col items-center gap-3 py-4 border-r border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)] w-10">
-            <div className="w-5 h-5 rounded-md bg-[var(--color-accent-primary-muted)] flex items-center justify-center">
-              <Activity size={10} className="text-[var(--color-accent-primary)]" />
+          <div className="hidden sm:flex flex-col items-center gap-3 py-4 border-r border-zinc-800 bg-zinc-950 w-10">
+            <div className="w-5 h-5 rounded-md bg-emerald-500/20 flex items-center justify-center">
+              <Activity size={10} className="text-emerald-400" />
             </div>
             {["W", "J", "A"].map((l) => (
               <div
                 key={l}
-                className="w-5 h-5 rounded-md bg-[var(--color-bg-primary)] flex items-center justify-center text-[8px] font-mono text-[var(--color-text-quaternary)]"
+                className="w-5 h-5 rounded-md bg-zinc-900 flex items-center justify-center text-[8px] font-mono text-zinc-500"
               >
                 {l}
               </div>
             ))}
           </div>
-          <div className="flex-1 flex flex-col p-3 bg-[var(--color-bg-deepest)]">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-[var(--color-border-subtle)]">
+          <div className="flex-1 flex flex-col p-3 bg-zinc-950">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-[var(--color-text-primary)] tracking-tight font-mono">
+                <span className="text-[11px] font-semibold text-white tracking-tight font-mono">
                   BTC/USD
                 </span>
-                <span className="text-[9px] font-medium text-[var(--color-text-quaternary)] bg-[var(--color-bg-primary)] border border-[var(--color-border-subtle)] px-1.5 py-0.5 rounded font-mono">
+                <span className="text-[9px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono">
                   4H
                 </span>
               </div>
               <div className="text-right flex items-center gap-2">
                 <DesktopLivePrice />
-                <span className="text-[10px] text-[var(--color-profit)] font-mono font-medium">+1.85%</span>
+                <span className="text-[10px] text-emerald-400 font-mono font-medium">+1.85%</span>
               </div>
             </div>
-            <div className="flex-1 relative flex items-end justify-between px-1 gap-[3px] overflow-hidden border border-[var(--color-border-subtle)] bg-[var(--color-bg-primary)] rounded-lg p-2">
-              <div className="absolute inset-x-0 top-1/4 h-px bg-[var(--color-border-subtle)] pointer-events-none" />
-              <div className="absolute inset-x-0 top-2/4 h-px bg-[var(--color-border-subtle)] pointer-events-none" />
-              <div className="absolute inset-x-0 top-3/4 h-px bg-[var(--color-border-subtle)] pointer-events-none" />
+            <div className="flex-1 relative flex items-end justify-between px-1 gap-[3px] overflow-hidden border border-zinc-800 bg-zinc-900 rounded-lg p-2">
+              <div className="absolute inset-x-0 top-1/4 h-px bg-zinc-800 pointer-events-none" />
+              <div className="absolute inset-x-0 top-2/4 h-px bg-zinc-800 pointer-events-none" />
+              <div className="absolute inset-x-0 top-3/4 h-px bg-zinc-800 pointer-events-none" />
               {candlesticks.map((c, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
                   <div
@@ -231,29 +217,54 @@ export function DesktopProductPreview() {
                 </div>
               ))}
               <div className="absolute right-3 bottom-[94px] flex items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-profit)] animate-ping absolute" />
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-profit)]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping absolute" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               </div>
             </div>
           </div>
-          <div className="hidden md:flex w-[180px] sm:w-[220px] flex flex-col p-3 border-l border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]">
-            <div className="flex items-center gap-1.5 border-b border-[var(--color-border-subtle)] pb-2 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent-primary)]" />
-              <span className="text-[10px] font-semibold text-[var(--color-text-primary)] tracking-tight">
-                TradePilot AI
+          <div className="hidden md:flex w-[210px] sm:w-[240px] flex flex-col p-3 border-l border-zinc-800 bg-zinc-950">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="text-[10px] font-semibold text-white tracking-tight">
+                  Completed AI Setup
+                </span>
+              </div>
+              <span className="text-[8px] font-mono text-emerald-400 bg-emerald-500/10 px-1 rounded">
+                88% HIGH
               </span>
             </div>
-            <div className="flex-1 overflow-y-auto text-[9px] leading-relaxed pr-1 space-y-3 font-mono text-[var(--color-text-tertiary)]">
-              <div className="flex justify-end">
-                <div className="bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] px-2 py-1 rounded-md text-[var(--color-text-primary)] text-[9px]">
-                  Analyze BTC level
-                </div>
+            
+            {/* Live Setup Parameters Box */}
+            <div className="p-2 rounded bg-zinc-900 border border-zinc-800 space-y-1.5 mb-2 font-mono text-[9px]">
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400">Bias:</span>
+                <span className="text-emerald-400 font-bold">BULLISH / LONG</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400">Entry Target:</span>
+                <span className="text-white font-bold">$92,800</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400">Stop Loss:</span>
+                <span className="text-rose-400 font-bold">$91,400</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400">Take Profit:</span>
+                <span className="text-emerald-400 font-bold">$95,600</span>
+              </div>
+              <div className="flex justify-between items-center pt-1 border-t border-zinc-800/60">
+                <span className="text-zinc-400">Risk Level:</span>
+                <span className="text-teal-300 font-bold">MODERATE (2.0 R:R)</span>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto text-[9px] leading-relaxed pr-1 space-y-3 font-mono text-zinc-400">
               <TypedResponse />
             </div>
-            <div className="mt-2 border-t border-[var(--color-border-subtle)] pt-2">
-              <div className="h-7 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border-subtle)] px-2 flex items-center text-[9px] text-[var(--color-text-quaternary)] font-mono">
-                Ask about this chart...
+            <div className="mt-2 border-t border-zinc-800 pt-2">
+              <div className="h-7 rounded-md bg-zinc-900 border border-zinc-800 px-2 flex items-center text-[9px] text-zinc-500 font-mono">
+                Ask copilot about this trade...
               </div>
             </div>
           </div>

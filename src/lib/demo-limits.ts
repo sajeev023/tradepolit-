@@ -12,7 +12,7 @@ import {
 } from "./entitlements";
 
 export const DEMO_LIMITS = {
-  maxAnalyses: 3,
+  maxAnalyses: 2,
   maxAlerts: 1,
   maxSessionMinutes: 15,
   allowJournal: false,

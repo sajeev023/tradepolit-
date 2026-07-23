@@ -17,7 +17,7 @@ export function HeroCTA() {
       ) : (
         <Play size={13} fill="currentColor" />
       )}
-      {isLoading ? "Loading..." : "Try Live Demo"}
+      {isLoading ? "Launching Demo..." : "Try Instant Demo (2 Free Scans)"}
     </button>
   );
 }

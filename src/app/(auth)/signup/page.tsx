@@ -9,6 +9,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
+import { analytics } from "@/lib/analytics";
 
 const signupSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -66,6 +67,7 @@ export default function SignupPage() {
 
   const handleGoogleSignup = async () => {
     setIsGoogleLoading(true);
+    analytics.trackGoogleOAuthStarted("signup_page");
     const supabase = createClient();
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -81,23 +83,28 @@ export default function SignupPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight mb-2" style={{ color: "var(--color-text-primary)" }}>
+      <div className="space-y-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Joined by 1,400+ Active Traders
+        </div>
+        <h1 className="text-3xl font-extrabold tracking-tight text-white">
           Start Trading Smarter
         </h1>
-        <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-          Create your TradePilot account and load the charts in under 30 seconds.
+        <p className="text-xs text-zinc-400 leading-relaxed">
+          Create your free TradePilot account to get 5 daily AI chart scans, trade journal memory, and risk guardrails.
         </p>
       </div>
 
+      {/* Prominent High-Contrast Google OAuth Primary Button */}
       <button
         type="button"
         onClick={handleGoogleSignup}
         disabled={isGoogleLoading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 disabled:opacity-50 border border-zinc-800 hover:border-zinc-700 bg-zinc-950 hover:bg-zinc-900 cursor-pointer h-[44px]"
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-white text-zinc-950 hover:bg-zinc-100 transition-all duration-200 shadow-lg cursor-pointer h-[46px] disabled:opacity-50"
       >
-        {isGoogleLoading ? <Loader2 size={18} className="animate-spin text-teal-400" /> : <GoogleIcon />}
-        <span>Sign up with Google</span>
+        {isGoogleLoading ? <Loader2 size={18} className="animate-spin text-zinc-950" /> : <GoogleIcon />}
+        <span>Continue with Google (1-Click)</span>
       </button>
 
       <div className="flex items-center gap-4">

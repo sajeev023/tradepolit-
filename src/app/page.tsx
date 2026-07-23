@@ -100,37 +100,41 @@ export default function LandingPage() {
 
       {/* ━━━ HERO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <header className="hero-section relative max-w-6xl mx-auto px-5 sm:px-6 lg:px-10 pt-20 pb-12 sm:pt-28 sm:pb-20 lg:pt-36 lg:pb-28 grid lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
-        <div className="absolute inset-0 -top-12 pointer-events-none overflow-hidden z-0">
-          <AntigravityCanvas particleCount={140} />
+        <div className="absolute inset-0 -top-12 pointer-events-none overflow-hidden z-0 opacity-40">
+          <AntigravityCanvas particleCount={50} />
         </div>
 
         <div className="lg:col-span-5 space-y-4 sm:space-y-6 animate-enter relative z-10">
-          <div className="animate-enter inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)]/80 backdrop-blur-md text-[11px] text-[var(--color-text-tertiary)] font-medium tracking-wide select-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent-primary)] animate-pulse" />
-            AI Trading Copilot · Early Access
+          <div className="animate-enter inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md text-[11px] text-emerald-400 font-semibold tracking-wide select-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            AI Trading Copilot · Live Market Telemetry
           </div>
 
-          <h1 className="hero-headline animate-enter-delay-1 leading-[1.08] font-bold tracking-[-0.03em] text-[var(--color-text-primary)]">
-            <span className="sm:hidden">The AI copilot that trades<br />with </span>
-            <span className="hidden sm:inline">The AI copilot that trades with </span>
-            <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 bg-clip-text text-transparent">your discipline.</span>
+          <h1 className="hero-headline animate-enter-delay-1 leading-[1.12] font-extrabold tracking-[-0.03em] text-white text-3xl sm:text-4xl lg:text-5xl">
+            AI Chart Scans & Trade Setup Signals in{" "}
+            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+              &lt;3 Seconds.
+            </span>
           </h1>
 
-          <p className="hero-subtext animate-enter-delay-2 text-[14px] sm:text-[15px] leading-[1.6] text-[var(--color-text-secondary)] max-w-[440px]">
-            TradePilot reads your charts, remembers every session, tracks behavioral patterns, and coaches you past emotional mistakes.
+          <p className="hero-subtext animate-enter-delay-2 text-[14px] sm:text-[15px] leading-[1.6] text-zinc-300 max-w-[460px]">
+            Select any crypto or forex pair. TradePilot instantly scans technical indicators, key support/resistance levels, entry setups, and flags emotional risk before you deploy capital.
           </p>
 
           {/* CTA row */}
           <div className="hero-cta-row animate-enter-delay-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1 w-full">
             <HeroCTA />
-            <a href="#pricing" className="group text-[14px] font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors flex items-center justify-center sm:justify-start gap-1.5 min-h-[44px] cursor-pointer">
-              See how it works <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
-            </a>
+            <Link href="/signup" className="group text-[14px] font-semibold text-white bg-zinc-900 border border-zinc-800 hover:border-zinc-700 px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer">
+              Create Free Account <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+            </Link>
           </div>
 
-          <p className="animate-enter-delay-4 text-[12px] text-[var(--color-text-quaternary)] select-none pt-1">
-            Free to start · 5 free analyses per day · No credit card required
-          </p>
+          {/* Micro Trust Indicators */}
+          <div className="animate-enter-delay-4 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-zinc-400 font-medium select-none pt-2 border-t border-zinc-800/80">
+            <div className="flex items-center gap-1.5"><Check size={13} className="text-emerald-400 shrink-0" /> Free to start</div>
+            <div className="flex items-center gap-1.5"><Check size={13} className="text-emerald-400 shrink-0" /> 100% Read-only</div>
+            <div className="flex items-center gap-1.5"><Check size={13} className="text-emerald-400 shrink-0" /> No broker setup</div>
+          </div>
 
           {/* Mobile product preview */}
           <Suspense fallback={<div className="h-64" />}>

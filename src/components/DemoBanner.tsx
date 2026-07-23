@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { X, AlertCircle, Crown } from "lucide-react";
 
-const DEMO_ANALYSIS_LIMIT = 3;
+const DEMO_ANALYSIS_LIMIT = 2;
 const DEMO_ALERT_LIMIT = 1;
 
 export function DemoBanner() {
@@ -88,7 +88,7 @@ export function DemoBanner() {
             }}
           >
             {limitReached
-              ? "You've completed all 3 demo analyses."
+              ? "You've completed all 2 demo analyses."
               : `YC Demo · ${analysesRemaining} analysis${analysesRemaining !== 1 ? "es" : ""} remaining`
             }
           </span>
