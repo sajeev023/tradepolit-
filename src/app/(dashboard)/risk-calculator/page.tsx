@@ -5,6 +5,7 @@ import { Calculator, ArrowRight, ShieldCheck, AlertTriangle, Zap, Minimize2, Max
 import { useRouter } from "next/navigation";
 import { calculate, validateInputs, type RiskEngineResult, type CalculationMode } from "@/lib/risk-engine";
 import { toast } from "sonner";
+import { trackClarityEvent } from "@/lib/clarity";
 
 // --- Types ---------------------------------------------------------------------
 type AssetClass = "CRYPTO" | "FOREX" | "COMMODITY";
@@ -120,6 +121,7 @@ export default function RiskCalculatorPage() {
     try {
       const result = calculate(params as any);
       setResults(result);
+      trackClarityEvent("risk_calculator_calculate");
       if (result.warnings.length > 0) {
         result.warnings.forEach(w => toast.warning(w));
       }

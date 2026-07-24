@@ -54,10 +54,10 @@ interface InstrumentSpec {
 }
 
 const DEFAULT_MAX_LEVERAGE: Record<AssetClass, number> = {
-  CRYPTO: 20,
-  FOREX: 30,
-  COMMODITY: 10,
-  INDEX: 5,
+  CRYPTO: 100,
+  FOREX: 100,
+  COMMODITY: 50,
+  INDEX: 20,
 };
 
 const INSTRUMENT_SPECS: Record<string, InstrumentSpec> = {

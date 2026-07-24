@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { X, AlertCircle, Crown } from "lucide-react";
+import { trackClarityEvent } from "@/lib/clarity";
 
 export function DemoBanner() {
   const [isDemo, setIsDemo] = useState(false);
@@ -116,6 +117,7 @@ export function DemoBanner() {
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <Link
             href="/signup"
+            onClick={() => trackClarityEvent("demo_banner_create_account_click")}
             style={{
               display: "inline-flex",
               alignItems: "center",

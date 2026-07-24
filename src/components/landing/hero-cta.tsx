@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useDemoLogin } from "./demo-button";
 
+import { trackClarityEvent } from "@/lib/clarity";
+
 // Single primary CTA (Start Free) with a clear, low-friction secondary
 // (Try Instant Demo). Risk reversal sits directly under the primary so
 // hesitant Meta-Ads visitors see "no credit card" before they bounce.
@@ -15,6 +17,7 @@ export function HeroCTA() {
         {/* Primary: account creation. This is the conversion action. */}
         <Link
           href="/signup"
+          onClick={() => trackClarityEvent("hero_start_free_click")}
           className="group w-full sm:w-auto h-12 px-6 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 text-[14px] font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-zinc-950/30 active:scale-[0.98] transition-all duration-150"
           aria-label="Start free account"
         >
@@ -24,7 +27,10 @@ export function HeroCTA() {
 
         {/* Secondary: instant demo. Lower visual weight so it doesn't compete. */}
         <button
-          onClick={handleDemo}
+          onClick={() => {
+            trackClarityEvent("hero_demo_button_click");
+            handleDemo();
+          }}
           disabled={isLoading}
           className="group w-full sm:w-auto h-12 px-5 rounded-xl bg-transparent hover:bg-zinc-900/60 border border-zinc-700 hover:border-zinc-600 text-zinc-200 text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150"
           aria-label="Try Instant Demo"
