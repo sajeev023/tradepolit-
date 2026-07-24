@@ -39,7 +39,7 @@ export function Comparison() {
           A factual look at what each tool offers
         </h2>
         <p className="text-[14px] text-zinc-400 max-w-md mx-auto leading-relaxed">
-          TradCopilot doesn't replace your charting platform — it adds an analysis, journaling, and coaching layer on top.
+          TradCopilot doesn&apos;t replace your charting platform — it adds an analysis, journaling, and coaching layer on top.
         </p>
       </AnimatedSection>
 

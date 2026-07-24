@@ -31,7 +31,7 @@ export function HowItWorks() {
           From chart to conviction in three steps
         </h2>
         <p className="text-[14px] text-zinc-400 max-w-md mx-auto leading-relaxed">
-          No spreads to configure. No 50-tab setup. Just the answer you'd ask a senior trader for.
+          No spreads to configure. No 50-tab setup. Just the answer you&apos;d ask a senior trader for.
         </p>
       </AnimatedSection>
 

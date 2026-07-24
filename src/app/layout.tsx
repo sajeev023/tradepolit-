@@ -10,6 +10,7 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { JsonLd } from "@/components/JsonLd";
+import { MicrosoftClarity } from "@/components/MicrosoftClarity";
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://tradcopilot.com";
 const siteName = "TradCopilot";
@@ -89,6 +90,7 @@ export default function RootLayout({
             <OfflineBanner />
             <Analytics />
             <SpeedInsights />
+            <MicrosoftClarity />
             <SmoothScrollProvider>
               <LiquidCursor />
               {children}

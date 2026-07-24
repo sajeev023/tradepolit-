@@ -242,7 +242,7 @@ export default function LandingPage() {
       <section id="pricing" className="max-w-5xl mx-auto px-6 lg:px-10 py-20 lg:py-28 border-t border-border scroll-mt-12">
         <AnimatedSection className="text-center space-y-3 mb-14 sm:mb-16">
           <span className="section-eyebrow">Pricing</span>
-          <h2 className="text-[26px] sm:text-[36px] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">Start free. Upgrade when you're ready.</h2>
+          <h2 className="text-[26px] sm:text-[36px] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">Start free. Upgrade when you&apos;re ready.</h2>
           <p className="text-[14px] text-[var(--color-text-secondary)] max-w-sm mx-auto leading-relaxed">No credit card to start. Cancel anytime in one click.</p>
         </AnimatedSection>
         <div className="grid md:grid-cols-2 gap-5 sm:gap-8 max-w-3xl mx-auto items-stretch">
