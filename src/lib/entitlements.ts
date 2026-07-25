@@ -63,6 +63,18 @@ export const ENTITLEMENTS: Record<Plan, Entitlement> = {
 export const DEMO_USER_EMAILS = ["partner@tradcopilot.com", "trader@tradcopilot.com"] as const;
 export const DEMO_USER_IDS = ["partner-1234-1234-1234-123456789012", "12345678-1234-1234-1234-123456789012"] as const;
 
+export const PRO_USER_EMAILS = [
+  "sajeevajay683@gmail.com",
+  "vanimadari123@gmail.com",
+  "ashokmummini.msc@gmail.com",
+] as const;
+
+export function isProEmail(email?: string): boolean {
+  if (!email) return false;
+  const normalized = email.toLowerCase().trim();
+  return PRO_USER_EMAILS.includes(normalized as any);
+}
+
 export function isDemoUser(userId: string, email?: string): boolean {
   if (DEMO_USER_IDS.includes(userId as any)) return true;
   if (email && DEMO_USER_EMAILS.includes(email as any)) return true;
@@ -71,6 +83,7 @@ export function isDemoUser(userId: string, email?: string): boolean {
 
 export function resolvePlan(userId: string, email?: string, dbPlan?: string, dbSubscriptionStatus?: string): Plan {
   if (isDemoUser(userId, email)) return "YC_DEMO";
+  if (isProEmail(email)) return "PRO";
   if (dbPlan === "PRO" || dbSubscriptionStatus === "PRO_ACTIVE" || dbSubscriptionStatus === "ACTIVE") return "PRO";
   return "FREE";
 }

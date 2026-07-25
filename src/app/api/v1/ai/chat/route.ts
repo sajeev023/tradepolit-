@@ -398,7 +398,8 @@ REQUIRED JSON RESPONSE SCHEMA:
       runAIChat(
         user.id,
         updatedMessages as any,
-        { symbol: resolvedSymbol, timeframe: resolvedTimeframe, chartState: activeChartState }
+        { symbol: resolvedSymbol, timeframe: resolvedTimeframe, chartState: activeChartState },
+        user.email
       ),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("AI chat timed out after 55s")), 55000)

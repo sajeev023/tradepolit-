@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { unauthorizedError } from "@/lib/api-helpers";
 import { cookies } from "next/headers";
+import { isProEmail } from "@/lib/entitlements";
 
 /**
  * Get the authenticated user from the Supabase session.
@@ -87,6 +88,9 @@ export async function ensurePrismaUser(supabaseUser: {
     }
   }
 
+  const userIsPro = isProEmail(supabaseUser.email);
+  const proUpdates = userIsPro ? { plan: "PRO", subscriptionStatus: "PRO_ACTIVE" } : {};
+
   // Atomic UserProfile upsert with P2002 retry handling
   const profileData = {
     accountSize: 10000.0,
@@ -97,12 +101,13 @@ export async function ensurePrismaUser(supabaseUser: {
     profitFactor: 0.85,
     avgWinLoss: 0.6,
     totalTrades: 12,
+    ...proUpdates,
   };
 
   try {
     await prisma.userProfile.upsert({
       where: { userId: dbUser.id },
-      update: {},
+      update: proUpdates,
       create: {
         userId: dbUser.id,
         ...profileData,
@@ -113,7 +118,7 @@ export async function ensurePrismaUser(supabaseUser: {
       await new Promise(resolve => setTimeout(resolve, 100));
       await prisma.userProfile.upsert({
         where: { userId: dbUser.id },
-        update: {},
+        update: proUpdates,
         create: {
           userId: dbUser.id,
           ...profileData,

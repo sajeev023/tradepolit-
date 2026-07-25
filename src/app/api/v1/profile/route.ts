@@ -36,7 +36,7 @@ export async function GET(_request: NextRequest) {
       plan: usage.plan,
       stripeCustomerId: profile.stripeCustomerId,
       stripeSubscriptionId: profile.stripeSubscriptionId,
-      subscriptionStatus: profile.subscriptionStatus,
+      subscriptionStatus: usage.isPro ? "PRO_ACTIVE" : profile.subscriptionStatus,
       subscriptionExpiresAt: profile.subscriptionExpiresAt,
       dailyAnalysisCount: usage.analysesUsed,
       dailyAlertCount: usage.alertsUsed,

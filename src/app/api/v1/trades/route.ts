@@ -10,6 +10,7 @@ import {
   validationError,
 } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
+import { resolvePlan } from "@/lib/entitlements";
 
 // Zod schema for trade creation
 const createTradeSchema = z.object({
@@ -137,10 +138,10 @@ export async function GET(request: NextRequest) {
     const instrument = searchParams.get("instrument");
     const userProfile = await prisma.userProfile.findUnique({
       where: { userId: user.id },
-      select: { plan: true },
+      select: { plan: true, subscriptionStatus: true },
     });
 
-    const isPro = userProfile?.plan === "PRO";
+    const isPro = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus) === "PRO";
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     

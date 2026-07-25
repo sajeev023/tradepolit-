@@ -4,6 +4,8 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 
+import { resolvePlan } from "@/lib/entitlements";
+
 // GET /api/v1/performance/summary
 export async function GET(_request: NextRequest) {
   try {
@@ -12,9 +14,10 @@ export async function GET(_request: NextRequest) {
 
     const userProfile = await prisma.userProfile.findUnique({
       where: { userId: user.id },
-      select: { plan: true },
+      select: { plan: true, subscriptionStatus: true },
     });
-    if (userProfile?.plan !== "PRO") {
+    const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus);
+    if (plan !== "PRO") {
       return new Response(JSON.stringify({ error: { message: "Upgrade to Pro to access this feature" } }), { status: 403, headers: { "Content-Type": "application/json" } });
     }
 

@@ -5,6 +5,7 @@ import { classifyIntent, getIntentInstruction } from "./question-router";
 import { searchKnowledge, formatKnowledgeForPrompt } from "./knowledge/rag";
 import { updateSession, addResponse, addTopic, formatSessionContext } from "./ai-memory";
 import { buildChatFallbackFromChartState } from "./ai-fallback";
+import { resolvePlan } from "./entitlements";
 
 export async function runAIChat(
   userId: string,
@@ -30,7 +31,8 @@ export async function runAIChat(
       confidence: string;
       whyItMatters?: string;
     };
-  }
+  },
+  userEmail?: string
 ): Promise<string> {
   const t0 = Date.now();
   const elapsed = () => `${Date.now() - t0}ms`;
@@ -108,7 +110,7 @@ export async function runAIChat(
   const closedTrades = trades.filter((t: any) => t.status === "CLOSED");
   const openTrades = trades.filter((t: any) => t.status === "OPEN");
 
-  const isPro = (userProfile as any).plan === "PRO";
+  const isPro = resolvePlan(userId, userEmail, (userProfile as any).plan, (userProfile as any).subscriptionStatus) === "PRO";
 
   // ─── STEP 5: Behavioural Heuristics (in-memory, no DB) ───────────────────
   console.log(`[STEP 5] Behavioural heuristics START | ${elapsed()}`);

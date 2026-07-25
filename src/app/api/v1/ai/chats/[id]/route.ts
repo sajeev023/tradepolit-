@@ -7,6 +7,7 @@ import {
   notFoundError,
 } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
+import { resolvePlan } from "@/lib/entitlements";
 
 export async function GET(
   request: NextRequest,
@@ -31,11 +32,12 @@ export async function GET(
 
     const userProfile = await prisma.userProfile.findUnique({
       where: { userId: user.id },
-      select: { plan: true },
+      select: { plan: true, subscriptionStatus: true },
     });
 
     let chatMessages = Array.isArray(chat.messages) ? (chat.messages as any[]) : [];
-    if (userProfile?.plan !== "PRO") {
+    const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus);
+    if (plan !== "PRO") {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       chatMessages = chatMessages.filter((m: any) => new Date(m.createdAt) >= sevenDaysAgo);
     }
