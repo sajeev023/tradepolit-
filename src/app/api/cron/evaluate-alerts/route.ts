@@ -4,12 +4,13 @@ import { MarketDataService } from "@/lib/market-data-service";
 import { calculateEMA, calculateRSI, calculateVolatility } from "@/lib/indicators";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
+import { secureBearerMatch } from "@/lib/secure-compare";
 
 export async function GET(request: NextRequest) {
   try {
     const cronSecret = process.env.CRON_SECRET;
     const authorization = request.headers.get("authorization");
-    if (!cronSecret || authorization !== `Bearer ${cronSecret}`) {
+    if (!secureBearerMatch(authorization, cronSecret)) {
       return unauthorizedError("Invalid or missing CRON_SECRET");
     }
 

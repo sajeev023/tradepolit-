@@ -77,13 +77,44 @@ export async function middleware(request: NextRequest) {
     // is allowed; same-site (subdomain) is allowed. Browsers without an Origin
     // header (older clients) fall back to Referer; if neither is present we
     // reject to be safe. GET/HEAD/OPTIONS are exempt.
+    //
+    // Outbound services (Stripe webhooks, Vercel Cron) POST to us with no
+    // Origin/Referer header and must be exempted, otherwise billing webhooks
+    // are 403'd before the handler ever runs. They carry their own
+    // signature (Stripe-Signature) / bearer (CRON_SECRET) auth.
+    const isMachineInbound =
+      pathname === "/api/stripe/webhook" || pathname.startsWith("/api/cron/");
     const method = request.method.toUpperCase();
-    if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+    if (!isMachineInbound && method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
       const origin = request.headers.get("origin");
       const referer = request.headers.get("referer");
       const host = request.headers.get("host");
-      const allowedOrigin = origin ?? (referer ? new URL(referer).origin : null);
-      if (!allowedOrigin || !host || !allowedOrigin.endsWith(host)) {
+      const allowedOriginRaw = origin ?? (referer ? new URL(referer).origin : null);
+      // Exact-origin comparison. A naive `endsWith(host)` check is bypassable
+      // by lookalike domains (e.g. https://evil-tradcopilot.com ends with
+      // tradcopilot.com). Compare parsed origins instead.
+      if (!allowedOriginRaw || !host) {
+        return NextResponse.json(
+          { error: { message: "Cross-origin requests are not allowed for this endpoint" } },
+          { status: 403 }
+        );
+      }
+      try {
+        const allowedOrigin = new URL(allowedOriginRaw).origin;
+        // Prefer x-forwarded-proto (set by Vercel/proxies to the client's
+        // original scheme); fall back to the request's own protocol for
+        // direct/local access.
+        const proto =
+          request.headers.get("x-forwarded-proto")?.split(",")[0].trim() ||
+          request.nextUrl.protocol.replace(":", "");
+        const expectedOrigin = `${proto}://${host}`;
+        if (allowedOrigin !== expectedOrigin) {
+          return NextResponse.json(
+            { error: { message: "Cross-origin requests are not allowed for this endpoint" } },
+            { status: 403 }
+          );
+        }
+      } catch {
         return NextResponse.json(
           { error: { message: "Cross-origin requests are not allowed for this endpoint" } },
           { status: 403 }

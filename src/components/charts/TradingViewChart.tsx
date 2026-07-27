@@ -183,7 +183,7 @@ export const TradingViewChart = memo(function TradingViewChart({
       }
       isWidgetReadyRef.current = false;
     };
-  }, [scriptLoaded, tvSymbol, tvInterval, widgetRetryKey, containerId]);
+  }, [scriptLoaded, tvSymbol, tvInterval, widgetRetryKey, containerId, symbol, timeframe]);
 
   // ResizeObserver for responsive chart container. The tv.js iframe is
   // width:100%/height:100%, so it auto-resizes with its container — we just

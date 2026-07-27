@@ -160,7 +160,7 @@ export async function runBacktestJob(backtestId: string, startBalance = 10000) {
     const totalTrades = backtestTrades.length;
     const winRate = totalTrades > 0 ? wins / totalTrades : 0;
     const lossRate = totalTrades > 0 ? losses / totalTrades : 0;
-    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit;
+    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? Infinity : 0);
 
     // Peak-to-trough max drawdown calculation
     let maxDrawdown = 0;
@@ -190,13 +190,16 @@ export async function runBacktestJob(backtestId: string, startBalance = 10000) {
       },
     };
 
-    // Update to COMPLETE
+    // Update to COMPLETE. profitFactor may be Infinity when there are no
+    // losing trades; the Decimal column cannot represent Infinity, so persist
+    // null in that case (the resultsJson.metrics.profitFactor retains Infinity
+    // for the UI, which serializes to null — semantically "no losses / N/A").
     await prisma.backtest.update({
       where: { id: backtestId },
       data: {
         status: "COMPLETE",
         winRate,
-        profitFactor,
+        profitFactor: Number.isFinite(profitFactor) ? profitFactor : null,
         netProfit,
         maxDrawdown,
         resultsJson: resultsJson as any,

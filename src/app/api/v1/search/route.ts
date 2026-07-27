@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
       where: {
         userId: user.id,
         OR: [
-          { instrument: { contains: cleanQuery } },
-          { notes: { contains: cleanQuery } },
-          { lessonsLearned: { contains: cleanQuery } },
+          { instrument: { contains: cleanQuery, mode: "insensitive" as const } },
+          { notes: { contains: cleanQuery, mode: "insensitive" as const } },
+          { lessonsLearned: { contains: cleanQuery, mode: "insensitive" as const } },
         ],
       },
       take: 5,
@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
       where: {
         userId: user.id,
         OR: [
-          { name: { contains: cleanQuery } },
-          { description: { contains: cleanQuery } },
+          { name: { contains: cleanQuery, mode: "insensitive" as const } },
+          { description: { contains: cleanQuery, mode: "insensitive" as const } },
         ],
       },
       take: 5,
@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
     const news = await prisma.news.findMany({
       where: {
         OR: [
-          { headline: { contains: cleanQuery } },
-          { summary: { contains: cleanQuery } },
+          { headline: { contains: cleanQuery, mode: "insensitive" as const } },
+          { summary: { contains: cleanQuery, mode: "insensitive" as const } },
         ],
       },
       take: 5,

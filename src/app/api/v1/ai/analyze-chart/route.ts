@@ -169,8 +169,12 @@ export async function POST(request: NextRequest) {
 
   const releaseReservation = async () => {
     if (reservedUserId) {
-      await prisma.user.update({
-        where: { id: reservedUserId },
+      // Conditional decrement: only decrement if the count is positive, so a
+      // release can never drive analysesCountToday below zero. A negative
+      // count would let recordUsage's `count < limit` check succeed extra
+      // times (|negative|+1 extra analyses), a small quota bypass.
+      await prisma.user.updateMany({
+        where: { id: reservedUserId, analysesCountToday: { gt: 0 } },
         data: { analysesCountToday: { decrement: 1 } },
       }).catch(() => {});
       reservedUserId = null;
@@ -225,7 +229,11 @@ export async function POST(request: NextRequest) {
         prisma.behavioralEvent.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 10 }),
         prisma.userProfile.findUnique({ where: { userId: user.id } }),
       ]);
-      const [dbUser, rawTrades, journalEntries, behavioralEvents, userProfile] = settled.map(r => r.status === "fulfilled" ? r.value : null);
+      const dbUser = settled[0].status === "fulfilled" ? settled[0].value : null;
+      const rawTrades = settled[1].status === "fulfilled" ? settled[1].value : [];
+      const journalEntries = settled[2].status === "fulfilled" ? settled[2].value : [];
+      const behavioralEvents = settled[3].status === "fulfilled" ? settled[3].value : [];
+      const userProfile = settled[4].status === "fulfilled" ? settled[4].value : null;
       const userTrades = rawTrades || [];
 
       if (dbUser) {
@@ -410,10 +418,15 @@ COACHING MANDATE:
           }
         });
 
-        // Fallback to system pre-warm cache if user hasn't analyzed this asset before
+        // Fallback to the system pre-warm cache if the user hasn't analyzed
+        // this asset before. MUST scope by userId: "system-prewarm" — without
+        // it, the query matches *any* user's cached_analysis row for this
+        // symbol/timeframe, leaking another user's personalized narrative
+        // (which contains their name, trades, win rate, journal moods).
         if (!cachedRecord) {
           cachedRecord = await prisma.conversationMemory.findFirst({
             where: {
+              userId: "system-prewarm",
               role: "cached_analysis",
               chatId: `${symbol}-${timeframe}`,
             }
@@ -819,44 +832,52 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
       console.warn("Failed to update cache", cacheErr);
     }
 
-    // Add debug logs and validation checks
+    // Add debug logs and validation checks. This is a telemetry-only price
+    // cross-check (no effect on the returned payload), so run it detached
+    // after the response is returned rather than blocking the user on a
+    // 2s Binance fetch. For non-crypto symbols the Binance symbol 404s
+    // silently anyway, so awaiting it added pure latency for no signal.
     const telemetryPrice = tech.currentPrice;
     const aiPrice = finalResponse.currentPrice;
-    let chartPrice = telemetryPrice;
-
-    try {
-      const binanceSymbol = symbol.replace("/USD", "USDT");
-      const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`, { signal: AbortSignal.timeout(2000) });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.price) {
-          chartPrice = parseFloat(data.price);
+    const validationSymbol = symbol;
+    const validationTimeframe = timeframe;
+    const validationExchange = exchangeName;
+    void (async () => {
+      let chartPrice = telemetryPrice;
+      try {
+        const binanceSymbol = validationSymbol.replace("/USD", "USDT");
+        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`, { signal: AbortSignal.timeout(2000) });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.price) {
+            chartPrice = parseFloat(data.price);
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
 
-    const diff = Math.abs(chartPrice - telemetryPrice);
-    const diffPercent = telemetryPrice > 0 ? (diff / telemetryPrice) * 100 : 0;
+      const diff = Math.abs(chartPrice - telemetryPrice);
+      const diffPercent = telemetryPrice > 0 ? (diff / telemetryPrice) * 100 : 0;
 
-    console.log(`[VALIDATION]
+      console.log(`[VALIDATION]
 Chart Price: ${chartPrice.toFixed(4)}
 Telemetry Price: ${telemetryPrice.toFixed(4)}
 AI Price: ${aiPrice.toFixed(4)}
 Timestamp: ${new Date().toISOString()}
-Exchange: ${exchangeName}
-Timeframe: ${timeframe}
-Symbol: ${symbol}
+Exchange: ${validationExchange}
+Timeframe: ${validationTimeframe}
+Symbol: ${validationSymbol}
 `);
 
-    if (diffPercent > 0.01) {
-      console.warn(`⚠ PRICE MISMATCH DETECTED
+      if (diffPercent > 0.01) {
+        console.warn(`⚠ PRICE MISMATCH DETECTED
 Chart: ${chartPrice.toFixed(4)}
 Telemetry: ${telemetryPrice.toFixed(4)}
 Difference: ${diff.toFixed(4)} (${diffPercent.toFixed(4)}%)
-Source: ${exchangeName}
+Source: ${validationExchange}
 Timestamp: ${new Date().toISOString()}
 `);
-    }
+      }
+    })();
 
     console.log(`[STEP 11: Response returned] FRESH ANALYSIS SUCCESSFUL | totalDuration=${Date.now() - t0}ms`);
     return successResponse(finalResponse);

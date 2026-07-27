@@ -147,16 +147,16 @@ describe("Cross-source news dedupe", () => {
     persistedRows = [];
     // The DB row surfaces what was upserted; the upsert payload has `url`
     // and `headline` so findMany can re-read them.
-    vi.mocked(prisma.news.upsert).mockImplementation(async ({ where, create, update }: any) => {
+    vi.mocked(prisma.news.upsert).mockImplementation((async ({ where, create, update }: any) => {
       const existing = persistedRows.find(r => r.url === where.url);
       const row = { id: existing?.id ?? `db_${persistedRows.length + 1}`, ...create, ...update };
       if (!existing) persistedRows.push(row);
       else Object.assign(existing, row);
       return row;
-    });
-    vi.mocked(prisma.news.findMany).mockImplementation(async () =>
+    }) as any);
+    vi.mocked(prisma.news.findMany).mockImplementation((async () =>
       [...persistedRows].sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt))
-    );
+    ) as any);
     fetchMock = vi.fn();
     (globalThis as any).fetch = fetchMock;
   });

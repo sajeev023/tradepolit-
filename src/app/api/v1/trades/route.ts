@@ -146,7 +146,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     
     const limitToTake = isPro ? limit : Math.min(limit, 20);
-    const skip = isPro ? (page - 1) * limit : (page === 1 ? 0 : 20); // free tier can only see page 1 (first 20)
+    // Free tier can only see the first 20 trades. The prior logic returned
+    // rows 21-40 for page=2 (skip=20) while reporting total=20, leaking past
+    // the cap. Clamp skip to 0 for non-Pro so every page returns only the
+    // first 20 (paginatedResponse already reports the clamped total below).
+    const skip = isPro ? (page - 1) * limit : 0;
     
     const where: Record<string, any> = {
       userId: user.id,

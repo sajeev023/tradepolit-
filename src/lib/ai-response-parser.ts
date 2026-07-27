@@ -12,7 +12,6 @@
  *   6. NEVER throws unhandled syntax errors or exposes "parsing failed" to end users.
  */
 
-import { validateAnalysisConsistency } from "./indicators";
 import { validateTradeAnalysis, ValidationResult, calculateDynamicRisk } from "./trade-validator";
 
 export interface AIAnalysisSchema {

@@ -129,13 +129,10 @@ export function calculateDynamicRisk(tech: TradeTelemetryContext): {
   const macdSig = tech.macdSignal ?? 0;
 
   // 1. Indicator Conflict
-  let indicatorConflict = false;
   if (trend.includes("BULLISH") && (macdHist < 0 || rsi < 45 || macdVal < macdSig)) {
-    indicatorConflict = true;
     score += 25;
     factors.push("Trend is Bullish but MACD/RSI show bearish momentum");
   } else if (trend.includes("BEARISH") && (macdHist > 0 || rsi > 55 || macdVal > macdSig)) {
-    indicatorConflict = true;
     score += 25;
     factors.push("Trend is Bearish but MACD/RSI show bullish momentum");
   }

@@ -161,7 +161,13 @@ export async function recomputeUserPerformance(userId: string) {
   // Expectancy & stats
   const totalTrades = trades.length;
   const winRate = winsCount / totalTrades;
-  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit;
+  // Profit factor is a ratio (grossProfit / grossLoss). When there are no
+  // losing trades, the prior code returned the raw dollar grossProfit (e.g.
+  // 1250), which downstream consumers misread as a ratio. Use Infinity when
+  // there are wins but no losses (the mathematically correct ratio), and 0
+  // when there are no trades at all. JSON.stringify(Infinity) → null, which
+  // the dashboard treats as "no losses / N/A".
+  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? Infinity : 0);
   const expectancy = runningPnL / totalTrades;
   const averageWin = winsCount > 0 ? grossProfit / winsCount : 0;
   const averageLoss = lossesCount > 0 ? grossLoss / lossesCount : 0;

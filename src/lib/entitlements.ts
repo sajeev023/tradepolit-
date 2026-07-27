@@ -118,7 +118,7 @@ export function getSessionExpiry(sessionCreatedAt: Date, entitlement: Entitlemen
   return new Date(sessionCreatedAt.getTime() + duration * 60 * 1000);
 }
 
-export function getAnalysisLimitError(entitlement: Entitlement, analysesUsed: number) {
+export function getAnalysisLimitError(entitlement: Entitlement, _analysesUsed: number) {
   if (entitlement.plan === "YC_DEMO") {
     return {
       error: "PREVIEW_LIMIT_REACHED" as const,
