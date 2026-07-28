@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Globe, Sparkles, TrendingUp } from "lucide-react";
+import { Check, Sparkles, TrendingUp } from "lucide-react";
 import type { MarketRegion } from "@/lib/supported-symbols";
 import { MARKETS } from "@/lib/supported-symbols";
 import { useUIStore } from "@/lib/stores/ui-store";

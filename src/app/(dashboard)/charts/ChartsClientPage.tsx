@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, Profiler } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, Profiler } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -132,9 +132,13 @@ export function ChartsClientPage() {
   const symbolGroups = getSymbolGroupsForMarket(selectedMarket);
 
   // Stable ref so async callbacks (init effect) read the latest market without
-  // stale-closure issues — the ref is updated synchronously on every render.
+  // stale-closure issues. Updated in useLayoutEffect (runs synchronously after
+  // commit, before the browser paints) so it is always current before any async
+  // callback from the init effect can fire.
   const selectedMarketRef = useRef(selectedMarket);
-  selectedMarketRef.current = selectedMarket;
+  useLayoutEffect(() => {
+    selectedMarketRef.current = selectedMarket;
+  });
 
   const [isBackgroundUpdating, setIsBackgroundUpdating] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(true);

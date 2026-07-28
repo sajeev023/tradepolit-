@@ -21,7 +21,7 @@ const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
 export default function WatchlistPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { selectedMarket, setSelectedSymbol } = useUIStore();
+  const { selectedMarket, setSelectedSymbol: _setSelectedSymbol } = useUIStore();
   const [newWatchlistName, setNewWatchlistName] = useState("");
   const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
