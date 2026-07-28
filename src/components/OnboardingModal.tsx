@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 interface OnboardingModalProps {
   isOpen: boolean;
-  onComplete: (selectedMarket: MarketRegion) => void;
+  onComplete: () => void;
 }
 
 export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
@@ -43,7 +43,7 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
       setSelectedMarket(selected);
       setHasCompletedOnboarding(true);
       setIsSubmitting(false);
-      onComplete(selected);
+      onComplete();
       toast.success(`Market preference set to ${MARKETS[selected].label}`);
     }
   };

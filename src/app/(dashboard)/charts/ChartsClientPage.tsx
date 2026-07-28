@@ -120,7 +120,7 @@ const generateProactiveAlerts = (data: any, symbol: string) => {
 };
 
 import { useUIStore } from "@/lib/stores/ui-store";
-import { getSymbolsForMarket, getSymbolGroupsForMarket } from "@/lib/supported-symbols";
+import { getSymbolsForMarket, getSymbolGroupsForMarket, getSupportedSymbol, getDefaultSymbolForMarket } from "@/lib/supported-symbols";
 
 export function ChartsClientPage() {
   const router = useRouter();
@@ -130,6 +130,11 @@ export function ChartsClientPage() {
   // Filter selector choices by the user's primary selected market
   const marketSymbols = getSymbolsForMarket(selectedMarket);
   const symbolGroups = getSymbolGroupsForMarket(selectedMarket);
+
+  // Stable ref so async callbacks (init effect) read the latest market without
+  // stale-closure issues — the ref is updated synchronously on every render.
+  const selectedMarketRef = useRef(selectedMarket);
+  selectedMarketRef.current = selectedMarket;
 
   const [isBackgroundUpdating, setIsBackgroundUpdating] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
@@ -144,9 +149,12 @@ export function ChartsClientPage() {
   const watchlistStreamPrices = useBinanceMultiStream(watchlistSymbols);
   const [watchlistRestPrices, setWatchlistRestPrices] = useState<Record<string, { price: number; changePercent24h: number }>>({});
 
-  // Merge: WebSocket prices override REST prices
+  // Merge live prices for ALL symbols in the current market scope.
+  // WebSocket prices (crypto) override REST prices; REST prices (stocks/forex/indices)
+  // are sourced from the watchlistRestPrices state populated by the REST poll effect.
   const watchlistPrices: Record<string, { price: number; changePercent24h: number }> = {};
-  for (const sym of ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ", "S&P500"]) {
+  for (const s of marketSymbols) {
+    const sym = s.symbol;
     const ws = watchlistStreamPrices[sym];
     if (ws) {
       watchlistPrices[sym] = { price: ws.price, changePercent24h: ws.changePercent24h };
@@ -229,11 +237,23 @@ export function ChartsClientPage() {
         if (profileRes.ok && profileBody.data) {
           const { lastSymbol, lastTimeframe, plan, subscriptionStatus: rawStatus, dailyAnalysisCount, dailyAlertCount, analysisLimit: profileLimit, alertLimit: profileAlertLimit, isDemo: profileIsDemo } = profileBody.data;
 
-          // Initial state is already seeded from localStorage synchronously; only
-          // override if the server profile has a *different* persisted preference.
+          // Restore lastSymbol ONLY if it is valid for the currently active market.
+          // If the user's stored lastSymbol belongs to a different market (e.g. "BTC/USD"
+          // stored from a prior Crypto session but the user's preferredMarket is now
+          // "INDIA"), we discard it and keep whatever the global store already resolved
+          // as the correct market default. This is the primary fix for Bitcoin appearing
+          // after selecting a stock market.
+          const currentMarket = selectedMarketRef.current;
+          const validMarketSymbols = new Set(getSymbolsForMarket(currentMarket).map((s) => s.symbol));
           const localSym = (typeof window !== "undefined" && localStorage.getItem("TradCopilot-default-symbol")) || null;
           const localTf = (typeof window !== "undefined" && localStorage.getItem("TradCopilot-default-timeframe")) || null;
-          const serverSym = lastSymbol || localSym || "BTC/USD";
+
+          // Only restore a symbol if it belongs to the current market.
+          // Fall back to the market default, NEVER to a hardcoded crypto symbol.
+          const candidateSym = lastSymbol || localSym;
+          const serverSym = (candidateSym && validMarketSymbols.has(candidateSym))
+            ? candidateSym
+            : getDefaultSymbolForMarket(currentMarket);
           const serverTf = lastTimeframe || localTf || "4h";
           if (serverSym !== selectedSymbol) setSelectedSymbol(serverSym);
           if (serverTf !== selectedTimeframe) setSelectedTimeframe(serverTf as any);
@@ -311,10 +331,20 @@ export function ChartsClientPage() {
     if (selectedSymbol && selectedTimeframe) save();
   }, [selectedSymbol, selectedTimeframe]);
 
-  // REST fallback for non-crypto (Forex/Index) watchlist prices — polled every 30s
+  // REST price poll for all non-WebSocket symbols in the active market.
+  // Crypto symbols that are already served by the Binance WebSocket hook are
+  // excluded to avoid redundant REST calls. The effect re-runs whenever the
+  // market changes so the new market's symbols are fetched immediately.
   useEffect(() => {
-    const restSymbols = ["USD/JPY", "XAU/USD", "NASDAQ", "S&P500"];
-    const fetchForexPrices = async () => {
+    // All market symbols that do NOT have a live Binance WebSocket stream.
+    const BINANCE_WS_SYMBOLS = new Set(["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD"]);
+    const restSymbols = marketSymbols
+      .map((s) => s.symbol)
+      .filter((sym) => !BINANCE_WS_SYMBOLS.has(sym));
+
+    if (restSymbols.length === 0) return;
+
+    const fetchRestPrices = async () => {
       if (document.hidden) return;
       const updated: Record<string, { price: number; changePercent24h: number }> = {};
       await Promise.all(restSymbols.map(async (sym) => {
@@ -326,10 +356,13 @@ export function ChartsClientPage() {
       }));
       setWatchlistRestPrices(prev => ({ ...prev, ...updated }));
     };
-    fetchForexPrices();
-    const id = setInterval(fetchForexPrices, 30000);
+
+    fetchRestPrices();
+    const id = setInterval(fetchRestPrices, 30000);
     return () => clearInterval(id);
-  }, []);
+  // marketSymbols identity changes when selectedMarket changes — correct dep.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMarket]);
 
   // ── Mobile detection (matches dashboard layout breakpoint) ──────────────────
   useEffect(() => {
@@ -1152,7 +1185,17 @@ Timestamp: ${new Date().toISOString()}
                   <TrendingUp size={14} style={{ color: "#2dd4bf" }} />
                 </div>
                 <span className="text-xs font-semibold text-[var(--color-text-primary)]">{selectedSymbol}</span>
-                <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] px-1.5 py-0.5 rounded font-mono select-none">BINANCE</span>
+                <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] px-1.5 py-0.5 rounded font-mono select-none">
+                  {/* Resolve the real exchange for the active symbol — never hardcode BINANCE */}
+                  {(() => {
+                    const entry = getSupportedSymbol(selectedSymbol);
+                    if (!entry) return "UNKNOWN";
+                    if (entry.assetClass === "CRYPTO") return "BINANCE";
+                    if (entry.assetClass === "FOREX") return "FOREX";
+                    if (entry.assetClass === "COMMODITY") return "OANDA";
+                    return entry.exchange || "STOCK";
+                  })()}
+                </span>
               </div>
 
               <LivePriceTag
