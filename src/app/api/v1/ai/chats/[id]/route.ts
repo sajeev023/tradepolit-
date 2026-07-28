@@ -32,11 +32,11 @@ export async function GET(
 
     const userProfile = await prisma.userProfile.findUnique({
       where: { userId: user.id },
-      select: { plan: true, subscriptionStatus: true },
+      select: { plan: true, subscriptionStatus: true, subscriptionExpiresAt: true },
     });
 
     let chatMessages = Array.isArray(chat.messages) ? (chat.messages as any[]) : [];
-    const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus);
+    const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus, userProfile?.subscriptionExpiresAt);
     if (plan !== "PRO") {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       chatMessages = chatMessages.filter((m: any) => new Date(m.createdAt) >= sevenDaysAgo);

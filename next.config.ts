@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     instantNavigationDevToolsToggle: true,
+    optimizePackageImports: ["lucide-react", "framer-motion", "recharts"],
   },
   async redirects() {
     return [

@@ -14,23 +14,34 @@ export async function GET(_request: NextRequest) {
 
     const userProfile = await prisma.userProfile.findUnique({
       where: { userId: user.id },
-      select: { plan: true, subscriptionStatus: true },
+      select: { plan: true, subscriptionStatus: true, subscriptionExpiresAt: true },
     });
-    const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus);
+    const plan = resolvePlan(
+      user.id,
+      user.email,
+      userProfile?.plan,
+      userProfile?.subscriptionStatus,
+      userProfile?.subscriptionExpiresAt
+    );
     if (plan !== "PRO") {
       return new Response(JSON.stringify({ error: { message: "Upgrade to Pro to access this feature" } }), { status: 403, headers: { "Content-Type": "application/json" } });
     }
 
     const userId = user.id;
 
-    // Fetch all closed and open trades
-    const trades = await prisma.trade.findMany({
-      where: { userId },
-      orderBy: { openedAt: "desc" },
-    });
-
-    const closedTrades = trades.filter((t: any) => t.status === "CLOSED");
-    const openTrades = trades.filter((t: any) => t.status === "OPEN");
+    // Fetch closed trades (the only rows the metrics below consume) and the
+    // open-position count in parallel. The prior implementation loaded EVERY
+    // trade (open + closed) and then filtered in memory — for a user with many
+    // open positions that pulled large rows (screenshots, notes) only to
+    // discard them. Querying CLOSED rows directly and counting OPEN rows
+    // avoids hydrating open rows entirely.
+    const [closedTrades, openCount] = await Promise.all([
+      prisma.trade.findMany({
+        where: { userId, status: "CLOSED" },
+        orderBy: { openedAt: "desc" },
+      }),
+      prisma.trade.count({ where: { userId, status: "OPEN" } }),
+    ]);
 
     const totalTrades = closedTrades.length;
     const wins = closedTrades.filter((t: any) => Number(t.pnl || 0) > 0);
@@ -124,7 +135,7 @@ export async function GET(_request: NextRequest) {
         pnl: Number(t.pnl || 0),
         openedAt: t.openedAt,
       })),
-      openPositionsCount: openTrades.length,
+      openPositionsCount: openCount,
     });
   } catch (err) {
     console.error("Summary statistics error:", err);

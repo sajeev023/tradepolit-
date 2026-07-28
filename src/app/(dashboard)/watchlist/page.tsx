@@ -5,22 +5,43 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, Plus, Trash2, X, RefreshCw, AlertTriangle, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { getSymbolGroups, type AssetClass } from "@/lib/supported-symbols";
 
 const MAX_NAME_LENGTH = 40;
 
-const AVAILABLE_ASSETS = [
-  { symbol: "BTC/USD",  group: "Crypto",    color: "#f59e0b" },
-  { symbol: "ETH/USD",  group: "Crypto",    color: "#6366f1" },
-  { symbol: "SOL/USD",  group: "Crypto",    color: "#8b5cf6" },
-  { symbol: "EUR/USD",  group: "Forex",     color: "#22d3ee" },
-  { symbol: "GBP/USD",  group: "Forex",     color: "#38bdf8" },
-  { symbol: "USD/JPY",  group: "Forex",     color: "#34d399" },
-  { symbol: "XAU/USD",  group: "Commodity", color: "#fbbf24" },
-  { symbol: "NASDAQ",   group: "Indices",   color: "#f87171" },
-  { symbol: "S&P500",   group: "Indices",   color: "#fb923c" },
-];
+// Preserve the original per-symbol accent colors for the legacy instruments so
+// existing watchlists render identically; new instruments fall back to an
+// asset-class-derived color.
+const LEGACY_COLORS: Record<string, string> = {
+  "BTC/USD": "#f59e0b",
+  "ETH/USD": "#6366f1",
+  "SOL/USD": "#8b5cf6",
+  "EUR/USD": "#22d3ee",
+  "GBP/USD": "#38bdf8",
+  "USD/JPY": "#34d399",
+  "XAU/USD": "#fbbf24",
+  "NASDAQ": "#f87171",
+  "S&P500": "#fb923c",
+};
 
-const GROUPS = ["Crypto", "Forex", "Commodity", "Indices"];
+const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
+  CRYPTO: "#f59e0b",
+  FOREX: "#22d3ee",
+  COMMODITY: "#fbbf24",
+  INDEX: "#f87171",
+  STOCK: "#34d399",
+};
+
+const SYMBOL_GROUPS = getSymbolGroups();
+const GROUPS = SYMBOL_GROUPS.map((g) => g.label);
+
+const AVAILABLE_ASSETS = SYMBOL_GROUPS.flatMap((g) =>
+  g.symbols.map((s) => ({
+    symbol: s.symbol,
+    group: g.label,
+    color: LEGACY_COLORS[s.symbol] ?? ASSET_CLASS_COLORS[g.assetClass],
+  }))
+);
 
 export default function WatchlistPage() {
   const router = useRouter();

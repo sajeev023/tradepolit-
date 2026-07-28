@@ -1,6 +1,32 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { prisma } from "./prisma";
 import { runBacktestJob } from "./backtest-service";
+
+// Deterministic synthetic OHLCV so the backtester is validated without live
+// network fetches, which intermittently timed out under parallel suite load.
+// The mock ignores instrument/timeframe and always returns the same 500-bar
+// sine-wave series, so same-instrument/same-timeframe runs (e.g. the balance
+// proportionality test) are byte-identical and comparable.
+vi.mock("@/lib/market", () => {
+  const makeCandles = () => {
+    const candles = [];
+    let price = 100;
+    for (let i = 0; i < 500; i++) {
+      const close = price + Math.sin(i / 8) * 5 + 0.5;
+      candles.push({
+        timestamp: Date.now() - (500 - i) * 86_400_000,
+        open: price,
+        high: Math.max(price, close) + 1,
+        low: Math.min(price, close) - 1,
+        close,
+        volume: 1000,
+      });
+      price = close;
+    }
+    return candles;
+  };
+  return { getOHLCV: async () => makeCandles() };
+});
 
 // ============================================================
 // BACKTESTER ENGINE — EXPERT VALIDATION

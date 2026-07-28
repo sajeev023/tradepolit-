@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Bell, RefreshCw, Key, Lock, AlertTriangle, Loader2, User, Palette, CreditCard, Zap } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
@@ -13,7 +13,10 @@ import { useRouter } from "next/navigation";
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const supabase = createClient();
+  // Memoize the Supabase client so it's constructed once for the component's
+  // lifetime, not on every render. A fresh client per render churned Supabase
+  // auth state and re-triggered the `[supabase]` effect below on each render.
+  const supabase = useMemo(() => createClient(), []);
 
   const [activeTab, setActiveTab] = useState<"profile" | "settings" | "preferences" | "billing">("profile");
 
@@ -518,7 +521,7 @@ export default function SettingsPage() {
                 </div>
 
                 <p className="text-xs leading-relaxed text-zinc-400">
-                  Deleting your account is permanent. It will instantly erase your profile, settings, alert thresholds, strategy setups, backtest records, RAG-grounded AI history, and all logged trade performance charts. **This action cannot be undone.**
+                  Deleting your account is permanent. It will instantly erase your profile, settings, alert thresholds, strategy setups, backtest records, RAG-grounded AI history, and all logged trade performance charts. <strong className="font-semibold text-zinc-200">This action cannot be undone.</strong>
                 </p>
 
                 <div className="space-y-4 pt-2">

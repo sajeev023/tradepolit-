@@ -41,12 +41,17 @@ import { motion } from "framer-motion";
 import { getInstantFallbackAnalysis } from "@/lib/fallback-analysis";
 import { SnapshotExportCard } from "@/components/charts/SnapshotExportCard";
 import { formatPrice } from "@/lib/format-price";
+import { getSymbolGroups } from "@/lib/supported-symbols";
 
-const SYMBOLS = [
-  { group: "Crypto", items: ["BTC/USD", "ETH/USD", "SOL/USD"] },
-  { group: "Forex & Commodities", items: ["EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD"] },
-  { group: "Indices", items: ["NASDAQ", "S&P500"] },
-];
+// Instrument selector sourced from the supported-instrument registry so every
+// market (Crypto, Forex, Commodities, Indices, US/IN/JP/AE/UK/EU equities) is
+// selectable. Live side-panel prices are only shown for the WebSocket/REST
+// subset below; the selected symbol's price always loads via the main price
+// query regardless of whether it's in the side-panel subset.
+const SYMBOLS = getSymbolGroups().map((g) => ({
+  group: g.label,
+  items: g.symbols.map((s) => s.symbol),
+}));
 
 interface ChatMessage {
   id?: string;
@@ -124,16 +129,24 @@ const generateProactiveAlerts = (data: any, symbol: string) => {
 
 export function ChartsClientPage() {
   const router = useRouter();
-  const [selectedSymbol, setSelectedSymbol] = useState<string>(() => {
-    if (typeof window === "undefined") return "BTC/USD";
-    return localStorage.getItem("TradCopilot-default-symbol") || "BTC/USD";
-  });
-  const [selectedTimeframe, setSelectedTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W">(() => {
-    if (typeof window === "undefined") return "4h";
-    const tf = localStorage.getItem("TradCopilot-default-timeframe");
-    const valid: Array<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W"> = ["1m", "5m", "15m", "1h", "4h", "1d", "1W"];
-    return valid.includes(tf as any) ? (tf as any) : "4h";
-  });
+  // Initialize with the SSR default (BTC/USD · 4h) so the server-rendered HTML
+  // and the client's first paint match — reading localStorage in the useState
+  // initializer caused a hydration mismatch (server renders the default, the
+  // client's first paint used the persisted value). The persisted preference
+  // is restored after mount in the effect below (and may be further overridden
+  // by the server profile's lastSymbol/lastTimeframe).
+  const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC/USD");
+  const [selectedTimeframe, setSelectedTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W">("4h");
+
+  // Restore the persisted symbol/timeframe after mount. This runs once; the
+  // profile effect below may override these with the server-side preference.
+  useEffect(() => {
+    const savedSymbol = localStorage.getItem("TradCopilot-default-symbol");
+    if (savedSymbol) setSelectedSymbol(savedSymbol);
+    const savedTf = localStorage.getItem("TradCopilot-default-timeframe");
+    const validTfs: Array<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W"> = ["1m", "5m", "15m", "1h", "4h", "1d", "1W"];
+    if (savedTf && validTfs.includes(savedTf as any)) setSelectedTimeframe(savedTf as any);
+  }, []);
   const [isBackgroundUpdating, setIsBackgroundUpdating] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [analysisData, setAnalysisData] = useState<any | null>(null);

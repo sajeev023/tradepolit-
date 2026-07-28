@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { unauthorizedError } from "@/lib/api-helpers";
-import { cookies } from "next/headers";
 import { isProEmail } from "@/lib/entitlements";
+import { verifyDemoSession } from "@/lib/demo-session";
 
 /**
  * Get the authenticated user from the Supabase session.
@@ -20,15 +20,17 @@ export async function getAuthUser() {
     return { user, error: null };
   }
 
-  // Demo session fallback for YC Instant Demo mode
+  // Signed demo-session fallback for YC Instant Demo mode. The demo identity
+  // comes from a server-issued HMAC-signed cookie — never from a client-set
+  // email cookie — so a visitor cannot escalate to PRO by supplying a PRO
+  // email. See src/lib/demo-session.ts.
   try {
-    const cookieStore = await cookies();
-    if (cookieStore.get("sb-mock-session")?.value === "true") {
-      const mockEmail = cookieStore.get("sb-mock-email")?.value || "partner@tradcopilot.com";
+    const demo = await verifyDemoSession();
+    if (demo) {
       return {
         user: {
-          id: "partner-1234-1234-1234-123456789012",
-          email: decodeURIComponent(mockEmail),
+          id: demo.uid,
+          email: demo.email,
           user_metadata: { full_name: "YC Demo Trader" },
           app_metadata: { role: "USER" },
           aud: "authenticated",

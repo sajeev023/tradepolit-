@@ -14,11 +14,19 @@ export interface StrategyDSL {
 }
 
 export async function runBacktestJob(backtestId: string, startBalance = 10000) {
-  // Update status to RUNNING
-  await prisma.backtest.update({
-    where: { id: backtestId },
+  // Atomically claim the job: only transition PENDING → RUNNING. The route
+  // creates rows as PENDING; if status is no longer PENDING here, another
+  // invocation already claimed it (or it has already finished/failed). Aborting
+  // in that case prevents double-execution when the route is called twice
+  // rapidly or the background promise is retried. This replaces the prior
+  // unconditional update that let two concurrent runs both proceed.
+  const claimed = await prisma.backtest.updateMany({
+    where: { id: backtestId, status: "PENDING" },
     data: { status: "RUNNING" },
   });
+  if (claimed.count === 0) {
+    return;
+  }
 
   try {
     const backtest = await prisma.backtest.findUnique({

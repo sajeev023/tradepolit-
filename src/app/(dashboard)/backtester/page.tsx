@@ -162,13 +162,15 @@ export default function BacktesterPage() {
   const { data: activeBacktest, isFetching: isPollingBacktest } = useQuery<any>({
     queryKey: ["backtest", activeBacktestId],
     queryFn: async () => {
-      if (!activeBacktestId) return null;
+      if (!activeBacktestId || activeBacktestId === "demo") return null;
       const res = await fetch(`/api/v1/backtests/${activeBacktestId}`);
       const body = await res.json();
       if (!res.ok) throw new Error(body.error?.message || "Failed to poll backtest");
       return body.data;
     },
-    enabled: !!activeBacktestId,
+    // "demo" is a sentinel for the static demo result — never poll a real
+    // /api/v1/backtests/demo endpoint in demo mode.
+    enabled: !!activeBacktestId && activeBacktestId !== "demo",
     refetchInterval: (query) => {
       const state = query.state.data;
       if (state && (state.status === "PENDING" || state.status === "RUNNING")) {

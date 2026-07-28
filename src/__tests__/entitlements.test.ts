@@ -35,6 +35,30 @@ describe("resolvePlan", () => {
   it("returns FREE for regular users", () => {
     expect(resolvePlan("any-id", "user@example.com", "FREE", "INACTIVE")).toBe("FREE");
   });
+
+  it("returns FREE for an ACTIVE subscription whose recorded expiry is in the past", () => {
+    // Guards against a missed customer.subscription.deleted webhook leaving a
+    // stale ACTIVE row that would otherwise grant perpetual PRO.
+    const expired = new Date(Date.now() - 60 * 1000).toISOString(); // 1 min ago
+    expect(resolvePlan("any-id", "user@example.com", "FREE", "ACTIVE", expired)).toBe("FREE");
+    expect(resolvePlan("any-id", "user@example.com", "PRO", "PRO_ACTIVE", expired)).toBe("FREE");
+  });
+
+  it("returns PRO for an ACTIVE subscription whose recorded expiry is in the future", () => {
+    const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    expect(resolvePlan("any-id", "user@example.com", "FREE", "ACTIVE", future)).toBe("PRO");
+  });
+
+  it("treats a null expiry as no-expiry (trusts the status)", () => {
+    // Legacy rows / callers without an expiry preserve prior behavior.
+    expect(resolvePlan("any-id", "user@example.com", "FREE", "ACTIVE", null)).toBe("PRO");
+    expect(resolvePlan("any-id", "user@example.com", "FREE", "ACTIVE")).toBe("PRO");
+  });
+
+  it("still grants permanent PRO to a PRO email regardless of a stale expiry", () => {
+    const expired = new Date(Date.now() - 60 * 1000).toISOString();
+    expect(resolvePlan("any-id", "sajeevajay683@gmail.com", "FREE", "ACTIVE", expired)).toBe("PRO");
+  });
 });
 
 describe("YC_DEMO entitlement", () => {

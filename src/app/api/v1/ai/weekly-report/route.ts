@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
 
     const userProfile = await prisma.userProfile.findUnique({
       where: { userId: user.id },
-      select: { plan: true, subscriptionStatus: true },
+      select: { plan: true, subscriptionStatus: true, subscriptionExpiresAt: true },
     });
-    const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus);
+    const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus, userProfile?.subscriptionExpiresAt);
     if (plan !== "PRO") {
       return new Response(JSON.stringify({ error: { message: "Upgrade to Pro to access this feature" } }), { status: 403, headers: { "Content-Type": "application/json" } });
     }

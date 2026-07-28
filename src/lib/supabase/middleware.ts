@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { verifyDemoSessionFromRequest } from "@/lib/demo-session";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -28,15 +29,18 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Refresh session — important for Server Components
+  // Refresh session — important for Server Components.
+  //
+  // Demo session: verified from a server-issued HMAC-signed cookie. The demo
+  // identity (id + email) is bound into the signed token, never read from a
+  // client-set cookie, so a visitor cannot forge a PRO email here.
   let user = null;
-  const isMockSession = request.cookies.get("sb-mock-session")?.value === "true";
+  const demoSession = await verifyDemoSessionFromRequest(request);
 
-  if (isMockSession) {
-    const mockEmail = request.cookies.get("sb-mock-email")?.value || "partner@tradcopilot.com";
+  if (demoSession) {
     user = {
-      id: "partner-1234-1234-1234-123456789012",
-      email: decodeURIComponent(mockEmail),
+      id: demoSession.uid,
+      email: demoSession.email,
       user_metadata: { full_name: "YC Demo Trader" },
       app_metadata: { role: "USER" },
       aud: "authenticated",

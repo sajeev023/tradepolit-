@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -12,6 +13,21 @@ interface BottomSheetProps {
 }
 
 export function BottomSheet({ open, onClose, title, children, maxHeight = "80vh" }: BottomSheetProps) {
+  // Escape closes the sheet (a11y). Keyboard users had no way to dismiss it
+  // previously — only the close button and backdrop click worked.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  // useId yields a stable, unique id per instance — safe even if two sheets
+  // are mounted simultaneously.
+  const headingId = useId();
+
   return (
     <AnimatePresence>
       {open && (
@@ -23,8 +39,13 @@ export function BottomSheet({ open, onClose, title, children, maxHeight = "80vh"
             transition={{ duration: 0.15 }}
             className="fixed inset-0 bg-black/40 z-40"
             onClick={onClose}
+            aria-hidden="true"
           />
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? headingId : undefined}
+            aria-label={title ? undefined : "Dialog"}
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
@@ -38,7 +59,7 @@ export function BottomSheet({ open, onClose, title, children, maxHeight = "80vh"
             }}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b shrink-0" style={{ borderColor: "var(--color-border-subtle)" }}>
-              {title && <span className="text-sm font-bold text-[var(--color-text-primary)]">{title}</span>}
+              {title && <span id={headingId} className="text-sm font-bold text-[var(--color-text-primary)]">{title}</span>}
               {!title && <div />}
               <button
                 onClick={onClose}

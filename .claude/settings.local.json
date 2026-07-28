@@ -40,7 +40,14 @@
       "Bash(curl -s -o /tmp/landing.html -w \"HTTP %{http_code} bytes=%{size_download}\\\\n\" http://localhost:3000/)",
       "Bash(curl -s -o /tmp/landing.html -w \"HTTP %{http_code} bytes=%{size_download}\\\\n\" http://localhost:3001/)",
       "Bash(curl *)",
-      "Bash(taskkill //PID 9136 //F)"
+      "Bash(taskkill //PID 9136 //F)",
+      "Bash(sed 's/.*\\\\.//')",
+      "Bash(npx eslint *)",
+      "Bash(npx next *)",
+      "Bash(xargs wc -l)",
+      "Bash(grep -rn \"Bearer \\\\${\" src/app/api/)",
+      "Bash(grep -rn 'Bearer \\\\$\\\\|!== `Bearer\\\\|!== \"Bearer' src/app/api/)",
+      "Bash(git checkout *)"
     ]
   }
 }

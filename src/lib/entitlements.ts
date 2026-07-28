@@ -81,10 +81,42 @@ export function isDemoUser(userId: string, email?: string): boolean {
   return false;
 }
 
-export function resolvePlan(userId: string, email?: string, dbPlan?: string, dbSubscriptionStatus?: string): Plan {
+/**
+ * Resolve the effective plan for a user. Pro can come from: a permanent PRO
+ * email (PRO_USER_EMAILS), a `plan: "PRO"` profile, or an `ACTIVE`/`PRO_ACTIVE`
+ * subscription status written by the Stripe webhook.
+ *
+ * The Stripe webhook writes `subscriptionStatus = "ACTIVE"` together with
+ * `subscriptionExpiresAt = current_period_end`, and Stripe sends
+ * `customer.subscription.deleted` on expiry (→ INACTIVE). Verified: the
+ * webhook only sets ACTIVE for Stripe `status === "active" | "trialing"`, so
+ * treating "ACTIVE" as PRO is correct. As a defensive guard against a missed
+ * or dropped `subscription.deleted` event leaving a stale ACTIVE row, when an
+ * expiry is recorded we refuse to grant PRO past that expiry. Callers that
+ * don't pass an expiry (legacy paths, tests) preserve the prior behavior and
+ * trust the status as-is.
+ */
+export function resolvePlan(
+  userId: string,
+  email?: string,
+  dbPlan?: string,
+  dbSubscriptionStatus?: string,
+  dbSubscriptionExpiresAt?: string | Date | null
+): Plan {
   if (isDemoUser(userId, email)) return "YC_DEMO";
   if (isProEmail(email)) return "PRO";
-  if (dbPlan === "PRO" || dbSubscriptionStatus === "PRO_ACTIVE" || dbSubscriptionStatus === "ACTIVE") return "PRO";
+  const isProFromDb =
+    dbPlan === "PRO" || dbSubscriptionStatus === "PRO_ACTIVE" || dbSubscriptionStatus === "ACTIVE";
+  if (isProFromDb) {
+    if (dbSubscriptionExpiresAt != null) {
+      const exp =
+        dbSubscriptionExpiresAt instanceof Date
+          ? dbSubscriptionExpiresAt.getTime()
+          : new Date(dbSubscriptionExpiresAt).getTime();
+      if (!Number.isNaN(exp) && exp < Date.now()) return "FREE";
+    }
+    return "PRO";
+  }
   return "FREE";
 }
 
@@ -92,8 +124,14 @@ export function getEntitlement(plan: Plan): Entitlement {
   return ENTITLEMENTS[plan];
 }
 
-export function getEntitlementForUser(userId: string, email?: string, dbPlan?: string, dbSubscriptionStatus?: string): Entitlement {
-  const plan = resolvePlan(userId, email, dbPlan, dbSubscriptionStatus);
+export function getEntitlementForUser(
+  userId: string,
+  email?: string,
+  dbPlan?: string,
+  dbSubscriptionStatus?: string,
+  dbSubscriptionExpiresAt?: string | Date | null
+): Entitlement {
+  const plan = resolvePlan(userId, email, dbPlan, dbSubscriptionStatus, dbSubscriptionExpiresAt);
   return getEntitlement(plan);
 }
 

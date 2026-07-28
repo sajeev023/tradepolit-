@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { Check, ShieldCheck, Sparkles, X, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,18 @@ interface DemoConversionModalProps {
 
 export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoConversionModalProps) {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const headingId = useId();
+
+  // Escape closes the modal (a11y). The overlay previously had no keyboard
+  // dismissal — only the close button worked.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -28,12 +40,20 @@ export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoC
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={headingId}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-emerald-500/30 bg-zinc-950 p-6 shadow-2xl shadow-emerald-950/40">
-        
+
         {/* Top Glow Accent */}
         <div className="absolute -top-16 -right-16 h-36 w-36 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
-        
+
         {/* Close button */}
         <button
           onClick={onClose}
@@ -49,7 +69,7 @@ export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoC
             <Sparkles size={12} />
             YC Instant Demo
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-white">
+          <h2 id={headingId} className="text-xl font-bold tracking-tight text-white">
             You&apos;ve used your {analysesUsed} free AI analyses
           </h2>
           <p className="text-xs text-zinc-400 leading-relaxed">

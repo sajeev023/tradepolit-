@@ -36,28 +36,30 @@ This note tracks what has been completed and what remains, grouped by the audit 
 
 ---
 
+## ✅ Completed in this pass
+
+### Global Markets (Phase 5) — DONE
+- `src/lib/market.ts` rewritten to consume `supported-symbols.ts`; `normalizeSymbol` no longer mangles `BRK-B`/`USDT`-style tickers, maps crypto shorthand to canonical `BTC/USD` etc. Twelve Data URLs now append `&exchange=` via the registry; stocks route through Twelve Data.
+- **Fail-fast on unsupported symbols**: `getLivePrice`/`getOHLCV` throw `UnsupportedSymbolError` (→ 422, `UNSUPPORTED_SYMBOL`) before touching the cache; SIMULATED is reserved for supported-but-provider-down symbols. `UnsupportedSymbolError` + `unsupportedSymbolError` + `dispatchCaughtError` wired in `typed-errors.ts`/`types.ts`.
+- Twelve Data circuit breaker (`TD_CIRCUIT`): 3 failures → 30s open, with `tdRecordSuccess`/`tdRecordFailure`; prevents a 429/401 from cascading to silent SIMULATED app-wide.
+- Registry wired into UI selectors: `charts/ChartsClientPage.tsx`, `watchlist/page.tsx`, `search/route.ts`, `ai/market-overview/route.ts`; `validate-market-data.ts` accepts `isSupportedSymbol`.
+- `STOCK` added to the Prisma `AssetClass` enum + migration `20260728000000_add_stock_asset_class_and_indexes`; client `AssetClass` in `types.ts` now `CRYPTO | FOREX | COMMODITY | INDEX | STOCK`. Journal `<select>` offers COMMODITY/INDEX/STOCK.
+- Tests: `src/lib/market.test.ts` (fail-fast + normalizeSymbol, 7 tests).
+
+### Security (Phase 9) — DONE
+- Demo session hardened: `src/lib/demo-session.ts` issues an HMAC-SHA256-signed, HttpOnly, 1h cookie with a pinned demo identity (`partner@tradcopilot.com` — a demo, not PRO, email). Signing key is a stable env secret (`DEMO_SESSION_SECRET || SUPABASE_SERVICE_ROLE_KEY || DATABASE_URL`) for cross-instance Vercel consistency. `auth.ts`/`supabase/middleware.ts` verify via `verifyDemoSession`/`verifyDemoSessionFromRequest`; `demo-button.tsx` clears legacy `sb-mock-*` cookies and POSTs to `/api/v1/demo/session`. Eliminates the client-supplied-email privilege-escalation.
+- Tests: `src/lib/demo-session.test.ts` (round-trip, tamper, forged-sig, expired, wrong-identity, malformed — 6 tests).
+
+### Database (Phase 3) — DONE
+- `ensureDailyReset` (`limit-checker.ts`) is now an atomic conditional `updateMany` keyed on `lastUsageReset < startOfTodayUTC`; `count === 0` re-reads fresh counters. Concurrent day-rollover requests can no longer double-reset.
+- `performance/summary/route.ts` queries `status:"CLOSED"` rows and `count`s `OPEN` in parallel instead of loading every trade into memory.
+- Trade PATCH (`trades/[id]/route.ts`) wrapped in `prisma.$transaction`; ownership check, recompute, and update are now atomic. PnL/R-multiple computed with `decimal.js` (matches the risk engine). `STOCK` added to the PATCH + POST `assetClass` zod enums.
+- Backtest double-execution guard: `runBacktestJob` claims via `updateMany({ where: { id, status: "PENDING" } })` and aborts on `count === 0`.
+- Indexes added in migration: `conversation_memory(role, chatId)`, `conversation_memory(userId, role, chatId)`, `behavioral_events(userId, createdAt)`.
+- `resolvePlan`/`getEntitlementForUser` accept an optional `dbSubscriptionExpiresAt`; a recorded expiry in the past downgrades a stale `ACTIVE` row to FREE (guards against a missed `subscription.deleted` webhook). Verified the Stripe webhook only writes `ACTIVE` for `active`/`trialing` statuses, so the existing behavior is preserved; threaded `subscriptionExpiresAt` through all `resolvePlan`/`getEntitlementForUser` call sites. Tests added in `__tests__/entitlements.test.ts`.
+- Test stability: `backtest.test.ts` / `backtest-stress.test.ts` now mock `getOHLCV` with deterministic synthetic candles — eliminated network timeouts under parallel load.
+
 ## 🟡 Still to do
-
-### Global Markets (Phase 5) — wiring (registry created, not yet consumed)
-- Refactor `src/lib/market.ts` to consume `supported-symbols.ts`: fix `normalizeSymbol` (currently blanket-replaces `-`→`/` and `USDT`→`/USD`, mangling tickers like `BRK-B` and any `USDT`-containing symbol), append `&exchange=` to Twelve Data URLs from the registry, and route stocks through Twelve Data.
-- **Fail-fast on unsupported symbols**: `getLivePrice`/`getOHLCV` currently return **SIMULATED** data with HTTP 200 for any unknown symbol — the most dangerous defect for a trading app. Throw a typed `UnsupportedSymbolError` (→ 422 from routes) and reserve SIMULATED for supported-but-provider-down symbols.
-- Add a Twelve Data **circuit breaker / token bucket** so a 429/401 doesn't cascade to silent SIMULATED data app-wide.
-- Wire the registry into the UI selectors: `charts/ChartsClientPage.tsx`, `watchlist/page.tsx`, `search/route.ts`, `ai/market-overview/route.ts`, `market-pulse.ts` (replace their local hardcoded lists with imports from `supported-symbols.ts`).
-- Align `src/lib/validate-market-data.ts` `KNOWN_BARE_INDICES` with the registry.
-- Add `STOCK` to the Prisma `AssetClass` enum + a migration; update the client-side `AssetClass` type in `src/lib/types.ts` (currently only `CRYPTO | FOREX`, also missing `COMMODITY`/`INDEX`).
-- Journal asset-class `<select>` (`journal/page.tsx`) only offers CRYPTO/FOREX — add COMMODITY/INDEX/STOCK options.
-
-### Security (Phase 9)
-- **Harden the mock/demo session** (`src/lib/auth.ts`, `src/lib/supabase/middleware.ts`, `components/landing/demo-button.tsx`): the "instant demo" path trusts unsigned client-set cookies (`sb-mock-session`/`sb-mock-email`) and authenticates every demo visitor as one shared user id. Replace with a server-issued signed (HMAC) short-lived cookie and a unique per-session `userId`; never trust a client-supplied email cookie.
-
-### Database (Phase 3) — remaining
-- `ensureDailyReset` (`limit-checker.ts`) is a non-atomic read-then-write; make the midnight reset a conditional `updateMany` so a concurrent reset can't zero a just-incremented counter.
-- `performance/summary/route.ts` loads **all** trades (open + closed) into memory; query `status: "CLOSED"` separately and `count` open positions.
-- Trade PATCH (`trades/[id]/route.ts`) is a non-atomic read-then-write; wrap fetch + recompute + update in `prisma.$transaction`.
-- Backtest status machine has no double-execution guard; use `updateMany({ where: { id, status: "PENDING" } })` and abort if `count === 0`.
-- Add missing indexes: `ConversationMemory(role, chatId)` and `(userId, role, chatId)`; `BehavioralEvent(userId, createdAt)`.
-- Trade PnL computed with IEEE-754 floats while the risk engine uses `decimal.js` — compute via `Decimal` for consistency.
-- `resolvePlan` treats `dbSubscriptionStatus === "ACTIVE"` as PRO — verify against Stripe webhook states.
 
 ### UI / UX (Phase 7) — high-value subset
 - Notification bell `aria-label` mismatch breaks close-on-toggle (`notification-panel.tsx`); remove auto-close on `onMouseLeave`.

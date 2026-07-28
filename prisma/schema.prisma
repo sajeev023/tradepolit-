@@ -20,6 +20,7 @@ enum AssetClass {
   FOREX
   COMMODITY
   INDEX
+  STOCK
 }
 
 enum Direction {
@@ -346,6 +347,7 @@ model BehavioralEvent {
   createdAt   DateTime @default(now())
 
   @@index([userId, eventType])
+  @@index([userId, createdAt])
   @@map("behavioral_events")
 }
 
@@ -373,6 +375,8 @@ model ConversationMemory {
   createdAt DateTime @default(now())
 
   @@index([userId])
+  @@index([role, chatId])
+  @@index([userId, role, chatId])
   @@map("conversation_memory")
 }
 

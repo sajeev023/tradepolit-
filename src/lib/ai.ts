@@ -110,7 +110,7 @@ export async function runAIChat(
   const closedTrades = trades.filter((t: any) => t.status === "CLOSED");
   const openTrades = trades.filter((t: any) => t.status === "OPEN");
 
-  const isPro = resolvePlan(userId, userEmail, (userProfile as any).plan, (userProfile as any).subscriptionStatus) === "PRO";
+  const isPro = resolvePlan(userId, userEmail, (userProfile as any).plan, (userProfile as any).subscriptionStatus, (userProfile as any).subscriptionExpiresAt) === "PRO";
 
   // ─── STEP 5: Behavioural Heuristics (in-memory, no DB) ───────────────────
   console.log(`[STEP 5] Behavioural heuristics START | ${elapsed()}`);

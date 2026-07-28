@@ -1,6 +1,32 @@
 import { runBacktestJob } from "./backtest-service";
 import { prisma } from "./prisma";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+
+// Deterministic synthetic OHLCV so the backtester engine is unit-tested without
+// live network fetches (Binance/Twelve Data/Coinbase). The slow sine wave
+// around a rising drift guarantees EMA20/EMA50 crossovers occur and produces a
+// stable, non-NaN equity curve. Without this mock the tests intermittently
+// timed out under parallel suite load while waiting on real provider fetches.
+vi.mock("@/lib/market", () => {
+  const makeCandles = (count: number) => {
+    const candles = [];
+    let price = 100;
+    for (let i = 0; i < count; i++) {
+      const close = price + Math.sin(i / 8) * 5 + 0.5;
+      candles.push({
+        timestamp: Date.now() - (count - i) * 86_400_000,
+        open: price,
+        high: Math.max(price, close) + 1,
+        low: Math.min(price, close) - 1,
+        close,
+        volume: 1000,
+      });
+      price = close;
+    }
+    return candles;
+  };
+  return { getOHLCV: async () => makeCandles(500) };
+});
 
 describe("Strategy Backtester Engine", () => {
   it("executes backtest job and aggregates metrics correctly", async () => {

@@ -15,6 +15,37 @@ function jsonError(
 }
 
 /**
+ * Thrown by the market-data layer when a caller requests a symbol that is not
+ * in the supported instrument registry (src/lib/supported-symbols.ts). This is
+ * distinct from a supported-but-provider-down symbol, which legitimately falls
+ * back to clearly-labelled SIMULATED data. An *unsupported* symbol must never
+ * silently receive fabricated prices — for a trading app that is the most
+ * dangerous defect, so the data layer fails fast and routes map this to 422.
+ */
+export class UnsupportedSymbolError extends Error {
+  readonly symbol: string;
+  readonly status = 422;
+  constructor(symbol: string) {
+    super(`Symbol "${symbol}" is not supported. Use a symbol from the supported instrument registry.`);
+    this.name = "UnsupportedSymbolError";
+    this.symbol = symbol;
+  }
+}
+
+/**
+ * 422 — the requested symbol is not in the supported instrument registry.
+ * The client should treat this as a permanent client error (not retryable).
+ */
+export function unsupportedSymbolError(symbol: string) {
+  return jsonError(
+    "UNSUPPORTED_SYMBOL",
+    `"${symbol}" is not a supported instrument. Choose from the available markets in the watchlist.`,
+    422,
+    { symbol }
+  );
+}
+
+/**
  * 503 — database is unreachable. Include retryAfterMs so the client can
  * implement exponential backoff and surface a "we'll retry in Ns" toast
  * instead of a generic failure.
@@ -129,6 +160,10 @@ export function isPrismaTransientError(err: any): boolean {
 export function dispatchCaughtError(message: string, err?: any) {
   if (isPrismaTransientError(err)) {
     return dbError(30_000);
+  }
+  // Unsupported symbol from the market-data layer → 422 (not a 500).
+  if (err instanceof UnsupportedSymbolError) {
+    return unsupportedSymbolError(err.symbol);
   }
   const status = err?.status ?? err?.statusCode;
   if (status === 401 || status === 403) {

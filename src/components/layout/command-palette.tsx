@@ -59,8 +59,20 @@ export function SearchCommandPalette() {
     results.assets.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-xl border glass-elevated overflow-hidden shadow-2xl" style={{ borderColor: "var(--color-border-subtle)" }}>
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm"
+      onClick={(e) => {
+        // Click on the backdrop (not the panel) closes the palette.
+        if (e.target === e.currentTarget) setCommandPaletteOpen(false);
+      }}
+    >
+      <div
+        className="w-full max-w-xl rounded-xl border glass-elevated overflow-hidden shadow-2xl"
+        style={{ borderColor: "var(--color-border-subtle)" }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search"
+      >
         {/* Input area */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor: "var(--color-border-subtle)", backgroundColor: "var(--color-bg-secondary)" }}>
           <Search size={18} style={{ color: "var(--color-text-tertiary)" }} />
@@ -76,6 +88,7 @@ export function SearchCommandPalette() {
           <button
             onClick={() => setCommandPaletteOpen(false)}
             className="text-zinc-500 hover:text-white p-1 rounded-md hover:bg-white/5 transition-colors"
+            aria-label="Close search"
           >
             <X size={16} />
           </button>
@@ -99,20 +112,31 @@ export function SearchCommandPalette() {
                   <div className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
                     Matching Assets
                   </div>
-                  {results.assets.map((asset: any, idx: number) => (
+                  {results.assets.map((asset: any, idx: number) => {
+                    const go = () => {
+                      setCommandPaletteOpen(false);
+                      router.push(`/charts?symbol=${encodeURIComponent(asset.symbol)}`);
+                    };
+                    return (
                     <div
                       key={idx}
-                      onClick={() => {
-                        setCommandPaletteOpen(false);
-                        router.push(`/charts?symbol=${encodeURIComponent(asset.symbol)}`);
+                      onClick={go}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          go();
+                        }
                       }}
+                      role="button"
+                      tabIndex={0}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-zinc-800/30 text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       <LineChart size={14} className="text-teal-400" />
                       <span>{asset.symbol}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -122,13 +146,23 @@ export function SearchCommandPalette() {
                   <div className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
                     Trade Logs
                   </div>
-                  {results.trades.map((trade: any) => (
+                  {results.trades.map((trade: any) => {
+                    const go = () => {
+                      setCommandPaletteOpen(false);
+                      router.push("/journal");
+                    };
+                    return (
                     <div
                       key={trade.id}
-                      onClick={() => {
-                        setCommandPaletteOpen(false);
-                        router.push("/journal");
+                      onClick={go}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          go();
+                        }
                       }}
+                      role="button"
+                      tabIndex={0}
                       className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer hover:bg-zinc-800/30 text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
@@ -140,7 +174,8 @@ export function SearchCommandPalette() {
                         {new Date(trade.openedAt).toLocaleDateString()}
                       </span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -150,20 +185,31 @@ export function SearchCommandPalette() {
                   <div className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
                     Strategies
                   </div>
-                  {results.strategies.map((strat: any) => (
+                  {results.strategies.map((strat: any) => {
+                    const go = () => {
+                      setCommandPaletteOpen(false);
+                      router.push("/backtester");
+                    };
+                    return (
                     <div
                       key={strat.id}
-                      onClick={() => {
-                        setCommandPaletteOpen(false);
-                        router.push("/backtester");
+                      onClick={go}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          go();
+                        }
                       }}
+                      role="button"
+                      tabIndex={0}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-zinc-800/30 text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       <FlaskConical size={14} className="text-teal-400" />
                       <span>{strat.name}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 

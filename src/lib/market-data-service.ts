@@ -1,41 +1,51 @@
 /**
  * src/lib/market-data-service.ts
  *
- * Centralized MarketDataService for TradCopilot.
- * Acts as the single source of truth for both live price fetches
- * and indicator candle calculations across all backend components
- * (API endpoints, AI analysis routes, cron jobs, alerts, risk calculator).
- *
- * Enforces Binance Spot as the exchange of truth.
+ * Centralized MarketDataService for TradCopilot. Thin façade over the
+ * market-data layer (src/lib/market.ts) used by API endpoints, AI analysis
+ * routes, cron jobs, alerts, and the risk calculator so they share one
+ * normalization + caching path. The supported-instrument universe and the
+ * per-symbol provider chain live in src/lib/supported-symbols.ts.
  */
 
 import { getLivePrice, getOHLCV, normalizeSymbol } from "./market";
+import { binanceSymbolFor } from "./supported-symbols";
 import type { PriceData, OHLCVCandle } from "./types";
 
 export const MarketDataService = {
   /**
-   * Normalizes symbol and converts it to the Binance Spot equivalent.
-   * E.g. BTC/USD -> BTCUSDT, EUR/USD -> EURUSDT
+   * Resolves a (possibly shorthand) symbol to its Binance Spot equivalent,
+   * e.g. BTC/USD -> BTCUSDT, EUR/USD -> EURUSDT. Uses the registry override
+   * when present.
    */
   getBinanceSymbol(symbol: string): string {
-    const normalized = this.normalizeSymbol(symbol);
-    return normalized.replace("/USD", "USDT");
+    return binanceSymbolFor(this.normalizeSymbol(symbol));
   },
 
   /**
-   * Normalizes the user input symbol.
+   * Normalizes user input to the canonical registry symbol.
    */
   normalizeSymbol(symbol: string): string {
     return normalizeSymbol(symbol);
   },
 
+  priceCache: new Map<string, { price: PriceData; timestamp: number }>(),
+
   /**
    * Retrieves the live price for a given symbol from the centralized source.
-   * Logs timestamps on every update to monitor latency.
+   * Caches results in memory for 2000ms to deduplicate concurrent requests.
    */
   async getLivePrice(symbol: string): Promise<PriceData> {
-    const timestamp = new Date().toISOString();
+    const canonical = this.normalizeSymbol(symbol);
+    const cached = this.priceCache.get(canonical);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < 2000) {
+      return cached.price;
+    }
+
+    const timestamp = new Date(now).toISOString();
     const result = await getLivePrice(symbol);
+    this.priceCache.set(canonical, { price: result, timestamp: now });
     console.log(`[MARKET DATA SERVICE] [${timestamp}] Resolved price for ${symbol} (${result.symbol}): $${result.price}`);
     return result;
   },

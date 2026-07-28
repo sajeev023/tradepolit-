@@ -340,6 +340,35 @@ export const prismaMock = {
     count: async () => {
       return memoryDb.users.length;
     },
+    updateMany: async ({ where, data }: any) => {
+      const list = memoryDb.users.filter((u) => {
+        if (where.id && u.id !== where.id) return false;
+        if (where.lastUsageReset && where.lastUsageReset.lt) {
+          const lr = u.lastUsageReset ? new Date(u.lastUsageReset) : null;
+          if (!lr || !(lr.getTime() < new Date(where.lastUsageReset.lt).getTime())) return false;
+        }
+        // Per-field `lt` filters (used by recordUsage's quota guard, e.g.
+        // analysesCountToday: { lt: limit }). Skip keys we already handled.
+        for (const [k, v] of Object.entries(where) as [string, any][]) {
+          if (k === "id" || k === "lastUsageReset") continue;
+          if (v && typeof v === "object" && "lt" in v) {
+            if (!(Number(u[k] ?? 0) < v.lt)) return false;
+          }
+        }
+        return true;
+      });
+      for (const u of list) {
+        for (const [k, v] of Object.entries(data) as [string, any][]) {
+          if (v && typeof v === "object" && "increment" in v) {
+            u[k] = Number(u[k] ?? 0) + v.increment;
+          } else {
+            u[k] = v;
+          }
+        }
+        u.updatedAt = new Date();
+      }
+      return { count: list.length };
+    },
   },
   trade: {
     findMany: async ({ where, skip = 0, take = 20 }: any) => {
@@ -528,6 +557,15 @@ export const prismaMock = {
       };
       memoryDb.backtests[idx] = updated;
       return updated;
+    },
+    updateMany: async ({ where, data }: any) => {
+      const list = memoryDb.backtests.filter((b) => {
+        if (where.id && b.id !== where.id) return false;
+        if (where.status && b.status !== where.status) return false;
+        return true;
+      });
+      for (const b of list) Object.assign(b, data);
+      return { count: list.length };
     },
   },
   marketCache: {
@@ -858,6 +896,14 @@ export const prismaMock = {
       flags[idx] = { ...flags[idx], ...data, updatedAt: new Date() };
       return flags[idx];
     },
+  },
+  // Interactive transaction: run the callback against the same in-memory mock
+  // (no real isolation, but sufficient for unit tests). Supports both the
+  // callback form and the promise-array form.
+  $transaction: async (arg: any) => {
+    if (typeof arg === "function") return arg(prismaMock);
+    if (Array.isArray(arg)) return Promise.all(arg);
+    return arg;
   },
 };
 

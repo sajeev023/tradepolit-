@@ -3,12 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
-
-const ALL_SYMBOLS = [
-  "BTC/USD", "ETH/USD", "SOL/USD",
-  "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD",
-  "NASDAQ", "S&P500",
-];
+import { isSupportedSymbol } from "@/lib/supported-symbols";
 
 // GET /api/v1/ai/market-overview
 // Reads cached analyses from ConversationMemory for all watched symbols.
@@ -22,9 +17,9 @@ export async function GET(_request: NextRequest) {
 
     const userProfile = await prisma.userProfile.findUnique({
       where: { userId: user.id },
-      select: { plan: true, subscriptionStatus: true },
+      select: { plan: true, subscriptionStatus: true, subscriptionExpiresAt: true },
     });
-    const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus);
+    const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus, userProfile?.subscriptionExpiresAt);
     if (plan !== "PRO") {
       return new Response(JSON.stringify({ error: { message: "Upgrade to Pro to access this feature" } }), { status: 403, headers: { "Content-Type": "application/json" } });
     }
@@ -55,7 +50,7 @@ export async function GET(_request: NextRequest) {
         // symbol is everything except the last hyphen segment
         const sym = record.chatId?.slice(0, record.chatId.lastIndexOf("-")) ?? "";
 
-        if (!sym || !ALL_SYMBOLS.includes(sym)) continue;
+        if (!sym || !isSupportedSymbol(sym)) continue;
 
         const bias: string = analysis.bias ?? "NEUTRAL";
         const whyItMatters: string = analysis.whyItMatters ?? "";

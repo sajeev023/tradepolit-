@@ -117,7 +117,10 @@ function PricingCardsContent() {
       </div>
 
       {/* Pro */}
-      <div className="pricing-pro-card card p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden border-[var(--color-accent-primary)]/25 order-1 md:order-2">
+      <div
+        className="pricing-pro-card card p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden order-1 md:order-2"
+        style={{ borderColor: "color-mix(in srgb, var(--color-accent-primary) 25%, transparent)" }}
+      >
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-[var(--color-accent-primary)] opacity-[0.06] rounded-full blur-[60px] pointer-events-none" />
         <div className="absolute top-0 right-0 px-3 py-1 bg-[var(--color-accent-primary)] text-[var(--color-bg-primary)] text-[10px] font-bold tracking-[0.04em] rounded-bl-lg">
           POPULAR

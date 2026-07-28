@@ -11,9 +11,10 @@ export default function AlertsPage() {
   const [selectedAsset, setSelectedAsset] = useState("BTC/USD");
   const [operator, setOperator] = useState("gt");
   const [triggerPrice, setTriggerPrice] = useState("");
+  const [isEvaluating, setIsEvaluating] = useState(false);
 
   // 1. Fetch user's alerts
-  const { data: alerts, isLoading: alertsLoading } = useQuery<any[]>({
+  const { data: alerts, isLoading: alertsLoading, isError: alertsError, refetch: refetchAlerts } = useQuery<any[]>({
     queryKey: ["alerts"],
     queryFn: async () => {
       const res = await fetch("/api/v1/alerts");
@@ -24,7 +25,7 @@ export default function AlertsPage() {
   });
 
   // 2. Fetch notifications
-  const { data: notifications, isLoading: notificationsLoading } = useQuery<any[]>({
+  const { data: notifications, isLoading: notificationsLoading, isError: notificationsError, refetch: refetchNotifications } = useQuery<any[]>({
     queryKey: ["notifications"],
     queryFn: async () => {
       const res = await fetch("/api/v1/notifications");
@@ -211,10 +212,8 @@ export default function AlertsPage() {
               The cron scheduler runs in the background. You can trigger an instant evaluation to trigger any crosses:
             </p>
             <button
-              onClick={async (e) => {
-                const btn = e.currentTarget;
-                btn.disabled = true;
-                btn.innerHTML = '<span class="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full mr-1.5"></span>Evaluating...';
+              onClick={async () => {
+                setIsEvaluating(true);
                 try {
                   const res = await fetch("/api/cron/evaluate-alerts");
                   const body = await res.json();
@@ -223,14 +222,16 @@ export default function AlertsPage() {
                   toast.success(`Evaluated active alerts. Triggered ${body.data?.triggered || 0} setups.`);
                 } catch {
                   toast.error("Evaluation failed. Please try again.");
+                } finally {
+                  setIsEvaluating(false);
                 }
-                btn.disabled = false;
-                btn.innerHTML = 'Force Evaluate Trigger Crosses';
               }}
-              className="w-full py-1.5 rounded text-[10px] font-semibold border transition-all disabled:opacity-60"
+              disabled={isEvaluating}
+              className="w-full py-1.5 rounded text-[10px] font-semibold border transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
               style={{ borderColor: "var(--color-border-subtle)" }}
             >
-              Force Evaluate Trigger Crosses
+              {isEvaluating && <RefreshCw size={12} className="animate-spin" />}
+              {isEvaluating ? "Evaluating..." : "Force Evaluate Trigger Crosses"}
             </button>
           </div>
         </div>
@@ -249,6 +250,19 @@ export default function AlertsPage() {
             {alertsLoading ? (
               <div className="flex justify-center py-6">
                 <RefreshCw className="animate-spin text-teal-400" size={18} />
+              </div>
+            ) : alertsError ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center">
+                <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                  Failed to load alerts.
+                </p>
+                <button
+                  onClick={() => refetchAlerts()}
+                  className="px-3 py-1 rounded text-[11px] font-semibold border"
+                  style={{ borderColor: "var(--color-border-subtle)" }}
+                >
+                  Retry
+                </button>
               </div>
             ) : activeAlertsList.length === 0 ? (
               <div className="text-xs text-center py-8" style={{ color: "var(--color-text-tertiary)" }}>
@@ -270,12 +284,14 @@ export default function AlertsPage() {
                         <button
                           onClick={() => toggleAlertMutation.mutate({ id: alert.id, isActive: false })}
                           className="text-teal-400 hover:text-teal-300"
+                          aria-label={`Disable alert for ${alert.instrument}`}
                         >
                           <ToggleRight size={20} />
                         </button>
                         <button
                           onClick={() => deleteAlertMutation.mutate(alert.id)}
                           className="text-rose-400 hover:text-rose-300 p-1"
+                          aria-label={`Delete alert for ${alert.instrument}`}
                         >
                           <Trash2 size={12} />
                         </button>
@@ -302,6 +318,19 @@ export default function AlertsPage() {
               <div className="flex justify-center py-6">
                 <RefreshCw className="animate-spin text-teal-400" size={18} />
               </div>
+            ) : notificationsError ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center">
+                <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
+                  Failed to load notifications.
+                </p>
+                <button
+                  onClick={() => refetchNotifications()}
+                  className="px-3 py-1 rounded text-[11px] font-semibold border"
+                  style={{ borderColor: "var(--color-border-subtle)" }}
+                >
+                  Retry
+                </button>
+              </div>
             ) : !notifications || notifications.length === 0 ? (
               <div className="text-xs text-center py-8" style={{ color: "var(--color-text-tertiary)" }}>
                 No notifications received.
@@ -312,6 +341,15 @@ export default function AlertsPage() {
                   <div
                     key={n.id}
                     onClick={() => !n.isRead && markReadMutation.mutate(n.id)}
+                    onKeyDown={(e) => {
+                      if (!n.isRead && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        markReadMutation.mutate(n.id);
+                      }
+                    }}
+                    role={n.isRead ? undefined : "button"}
+                    tabIndex={n.isRead ? undefined : 0}
+                    aria-label={n.isRead ? undefined : `Mark notification "${n.title}" as read`}
                     className="p-3 rounded-lg border text-xs cursor-pointer transition-colors flex items-start justify-between"
                     style={{
                       backgroundColor: n.isRead ? "transparent" : "var(--color-accent-primary-muted)",

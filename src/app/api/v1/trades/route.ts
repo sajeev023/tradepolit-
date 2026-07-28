@@ -15,7 +15,7 @@ import { resolvePlan } from "@/lib/entitlements";
 // Zod schema for trade creation
 const createTradeSchema = z.object({
   instrument: z.string().min(1, "Instrument symbol is required"),
-  assetClass: z.enum(["CRYPTO", "FOREX", "COMMODITY", "INDEX"]),
+  assetClass: z.enum(["CRYPTO", "FOREX", "COMMODITY", "INDEX", "STOCK"]),
   direction: z.enum(["LONG", "SHORT"]),
   entryPrice: z.number().positive("Entry price must be positive"),
   exitPrice: z.number().positive("Exit price must be positive").optional(),
@@ -138,10 +138,16 @@ export async function GET(request: NextRequest) {
     const instrument = searchParams.get("instrument");
     const userProfile = await prisma.userProfile.findUnique({
       where: { userId: user.id },
-      select: { plan: true, subscriptionStatus: true },
+      select: { plan: true, subscriptionStatus: true, subscriptionExpiresAt: true },
     });
 
-    const isPro = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus) === "PRO";
+    const isPro = resolvePlan(
+      user.id,
+      user.email,
+      userProfile?.plan,
+      userProfile?.subscriptionStatus,
+      userProfile?.subscriptionExpiresAt
+    ) === "PRO";
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     

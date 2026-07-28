@@ -60,10 +60,14 @@ export function NotificationPanel() {
         panelRef.current &&
         !panelRef.current.contains(event.target as Node)
       ) {
-        // Prevent immediate close if click was on the toggle bell icon
+        // Prevent immediate close if click was on the toggle bell icon. The
+        // bell button (topbar.tsx) uses aria-label="Notifications", so match
+        // that exactly — a previous mismatch with 'View notifications' meant
+        // the guard never matched and clicking the bell while open re-opened
+        // the panel instead of toggling it closed.
         const target = event.target as HTMLElement;
-        if (target.closest("[aria-label='View notifications']")) return;
-        
+        if (target.closest("[aria-label='Notifications']")) return;
+
         setNotificationPanelOpen(false);
       }
     }
@@ -78,7 +82,6 @@ export function NotificationPanel() {
   return (
     <div
       ref={panelRef}
-      onMouseLeave={() => setNotificationPanelOpen(false)}
       className="fixed right-0 top-0 h-screen w-80 z-50 flex flex-col justify-between border-l glass shadow-2xl animate-fade-in"
       style={{
         backgroundColor: "rgba(18, 18, 20, 0.9)",
@@ -97,6 +100,7 @@ export function NotificationPanel() {
         <button
           onClick={() => setNotificationPanelOpen(false)}
           className="text-zinc-400 hover:text-white p-1"
+          aria-label="Close notifications"
         >
           <X size={16} />
         </button>
@@ -122,6 +126,15 @@ export function NotificationPanel() {
               <div
                 key={n.id}
                 onClick={() => !n.isRead && markReadMutation.mutate(n.id)}
+                onKeyDown={(e) => {
+                  if (!n.isRead && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    markReadMutation.mutate(n.id);
+                  }
+                }}
+                role={n.isRead ? undefined : "button"}
+                tabIndex={n.isRead ? undefined : 0}
+                aria-label={n.isRead ? undefined : `Mark notification "${n.title}" as read`}
                 className="p-3 rounded-lg border text-xs cursor-pointer transition-all duration-200 select-none hover:border-[var(--color-border-default)]"
                 style={{
                   backgroundColor: n.isRead ? "rgba(255, 255, 255, 0.01)" : "rgba(20, 241, 178, 0.05)",

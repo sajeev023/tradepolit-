@@ -21,15 +21,22 @@ import {
 } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
+import { getSupportedSymbol, getSymbolGroups } from "@/lib/supported-symbols";
 
 // Enums and tags list
 const EMOTIONS = ["CONFIDENT", "FEARFUL", "GREEDY", "REVENGE", "FOMO", "DISCIPLINED", "NEUTRAL"];
 const MISTAKES = ["FOMO Entry", "Overleveraging", "Moving Stop Loss", "Early Exit", "Revenge Trade", "No Plan", "Poor Sizing"];
-const SUPPORTED_ASSETS = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ", "S&P500"];
+
+// All instruments come from the supported-instrument registry; the asset class
+// for a trade is derived from the registry entry rather than hand-maintained
+// lists, so every market (Crypto / Forex / Commodities / Indices / Stocks)
+// is journalable without editing this file.
+const SUPPORTED_ASSETS = getSymbolGroups()
+  .flatMap((g) => g.symbols.map((s) => s.symbol));
 
 const tradeFormSchema = z.object({
   instrument: z.string().min(1, "Asset symbol is required"),
-  assetClass: z.enum(["CRYPTO", "FOREX", "COMMODITY", "INDEX"]),
+  assetClass: z.enum(["CRYPTO", "FOREX", "COMMODITY", "INDEX", "STOCK"]),
   direction: z.enum(["LONG", "SHORT"]),
   entryPrice: z.coerce.number().positive("Entry price must be positive"),
   exitPrice: z.preprocess((val) => (val === "" ? undefined : val), z.coerce.number().positive("Exit price must be positive").optional()),
@@ -165,6 +172,14 @@ function JournalPageContent() {
 
   const searchParams = useSearchParams();
 
+  // Derive the asset class for an instrument from the registry so every
+  // supported market (incl. stocks) resolves correctly without maintaining
+  // parallel hardcoded lists here.
+  const assetClassFor = (instrument: string): "CRYPTO" | "FOREX" | "COMMODITY" | "INDEX" | "STOCK" => {
+    const entry = getSupportedSymbol(instrument);
+    return (entry?.assetClass as any) ?? "CRYPTO";
+  };
+
   useEffect(() => {
     const prefill = searchParams.get("prefill") === "true";
     if (prefill) {
@@ -176,11 +191,7 @@ function JournalPageContent() {
       const size = searchParams.get("size") || "";
       const leverage = searchParams.get("leverage") || "1";
 
-      const assetClass =
-        ["EUR/USD", "GBP/USD", "USD/JPY"].includes(instrument) ? "FOREX" :
-        ["XAU/USD"].includes(instrument) ? "COMMODITY" :
-        ["NASDAQ", "S&P500"].includes(instrument) ? "INDEX" :
-        "CRYPTO";
+      const assetClass = assetClassFor(instrument);
 
       setValue("instrument", instrument);
       setValue("assetClass", assetClass);
@@ -200,12 +211,7 @@ function JournalPageContent() {
 
   useEffect(() => {
     if (watchInstrument) {
-      const assetClass =
-        ["EUR/USD", "GBP/USD", "USD/JPY"].includes(watchInstrument) ? "FOREX" :
-        ["XAU/USD"].includes(watchInstrument) ? "COMMODITY" :
-        ["NASDAQ", "S&P500"].includes(watchInstrument) ? "INDEX" :
-        "CRYPTO";
-      setValue("assetClass", assetClass);
+      setValue("assetClass", assetClassFor(watchInstrument));
     }
   }, [watchInstrument, setValue]);
 
@@ -545,6 +551,9 @@ function JournalPageContent() {
                   >
                     <option value="CRYPTO">Crypto</option>
                     <option value="FOREX">Forex</option>
+                    <option value="COMMODITY">Commodity</option>
+                    <option value="INDEX">Index</option>
+                    <option value="STOCK">Stock</option>
                   </select>
                 </div>
                 <div>

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
+import { SUPPORTED_SYMBOLS } from "@/lib/supported-symbols";
 
 export const dynamic = "force-dynamic";
 
@@ -56,17 +57,20 @@ export async function GET(request: NextRequest) {
       take: 5,
     });
 
-    // 4. Search matching symbols
-    const AVAILABLE_SYMBOLS = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ", "S&P500"];
-    const matchingSymbols = AVAILABLE_SYMBOLS.filter((symbol) =>
-      symbol.toLowerCase().includes(cleanQuery)
-    );
+    // 4. Search matching symbols from the supported-instrument registry.
+    const matchingSymbols = SUPPORTED_SYMBOLS
+      .filter((s) =>
+        s.symbol.toLowerCase().includes(cleanQuery) ||
+        s.displayName.toLowerCase().includes(cleanQuery)
+      )
+      .slice(0, 10)
+      .map((s) => ({ symbol: s.symbol, displayName: s.displayName }));
 
     return successResponse({
       trades,
       strategies,
       news,
-      assets: matchingSymbols.map((sym) => ({ symbol: sym })),
+      assets: matchingSymbols,
     });
   } catch (error) {
     console.error("Global search API error:", error);

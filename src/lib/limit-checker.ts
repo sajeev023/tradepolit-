@@ -20,6 +20,7 @@ interface UserWithReset {
   email: string | null;
   profilePlan: string | null;
   profileSubscriptionStatus: string | null;
+  profileSubscriptionExpiresAt: Date | null;
 }
 
 async function getDbUserWithReset(userId: string): Promise<UserWithReset | null> {
@@ -35,6 +36,7 @@ async function getDbUserWithReset(userId: string): Promise<UserWithReset | null>
         select: {
           plan: true,
           subscriptionStatus: true,
+          subscriptionExpiresAt: true,
         },
       },
     },
@@ -44,6 +46,7 @@ async function getDbUserWithReset(userId: string): Promise<UserWithReset | null>
     ...dbUser,
     profilePlan: dbUser.profile?.plan ?? null,
     profileSubscriptionStatus: dbUser.profile?.subscriptionStatus ?? null,
+    profileSubscriptionExpiresAt: dbUser.profile?.subscriptionExpiresAt ?? null,
   };
 }
 
@@ -58,22 +61,46 @@ async function ensureDailyReset(
     now.getUTCMonth() === lastReset.getUTCMonth() &&
     now.getUTCDate() === lastReset.getUTCDate();
 
-  if (!isSameDay) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        analysesCountToday: 0,
-        alertsCountToday: 0,
-        lastUsageReset: now,
-      },
-    });
-    return { analysesCount: 0, alertsCount: 0 };
+  if (isSameDay) {
+    return {
+      analysesCount: dbUser.analysesCountToday,
+      alertsCount: dbUser.alertsCountToday,
+    };
   }
 
-  return {
-    analysesCount: dbUser.analysesCountToday,
-    alertsCount: dbUser.alertsCountToday,
-  };
+  // New UTC day. Atomically reset ONLY rows whose lastUsageReset is still from a
+  // prior day. Two concurrent requests both observing isSameDay=false (from a
+  // stale in-memory read) are serialized at the row level by this conditional
+  // updateMany: exactly one resets (count === 1) and the other observes count
+  // === 0 and re-reads the fresh counters. This replaces the prior
+  // unconditional update that let concurrent requests both reset-and-increment,
+  // double-counting usage around the day boundary.
+  const startOfTodayUTC = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  const result = await prisma.user.updateMany({
+    where: { id: userId, lastUsageReset: { lt: startOfTodayUTC } },
+    data: {
+      analysesCountToday: 0,
+      alertsCountToday: 0,
+      lastUsageReset: now,
+    },
+  });
+
+  if (result.count === 0) {
+    // Another request already performed today's reset — re-read the fresh
+    // counters so this request reports accurate usage.
+    const fresh = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { analysesCountToday: true, alertsCountToday: true },
+    });
+    return {
+      analysesCount: fresh?.analysesCountToday ?? 0,
+      alertsCount: fresh?.alertsCountToday ?? 0,
+    };
+  }
+
+  return { analysesCount: 0, alertsCount: 0 };
 }
 
 export async function checkUsageLimit(
@@ -99,7 +126,8 @@ export async function checkUsageLimit(
     userId,
     userEmail,
     dbUser.profilePlan ?? undefined,
-    dbUser.profileSubscriptionStatus ?? undefined
+    dbUser.profileSubscriptionStatus ?? undefined,
+    dbUser.profileSubscriptionExpiresAt
   );
   const { analysesCount, alertsCount } = await ensureDailyReset(userId, dbUser);
   const isPro = entitlement.isUnlimitedAnalyses;
@@ -144,7 +172,8 @@ export async function recordUsage(
     userId,
     userEmail,
     dbUser.profilePlan ?? undefined,
-    dbUser.profileSubscriptionStatus ?? undefined
+    dbUser.profileSubscriptionStatus ?? undefined,
+    dbUser.profileSubscriptionExpiresAt
   );
 
   // Pro users: no tracking needed
@@ -212,7 +241,8 @@ export async function getCurrentUsage(
     userId,
     userEmail,
     dbUser.profilePlan ?? undefined,
-    dbUser.profileSubscriptionStatus ?? undefined
+    dbUser.profileSubscriptionStatus ?? undefined,
+    dbUser.profileSubscriptionExpiresAt
   );
   const { analysesCount, alertsCount } = await ensureDailyReset(userId, dbUser);
 
