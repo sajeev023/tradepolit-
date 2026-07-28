@@ -41,17 +41,9 @@ import { motion } from "framer-motion";
 import { getInstantFallbackAnalysis } from "@/lib/fallback-analysis";
 import { SnapshotExportCard } from "@/components/charts/SnapshotExportCard";
 import { formatPrice } from "@/lib/format-price";
-import { getSymbolGroups } from "@/lib/supported-symbols";
-
-// Instrument selector sourced from the supported-instrument registry so every
-// market (Crypto, Forex, Commodities, Indices, US/IN/JP/AE/UK/EU equities) is
-// selectable. Live side-panel prices are only shown for the WebSocket/REST
-// subset below; the selected symbol's price always loads via the main price
-// query regardless of whether it's in the side-panel subset.
-const SYMBOLS = getSymbolGroups().map((g) => ({
-  group: g.label,
-  items: g.symbols.map((s) => s.symbol),
-}));
+// NOTE: The instrument selector is now driven by `symbolGroups` (market-scoped,
+// derived inside the component from `getSymbolGroupsForMarket(selectedMarket)`).
+// The old module-level SYMBOLS constant has been removed.
 
 interface ChatMessage {
   id?: string;
@@ -1077,11 +1069,12 @@ Timestamp: ${new Date().toISOString()}
               <Eye size={10} className="text-[var(--color-accent-primary)]" /> Watchlist
             </h2>
             <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
-              {SYMBOLS.map(group => (
-                <div key={group.group} className="space-y-0.5">
-                  <h3 className="text-[8px] font-bold tracking-widest uppercase text-zinc-500 select-none">{group.group}</h3>
+              {symbolGroups.map(group => (
+                <div key={group.label} className="space-y-0.5">
+                  <h3 className="text-[8px] font-bold tracking-widest uppercase text-zinc-500 select-none">{group.label}</h3>
                   <div className="flex flex-col gap-0.5">
-                    {group.items.map(item => {
+                    {group.symbols.map(s => {
+                      const item = s.symbol;
                       const active = item === selectedSymbol;
                       const info = watchlistPrices[item];
                       const ovr = marketOverview[item];
