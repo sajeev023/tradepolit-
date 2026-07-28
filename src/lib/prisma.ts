@@ -47,10 +47,12 @@ const isLocalhostDb =
   process.env.DATABASE_URL.includes("localhost") ||
   process.env.DATABASE_URL.includes("mockproject");
 
-// In production, a missing/placeholder DATABASE_URL is a misconfiguration that
-// would silently fall back to the in-memory mock (losing all writes on
-// instance recycle). Fail fast instead of degrading to a non-persistent store.
-if (process.env.NODE_ENV === "production" && isLocalhostDb) {
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+
+// In production runtime (not build phase), a missing/placeholder DATABASE_URL
+// is a misconfiguration that would silently fall back to the in-memory mock.
+// Fail fast in runtime, but allow build-time static generation in CI pipelines.
+if (process.env.NODE_ENV === "production" && isLocalhostDb && !isBuildPhase) {
   throw new Error(
     "[PRISMA RUNTIME] Production is misconfigured: DATABASE_URL is missing or points to localhost/mockproject. Refusing to start on a non-persistent mock database."
   );
