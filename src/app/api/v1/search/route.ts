@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
-import { SUPPORTED_SYMBOLS } from "@/lib/supported-symbols";
+import { SUPPORTED_SYMBOLS, getSymbolsForMarket, type MarketRegion } from "@/lib/supported-symbols";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
+    const market = searchParams.get("market") as MarketRegion | null;
 
     if (!query.trim()) {
       return successResponse({ trades: [], strategies: [], news: [], assets: [] });
@@ -57,14 +58,15 @@ export async function GET(request: NextRequest) {
       take: 5,
     });
 
-    // 4. Search matching symbols from the supported-instrument registry.
-    const matchingSymbols = SUPPORTED_SYMBOLS
+    // 4. Search matching symbols filtered by preferred market if provided
+    const pool = market ? getSymbolsForMarket(market) : SUPPORTED_SYMBOLS;
+    const matchingSymbols = pool
       .filter((s) =>
         s.symbol.toLowerCase().includes(cleanQuery) ||
         s.displayName.toLowerCase().includes(cleanQuery)
       )
       .slice(0, 10)
-      .map((s) => ({ symbol: s.symbol, displayName: s.displayName }));
+      .map((s) => ({ symbol: s.symbol, displayName: s.displayName, assetClass: s.assetClass, region: s.region }));
 
     return successResponse({
       trades,

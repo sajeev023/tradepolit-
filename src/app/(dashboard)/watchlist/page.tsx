@@ -5,24 +5,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, Plus, Trash2, X, RefreshCw, AlertTriangle, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { getSymbolGroups, type AssetClass } from "@/lib/supported-symbols";
+import { useUIStore } from "@/lib/stores/ui-store";
+import { getSymbolsForMarket, type AssetClass } from "@/lib/supported-symbols";
 
 const MAX_NAME_LENGTH = 40;
-
-// Preserve the original per-symbol accent colors for the legacy instruments so
-// existing watchlists render identically; new instruments fall back to an
-// asset-class-derived color.
-const LEGACY_COLORS: Record<string, string> = {
-  "BTC/USD": "#f59e0b",
-  "ETH/USD": "#6366f1",
-  "SOL/USD": "#8b5cf6",
-  "EUR/USD": "#22d3ee",
-  "GBP/USD": "#38bdf8",
-  "USD/JPY": "#34d399",
-  "XAU/USD": "#fbbf24",
-  "NASDAQ": "#f87171",
-  "S&P500": "#fb923c",
-};
 
 const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
   CRYPTO: "#f59e0b",
@@ -32,25 +18,24 @@ const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
   STOCK: "#34d399",
 };
 
-const SYMBOL_GROUPS = getSymbolGroups();
-const GROUPS = SYMBOL_GROUPS.map((g) => g.label);
-
-const AVAILABLE_ASSETS = SYMBOL_GROUPS.flatMap((g) =>
-  g.symbols.map((s) => ({
-    symbol: s.symbol,
-    group: g.label,
-    color: LEGACY_COLORS[s.symbol] ?? ASSET_CLASS_COLORS[g.assetClass],
-  }))
-);
-
 export default function WatchlistPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { selectedMarket, setSelectedSymbol } = useUIStore();
   const [newWatchlistName, setNewWatchlistName] = useState("");
   const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [filterGroup, setFilterGroup] = useState<string>("All");
+
+  const marketSymbols = getSymbolsForMarket(selectedMarket);
+  const AVAILABLE_ASSETS = marketSymbols.map((s) => ({
+    symbol: s.symbol,
+    group: s.assetClass,
+    displayName: s.displayName,
+    color: ASSET_CLASS_COLORS[s.assetClass] || "#34d399",
+  }));
+  const GROUPS = Array.from(new Set(AVAILABLE_ASSETS.map((a) => a.group)));
 
   // 1. Fetch watchlists
   const { data: watchlists, isLoading } = useQuery<any[]>({

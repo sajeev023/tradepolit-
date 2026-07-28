@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 export function SearchCommandPalette() {
   const router = useRouter();
-  const { commandPaletteOpen, setCommandPaletteOpen } = useUIStore();
+  const { commandPaletteOpen, setCommandPaletteOpen, selectedMarket, setSelectedSymbol } = useUIStore();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any>({ trades: [], strategies: [], news: [], assets: [] });
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +22,7 @@ export function SearchCommandPalette() {
     const delay = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/v1/search?q=${encodeURIComponent(query)}`);
+        const res = await fetch(`/api/v1/search?q=${encodeURIComponent(query)}&market=${selectedMarket}`);
         if (res.ok) {
           const body = await res.json();
           setResults(body.data);
@@ -35,7 +35,7 @@ export function SearchCommandPalette() {
     }, 300);
 
     return () => clearTimeout(delay);
-  }, [query]);
+  }, [query, selectedMarket]);
 
   // Handle ESC close
   useEffect(() => {
@@ -114,8 +114,9 @@ export function SearchCommandPalette() {
                   </div>
                   {results.assets.map((asset: any, idx: number) => {
                     const go = () => {
+                      setSelectedSymbol(asset.symbol);
                       setCommandPaletteOpen(false);
-                      router.push(`/charts?symbol=${encodeURIComponent(asset.symbol)}`);
+                      router.push("/charts");
                     };
                     return (
                     <div

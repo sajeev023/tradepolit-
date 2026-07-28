@@ -312,15 +312,40 @@ function MobileBottomNav() {
   );
 }
 
+import { useQuery } from "@tanstack/react-query";
+import { OnboardingModal } from "@/components/OnboardingModal";
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { sidebarCollapsed } = useUIStore();
+  const { sidebarCollapsed, setSelectedMarket, hasCompletedOnboarding, setHasCompletedOnboarding } = useUIStore();
   const [user, setUser] = useState<User | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+
+  // Profile data & onboarding check
+  const { data: profile } = useQuery<any>({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const res = await fetch("/api/v1/profile");
+      const body = await res.json();
+      if (!res.ok) return null;
+      return body.data;
+    },
+  });
+
+  useEffect(() => {
+    if (profile) {
+      if (profile.preferredMarket) {
+        setSelectedMarket(profile.preferredMarket);
+      }
+      if (typeof profile.hasCompletedOnboarding === "boolean") {
+        setHasCompletedOnboarding(profile.hasCompletedOnboarding);
+      }
+    }
+  }, [profile, setSelectedMarket, setHasCompletedOnboarding]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -396,6 +421,10 @@ export default function DashboardLayout({
 
       <SearchCommandPalette />
       <NotificationPanel />
+      <OnboardingModal
+        isOpen={Boolean(user && profile && profile.hasCompletedOnboarding === false && !hasCompletedOnboarding)}
+        onComplete={() => setHasCompletedOnboarding(true)}
+      />
     </div>
   );
 }

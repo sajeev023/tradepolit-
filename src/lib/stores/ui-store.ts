@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import type { MarketRegion } from "@/lib/supported-symbols";
+import { getDefaultSymbolForMarket } from "@/lib/supported-symbols";
 
 interface UIState {
   sidebarCollapsed: boolean;
@@ -10,6 +12,15 @@ interface UIState {
 
   notificationPanelOpen: boolean;
   setNotificationPanelOpen: (open: boolean) => void;
+
+  selectedMarket: MarketRegion;
+  setSelectedMarket: (market: MarketRegion) => void;
+
+  selectedSymbol: string;
+  setSelectedSymbol: (symbol: string) => void;
+
+  hasCompletedOnboarding: boolean;
+  setHasCompletedOnboarding: (completed: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -23,4 +34,17 @@ export const useUIStore = create<UIState>((set) => ({
 
   notificationPanelOpen: false,
   setNotificationPanelOpen: (open) => set({ notificationPanelOpen: open }),
+
+  selectedMarket: "US",
+  setSelectedMarket: (market) =>
+    set({
+      selectedMarket: market,
+      selectedSymbol: getDefaultSymbolForMarket(market),
+    }),
+
+  selectedSymbol: "AAPL",
+  setSelectedSymbol: (symbol) => set({ selectedSymbol: symbol }),
+
+  hasCompletedOnboarding: false,
+  setHasCompletedOnboarding: (completed) => set({ hasCompletedOnboarding: completed }),
 }));

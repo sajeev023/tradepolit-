@@ -9,10 +9,13 @@ import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { useUIStore } from "@/lib/stores/ui-store";
+import { MARKETS, MarketRegion } from "@/lib/supported-symbols";
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { selectedMarket, setSelectedMarket } = useUIStore();
   // Memoize the Supabase client so it's constructed once for the component's
   // lifetime, not on every render. A fresh client per render churned Supabase
   // auth state and re-triggered the `[supabase]` effect below on each render.
@@ -565,10 +568,40 @@ export default function SettingsPage() {
                 </div>
 
                 <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-                  Configure your default dashboard defaults, AI Copilot behavior, and preferred charting settings. Saved preferences persist locally in this browser.
+                  Configure your primary trading market, default dashboard defaults, AI Copilot behavior, and preferred charting settings.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                  {/* Primary Trading Market selector */}
+                  <div className="md:col-span-2 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                    <label className="block text-xs font-bold uppercase tracking-wide mb-1.5 text-emerald-400">
+                      Primary Trading Market / Region
+                    </label>
+                    <p className="text-[11px] text-zinc-400 mb-3">
+                      Controls the active instrument universe across your Watchlist, Charts, News, AI Copilot, and Market Overview.
+                    </p>
+                    <select
+                      value={selectedMarket}
+                      onChange={(e) => {
+                        const m = e.target.value as MarketRegion;
+                        setSelectedMarket(m);
+                        fetch("/api/v1/profile", {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ preferredMarket: m }),
+                        });
+                        toast.success(`Primary trading market set to ${MARKETS[m]?.label}`);
+                      }}
+                      className="w-full bg-zinc-900 border border-emerald-500/40 rounded-lg px-3 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-400"
+                    >
+                      {Object.values(MARKETS).map((m) => (
+                        <option key={m.key} value={m.key}>
+                          {m.flag} {m.label} ({m.countryName})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Default timeframe selector */}
                   <div>
                     <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
@@ -581,22 +614,6 @@ export default function SettingsPage() {
                     >
                       {["1m", "5m", "15m", "1h", "4h", "1d", "1W"].map((tf) => (
                         <option key={tf} value={tf}>{tf}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Default market symbol selector */}
-                  <div>
-                    <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-                      Default Market / Symbol
-                    </label>
-                    <select
-                      value={defaultSymbol}
-                      onChange={(e) => setDefaultSymbol(e.target.value)}
-                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-accent"
-                    >
-                      {["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ", "S&P500"].map((sym) => (
-                        <option key={sym} value={sym}>{sym}</option>
                       ))}
                     </select>
                   </div>

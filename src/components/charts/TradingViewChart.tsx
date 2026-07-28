@@ -3,24 +3,13 @@
 import { useEffect, useRef, useState, memo, useId } from "react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { profiler } from "@/lib/performance-profiler";
+import { getTradingViewSymbol } from "@/lib/supported-symbols";
 
 interface TradingViewChartProps {
   symbol: string;
   timeframe?: string;
   isMaximized?: boolean;
 }
-
-const TV_SYMBOL_MAP: Record<string, string> = {
-  "BTC/USD": "BINANCE:BTCUSDT",
-  "ETH/USD": "BINANCE:ETHUSDT",
-  "SOL/USD": "BINANCE:SOLUSDT",
-  "EUR/USD": "FX:EURUSD",
-  "GBP/USD": "FX:GBPUSD",
-  "USD/JPY": "FX:USDJPY",
-  "XAU/USD": "OANDA:XAUUSD",
-  NASDAQ: "NASDAQ:NDX",
-  "S&P500": "FOREXCOM:SPXUSD",
-};
 
 const TIMEFRAME_MAP: Record<string, string> = {
   "1m": "1",
@@ -51,7 +40,7 @@ export const TradingViewChart = memo(function TradingViewChart({
   
   const isWidgetReadyRef = useRef(false);
 
-  const tvSymbol = TV_SYMBOL_MAP[symbol] || "BINANCE:BTCUSDT";
+  const tvSymbol = getTradingViewSymbol(symbol);
   const tvInterval = TIMEFRAME_MAP[timeframe] || "60";
 
   // Track React component render cycles

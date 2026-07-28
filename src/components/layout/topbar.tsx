@@ -8,6 +8,8 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useBinanceStream, useBinanceStreamStatus } from "@/hooks/useBinanceStream";
 
+import { MARKETS } from "@/lib/supported-symbols";
+
 interface TopbarProps {
   userEmail?: string;
   userName?: string;
@@ -15,7 +17,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
-  const { sidebarCollapsed, setNotificationPanelOpen, notificationPanelOpen, setCommandPaletteOpen } =
+  const { sidebarCollapsed, setNotificationPanelOpen, notificationPanelOpen, setCommandPaletteOpen, selectedMarket, selectedSymbol } =
     useUIStore();
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -36,27 +38,25 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  // ── BTC ticker via shared WebSocket (same stream as charts page) ───────────
-  // useBinanceStream("BTC/USD") joins the shared singleton registry — zero extra connections.
-  const webSocketPrice = useBinanceStream("BTC/USD");
-  const wsStatus = useBinanceStreamStatus("BTC/USD");
+  // Active Symbol Ticker via shared WebSocket stream or REST fallback
+  const webSocketPrice = useBinanceStream(selectedSymbol);
+  const wsStatus = useBinanceStreamStatus(selectedSymbol);
   const isWsDisconnected = wsStatus === "disconnected" || wsStatus === "reconnecting";
 
-  // REST fallback — polls when WebSocket is disconnected/reconnecting, stops when connected
-  const { data: btcPriceRest } = useQuery<any>({
-    queryKey: ["btc-topbar-ticker"],
+  const { data: restPrice } = useQuery<any>({
+    queryKey: ["topbar-ticker", selectedSymbol],
     queryFn: async () => {
-      const res = await fetch("/api/v1/market/price?symbol=BTC/USD");
+      const res = await fetch(`/api/v1/market/price?symbol=${encodeURIComponent(selectedSymbol)}`);
       const body = await res.json();
       if (!res.ok) return null;
       return body.data;
     },
-    refetchInterval: isWsDisconnected ? 5000 : 30000, // 5s when disconnected, 30s as failsafe
-    enabled: !webSocketPrice || isWsDisconnected, // re-enable polling when WS disconnects
+    refetchInterval: isWsDisconnected ? 5000 : 30000,
+    enabled: !webSocketPrice || isWsDisconnected,
   });
 
-  const activeBtcPrice = webSocketPrice || btcPriceRest;
-  const isBtcProfit = activeBtcPrice ? activeBtcPrice.change24h >= 0 : true;
+  const activeBtcPrice = webSocketPrice || restPrice;
+  const isBtcProfit = activeBtcPrice ? (activeBtcPrice.changePercent24h ?? 0) >= 0 : true;
 
   // Resize handler
   useEffect(() => {
@@ -136,22 +136,32 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
         transitionTimingFunction: "var(--ease-out-expo)",
       }}
     >
-      {/* ── Left: BTC Ticker ── */}
-      <div className="flex items-center gap-3 min-w-0">
+      {/* ── Left: Market & Symbol Ticker ── */}
+      <div className="flex items-center gap-2.5 min-w-0">
+        <button
+          type="button"
+          onClick={() => router.push("/settings")}
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--color-bg-secondary)] border border-[var(--color-border-subtle)] hover:border-emerald-500/40 text-xs font-semibold text-white transition-colors cursor-pointer"
+          title="Change Primary Market in Settings"
+        >
+          <span>{MARKETS[selectedMarket]?.flag || "🌐"}</span>
+          <span className="text-[11px] font-bold">{MARKETS[selectedMarket]?.countryName || selectedMarket}</span>
+        </button>
+
         {isWsDisconnected && !activeBtcPrice && (
           <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-[10px] font-medium text-amber-400/80">Live market data is temporarily unavailable. Reconnecting...</span>
+            <span className="text-[10px] font-medium text-amber-400/80">Reconnecting...</span>
           </div>
         )}
         {activeBtcPrice && (
           <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-[var(--color-bg-secondary)] border border-[var(--color-border-subtle)]">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--color-text-quaternary)]">BTC</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--color-text-quaternary)]">{selectedSymbol}</span>
             <span className="text-[12px] font-mono font-medium text-[var(--color-text-primary)] tabular-nums">
               ${activeBtcPrice.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
             <span className={`text-[11px] font-mono font-medium ${isBtcProfit ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
-              {isBtcProfit ? "+" : ""}{activeBtcPrice.changePercent24h.toFixed(2)}%
+              {isBtcProfit ? "+" : ""}{(activeBtcPrice.changePercent24h ?? 0).toFixed(2)}%
             </span>
           </div>
         )}

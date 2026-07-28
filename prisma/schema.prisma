@@ -72,6 +72,8 @@ model User {
   baseCurrency String   @default("USD")
   timezone     String   @default("UTC")
   language     String   @default("en")
+  preferredMarket        String   @default("US")
+  hasCompletedOnboarding Boolean  @default(false)
   role         Role     @default(USER)
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())

@@ -17,7 +17,7 @@ export async function GET(_request: NextRequest) {
       prisma.userProfile.findUniqueOrThrow({ where: { userId: user.id } }),
       prisma.user.findUnique({
         where: { id: user.id },
-        select: { lastUsageReset: true },
+        select: { lastUsageReset: true, preferredMarket: true, hasCompletedOnboarding: true },
       }),
     ]);
     const dbDuration = performance.now() - dbStart;
@@ -38,6 +38,8 @@ export async function GET(_request: NextRequest) {
       maxDrawdown: Number(profile.maxDrawdown),
       lastSymbol: profile.lastSymbol,
       lastTimeframe: profile.lastTimeframe,
+      preferredMarket: userRow?.preferredMarket ?? "US",
+      hasCompletedOnboarding: userRow?.hasCompletedOnboarding ?? false,
       plan: usage.plan,
       stripeCustomerId: profile.stripeCustomerId,
       stripeSubscriptionId: profile.stripeSubscriptionId,
@@ -50,9 +52,6 @@ export async function GET(_request: NextRequest) {
       analysisLimit: usage.limit,
       alertLimit: usage.alertLimit,
       isDemo: usage.isDemo,
-      // Daily reset timestamp lives on the User row (UserProfile has no
-      // lastAnalysisReset field); the previous `profile.lastAnalysisReset`
-      // was always undefined and silently serialized as null.
       lastAnalysisReset: userRow?.lastUsageReset ?? null,
     }, 200, headers);
   } catch (err: any) {
@@ -64,6 +63,8 @@ export async function GET(_request: NextRequest) {
 const updateProfileSchema = z.object({
   lastSymbol: z.string().max(64).optional(),
   lastTimeframe: z.string().max(16).optional(),
+  preferredMarket: z.enum(["INDIA", "US", "UAE", "UK", "JAPAN", "EUROPE", "FOREX", "CRYPTO"]).optional(),
+  hasCompletedOnboarding: z.boolean().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -83,17 +84,32 @@ export async function PATCH(request: NextRequest) {
       return validationError(validation.error);
     }
 
-    const { lastSymbol, lastTimeframe } = validation.data;
+    const { lastSymbol, lastTimeframe, preferredMarket, hasCompletedOnboarding } = validation.data;
 
-    const profile = await prisma.userProfile.update({
-      where: { userId: user.id },
-      data: {
-        ...(lastSymbol !== undefined ? { lastSymbol } : {}),
-        ...(lastTimeframe !== undefined ? { lastTimeframe } : {}),
-      },
+    const [profile] = await Promise.all([
+      prisma.userProfile.update({
+        where: { userId: user.id },
+        data: {
+          ...(lastSymbol !== undefined ? { lastSymbol } : {}),
+          ...(lastTimeframe !== undefined ? { lastTimeframe } : {}),
+        },
+      }),
+      preferredMarket !== undefined || hasCompletedOnboarding !== undefined
+        ? prisma.user.update({
+            where: { id: user.id },
+            data: {
+              ...(preferredMarket !== undefined ? { preferredMarket } : {}),
+              ...(hasCompletedOnboarding !== undefined ? { hasCompletedOnboarding } : {}),
+            },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    return successResponse({
+      ...profile,
+      preferredMarket,
+      hasCompletedOnboarding,
     });
-
-    return successResponse(profile);
   } catch (err: any) {
     console.error("Update profile API error:", err);
     return dispatchCaughtError("Failed to update profile", err);

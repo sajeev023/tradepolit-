@@ -127,26 +127,18 @@ const generateProactiveAlerts = (data: any, symbol: string) => {
   return alerts;
 };
 
+import { useUIStore } from "@/lib/stores/ui-store";
+import { getSymbolsForMarket, getSymbolGroupsForMarket } from "@/lib/supported-symbols";
+
 export function ChartsClientPage() {
   const router = useRouter();
-  // Initialize with the SSR default (BTC/USD · 4h) so the server-rendered HTML
-  // and the client's first paint match — reading localStorage in the useState
-  // initializer caused a hydration mismatch (server renders the default, the
-  // client's first paint used the persisted value). The persisted preference
-  // is restored after mount in the effect below (and may be further overridden
-  // by the server profile's lastSymbol/lastTimeframe).
-  const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC/USD");
+  const { selectedMarket, selectedSymbol, setSelectedSymbol } = useUIStore();
   const [selectedTimeframe, setSelectedTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W">("4h");
 
-  // Restore the persisted symbol/timeframe after mount. This runs once; the
-  // profile effect below may override these with the server-side preference.
-  useEffect(() => {
-    const savedSymbol = localStorage.getItem("TradCopilot-default-symbol");
-    if (savedSymbol) setSelectedSymbol(savedSymbol);
-    const savedTf = localStorage.getItem("TradCopilot-default-timeframe");
-    const validTfs: Array<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W"> = ["1m", "5m", "15m", "1h", "4h", "1d", "1W"];
-    if (savedTf && validTfs.includes(savedTf as any)) setSelectedTimeframe(savedTf as any);
-  }, []);
+  // Filter selector choices by the user's primary selected market
+  const marketSymbols = getSymbolsForMarket(selectedMarket);
+  const symbolGroups = getSymbolGroupsForMarket(selectedMarket);
+
   const [isBackgroundUpdating, setIsBackgroundUpdating] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [analysisData, setAnalysisData] = useState<any | null>(null);
@@ -155,8 +147,8 @@ export function ChartsClientPage() {
 
   const [liveIndicators, setLiveIndicators] = useState<any | null>(null);
 
-  // ── Live watchlist prices via shared Binance WebSocket streams ──────────────────
-  const watchlistSymbols = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD"];
+  // Live watchlist prices via shared WebSocket stream
+  const watchlistSymbols = marketSymbols.slice(0, 5).map((s) => s.symbol);
   const watchlistStreamPrices = useBinanceMultiStream(watchlistSymbols);
   const [watchlistRestPrices, setWatchlistRestPrices] = useState<Record<string, { price: number; changePercent24h: number }>>({});
 
