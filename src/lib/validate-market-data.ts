@@ -129,18 +129,24 @@ export function validateLevels(levels: any, currentPrice: number): string[] {
 }
 
 export function isDataFresh(timestamp: number, timeframe: string): boolean {
+  if (!timestamp || isNaN(timestamp) || timestamp <= 0) return false;
   const now = Date.now();
   const age = now - timestamp;
 
-  // Max-age must accommodate the candle's full duration PLUS a small grace
-  // period for clock skew, request latency, and exchange close-time reporting
-  // delay. The previous hardcoded table (4h: 15min) rejected 100% of >=1h
-  // candle fetches because a 4h candle is up to 4h old at the time of read.
-  // Grace = min(5min, 50% of candle duration) so sub-hour TFs stay tight
-  // (1m candle is at most 1m old, 2min-old is stale) while long TFs are
-  // accepted. The duration itself comes from the shared timeframes module so
-  // this can't drift from the provider interval mappings.
+  if (age < 0) {
+    // Clock skew guard
+    return Math.abs(age) < 60000;
+  }
+
   const duration = timeframeDurationMs(timeframe);
+
+  // Daily/Weekly charts accept up to 7 days to accommodate weekends & holidays
+  if (timeframe === "1d" || timeframe === "1W" || duration >= 24 * 60 * 60 * 1000) {
+    const MAX_HISTORICAL_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    return age <= MAX_HISTORICAL_AGE_MS;
+  }
+
+  // Intraday timeframes (1m, 5m, 15m, 1h, 4h) enforce duration + grace period
   const grace = Math.min(5 * 60 * 1000, duration * 0.5);
   const max = duration + grace;
 

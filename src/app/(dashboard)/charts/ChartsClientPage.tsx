@@ -595,13 +595,24 @@ export function ChartsClientPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(30000), // 30s fetch timeout matching serverless capacity
+          signal: AbortSignal.timeout(50000), // 50s fetch timeout matching server execution cap
         });
         const body = await res.json();
-        if (!res.ok) throw new Error(body.error?.message || body.message || "Analysis failed");
+        if (!res.ok) {
+          // If server returns structured error with fallback, use it
+          if (body.data && body.data.coachNarrative) {
+            return body.data;
+          }
+          throw new Error(body.error?.message || body.message || "Analysis failed");
+        }
         return body.data;
       } catch (err: unknown) {
         console.error(`[SYNC] Client analysis fetch error: ${err instanceof Error ? err.message : String(err)}`);
+        // Smooth client-side fallback: if network/timeout occurs, return dynamic telemetry fallback
+        if (instantFallback) {
+          console.warn(`[SYNC] Falling back to local telemetry analysis for ${sym}`);
+          return { ...instantFallback, _clientFallback: true };
+        }
         throw err;
       }
     },
@@ -702,6 +713,7 @@ Timestamp: ${new Date().toISOString()}
     },
     onError: (err: unknown) => {
       setIsBackgroundUpdating(false);
+      setAnalysisReady(true);
       toast.error(err instanceof Error ? err.message : "Analysis request timed out. Please try again.");
     },
   });

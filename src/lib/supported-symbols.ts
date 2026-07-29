@@ -355,6 +355,17 @@ export function getTradingViewSymbol(symbol: string): string {
   return `NASDAQ:${symbol}`;
 }
 
+/**
+ * Returns true if a symbol belongs to an equity exchange with TradingView iframe embed
+ * restrictions (India, Japan, UK, UAE, Europe equities). These use TradCopilot's
+ * native LightweightChart engine to guarantee zero iframe/licensing popups.
+ */
+export function shouldUseNativeChart(symbol: string): boolean {
+  const entry = getSupportedSymbol(symbol);
+  if (!entry) return false;
+  return entry.assetClass === "STOCK" && ["IN", "JP", "UK", "AE", "EU"].includes(entry.region);
+}
+
 /** Binance WebSocket stream name, or null if the symbol is not streamable. */
 export function binanceStreamFor(symbol: string): string | null {
   return SUPPORTED_SYMBOL_MAP[symbol]?.binanceStream ?? null;
