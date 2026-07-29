@@ -375,6 +375,20 @@ export function shouldUseNativeChart(symbol: string): boolean {
   return !supportsTradingViewWidget(symbol);
 }
 
+/** Returns the local currency symbol for an asset (₹ for India, ¥ for Japan, £ for UK, € for EU, $ for US/Crypto/Forex). */
+export function getCurrencySymbol(symbol: string): string {
+  const entry = getSupportedSymbol(symbol);
+  if (!entry) return "$";
+  switch (entry.region) {
+    case "IN": return "₹";
+    case "UK": return "£";
+    case "EU": return "€";
+    case "JP": return "¥";
+    case "AE": return "AED ";
+    default: return "$";
+  }
+}
+
 /** Binance WebSocket stream name, or null if the symbol is not streamable. */
 export function binanceStreamFor(symbol: string): string | null {
   return SUPPORTED_SYMBOL_MAP[symbol]?.binanceStream ?? null;

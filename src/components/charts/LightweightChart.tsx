@@ -3,6 +3,7 @@
 import { useState, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, AlertTriangle, Clock } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/supported-symbols";
 import type { OHLCVCandle } from "@/lib/types";
 
 interface LightweightChartProps {
@@ -150,10 +151,10 @@ export function LightweightChart({
         {/* Dynamic O/H/L/C telemetry readout */}
         {activeCandle && (
           <div className="flex items-center gap-3 text-[11px] font-mono text-zinc-300">
-            <span>O: <strong className="text-white">${activeCandle.open?.toLocaleString()}</strong></span>
-            <span>H: <strong className="text-emerald-400">${activeCandle.high?.toLocaleString()}</strong></span>
-            <span>L: <strong className="text-rose-400">${activeCandle.low?.toLocaleString()}</strong></span>
-            <span>C: <strong className="text-white">${activeCandle.close?.toLocaleString()}</strong></span>
+            <span>O: <strong className="text-white">{getCurrencySymbol(symbol)}{activeCandle.open?.toLocaleString()}</strong></span>
+            <span>H: <strong className="text-emerald-400">{getCurrencySymbol(symbol)}{activeCandle.high?.toLocaleString()}</strong></span>
+            <span>L: <strong className="text-rose-400">{getCurrencySymbol(symbol)}{activeCandle.low?.toLocaleString()}</strong></span>
+            <span>C: <strong className="text-white">{getCurrencySymbol(symbol)}{activeCandle.close?.toLocaleString()}</strong></span>
             {activeCandle.volume ? (
               <span className="hidden sm:inline">V: <strong className="text-teal-400">{Math.round(activeCandle.volume).toLocaleString()}</strong></span>
             ) : null}
@@ -202,7 +203,7 @@ export function LightweightChart({
                   fontFamily="monospace"
                   textAnchor="end"
                 >
-                  ${priceVal > 10 ? priceVal.toFixed(2) : priceVal.toFixed(4)}
+                  {getCurrencySymbol(symbol)}{priceVal > 10 ? priceVal.toFixed(2) : priceVal.toFixed(4)}
                 </text>
               </g>
             );
