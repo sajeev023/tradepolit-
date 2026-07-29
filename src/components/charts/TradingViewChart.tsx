@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState, memo, useId } from "react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { profiler } from "@/lib/performance-profiler";
-import { getTradingViewSymbol, shouldUseNativeChart } from "@/lib/supported-symbols";
+import { getTradingViewSymbol } from "@/lib/supported-symbols";
 import { tradingViewIntervalFor } from "@/lib/timeframes";
-import { LightweightChart } from "./LightweightChart";
 
 interface TradingViewChartProps {
   symbol: string;
@@ -18,7 +17,6 @@ export const TradingViewChart = memo(function TradingViewChart({
   timeframe = "1h",
   isMaximized = false,
 }: TradingViewChartProps) {
-  const useNative = shouldUseNativeChart(symbol);
   const renderStart = performance.now();
 
   const reactId = useId().replace(/:/g, "");
@@ -259,10 +257,6 @@ export const TradingViewChart = memo(function TradingViewChart({
     setRetryCount(0);
     setWidgetRetryKey((k) => k + 1);
   };
-
-  if (useNative) {
-    return <LightweightChart symbol={symbol} timeframe={timeframe} isMaximized={isMaximized} />;
-  }
 
   return (
     <div

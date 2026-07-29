@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, Profiler } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { TradingViewChart } from "@/components/charts/TradingViewChart";
+import { MarketChart } from "@/components/charts/MarketChart";
 import type { PriceData } from "@/lib/types";
 import { ChatHistorySidebar } from "@/components/charts/ChatHistorySidebar";
 import { SavedAnalysesPanel } from "@/components/charts/SavedAnalysesPanel";
@@ -1379,7 +1379,7 @@ Timestamp: ${new Date().toISOString()}
 
           {/* Chart canvas */}
           <div className={`flex-1 w-full relative bg-[var(--color-bg-primary)] ${isChartMaximized ? "min-h-0" : "min-h-[250px] lg:min-h-[400px]"}`}>
-            <TradingViewChart symbol={selectedSymbol} timeframe={selectedTimeframe} isMaximized={isChartMaximized} />
+            <MarketChart symbol={selectedSymbol} timeframe={selectedTimeframe} isMaximized={isChartMaximized} />
           </div>
 
           {/* Indicator strip */}

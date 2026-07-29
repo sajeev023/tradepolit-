@@ -381,7 +381,16 @@ COACHING MANDATE:
       support: tech.support,
       resistance: tech.resistance
     }, tech.currentPrice);
-    dataErrors.push(...levelErrors);
+
+    if (levelErrors.length > 0) {
+      console.warn('[TELEMETRY LEVEL WARNINGS] Auto-adjusting key levels:', levelErrors);
+      if (tech.support >= tech.currentPrice) {
+        tech.support = Number((tech.currentPrice * 0.985).toFixed(4));
+      }
+      if (tech.resistance <= tech.currentPrice) {
+        tech.resistance = Number((tech.currentPrice * 1.015).toFixed(4));
+      }
+    }
 
     const requiredFields = ['currentPrice', 'rsi', 'support', 'resistance'];
     const missing = requiredFields.filter(f => {
@@ -389,8 +398,10 @@ COACHING MANDATE:
       return val === undefined || val === null || (typeof val === 'number' && (isNaN(val) || val === 0));
     });
 
-    if (missing.length > 0 || dataErrors.length > 0) {
-      console.error('[TELEMETRY] Missing required fields or validation failed:', { missing, dataErrors });
+    const criticalErrors = [...marketErrors, ...indicatorErrors];
+
+    if (missing.length > 0 || criticalErrors.length > 0) {
+      console.error('[TELEMETRY] Missing required fields or critical validation failed:', { missing, criticalErrors });
       return errorResponse(
         "TELEMETRY_UNAVAILABLE",
         "Live market data is temporarily unavailable. Please try again in a moment.",

@@ -356,14 +356,23 @@ export function getTradingViewSymbol(symbol: string): string {
 }
 
 /**
- * Returns true if a symbol belongs to an equity exchange with TradingView iframe embed
- * restrictions (India, Japan, UK, UAE, Europe equities). These use TradCopilot's
- * native LightweightChart engine to guarantee zero iframe/licensing popups.
+ * Returns true if a symbol is officially supported by TradingView's free embed iframe widget
+ * (US Equities, Global Crypto, Forex, and Commodities).
+ *
+ * Returns false for non-US equity exchanges (India IN, Japan JP, UK, Germany DE, France FR, UAE AE, Europe EU),
+ * which must route directly to TradCopilot's NativeChart engine to avoid third-party embed popups.
  */
-export function shouldUseNativeChart(symbol: string): boolean {
+export function supportsTradingViewWidget(symbol: string): boolean {
   const entry = getSupportedSymbol(symbol);
-  if (!entry) return false;
-  return entry.assetClass === "STOCK" && ["IN", "JP", "UK", "AE", "EU"].includes(entry.region);
+  if (!entry) return true;
+  if (entry.assetClass === "CRYPTO" || entry.assetClass === "FOREX" || entry.assetClass === "COMMODITY") {
+    return true;
+  }
+  return entry.assetClass === "STOCK" && entry.region === "US";
+}
+
+export function shouldUseNativeChart(symbol: string): boolean {
+  return !supportsTradingViewWidget(symbol);
 }
 
 /** Binance WebSocket stream name, or null if the symbol is not streamable. */

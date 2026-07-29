@@ -225,14 +225,32 @@ export function calculateKeyLevels(candles: OHLCVCandle[]): KeyLevelsResult {
   const closes = candles.map((c) => c.close);
   if (closes.length === 0) return { support: NaN, resistance: NaN };
 
+  const currentPrice = closes[closes.length - 1] || 0;
   const recentCloses = closes.slice(-50);
   const min = Math.min(...recentCloses);
   const max = Math.max(...recentCloses);
 
-  return {
-    support: min,
-    resistance: max,
-  };
+  let support = min;
+  let resistance = max;
+
+  // On breakout to new high or ATH, resistance equals currentPrice — project resistance higher
+  if (resistance <= currentPrice) {
+    const atrBuffer = currentPrice * 0.015;
+    resistance = Number((currentPrice + atrBuffer).toFixed(4));
+  }
+
+  // On breakdown to new low or ATL, support equals currentPrice — project support lower
+  if (support >= currentPrice) {
+    const atrBuffer = currentPrice * 0.015;
+    support = Number((Math.max(0.0001, currentPrice - atrBuffer)).toFixed(4));
+  }
+
+  if (support >= resistance) {
+    support = Number((currentPrice * 0.985).toFixed(4));
+    resistance = Number((currentPrice * 1.015).toFixed(4));
+  }
+
+  return { support, resistance };
 }
 
 /**
