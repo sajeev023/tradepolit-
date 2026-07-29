@@ -17,6 +17,7 @@ export const TradingViewChart = memo(function TradingViewChart({
   timeframe = "1h",
   isMaximized = false,
 }: TradingViewChartProps) {
+  console.log(`[TRADINGVIEW-CHART-MOUNTED] ⚠️ TradingViewChart rendered for symbol=${symbol}`);
   const renderStart = performance.now();
 
   const reactId = useId().replace(/:/g, "");

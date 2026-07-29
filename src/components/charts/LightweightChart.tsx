@@ -16,6 +16,7 @@ export function LightweightChart({
   timeframe = "1h",
   isMaximized = false,
 }: LightweightChartProps) {
+  console.log(`[LIGHTWEIGHT-CHART-MOUNTED] ✓ LightweightChart rendered for symbol=${symbol}`);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 

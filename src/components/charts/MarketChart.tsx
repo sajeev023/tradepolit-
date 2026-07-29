@@ -29,6 +29,12 @@ export const MarketChart = memo(function MarketChart({
 }: MarketChartProps) {
   const isTvSupported = supportsTradingViewWidget(symbol);
 
+  console.log(
+    `[MARKET-CHART-ROUTER] symbol=${symbol} | isTvSupported=${isTvSupported} | TargetComponent=${
+      isTvSupported ? "TradingViewChart" : "LightweightChart (Native)"
+    }`
+  );
+
   if (isTvSupported) {
     return <TradingViewChart symbol={symbol} timeframe={timeframe} isMaximized={isMaximized} />;
   }
