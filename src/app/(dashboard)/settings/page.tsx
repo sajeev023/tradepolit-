@@ -43,6 +43,7 @@ export default function SettingsPage() {
   const [notifyInApp, setNotifyInApp] = useState(true);
   const [cmcKey, setCmcKey] = useState("");
   const [tdKey, setTdKey] = useState("");
+  const [showByok, setShowByok] = useState(false);
 
   // Password fields
   const [newPassword, setNewPassword] = useState("");
@@ -413,44 +414,54 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Credentials Panel */}
-                <div className="card p-5 space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Key size={16} className="text-teal-400" />
-                    <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                      API Keys (Encrypted at Rest)
-                    </h2>
+                {/* Advanced / BYOK Credentials Accordion (Optional) */}
+                <div className="card p-5 space-y-3 border border-zinc-800 bg-[var(--color-bg-secondary)]">
+                  <div 
+                    onClick={() => setShowByok(!showByok)}
+                    className="flex items-center justify-between cursor-pointer select-none"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Key size={16} className="text-teal-400" />
+                      <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                        Advanced Settings / BYOK (Bring Your Own Key)
+                      </h2>
+                    </div>
+                    <span className="text-xs font-mono text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded">
+                      {showByok ? "Hide" : "Expand"}
+                    </span>
                   </div>
 
-                  <p className="text-[10px] leading-relaxed mb-4" style={{ color: "var(--color-text-tertiary)" }}>
-                    Add personal API keys to increase request rate limits. Values are symmetric-encrypted at rest and decrypted only in-memory.
+                  <p className="text-[11px] leading-relaxed text-zinc-400">
+                    TradCopilot provides built-in real-time market data across all supported assets by default. <strong className="text-teal-300 font-semibold">No external keys required.</strong> Providing custom keys is strictly optional for BYOK power users desiring higher rate limits.
                   </p>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                        TwelveData API Key
-                      </label>
-                      <FormInput
-                        type="password"
-                        value={tdKey}
-                        onChange={(e) => setTdKey(e.target.value)}
-                        placeholder="Paste TwelveData key..."
-                      />
-                    </div>
+                  {showByok && (
+                    <div className="space-y-4 pt-3 border-t border-zinc-800 animate-fade-in">
+                      <div>
+                        <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
+                          TwelveData API Key (Optional)
+                        </label>
+                        <FormInput
+                          type="password"
+                          value={tdKey}
+                          onChange={(e) => setTdKey(e.target.value)}
+                          placeholder="Paste optional TwelveData key..."
+                        />
+                      </div>
 
-                    <div>
-                      <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                        CoinMarketCap API Key
-                      </label>
-                      <FormInput
-                        type="password"
-                        value={cmcKey}
-                        onChange={(e) => setCmcKey(e.target.value)}
-                        placeholder="Paste CoinMarketCap key..."
-                      />
+                      <div>
+                        <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
+                          CoinMarketCap API Key (Optional)
+                        </label>
+                        <FormInput
+                          type="password"
+                          value={cmcKey}
+                          onChange={(e) => setCmcKey(e.target.value)}
+                          placeholder="Paste optional CoinMarketCap key..."
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="flex justify-end">

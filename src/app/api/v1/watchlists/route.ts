@@ -18,7 +18,7 @@ function demoWatchlistLocked() {
 }
 
 const createWatchlistSchema = z.object({
-  name: z.string().min(1, "Watchlist name is required"),
+  name: z.string().trim().min(1, "Watchlist name is required").max(40, "Name must be 40 characters or fewer"),
   instruments: z.array(z.string()).default([]),
 });
 

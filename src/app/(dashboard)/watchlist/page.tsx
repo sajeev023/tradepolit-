@@ -56,7 +56,7 @@ function WatchlistPageContent() {
   const GROUPS = Array.from(new Set(AVAILABLE_ASSETS.map((a) => a.group)));
 
   // 1. Fetch watchlists
-  const { data: watchlists, isLoading } = useQuery<any[]>({
+  const { data: watchlists, isLoading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["watchlists"],
     queryFn: async () => {
       const res = await fetch("/api/v1/watchlists");
@@ -190,7 +190,16 @@ return (
         </p>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <div className="card p-8 text-center flex flex-col items-center justify-center space-y-3 my-12" style={{ backgroundColor: "var(--color-bg-secondary)", borderColor: "rgba(244, 63, 94, 0.3)" }}>
+          <AlertTriangle size={28} className="text-rose-400 animate-pulse" />
+          <h3 className="text-sm font-semibold text-rose-300">Unable to load watchlists</h3>
+          <p className="text-xs text-zinc-400 max-w-md">{(error as Error)?.message || "A network or authentication error occurred."}</p>
+          <button onClick={() => refetch()} className="btn-secondary text-xs px-4 py-2 mt-2 flex items-center gap-2">
+            <RefreshCw size={14} /> Retry Loading
+          </button>
+        </div>
+      ) : isLoading ? (
         <div className="flex flex-col items-center justify-center py-40">
           <RefreshCw className="animate-spin text-teal-400 mb-2" size={24} />
           <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading watchlists...</span>
@@ -246,7 +255,15 @@ return (
                     return (
                       <div
                         key={w.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => { if (!isEditing) selectWatchlist(w.id); }}
+                        onKeyDown={(e) => {
+                          if (!isEditing && (e.key === "Enter" || e.key === " ")) {
+                            e.preventDefault();
+                            selectWatchlist(w.id);
+                          }
+                        }}
                         className="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors group"
                         style={{
                           backgroundColor: isActive ? "var(--color-bg-hover)" : "transparent",
