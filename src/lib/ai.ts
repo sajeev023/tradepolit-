@@ -1,11 +1,15 @@
 import { prisma } from "./prisma";
+import type { User, UserProfile, JournalEntry, Trade, BehavioralEvent } from "@prisma/client";
 import { handleNvidiaError } from "./nvidia-ai";
 import { callFastestAIModel } from "./ai-providers";
 import { classifyIntent, getIntentInstruction } from "./question-router";
 import { searchKnowledge, formatKnowledgeForPrompt } from "./knowledge/rag";
+import type { KnowledgeEntry } from "./knowledge/events";
 import { updateSession, addResponse, addTopic, formatSessionContext } from "./ai-memory";
 import { buildChatFallbackFromChartState } from "./ai-fallback";
 import { resolvePlan } from "./entitlements";
+import { getDefaultSymbolForMarket, type MarketRegion } from "./supported-symbols";
+import type { ChartState } from "./schemas";
 
 export async function runAIChat(
   userId: string,
@@ -13,26 +17,14 @@ export async function runAIChat(
   chartContext?: {
     symbol: string;
     timeframe: string;
-    chartState?: {
-      currentPrice: number;
-      volume: number;
-      atr: number;
-      trend: string;
-      rsi: number;
-      rsiSentiment: string;
-      macdValue: number;
-      macdSignal: number;
-      macdHistogram: number;
-      support: number;
-      resistance: number;
-      invalidationLevel: number;
-      bias: string;
-      setupQuality: string;
-      confidence: string;
-      whyItMatters?: string;
-    };
+    // The chart-state shape is the validated `ChartState` from the shared Zod
+    // schema — every field optional, matching how the prompt builder actually
+    // reads it (with optional chaining). The prior inline type lied with all-
+    // required fields while the code defended against undefined.
+    chartState?: ChartState;
   },
-  userEmail?: string
+  userEmail?: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const t0 = Date.now();
   const elapsed = () => `${Date.now() - t0}ms`;
@@ -48,7 +40,7 @@ export async function runAIChat(
 
   // Update session memory
   updateSession(userId, {
-    symbol: chartContext?.symbol || "BTC/USD",
+    symbol: chartContext?.symbol || getDefaultSymbolForMarket("CRYPTO"),
     timeframe: chartContext?.timeframe || "4h",
     lastIntent: intent.category,
   });
@@ -66,7 +58,7 @@ export async function runAIChat(
   // (if thinner) context and the user still gets a reply.
   lap("Steps 2-8 — Parallel fetch START (userProfile + journal + trades + RAG + behavioral events)");
   const settled = await Promise.allSettled([
-    prisma.user.findUnique({ where: { id: userId }, select: { displayName: true, email: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { displayName: true, email: true, preferredMarket: true } }),
     prisma.userProfile.findUnique({ where: { userId } }),
     prisma.journalEntry.findMany({
       where: { userId },
@@ -85,16 +77,17 @@ export async function runAIChat(
   ]);
   const pick = <T,>(idx: number, fallback: T): T =>
     settled[idx].status === "fulfilled" ? (settled[idx] as PromiseFulfilledResult<T>).value : fallback;
-  const dbUser = pick<any>(0, null);
-  const rawProfile = pick<any>(1, null);
-  const journalEntries = pick<any[]>(2, []);
-  const trades = pick<any[]>(3, []);
-  const recentEvents = pick<any[]>(4, []);
-  const knowledgeResult = pick<any[]>(5, []);
+  const dbUser = pick<Pick<User, "displayName" | "email" | "preferredMarket"> | null>(0, null);
+  const rawProfile = pick<UserProfile | null>(1, null);
+  const journalEntries = pick<JournalEntry[]>(2, []);
+  const trades = pick<Trade[]>(3, []);
+  const recentEvents = pick<BehavioralEvent[]>(4, []);
+  const knowledgeResult = pick<KnowledgeEntry[]>(5, []);
   // Log which fetches degraded so DB outages are visible in logs but non-fatal.
   settled.forEach((s, i) => {
     if (s.status === "rejected") {
-      console.warn(`[AI CHAT] Parallel fetch ${i} degraded:`, (s.reason as any)?.message ?? s.reason);
+      const reason = s.reason;
+      console.warn(`[AI CHAT] Parallel fetch ${i} degraded:`, reason instanceof Error ? reason.message : reason);
     }
   });
   const userName = dbUser?.displayName || (dbUser?.email ? dbUser.email.split("@")[0].replace(/[._-]/g, " ") : "Trader");
@@ -107,15 +100,15 @@ export async function runAIChat(
   };
   lap(`Steps 2-8 — Parallel fetch DONE | journal=${journalEntries.length} | trades=${trades.length} | events=${recentEvents.length} | knowledge=${knowledgeResult.length}`);
 
-  const closedTrades = trades.filter((t: any) => t.status === "CLOSED");
-  const openTrades = trades.filter((t: any) => t.status === "OPEN");
+  const closedTrades = trades.filter((t) => t.status === "CLOSED");
+  const openTrades = trades.filter((t) => t.status === "OPEN");
 
-  const isPro = resolvePlan(userId, userEmail, (userProfile as any).plan, (userProfile as any).subscriptionStatus, (userProfile as any).subscriptionExpiresAt) === "PRO";
+  const isPro = resolvePlan(userId, userEmail, rawProfile?.plan, rawProfile?.subscriptionStatus, rawProfile?.subscriptionExpiresAt) === "PRO";
 
   // ─── STEP 5: Behavioural Heuristics (in-memory, no DB) ───────────────────
   console.log(`[STEP 5] Behavioural heuristics START | ${elapsed()}`);
   const today = new Date();
-  const tradesToday = trades.filter((t: any) => {
+  const tradesToday = trades.filter((t) => {
     const d = new Date(t.openedAt);
     return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
   }).length;
@@ -153,16 +146,16 @@ export async function runAIChat(
     console.log(`[STEP 6] Behavioural DB writes DONE | ${elapsed()}`);
   }
 
-  const winningTrades = closedTrades.filter((t: any) => Number(t.pnl) > 0);
-  const losingTrades = closedTrades.filter((t: any) => Number(t.pnl) < 0);
-  const avgWin = winningTrades.length ? winningTrades.reduce((acc: number, t: any) => acc + Number(t.pnl), 0) / winningTrades.length : 0;
-  const avgLoss = losingTrades.length ? losingTrades.reduce((acc: number, t: any) => acc + Math.abs(Number(t.pnl)), 0) / losingTrades.length : 0;
+  const winningTrades = closedTrades.filter((t) => Number(t.pnl) > 0);
+  const losingTrades = closedTrades.filter((t) => Number(t.pnl) < 0);
+  const avgWin = winningTrades.length ? winningTrades.reduce((acc: number, t) => acc + Number(t.pnl), 0) / winningTrades.length : 0;
+  const avgLoss = losingTrades.length ? losingTrades.reduce((acc: number, t) => acc + Math.abs(Number(t.pnl)), 0) / losingTrades.length : 0;
   const isCuttingWinnersShort = winningTrades.length > 0 && avgWin < avgLoss * 0.6;
 
-  const londonTrades = trades.filter((t: any) => { const h = new Date(t.openedAt).getUTCHours(); return h >= 7 && h < 15; });
-  const nyTrades = trades.filter((t: any) => { const h = new Date(t.openedAt).getUTCHours(); return h >= 13 && h < 21; });
-  const londonWinRate = londonTrades.length ? (londonTrades.filter((t: any) => Number(t.pnl) > 0).length / londonTrades.length) * 100 : 0;
-  const nyWinRate = nyTrades.length ? (nyTrades.filter((t: any) => Number(t.pnl) > 0).length / nyTrades.length) * 100 : 0;
+  const londonTrades = trades.filter((t) => { const h = new Date(t.openedAt).getUTCHours(); return h >= 7 && h < 15; });
+  const nyTrades = trades.filter((t) => { const h = new Date(t.openedAt).getUTCHours(); return h >= 13 && h < 21; });
+  const londonWinRate = londonTrades.length ? (londonTrades.filter((t) => Number(t.pnl) > 0).length / londonTrades.length) * 100 : 0;
+  const nyWinRate = nyTrades.length ? (nyTrades.filter((t) => Number(t.pnl) > 0).length / nyTrades.length) * 100 : 0;
 
   // ─── RAG Knowledge Context (pre-fetched in parallel above) ──────────────
   let knowledgeContext = "";
@@ -173,14 +166,14 @@ export async function runAIChat(
   // ─── STEP 8.5: Fallback Chart Context ─────────────────────
   let activeChartContext = chartContext;
 
-  if (activeChartContext && activeChartContext.symbol && (activeChartContext.chartState as any)?.symbol && (activeChartContext.chartState as any).symbol !== activeChartContext.symbol) {
-    console.warn(`[AI CHAT] Mismatched chartState symbol (${(activeChartContext.chartState as any).symbol}) vs context symbol (${activeChartContext.symbol}). Dropping invalid state.`);
+  if (activeChartContext && activeChartContext.symbol && activeChartContext.chartState?.symbol && activeChartContext.chartState.symbol !== activeChartContext.symbol) {
+    console.warn(`[AI CHAT] Mismatched chartState symbol (${activeChartContext.chartState.symbol}) vs context symbol (${activeChartContext.symbol}). Dropping invalid state.`);
     activeChartContext.chartState = undefined;
   }
 
   if (!activeChartContext || !activeChartContext.symbol) {
-    const fallbackSymbol = (rawProfile as any)?.lastSymbol || "BTC/USD";
-    const fallbackTimeframe = (rawProfile as any)?.lastTimeframe || "4h";
+    const fallbackSymbol = rawProfile?.lastSymbol || getDefaultSymbolForMarket((dbUser?.preferredMarket ?? "CRYPTO") as MarketRegion);
+    const fallbackTimeframe = rawProfile?.lastTimeframe || "4h";
     try {
       const cachedRecord = await prisma.conversationMemory.findFirst({
         where: {
@@ -438,7 +431,7 @@ The following data is from the live exchange feed via TradCopilot's telemetry sy
 TRADER IDENTITY
 ============================================================
 - Name: ${userNameFormatted}
-- Primary Instrument: ${chartContext?.symbol || (rawProfile as any)?.lastSymbol || "BTC/USD"}
+- Primary Instrument: ${chartContext?.symbol || rawProfile?.lastSymbol || getDefaultSymbolForMarket((dbUser?.preferredMarket ?? "CRYPTO") as MarketRegion)}
 - Trading Since: ${trades.length > 0 ? new Date(trades[trades.length-1].openedAt).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "Recently"}
 - Account Size: $${userProfile.accountSize.toString()}
 - Max Risk Per Trade: ${userProfile.maxRiskPercent.toString()}%
@@ -452,7 +445,7 @@ USER TRADING HISTORICAL DATA (Last 20 Trades):
 - New York Session: ${nyTrades.length} trades | Win Rate: ${nyWinRate.toFixed(1)}%
 
 INDIVIDUAL TRADE RECORDS:
-${closedTrades.length === 0 ? "No closed trades yet." : closedTrades.slice(0, 5).map((t: any, i: number) => {
+${closedTrades.length === 0 ? "No closed trades yet." : closedTrades.slice(0, 5).map((t, i: number) => {
   const dateStr = new Date(t.openedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return `  [T${i+1}] ${dateStr} | ${t.instrument} ${t.direction} | Entry:$${Number(t.entryPrice).toFixed(2)} Exit:$${Number(t.exitPrice||0).toFixed(2)} | PnL:$${Number(t.pnl).toFixed(2)} | Emotion:${t.emotionTag||"NEUTRAL"} | Mistakes:${(t.mistakeTags||[]).join(",")||"None"}`;}).join("\n")}
 
@@ -462,13 +455,13 @@ DETECTED USER BEHAVIORAL PATHOLOGY FLAGS:
 - Early Winner Cutting: ${isCuttingWinnersShort ? "YES" : "NO"}
 
 RECENT BEHAVIORAL DANGER EVENTS:
-${recentEvents.length === 0 ? "None logged." : recentEvents.map((e: any) => `- [${e.createdAt.toISOString().slice(0,10)}] ${e.eventType}: ${e.description}`).join("\n")}
+${recentEvents.length === 0 ? "None logged." : recentEvents.map((e) => `- [${e.createdAt.toISOString().slice(0,10)}] ${e.eventType}: ${e.description}`).join("\n")}
 
 USER JOURNAL ENTRIES:
-${journalEntries.length === 0 ? "No journal entries yet." : journalEntries.slice(0, 5).map((j: any) => `- [${j.createdAt.toISOString().slice(0,10)}] Mood:${j.mood||"NEUTRAL"} | "${j.title}"`).join("\n")}
+${journalEntries.length === 0 ? "No journal entries yet." : journalEntries.slice(0, 5).map((j) => `- [${j.createdAt.toISOString().slice(0,10)}] Mood:${j.mood||"NEUTRAL"} | "${j.title}"`).join("\n")}
 
 USER ACTIVE OPEN POSITIONS:
-${openTrades.length === 0 ? "None" : openTrades.map((t: any) => `- ${t.instrument} ${t.direction} | entry: $${t.entryPrice.toString()} | SL: ${t.stopLoss?.toString() || "None"}`).join("\n")}
+${openTrades.length === 0 ? "None" : openTrades.map((t) => `- ${t.instrument} ${t.direction} | entry: $${t.entryPrice.toString()} | SL: ${t.stopLoss?.toString() || "None"}`).join("\n")}
 `;
 
   console.log(`[STEP 9] Build system prompt DONE | len=${systemPrompt.length}chars | ${elapsed()}`);
@@ -485,10 +478,10 @@ ${openTrades.length === 0 ? "None" : openTrades.map((t: any) => `- ${t.instrumen
   lap("Step 11 — Starting concurrent AI provider race");
   const nvStart = Date.now();
   try {
-    const raceResult = await callFastestAIModel(formattedMessages as any, {
+    const raceResult = await callFastestAIModel(formattedMessages, {
       temperature: 0.25,
       maxTokens: 350,
-    });
+    }, signal);
     const nvMs = Date.now() - nvStart;
     lap(`Step 11 — Race won by [${raceResult.provider.toUpperCase()}] in ${nvMs}ms`);
 
@@ -509,10 +502,11 @@ ${openTrades.length === 0 ? "None" : openTrades.map((t: any) => `- ${t.instrumen
 
     console.log(`[TIMING] ========== AI CHAT END — TOTAL: ${elapsed()} ==========\n`);
     return reply;
-  } catch (err: any) {
+  } catch (err: unknown) {
     const nvMs = Date.now() - nvStart;
     const errorDetails = handleNvidiaError(err);
-    const failureReason = err?.message || errorDetails?.message || "Unknown AI provider error";
+    const errMessage = err instanceof Error ? err.message : undefined;
+    const failureReason = errMessage || errorDetails?.message || "Unknown AI provider error";
     console.error(`[TIMING] Step 11 — FAILED | duration=${nvMs}ms | total=${elapsed()} | err=${failureReason}`, err);
 
     // Deterministic, chart-state-aware fallback. The user still gets a

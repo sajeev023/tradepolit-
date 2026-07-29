@@ -16,9 +16,9 @@ export function DemoBanner() {
   const [alertLimit, setAlertLimit] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
-  const fetchUsage = useCallback(async (_userId: string) => {
+  const fetchUsage = useCallback(async (_userId: string, signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/v1/usage");
+      const res = await fetch("/api/v1/usage", { signal });
       if (res.ok) {
         const data = await res.json();
         setAnalysesUsed(data.data?.analysesUsed || 0);
@@ -27,20 +27,30 @@ export function DemoBanner() {
         if (typeof data.data?.alertLimit === "number") setAlertLimit(data.data.alertLimit);
       }
     } catch {
-      // Silently fail
+      // Silently fail (includes AbortError on unmount)
     }
   }, []);
 
   useEffect(() => {
+    // Mounted guard: supabase.auth.getUser() and the usage fetch both settle
+    // asynchronously; without this, both could write state after unmount.
+    let active = true;
+    const controller = new AbortController();
+
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }: any) => {
+      if (!active) return;
       const user = data.user;
       const demoEmails = ["partner@tradcopilot.com", "trader@tradcopilot.com"];
       if (user?.email && demoEmails.includes(user.email)) {
         setIsDemo(true);
-        fetchUsage(user.id);
+        fetchUsage(user.id, controller.signal);
       }
     });
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [fetchUsage]);
 
   if (!isDemo || dismissed) return null;

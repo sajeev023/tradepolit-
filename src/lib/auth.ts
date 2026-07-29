@@ -1,15 +1,43 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { unauthorizedError } from "@/lib/api-helpers";
 import { isProEmail } from "@/lib/entitlements";
 import { verifyDemoSession } from "@/lib/demo-session";
+import { getPopularSymbols } from "@/lib/supported-symbols";
+
+// The subset of the Supabase `User` that this app's callers actually rely on.
+// Both the real server-verified user and the signed-demo-session user conform
+// to this shape, so the demo path no longer fabricates a partial `User` via
+// `as any` — it just builds a valid `AuthUser` literal.
+export interface AuthUser {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+  app_metadata?: Record<string, unknown>;
+  aud?: string;
+  created_at?: string;
+}
+
+// Narrow an unknown to a Prisma unique-constraint violation (P2002). Replaces
+// the prior `catch (error: any) { if (error.code === 'P2002') }` pattern that
+// reached into `any` for a field only Prisma errors carry.
+function isP2002(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  );
+}
 
 /**
  * Get the authenticated user from the Supabase session.
  * Use in API routes to enforce authentication.
  * Always uses getUser() (server-verified) instead of getSession() (JWT-only).
  */
-export async function getAuthUser() {
+export async function getAuthUser(): Promise<{
+  user: AuthUser | null;
+  error: ReturnType<typeof unauthorizedError> | null;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -27,17 +55,15 @@ export async function getAuthUser() {
   try {
     const demo = await verifyDemoSession();
     if (demo) {
-      return {
-        user: {
-          id: demo.uid,
-          email: demo.email,
-          user_metadata: { full_name: "YC Demo Trader" },
-          app_metadata: { role: "USER" },
-          aud: "authenticated",
-          created_at: new Date().toISOString(),
-        } as any,
-        error: null,
+      const demoUser: AuthUser = {
+        id: demo.uid,
+        email: demo.email,
+        user_metadata: { full_name: "YC Demo Trader" },
+        app_metadata: { role: "USER" },
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
       };
+      return { user: demoUser, error: null };
     }
   } catch (_) {}
 
@@ -74,8 +100,8 @@ export async function ensurePrismaUser(supabaseUser: {
         ...userData,
       },
     });
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+  } catch (error: unknown) {
+    if (isP2002(error)) {
       await new Promise(resolve => setTimeout(resolve, 100));
       dbUser = await prisma.user.upsert({
         where: { id: supabaseUser.id },
@@ -115,8 +141,8 @@ export async function ensurePrismaUser(supabaseUser: {
         ...profileData,
       },
     });
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+  } catch (error: unknown) {
+    if (isP2002(error)) {
       await new Promise(resolve => setTimeout(resolve, 100));
       await prisma.userProfile.upsert({
         where: { userId: dbUser.id },
@@ -143,11 +169,15 @@ export async function ensurePrismaUser(supabaseUser: {
         data: {
           userId: dbUser.id,
           name: "My Watchlist",
-          instruments: ["BTC/USD", "ETH/USD", "SOL/USD"],
+          // Seed with the registry's curated popular crypto instruments so the
+          // default watchlist tracks config, not a hardcoded literal here.
+          instruments: getPopularSymbols()
+            .filter((s) => s.assetClass === "CRYPTO")
+            .map((s) => s.symbol),
         },
       });
-    } catch (e: any) {
-      if (e.code !== "P2002") throw e;
+    } catch (e: unknown) {
+      if (!isP2002(e)) throw e;
     }
   }
 

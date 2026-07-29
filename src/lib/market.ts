@@ -18,7 +18,7 @@
  */
 import { getCachedData, setCachedData } from "./cache";
 import { redactKey } from "./startup";
-import type { PriceData, OHLCVCandle } from "./types";
+import type { PriceData, OHLCVCandle, PriceStats } from "./types";
 import {
   SUPPORTED_SYMBOL_MAP,
   getSupportedSymbol,
@@ -32,6 +32,13 @@ import {
   VOLATILITIES,
 } from "./supported-symbols";
 import { UnsupportedSymbolError } from "./typed-errors";
+import {
+  tdIntervalFor,
+  binanceIntervalFor,
+  coinbaseCandleSpecFor,
+  timeframeDurationMs,
+  ohlcvCacheTtlFor,
+} from "./timeframes";
 
 // ─── Twelve Data key validation ──────────────────────────────────────────────
 function isTwelvedataKeyValid(): boolean {
@@ -87,13 +94,22 @@ function downsampleCandles(candles: OHLCVCandle[], factor: number): OHLCVCandle[
   for (let i = 0; i < candles.length; i += factor) {
     const chunk = candles.slice(i, i + factor);
     if (chunk.length === 0) continue;
-    const timestamp = chunk[0].timestamp;
-    const open = chunk[0].open;
-    const close = chunk[chunk.length - 1].close;
-    const high = Math.max(...chunk.map(c => c.high));
-    const low = Math.min(...chunk.map(c => c.low));
-    const volume = chunk.reduce((sum, c) => sum + c.volume, 0);
-    result.push({ timestamp, open, high, low, close, volume });
+    const first = chunk[0];
+    const base = {
+      timestamp: first.timestamp,
+      open: first.open,
+      high: Math.max(...chunk.map(c => c.high)),
+      low: Math.min(...chunk.map(c => c.low)),
+      close: chunk[chunk.length - 1].close,
+      volume: chunk.reduce((sum, c) => sum + c.volume, 0),
+    };
+    // Preserve the source discriminant so a downsampled SIMULATED candle keeps
+    // its warning (and a LIVE candle stays untagged) — the union has no default.
+    if (first.source === "SIMULATED") {
+      result.push({ ...base, source: "SIMULATED" as const, warning: first.warning });
+    } else {
+      result.push({ ...base, source: "LIVE" as const });
+    }
   }
   return result;
 }
@@ -106,7 +122,7 @@ function tdUrl(path: string, normSymbol: string): string {
   return `https://api.twelvedata.com/${path}?symbol=${encodeURIComponent(tdSymbol)}${exchangeParam}&apikey=${process.env.TWELVEDATA_API_KEY}`;
 }
 
-async function fetchTdPrice(normSymbol: string): Promise<{ price: number; stats: Partial<PriceData> | null } | null> {
+async function fetchTdPrice(normSymbol: string): Promise<{ price: number; stats: PriceStats | null } | null> {
   if (!isTwelvedataKeyValid()) {
     console.warn(`[Market] TwelveData ✗ key missing for ${normSymbol} — skipping`);
     return null;
@@ -147,7 +163,7 @@ async function fetchTdPrice(normSymbol: string): Promise<{ price: number; stats:
 
   // 24h stats from a 2-point 1min time series (open ≈ 24h ago is approximate;
   // matches the legacy behavior so callers don't regress).
-  let stats: Partial<PriceData> | null = null;
+  let stats: PriceStats | null = null;
   try {
     const res = await fetch(tdUrl("time_series", normSymbol) + "&interval=1min&outputsize=2", {
       signal: AbortSignal.timeout(3000),
@@ -181,14 +197,7 @@ async function fetchTdOHLCV(normSymbol: string, timeframe: string, limit: number
     console.warn(`[Market] TwelveData ✗ circuit open for OHLCV ${normSymbol} — skipping`);
     return [];
   }
-  const tdInterval =
-    timeframe === "1m" ? "1min" :
-    timeframe === "5m" ? "5min" :
-    timeframe === "15m" ? "15min" :
-    timeframe === "1h" ? "1h" :
-    timeframe === "4h" ? "4h" :
-    timeframe === "1d" ? "1day" :
-    timeframe === "1W" ? "1week" : "1h";
+  const tdInterval = tdIntervalFor(timeframe);
   try {
     const res = await fetch(tdUrl("time_series", normSymbol) + `&interval=${tdInterval}&outputsize=${limit}`, {
       signal: AbortSignal.timeout(5000),
@@ -207,6 +216,7 @@ async function fetchTdOHLCV(normSymbol: string, timeframe: string, limit: number
             low: parseFloat(v.low),
             close: parseFloat(v.close),
             volume: parseFloat(v.volume || "0"),
+            source: "LIVE" as const,
           }))
           .reverse();
         console.log(`[Market] TwelveData ← OHLCV ${normSymbol} (${timeframe}) = ${candles.length} candles`);
@@ -232,12 +242,12 @@ async function fetchTdOHLCV(normSymbol: string, timeframe: string, limit: number
 }
 
 // ─── Provider: Binance ───────────────────────────────────────────────────────
-async function fetchBinancePrice(normSymbol: string): Promise<{ price: number; stats: Partial<PriceData> | null } | null> {
+async function fetchBinancePrice(normSymbol: string): Promise<{ price: number; stats: PriceStats | null } | null> {
   const binanceSymbol = binanceSymbolFor(normSymbol);
   let price: number | null = null;
-  let stats: Partial<PriceData> | null = null;
+  let stats: PriceStats | null = null;
   const statsCacheKey = `price-stats:${normSymbol}`;
-  const cachedStats = await getCachedData<Partial<PriceData>>(statsCacheKey);
+  const cachedStats = await getCachedData<PriceStats>(statsCacheKey);
 
   try {
     const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`, {
@@ -289,14 +299,7 @@ async function fetchBinancePrice(normSymbol: string): Promise<{ price: number; s
 
 async function fetchBinanceOHLCV(normSymbol: string, timeframe: string, limit: number): Promise<OHLCVCandle[]> {
   const binanceSymbol = binanceSymbolFor(normSymbol);
-  const binanceInterval =
-    timeframe === "1m" ? "1m" :
-    timeframe === "5m" ? "5m" :
-    timeframe === "15m" ? "15m" :
-    timeframe === "1h" ? "1h" :
-    timeframe === "4h" ? "4h" :
-    timeframe === "1d" ? "1d" :
-    timeframe === "1W" ? "1w" : "1h";
+  const binanceInterval = binanceIntervalFor(timeframe);
   const endpoints = [
     `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${binanceInterval}&limit=${limit}`,
     `https://api1.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${binanceInterval}&limit=${limit}`,
@@ -315,6 +318,7 @@ async function fetchBinanceOHLCV(normSymbol: string, timeframe: string, limit: n
             low: parseFloat(c[3]),
             close: parseFloat(c[4]),
             volume: parseFloat(c[5]),
+            source: "LIVE" as const,
           }));
           console.log(`[Market] Binance ← OHLCV ${normSymbol} (${binanceSymbol}, ${timeframe}) = ${candles.length} candles`);
           return candles;
@@ -328,12 +332,12 @@ async function fetchBinanceOHLCV(normSymbol: string, timeframe: string, limit: n
 }
 
 // ─── Provider: Coinbase ──────────────────────────────────────────────────────
-async function fetchCoinbasePrice(normSymbol: string): Promise<{ price: number; stats: Partial<PriceData> | null } | null> {
+async function fetchCoinbasePrice(normSymbol: string): Promise<{ price: number; stats: PriceStats | null } | null> {
   const coinbaseSymbol = coinbaseSymbolFor(normSymbol);
   let price: number | null = null;
-  let stats: Partial<PriceData> | null = null;
+  let stats: PriceStats | null = null;
   const statsCacheKey = `price-stats:${normSymbol}`;
-  const cachedStats = await getCachedData<Partial<PriceData>>(statsCacheKey);
+  const cachedStats = await getCachedData<PriceStats>(statsCacheKey);
 
   try {
     const res = await fetch(`https://api.exchange.coinbase.com/products/${coinbaseSymbol}/ticker`, {
@@ -381,15 +385,7 @@ async function fetchCoinbasePrice(normSymbol: string): Promise<{ price: number; 
 
 async function fetchCoinbaseOHLCV(normSymbol: string, timeframe: string, limit: number): Promise<OHLCVCandle[]> {
   const coinbaseSymbol = coinbaseSymbolFor(normSymbol);
-  let granularity = 3600;
-  let factor = 1;
-  if (timeframe === "1m") granularity = 60;
-  else if (timeframe === "5m") granularity = 300;
-  else if (timeframe === "15m") granularity = 900;
-  else if (timeframe === "1h") granularity = 3600;
-  else if (timeframe === "4h") { granularity = 3600; factor = 4; }
-  else if (timeframe === "1d") granularity = 86400;
-  else if (timeframe === "1W") { granularity = 86400; factor = 7; }
+  const { granularity, factor } = coinbaseCandleSpecFor(timeframe);
 
   try {
     const res = await fetch(
@@ -406,6 +402,7 @@ async function fetchCoinbaseOHLCV(normSymbol: string, timeframe: string, limit: 
           low: parseFloat(c[1]),
           close: parseFloat(c[4]),
           volume: parseFloat(c[5]),
+          source: "LIVE" as const,
         })).reverse();
         const candles = (factor > 1 ? downsampleCandles(mapped, factor) : mapped).slice(0, limit);
         console.log(`[Market] Coinbase ← OHLCV ${normSymbol} (${coinbaseSymbol}, ${timeframe}) = ${candles.length} candles`);
@@ -418,7 +415,7 @@ async function fetchCoinbaseOHLCV(normSymbol: string, timeframe: string, limit: 
   return [];
 }
 
-const PROVIDER_PRICE_FETCHERS: Record<string, (s: string) => Promise<{ price: number; stats: Partial<PriceData> | null } | null>> = {
+const PROVIDER_PRICE_FETCHERS: Record<string, (s: string) => Promise<{ price: number; stats: PriceStats | null } | null>> = {
   twelvedata: fetchTdPrice,
   binance: fetchBinancePrice,
   coinbase: fetchCoinbasePrice,
@@ -443,7 +440,7 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
   if (cached) return cached;
 
   let price: number | null = null;
-  let stats: Partial<PriceData> | null = null;
+  let stats: PriceStats | null = null;
 
   try {
     // Walk the registry-ordered provider chain. The first provider that
@@ -550,15 +547,13 @@ export async function getOHLCV(
     const vol = VOLATILITIES[normSymbol] || 0.01;
     let currentPrice = basePrice;
     const now = Date.now();
-    const stepMs =
-      timeframe === "1m" ? 1 * 60 * 1000 :
-      timeframe === "5m" ? 5 * 60 * 1000 :
-      timeframe === "15m" ? 15 * 60 * 1000 :
-      timeframe === "1h" ? 60 * 60 * 1000 :
-      timeframe === "4h" ? 4 * 60 * 60 * 1000 :
-      timeframe === "1d" ? 24 * 60 * 60 * 1000 :
-      timeframe === "1W" ? 7 * 24 * 60 * 60 * 1000 : 60 * 60 * 1000;
+    const stepMs = timeframeDurationMs(timeframe);
+    const warning = `Live OHLCV for ${normSymbol} is temporarily unavailable. Showing simulated candles — do not trade on these values.`;
 
+    // Build the candles already tagged SIMULATED so the warning is baked in and
+    // survives the cache round-trip. The prior code cached the *untagged* temp
+    // candles and only added source/warning on the return path, so a cache hit
+    // served simulated candles that looked live — the most dangerous state.
     const tempCandles: OHLCVCandle[] = [];
     for (let i = limit; i > 0; i--) {
       const open = currentPrice;
@@ -567,28 +562,16 @@ export async function getOHLCV(
       const high = Math.max(open, close) * (1 + Math.random() * (vol / 2));
       const low = Math.min(open, close) * (1 - Math.random() * (vol / 2));
       const volume = basePrice * 500 + Math.random() * 1000;
-      tempCandles.push({ timestamp: now - i * stepMs, open, high, low, close, volume });
+      tempCandles.push({ timestamp: now - i * stepMs, open, high, low, close, volume, source: "SIMULATED" as const, warning });
       currentPrice = close;
     }
     candles = tempCandles;
   }
 
-  // Cache the resolved candles (timeframe-dependent TTL for freshness).
-  let ttl = 30;
-  if (timeframe === "1m") ttl = 5;
-  else if (timeframe === "5m") ttl = 10;
-  else if (timeframe === "15m") ttl = 20;
-  else if (timeframe === "1h" || timeframe === "1H") ttl = 30;
-  else if (timeframe === "4h" || timeframe === "4H") ttl = 45;
-  else if (timeframe === "1d") ttl = 120;
-  else ttl = 60;
+  // Cache the resolved candles (timeframe-dependent TTL for freshness). Both
+  // LIVE and SIMULATED candles are cached in their final, tagged form.
+  const ttl = ohlcvCacheTtlFor(timeframe);
   await setCachedData(cacheKey, candles, ttl);
-
-  if (isSimulated) {
-    // Simulated candles are not cached; mark them for callers and surface
-    // a single top-level warning so the frontend can render a banner.
-    return candles.map(c => ({ ...c, source: "SIMULATED" as const, warning: `Live OHLCV for ${normSymbol} is temporarily unavailable. Showing simulated candles — do not trade on these values.` }));
-  }
 
   return candles;
 }

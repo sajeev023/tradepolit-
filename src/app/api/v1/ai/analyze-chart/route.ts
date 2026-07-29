@@ -23,6 +23,8 @@ import { getEntitlementForUser, getAnalysisLimitError } from "@/lib/entitlements
 import { callFastestModel } from "@/lib/nvidia-ai";
 import { getAnalyzeChartSystemPrompt } from "@/lib/prompt-cache";
 import { safeParseAIResponse } from "@/lib/ai-response-parser";
+import { aiExchangeLabelFor, getDefaultSymbolForMarket } from "@/lib/supported-symbols";
+import { sourceMetadataSchema } from "@/lib/schemas";
 import { validateMarketData, validateIndicators, validateLevels, isDataFresh } from "@/lib/validate-market-data";
 import { checkTokenBudget } from "@/lib/token-budget";
 
@@ -51,7 +53,7 @@ const telemetrySchema = z.object({
   invalidationLevel: z.number(),
   atr: z.number(),
   volume: z.number().optional(),
-  sourceMetadata: z.any().optional(),
+  sourceMetadata: sourceMetadataSchema.optional(),
   volumeSurgeRatio: z.number().optional(),
   lostVWAP: z.boolean().optional(),
   reclaimedVWAP: z.boolean().optional(),
@@ -193,15 +195,7 @@ export async function POST(request: NextRequest) {
     validatedSymbol = symbol;
     validatedTimeframe = timeframe;
 
-    const getExchangeForSymbol = (sym: string): string => {
-      if (["BTC/USD", "ETH/USD", "SOL/USD"].includes(sym)) return "BINANCE";
-      if (["EUR/USD", "GBP/USD", "USD/JPY"].includes(sym)) return "FX";
-      if (sym === "XAU/USD") return "OANDA";
-      if (sym === "NASDAQ") return "NASDAQ";
-      if (sym === "S&P500") return "FOREXCOM";
-      return "BINANCE";
-    };
-    const exchangeName = getExchangeForSymbol(symbol);
+    const exchangeName = aiExchangeLabelFor(symbol);
 
     // Check user auth first
     const { user, error } = await getAuthenticatedUser();
@@ -274,8 +268,8 @@ export async function POST(request: NextRequest) {
       behavioralContext = `
 TRADER IDENTITY:
 - Name: ${userName}
-- Account Size: $${(profile as any).accountSize?.toString() || "10,000"}
-- Max Risk Per Trade: ${(profile as any).maxRiskPercent?.toString() || "1.0"}%
+- Account Size: $${String(profile.accountSize) || "10,000"}
+- Max Risk Per Trade: ${String(profile.maxRiskPercent) || "1.0"}%
 - Trades Today: ${tradesToday}${tradesToday > 5 ? " ⚠️ OVERTRADING" : ""}
 - Recent Mistakes: ${topMistakes || "None recorded"}
 - Win Rate: ${closedTrades.length ? ((winningTrades.length / closedTrades.length) * 100).toFixed(0) + "%" : "No closed trades"}
@@ -504,7 +498,7 @@ COACHING MANDATE:
     // degradation — quota enforcement is best-effort, not a hard gate that
     // should produce a generic "AI unavailable" 503.
     let usageReserved = false;
-    let usageLimitError: any = null;
+    let usageLimitError: ReturnType<typeof getAnalysisLimitError> | null = null;
     try {
       usageReserved = await recordUsage(user.id, "analyses", user.email);
       if (!usageReserved) {
@@ -512,12 +506,12 @@ COACHING MANDATE:
         const entitlement = getEntitlementForUser(user.id, user.email);
         usageLimitError = getAnalysisLimitError(entitlement, limitResult.analysesUsed);
       }
-    } catch (usageErr: any) {
+    } catch (usageErr: unknown) {
       console.warn("[ANALYZE-CHART] Usage reservation failed (non-fatal, proceeding without quota gate):", usageErr);
       usageReserved = true; // proceed optimistically on DB outage
     }
     if (usageLimitError) {
-      return errorResponse(usageLimitError.error as any, usageLimitError.message, 403, {
+      return errorResponse(usageLimitError.error, usageLimitError.message, 403, {
         cta: usageLimitError.cta,
         ctaLink: usageLimitError.ctaLink,
       });
@@ -628,8 +622,8 @@ REQUIRED JSON RESPONSE SCHEMA:
         ),
       ]);
       console.log(`[STEP 9: AI response received] Provider=${raceResult.provider.toUpperCase()} Model=${raceResult.model} in ${Date.now() - raceStart}ms`);
-    } catch (raceErr: any) {
-      console.error(`[STEP 9 FAILED] Race error | duration=${Date.now() - raceStart}ms | err=${raceErr?.message}`);
+    } catch (raceErr: unknown) {
+      console.error(`[STEP 9 FAILED] Race error | duration=${Date.now() - raceStart}ms | err=${raceErr instanceof Error ? raceErr.message : String(raceErr)}`);
 
       // Fallback: compute indicator-based analysis when all AI providers are unavailable.
       // Note: do NOT call recordUsage again here — the reservation at line ~450
@@ -708,7 +702,7 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
         console.log(`[AI REGENERATION COMPLETED] Latency: ${regenResult.duration}ms`);
         activeContent = regenResult.content;
         parseResult = safeParseAIResponse(activeContent, techTelemetryData);
-      } catch (retryErr: any) {
+      } catch (retryErr: unknown) {
         console.error(`[AI REGENERATION ATTEMPT FAILED] Error:`, retryErr);
       }
     }
@@ -882,7 +876,7 @@ Timestamp: ${new Date().toISOString()}
     console.log(`[STEP 11: Response returned] FRESH ANALYSIS SUCCESSFUL | totalDuration=${Date.now() - t0}ms`);
     return successResponse(finalResponse);
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Critical error in analyze-chart route:", err);
     await releaseReservation();
 
@@ -901,11 +895,13 @@ Timestamp: ${new Date().toISOString()}
     //    issue is upstream, not AI.
     // 5. Only as a last resort (no tech, unknown cause) return aiUnavailableError.
     if (isPrismaTransientError(err)) {
-      console.warn("[ANALYZE-CHART] DB transient error:", err?.code);
+      const code = (err as { code?: string }).code;
+      console.warn("[ANALYZE-CHART] DB transient error:", code);
       return dbError(30_000, { route: "analyze-chart" });
     }
 
-    const status = err?.status ?? err?.statusCode;
+    const status = (err as { status?: number; statusCode?: number }).status
+      ?? (err as { statusCode?: number }).statusCode;
     if (status === 401 || status === 403) {
       return authFailedError();
     }
@@ -916,7 +912,7 @@ Timestamp: ${new Date().toISOString()}
     // with N/A values would be a lie — surface the failure as 503.
     const catchFallback = tech
       ? buildFallbackAnalysis(
-          validatedSymbol || "BTC/USD",
+          validatedSymbol || getDefaultSymbolForMarket("CRYPTO"),
           validatedTimeframe || "4h",
           tech,
           "AUTO",

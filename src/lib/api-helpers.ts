@@ -45,6 +45,20 @@ export function validationError(error: ZodError) {
   });
 }
 
+// For ad-hoc validation failures that aren't a full Zod parse (e.g. a
+// referenced entity that doesn't exist). Replaces the `{ issues: [...] } as any`
+// casts that fabricated fake ZodError objects across routes.
+export function validationErrorFromIssues(
+  issues: Array<{ path: Array<string | number>; message: string }>
+) {
+  return errorResponse("VALIDATION_ERROR", "Validation failed", 400, {
+    issues: issues.map((i) => ({
+      path: i.path.join("."),
+      message: i.message,
+    })),
+  });
+}
+
 export function unauthorizedError(message = "Authentication required") {
   return errorResponse("UNAUTHORIZED", message, 401);
 }

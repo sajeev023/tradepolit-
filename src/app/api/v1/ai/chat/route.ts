@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { Prisma, type AIChat } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { runAIChat } from "@/lib/ai";
@@ -8,6 +9,7 @@ import {
   successResponse,
   unauthorizedError,
   validationError,
+  validationErrorFromIssues,
   errorResponse,
   rateLimitError as rateLimitResponse,
 } from "@/lib/api-helpers";
@@ -18,6 +20,9 @@ import { getAnalyzeChartSystemPrompt } from "@/lib/prompt-cache";
 import { safeParseAIResponse } from "@/lib/ai-response-parser";
 import { validateMarketData, validateIndicators, validateLevels, isDataFresh } from "@/lib/validate-market-data";
 import { checkTokenBudget } from "@/lib/token-budget";
+import { aiExchangeLabelFor, getDefaultSymbolForMarket, type MarketRegion } from "@/lib/supported-symbols";
+import { chartStateSchema, type ChartState } from "@/lib/schemas";
+import { type ChatMessage, parseChatMessages } from "@/lib/chat-message";
 import { getEntitlementForUser } from "@/lib/entitlements";
 import { checkUserRateLimit } from "@/lib/rate-limit";
 import { dispatchCaughtError } from "@/lib/typed-errors";
@@ -27,8 +32,18 @@ const chatMessageSchema = z.object({
   message: z.string().min(1, "Message is required"),
   symbol: z.string().optional(),
   timeframe: z.string().optional(),
-  chartState: z.any().optional(),
+  // Validated against the typed chart-state schema — no more `z.any()`. Only
+  // schema-validated data reaches the model prompt; unknown keys are stripped.
+  chartState: chartStateSchema.optional(),
 });
+
+// Shape of a message persisted in `AIChat.messages` (a Prisma Json column).
+// Narrowing the raw Json into this type replaces the prior `chat.messages as any[]`
+// and `finalMessages as any` casts at the persistence boundary.
+// `ChatMessage` and `parseChatMessages` live in the shared `@/lib/chat-message`
+// module so every chat-consuming route (chat, list, latest, single) narrows the
+// untyped `AIChat.messages` JSON column through one definition — replacing the
+// per-route `chat.messages as any[]` casts that let malformed rows slip through.
 
 // Allow up to 60s for AI model race — overrides Next.js default 10s timeout
 export const maxDuration = 60;
@@ -66,22 +81,18 @@ export async function POST(request: NextRequest) {
 
     const { chatId, message, symbol, timeframe, chartState } = validation.data;
 
-    // STEP 2: Resolve effective symbol & timeframe (Profile fallback)
-    const userProfile: any = (!symbol || !timeframe)
+    // STEP 2: Resolve effective symbol & timeframe (Profile fallback).
+    // `preferredMarket` lives on the User model (not UserProfile), so it is
+    // read from the already-loaded `user` — the prior `userProfile?.preferredMarket`
+    // read silently returned undefined and always fell back to CRYPTO.
+    const userProfile = (!symbol || !timeframe)
       ? await db(prisma.userProfile.findUnique({ where: { userId: user.id } }))
       : null;
-    const resolvedSymbol: string = symbol || userProfile?.lastSymbol || "BTC/USD";
+    const resolvedSymbol: string =
+      symbol || userProfile?.lastSymbol || getDefaultSymbolForMarket((user.preferredMarket ?? "CRYPTO") as MarketRegion);
     const resolvedTimeframe: string = timeframe || userProfile?.lastTimeframe || "4h";
 
-    const getExchangeForSymbol = (sym: string): string => {
-      if (["BTC/USD", "ETH/USD", "SOL/USD"].includes(sym)) return "BINANCE";
-      if (["EUR/USD", "GBP/USD", "USD/JPY"].includes(sym)) return "FX";
-      if (sym === "XAU/USD") return "OANDA";
-      if (sym === "NASDAQ") return "NASDAQ";
-      if (sym === "S&P500") return "FOREXCOM";
-      return "BINANCE";
-    };
-    const exchangeName = getExchangeForSymbol(resolvedSymbol);
+    const exchangeName = aiExchangeLabelFor(resolvedSymbol);
 
     console.log(`[STEP 2] Check telemetry cache for asset: ${resolvedSymbol}, timeframe: ${resolvedTimeframe}`);
     
@@ -91,14 +102,14 @@ export async function POST(request: NextRequest) {
     const livePrice = lastCandle ? lastCandle.close : null;
     let staleNotice = "";
 
-    let activeChartState = chartState;
+    let activeChartState: ChartState | null = chartState ?? null;
     if (activeChartState && activeChartState.symbol && activeChartState.symbol !== resolvedSymbol) {
       console.warn(`[CHAT ROUTE] Mismatched chartState symbol (${activeChartState.symbol}) vs resolvedSymbol (${resolvedSymbol}). Discarding stale state.`);
       activeChartState = null;
     }
 
     if (!activeChartState) {
-      const cachedRecord: any = await db(prisma.conversationMemory.findFirst({
+      const cachedRecord = await db(prisma.conversationMemory.findFirst({
         where: {
           userId: user.id,
           role: "cached_analysis",
@@ -108,8 +119,13 @@ export async function POST(request: NextRequest) {
       if (cachedRecord) {
         try {
           const cachedData = JSON.parse(cachedRecord.content);
-          activeChartState = cachedData.analysis || cachedData;
-          if (activeChartState) activeChartState.symbol = resolvedSymbol;
+          // Validate the DB-cached analysis through the same schema so legacy
+          // or corrupt rows can't inject untyped data into the prompt.
+          const parsedCache = chartStateSchema.safeParse(cachedData.analysis || cachedData);
+          if (parsedCache.success) {
+            activeChartState = parsedCache.data;
+            activeChartState.symbol = resolvedSymbol;
+          }
         } catch (_) {}
       }
     }
@@ -308,7 +324,7 @@ REQUIRED JSON RESPONSE SCHEMA:
             analysis: activeChartState
           };
 
-          const existingCache: any = await db(prisma.conversationMemory.findFirst({
+          const existingCache = await db(prisma.conversationMemory.findFirst({
             where: {
               userId: user.id,
               role: "cached_analysis",
@@ -346,16 +362,16 @@ REQUIRED JSON RESPONSE SCHEMA:
       console.log("[STEP 3] Telemetry cached context not found. Using profile defaults.");
     }
 
-    let chat: any;
+    let chat: AIChat | null;
 
     if (chatId) {
       chat = await db(prisma.aIChat.findFirst({
         where: { id: chatId, userId: user.id },
       }));
       if (!chat) {
-        return validationError({
-          issues: [{ path: ["chatId"], message: "AI Chat session not found" }],
-        } as any);
+        return validationErrorFromIssues([
+          { path: ["chatId"], message: "AI Chat session not found" },
+        ]);
       }
     } else {
       // Demo users can chat in-memory (chat history not persisted to DB)
@@ -367,6 +383,8 @@ REQUIRED JSON RESPONSE SCHEMA:
           symbol: resolvedSymbol,
           timeframe: resolvedTimeframe,
           messages: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
         };
       } else {
         // Create new chat — store symbol/timeframe for history sidebar
@@ -385,26 +403,46 @@ REQUIRED JSON RESPONSE SCHEMA:
     }
 
     // Append user message
-    const messageList = Array.isArray(chat.messages) ? (chat.messages as any[]) : [];
-    const updatedMessages = [
+    const messageList = parseChatMessages(chat.messages);
+    const updatedMessages: ChatMessage[] = [
       ...messageList,
       { role: "user", content: message, createdAt: new Date().toISOString() },
     ];
 
-    // STEP 5: Generate conversational response with timeout
+    // STEP 5: Generate conversational response with timeout + cancellation
     console.log("[STEP 5] Generate conversational response (calling runAIChat)");
     const apiStartTime = Date.now();
-    const assistantReply = await Promise.race([
-      runAIChat(
-        user.id,
-        updatedMessages as any,
-        { symbol: resolvedSymbol, timeframe: resolvedTimeframe, chartState: activeChartState },
-        user.email
-      ),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("AI chat timed out after 55s")), 55000)
-      ),
-    ]);
+    // One AbortController governs the whole AI call: it fires on the 55s
+    // timeout OR on client disconnect (request.signal). The signal is threaded
+    // into runAIChat → callFastestAIModel so an in-flight provider fetch is
+    // cancelled mid-request instead of running to completion and wasting
+    // tokens after the race has already rejected. The prior impl used a bare
+    // setTimeout reject that left the fetches alive for up to 60s.
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 55_000);
+    const onClientDisconnect = () => abortController.abort();
+    if (request.signal.aborted) abortController.abort();
+    else request.signal.addEventListener("abort", onClientDisconnect, { once: true });
+
+    let assistantReply: string;
+    try {
+      assistantReply = await Promise.race([
+        runAIChat(
+          user.id,
+          updatedMessages,
+          { symbol: resolvedSymbol, timeframe: resolvedTimeframe, chartState: activeChartState ?? undefined },
+          user.email,
+          abortController.signal
+        ),
+        new Promise<never>((_, reject) => {
+          if (abortController.signal.aborted) reject(new Error("AI chat timed out after 55s"));
+          else abortController.signal.addEventListener("abort", () => reject(new Error("AI chat timed out after 55s")), { once: true });
+        }),
+      ]);
+    } finally {
+      clearTimeout(timeoutId);
+      request.signal.removeEventListener("abort", onClientDisconnect);
+    }
     const apiDuration = Date.now() - apiStartTime;
     console.log(`[STEP 5 COMPLETE] NVIDIA API request finished in ${apiDuration}ms`);
 
@@ -418,7 +456,7 @@ REQUIRED JSON RESPONSE SCHEMA:
       let analyzedAtStr = new Date().toISOString();
       let lastCandleTimeStr = new Date().toISOString();
       try {
-        const cachedRecord: any = await db(prisma.conversationMemory.findFirst({
+        const cachedRecord = await db(prisma.conversationMemory.findFirst({
           where: {
             userId: user.id,
             role: "cached_analysis",
@@ -442,7 +480,7 @@ REQUIRED JSON RESPONSE SCHEMA:
       );
     }
 
-    const finalMessages = [
+    const finalMessages: ChatMessage[] = [
       ...updatedMessages,
       { role: "assistant", content: finalReply, createdAt: new Date().toISOString() },
     ];
@@ -464,7 +502,7 @@ REQUIRED JSON RESPONSE SCHEMA:
     const updatedChat = await db(prisma.aIChat.update({
       where: { id: chat.id },
       data: {
-        messages: finalMessages as any,
+        messages: finalMessages as unknown as Prisma.InputJsonValue,
         title: chat.title === "New AI Coach Session" || chat.title.startsWith("New Chat")
           ? message.split(" ").slice(0, 4).join(" ") + "..."
           : chat.title,

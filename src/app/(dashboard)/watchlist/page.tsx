@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+export const dynamic = "force-dynamic";
+
+import { useState, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, Plus, Trash2, X, RefreshCw, AlertTriangle, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUIStore } from "@/lib/stores/ui-store";
 import { getSymbolsForMarket, type AssetClass } from "@/lib/supported-symbols";
 
@@ -18,12 +20,28 @@ const ASSET_CLASS_COLORS: Record<AssetClass, string> = {
   STOCK: "#34d399",
 };
 
-export default function WatchlistPage() {
+function WatchlistPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const { selectedMarket, setSelectedSymbol: _setSelectedSymbol } = useUIStore();
+  const { selectedMarket, setSelectedSymbol } = useUIStore();
   const [newWatchlistName, setNewWatchlistName] = useState("");
-  const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>("");
+  // Seed from the `?wl=` query param so the active watchlist survives refresh
+  // (previously page-local and lost on reload). Falls back to the first
+  // watchlist via `activeWatchlist` when empty.
+  const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>(
+    searchParams.get("wl") || ""
+  );
+
+  // Selecting a watchlist mirrors the id into the URL (replace, not push, so
+  // it doesn't pollute history) so a refresh rehydrates the same selection.
+  const selectWatchlist = (id: string) => {
+    setSelectedWatchlistId(id);
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) params.set("wl", id);
+    else params.delete("wl");
+    router.replace(`/watchlist?${params.toString()}`, { scroll: false });
+  };
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [filterGroup, setFilterGroup] = useState<string>("All");
@@ -64,7 +82,7 @@ export default function WatchlistPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["watchlists"] });
-      setSelectedWatchlistId(data.id);
+      selectWatchlist(data.id);
       setNewWatchlistName("");
       toast.success("Watchlist created");
     },
@@ -101,7 +119,7 @@ export default function WatchlistPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["watchlists"] });
-      setSelectedWatchlistId("");
+      selectWatchlist("");
       toast.success("Watchlist deleted");
     },
     onError: (err: any) => toast.error(err.message),
@@ -228,7 +246,7 @@ return (
                     return (
                       <div
                         key={w.id}
-                        onClick={() => { if (!isEditing) setSelectedWatchlistId(w.id); }}
+                        onClick={() => { if (!isEditing) selectWatchlist(w.id); }}
                         className="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors group"
                         style={{
                           backgroundColor: isActive ? "var(--color-bg-hover)" : "transparent",
@@ -331,12 +349,20 @@ return (
                           key={symbol}
                           onClick={async () => {
                             if (isAdded) {
+                              // Update the global store FIRST so /charts renders
+                              // the chosen symbol instantly, then persist to the
+                              // profile (the previous code PATCHed /api/v1/settings
+                              // which silently drops lastSymbol — its Zod schema
+                              // doesn't accept it — so the click never persisted
+                              // and the chart loaded the stale store symbol).
+                              setSelectedSymbol(symbol);
                               try {
-                                await fetch("/api/v1/settings", {
+                                await fetch("/api/v1/profile", {
                                   method: "PATCH",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify({ lastSymbol: symbol }),
                                 });
+                                queryClient.invalidateQueries({ queryKey: ["profile"] });
                               } catch (_) {}
                               router.push("/charts");
                             }
@@ -389,12 +415,14 @@ return (
                                 border: `1px solid ${spec?.color || "#6b7280"}40`,
                               }}
                               onClick={async () => {
+                                setSelectedSymbol(s);
                                 try {
-                                  await fetch("/api/v1/settings", {
+                                  await fetch("/api/v1/profile", {
                                     method: "PATCH",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ lastSymbol: s }),
                                   });
+                                  queryClient.invalidateQueries({ queryKey: ["profile"] });
                                 } catch (_) {}
                                 router.push("/charts");
                               }}
@@ -432,5 +460,15 @@ return (
         </div>
       )}
     </div>
+  );
+}
+
+// `useSearchParams` requires a Suspense boundary so the page can prerender
+// without a CSR bailout. The content is client-only; a null fallback is fine.
+export default function WatchlistPage() {
+  return (
+    <Suspense fallback={null}>
+      <WatchlistPageContent />
+    </Suspense>
   );
 }

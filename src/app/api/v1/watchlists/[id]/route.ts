@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import {
@@ -50,9 +51,16 @@ export async function PATCH(
       return validationError(validation.error);
     }
 
-    const updateData: any = { ...validation.data };
-    if (updateData.instruments) {
-      updateData.instruments = [...new Set(updateData.instruments)];
+    // Build the update payload field-by-field so each value keeps its precise
+    // type. Spreading `validation.data` widened `instruments` to the union
+    // `string[] | WatchlistUpdateinstrumentsInput`, which then broke the dedupe
+    // `new Set(...)` below.
+    const updateData: Prisma.WatchlistUpdateInput = {};
+    if (validation.data.name !== undefined) {
+      updateData.name = validation.data.name;
+    }
+    if (validation.data.instruments !== undefined) {
+      updateData.instruments = [...new Set(validation.data.instruments)];
     }
 
     const updated = await prisma.watchlist.update({

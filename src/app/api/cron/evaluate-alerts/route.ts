@@ -5,6 +5,7 @@ import { calculateEMA, calculateRSI, calculateVolatility } from "@/lib/indicator
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 import { secureBearerMatch } from "@/lib/secure-compare";
+import { getPopularSymbolStrings } from "@/lib/supported-symbols";
 
 export async function GET(request: NextRequest) {
   try {
@@ -113,8 +114,10 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Proactive system intelligence checks:
-    // Fetch unique watchlist items or standard symbols to check volatility & sharp returns
-    const standardAssets = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "XAU/USD"];
+    // Fetch unique watchlist items or the registry's curated popular symbols
+    // to check volatility & sharp returns. The curated set lives on the
+    // registry (`popular: true`), not hardcoded in this route.
+    const standardAssets = getPopularSymbolStrings();
     
     // Select all user settings to see who gets notifications
     const users = await prisma.user.findMany({ select: { id: true } });

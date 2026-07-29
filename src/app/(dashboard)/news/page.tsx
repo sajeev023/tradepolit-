@@ -16,8 +16,11 @@ import {
   Layers
 } from "lucide-react";
 import type { NewsStory } from "@/lib/news";
+import { getPopularSymbolStrings } from "@/lib/supported-symbols";
 
-const FILTER_ASSETS = ["ALL", "BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ"];
+// "ALL" + the registry's curated popular instruments. Adding a filterable
+// asset is a `popular: true` edit on its registry entry, not a UI edit here.
+const FILTER_ASSETS = ["ALL", ...getPopularSymbolStrings()];
 
 export default function NewsPage() {
   const [selectedAsset, setSelectedAsset] = useState("ALL");

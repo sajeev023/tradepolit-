@@ -4,18 +4,28 @@ export const dynamic = "force-dynamic";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useMemo } from "react";
+import { z } from "zod";
 import { Bell, RefreshCw, Key, Lock, AlertTriangle, Loader2, User, Palette, CreditCard, Zap } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useUIStore } from "@/lib/stores/ui-store";
-import { MARKETS, MarketRegion } from "@/lib/supported-symbols";
+import { MARKETS, MarketRegion, getDefaultSymbolForMarket } from "@/lib/supported-symbols";
+import { normalizeTimeframe } from "@/lib/timeframes";
+import { apiClient, ApiClientError } from "@/lib/api-client";
+
+// Terminal-only preferences persisted to localStorage. Validated through Zod
+// on read so a corrupt/manually-edited value can never inject an impossible
+// state into the setters (which expect their literal-union type) — the prior
+// `localStorage.getItem(...) as any` cast silently accepted any string.
+const aiBehaviorSchema = z.enum(["aggressive", "balanced", "risk-shield"]);
+const chartTypeSchema = z.enum(["candlestick", "line", "heikin-ashi"]);
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { selectedMarket, setSelectedMarket } = useUIStore();
+  const { selectedMarket, switchMarket, setSelectedTimeframe } = useUIStore();
   // Memoize the Supabase client so it's constructed once for the component's
   // lifetime, not on every render. A fresh client per render churned Supabase
   // auth state and re-triggered the `[supabase]` effect below on each render.
@@ -43,9 +53,11 @@ export default function SettingsPage() {
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
-  // Trading preferences (localStorage backed)
+  // Trading preferences. `defaultTimeframe` is server-backed (profile
+  // lastTimeframe) — the single source of truth, no localStorage mirror. The
+  // AI behavior and chart type are terminal-only prefs with no server row, so
+  // those remain localStorage-backed (the only non-server-backed keys kept).
   const [defaultTimeframe, setDefaultTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W">("4h");
-  const [defaultSymbol, setDefaultSymbol] = useState("BTC/USD");
   const [aiBehavior, setAiBehavior] = useState<"aggressive" | "balanced" | "risk-shield">("balanced");
   const [defaultChartType, setDefaultChartType] = useState<"candlestick" | "line" | "heikin-ashi">("candlestick");
 
@@ -55,15 +67,13 @@ export default function SettingsPage() {
   const handleCheckout = async () => {
     setStripeLoading(true);
     try {
-      const res = await fetch("/api/v1/stripe/checkout", { method: "POST" });
-      const body = await res.json();
-      if (res.ok && body.data?.url) {
-        window.location.href = body.data.url;
-      } else {
-        toast.error(body.error?.message || "Checkout failed");
-      }
-    } catch {
-      toast.error("Checkout failed");
+      // apiClient centralizes the /api/stripe base path and unwraps the `{ url }`
+      // body (Stripe returns a non-envelope success). A non-2xx throws
+      // ApiClientError carrying the server's error.code/message.
+      const { url } = await apiClient.stripe.post<{ url: string }>("/create-checkout");
+      window.location.href = url;
+    } catch (err) {
+      toast.error(err instanceof ApiClientError ? err.message : "Checkout failed");
     } finally {
       setStripeLoading(false);
     }
@@ -72,15 +82,10 @@ export default function SettingsPage() {
   const handlePortal = async () => {
     setStripeLoading(true);
     try {
-      const res = await fetch("/api/v1/stripe/portal", { method: "POST" });
-      const body = await res.json();
-      if (res.ok && body.data?.url) {
-        window.location.href = body.data.url;
-      } else {
-        toast.error(body.error?.message || "Billing Portal failed");
-      }
-    } catch {
-      toast.error("Billing Portal failed");
+      const { url } = await apiClient.stripe.post<{ url: string }>("/portal");
+      window.location.href = url;
+    } catch (err) {
+      toast.error(err instanceof ApiClientError ? err.message : "Billing Portal failed");
     } finally {
       setStripeLoading(false);
     }
@@ -89,23 +94,13 @@ export default function SettingsPage() {
   // Fetch current database settings
   const { data: settingsData, isLoading: settingsLoading } = useQuery<any>({
     queryKey: ["settings"],
-    queryFn: async () => {
-      const res = await fetch("/api/v1/settings");
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error?.message || "Failed to load settings");
-      return body.data;
-    },
+    queryFn: () => apiClient.get("/settings"),
   });
 
   // Fetch current user profile with subscription status
   const { data: profileData, isLoading: profileLoading, refetch: _refetchProfile } = useQuery<any>({
     queryKey: ["profile"],
-    queryFn: async () => {
-      const res = await fetch("/api/v1/profile");
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error?.message || "Failed to load profile");
-      return body.data;
-    },
+    queryFn: () => apiClient.get("/profile"),
   });
 
   const isLoading = settingsLoading || profileLoading;
@@ -120,6 +115,14 @@ export default function SettingsPage() {
     }
   }, [settingsData]);
 
+  // The default timeframe is server-backed (profile.lastTimeframe), so sync it
+  // from the shared profile query rather than a localStorage mirror.
+  useEffect(() => {
+    if (profileData?.lastTimeframe) {
+      setDefaultTimeframe(profileData.lastTimeframe as "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W");
+    }
+  }, [profileData]);
+
   useEffect(() => {
     const getUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -130,41 +133,32 @@ export default function SettingsPage() {
     };
     getUserData();
 
+    // Only the non-server-backed terminal prefs are localStorage-mirrored.
+    // The default symbol/timeframe live on the server profile (single source
+    // of truth) — their previous localStorage mirror duplicated
+    // profile.lastSymbol/lastTimeframe and drifted out of sync.
     if (typeof window !== "undefined") {
-      const tf = localStorage.getItem("TradCopilot-default-timeframe") as any;
-      const sym = localStorage.getItem("TradCopilot-default-symbol");
-      const behavior = localStorage.getItem("TradCopilot-ai-behavior") as any;
-      const chart = localStorage.getItem("TradCopilot-default-chart-type") as any;
-      if (tf) setDefaultTimeframe(tf);
-      if (sym) setDefaultSymbol(sym);
-      if (behavior) setAiBehavior(behavior);
-      if (chart) setDefaultChartType(chart);
+      const behavior = aiBehaviorSchema.safeParse(localStorage.getItem("TradCopilot-ai-behavior"));
+      if (behavior.success) setAiBehavior(behavior.data);
+      const chart = chartTypeSchema.safeParse(localStorage.getItem("TradCopilot-default-chart-type"));
+      if (chart.success) setDefaultChartType(chart.data);
     }
   }, [supabase]);
 
   // Save settings mutation (API keys and notification prefs)
   const saveMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/v1/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          notifyEmail,
-          notifyInApp,
-          coinmarketcapKey: cmcKey,
-          twelvedataKey: tdKey,
-        }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error?.message || "Failed to save settings");
-      return body.data;
-    },
+    mutationFn: () => apiClient.patch("/settings", {
+      notifyEmail,
+      notifyInApp,
+      coinmarketcapKey: cmcKey,
+      twelvedataKey: tdKey,
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settings"] });
       toast.success("Settings saved successfully");
     },
-    onError: (err: any) => {
-      toast.error(err.message);
+    onError: (err: unknown) => {
+      toast.error(err instanceof ApiClientError ? err.message : "Failed to save settings");
     },
   });
 
@@ -189,8 +183,8 @@ export default function SettingsPage() {
       if (error) throw error;
       toast.success("Profile details updated successfully");
       router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update profile");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
       setProfileUpdating(false);
     }
@@ -218,8 +212,8 @@ export default function SettingsPage() {
       toast.success("Password updated successfully");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update password");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update password");
     } finally {
       setPasswordUpdating(false);
     }
@@ -233,31 +227,35 @@ export default function SettingsPage() {
 
     setDeletingAccount(true);
     try {
-      const res = await fetch("/api/v1/settings", {
-        method: "DELETE",
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error?.message || "Failed to clear account database records");
+      await apiClient.delete("/settings");
 
       await supabase.auth.signOut();
       toast.success("Account deleted successfully. We are sorry to see you go!");
       router.push("/");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete account");
+    } catch (err) {
+      toast.error(err instanceof ApiClientError ? err.message : "Failed to delete account");
     } finally {
       setDeletingAccount(false);
     }
   };
 
-  const handleSavePreferences = (e: React.FormEvent) => {
+  const handleSavePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Default timeframe is the server-backed single source of truth: persist
+    // to the profile and mirror into the store so the charts page picks it up
+    // immediately. AI behavior + chart type stay localStorage (no server row).
+    try {
+      await apiClient.patch("/profile", { lastTimeframe: defaultTimeframe });
+      setSelectedTimeframe(defaultTimeframe);
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    } catch {
+      // non-fatal: the selector still reflects the local choice
+    }
     if (typeof window !== "undefined") {
-      localStorage.setItem("TradCopilot-default-timeframe", defaultTimeframe);
-      localStorage.setItem("TradCopilot-default-symbol", defaultSymbol);
       localStorage.setItem("TradCopilot-ai-behavior", aiBehavior);
       localStorage.setItem("TradCopilot-default-chart-type", defaultChartType);
-      toast.success("Trading preferences saved successfully");
     }
+    toast.success("Trading preferences saved successfully");
   };
 
   // Get initials for profile representation
@@ -584,12 +582,19 @@ export default function SettingsPage() {
                       value={selectedMarket}
                       onChange={(e) => {
                         const m = e.target.value as MarketRegion;
-                        setSelectedMarket(m);
-                        fetch("/api/v1/profile", {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ preferredMarket: m }),
+                        // Deliberate market switch: reset the symbol to the
+                        // market's default (the hydrator never does this) and
+                        // persist both preferredMarket and the new default
+                        // symbol so the profile stays internally consistent —
+                        // a stale lastSymbol from the old market would
+                        // otherwise reappear on next charts load.
+                        const newDefaultSymbol = getDefaultSymbolForMarket(m);
+                        switchMarket(m);
+                        void apiClient.patch("/profile", {
+                          preferredMarket: m,
+                          lastSymbol: newDefaultSymbol,
                         });
+                        queryClient.invalidateQueries({ queryKey: ["profile"] });
                         toast.success(`Primary trading market set to ${MARKETS[m]?.label}`);
                       }}
                       className="w-full bg-zinc-900 border border-emerald-500/40 rounded-lg px-3 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-400"
@@ -609,7 +614,10 @@ export default function SettingsPage() {
                     </label>
                     <select
                       value={defaultTimeframe}
-                      onChange={(e) => setDefaultTimeframe(e.target.value as any)}
+                      onChange={(e) => {
+                        const tf = normalizeTimeframe(e.target.value);
+                        if (tf) setDefaultTimeframe(tf);
+                      }}
                       className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-accent"
                     >
                       {["1m", "5m", "15m", "1h", "4h", "1d", "1W"].map((tf) => (
@@ -625,7 +633,10 @@ export default function SettingsPage() {
                     </label>
                     <select
                       value={aiBehavior}
-                      onChange={(e) => setAiBehavior(e.target.value as any)}
+                      onChange={(e) => {
+                        const v = aiBehaviorSchema.safeParse(e.target.value);
+                        if (v.success) setAiBehavior(v.data);
+                      }}
                       className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-accent"
                     >
                       <option value="balanced">Balanced / Disciplined Coach (Default)</option>
@@ -641,7 +652,10 @@ export default function SettingsPage() {
                     </label>
                     <select
                       value={defaultChartType}
-                      onChange={(e) => setDefaultChartType(e.target.value as any)}
+                      onChange={(e) => {
+                        const v = chartTypeSchema.safeParse(e.target.value);
+                        if (v.success) setDefaultChartType(v.data);
+                      }}
                       className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-accent"
                     >
                       <option value="candlestick">Standard Candlestick</option>

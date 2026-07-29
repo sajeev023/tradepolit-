@@ -1,17 +1,13 @@
-import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/auth";
 import {
   successResponse,
   paginatedResponse,
-  unauthorizedError,
-  validationError,
   notFoundError,
   errorResponse,
 } from "@/lib/api-helpers";
 import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
-import { dispatchCaughtError } from "@/lib/typed-errors";
+import { createHandler } from "@/lib/route-handler";
 
 function demoJournalLocked() {
   const e = getDemoFeatureLockedError("journal");
@@ -35,23 +31,24 @@ const journalEntrySchema = z.object({
   tradeId: z.string().uuid().optional(),
 });
 
-export async function POST(request: NextRequest) {
-  try {
-    const { user, error } = await getAuthenticatedUser();
-    if (error || !user) return error ?? unauthorizedError();
+// Query params arrive as strings; z.coerce.number() replaces the hand-rolled
+// parseInt and validates the range in one step.
+const journalQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  tradeId: z.string().uuid().optional(),
+});
 
+export const POST = createHandler({
+  rateLimit: { prefix: "journal", max: 30, windowMs: 60_000 },
+  schema: journalEntrySchema,
+  async handler({ user, body }) {
     // Demo users can't use the journal (per entitlements).
     if (isDemoUser(user.id, user.email ?? undefined)) {
       return demoJournalLocked();
     }
 
-    const json = await request.json();
-    const validation = journalEntrySchema.safeParse(json);
-    if (!validation.success) {
-      return validationError(validation.error);
-    }
-
-    const { title, body, mood, tradeId } = validation.data;
+    const { title, body: entryBody, mood, tradeId } = body;
 
     // If a tradeId is provided, ensure the trade belongs to the user.
     if (tradeId) {
@@ -67,35 +64,27 @@ export async function POST(request: NextRequest) {
       data: {
         userId: user.id,
         title,
-        body,
+        body: entryBody,
         mood: mood ?? null,
         tradeId: tradeId ?? null,
       },
     });
 
     return successResponse(entry, 201);
-  } catch (error) {
-    console.error("Create journal entry API error:", error);
-    return dispatchCaughtError("Failed to create journal entry", error);
-  }
-}
+  },
+});
 
-export async function GET(request: NextRequest) {
-  try {
-    const { user, error } = await getAuthenticatedUser();
-    if (error || !user) return error ?? unauthorizedError();
-
-    // Demo users can't use the journal (per entitlements).
+export const GET = createHandler({
+  rateLimit: { prefix: "journal", max: 60, windowMs: 60_000 },
+  querySchema: journalQuerySchema,
+  async handler({ user, query }) {
     if (isDemoUser(user.id, user.email ?? undefined)) {
       return demoJournalLocked();
     }
 
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
-    const tradeId = searchParams.get("tradeId");
+    const { page, limit, tradeId } = query;
 
-    const where: Record<string, any> = { userId: user.id };
+    const where: Record<string, unknown> = { userId: user.id };
     if (tradeId) {
       where.tradeId = tradeId;
     }
@@ -122,8 +111,5 @@ export async function GET(request: NextRequest) {
     ]);
 
     return paginatedResponse(entries, page, limit, total);
-  } catch (error) {
-    console.error("List journal entries API error:", error);
-    return dispatchCaughtError("Failed to list journal entries", error);
-  }
-}
+  },
+});

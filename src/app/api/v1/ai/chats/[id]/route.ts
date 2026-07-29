@@ -8,6 +8,7 @@ import {
 } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 import { resolvePlan } from "@/lib/entitlements";
+import { parseChatMessages } from "@/lib/chat-message";
 
 export async function GET(
   request: NextRequest,
@@ -35,11 +36,13 @@ export async function GET(
       select: { plan: true, subscriptionStatus: true, subscriptionExpiresAt: true },
     });
 
-    let chatMessages = Array.isArray(chat.messages) ? (chat.messages as any[]) : [];
+    let chatMessages = parseChatMessages(chat.messages);
     const plan = resolvePlan(user.id, user.email, userProfile?.plan, userProfile?.subscriptionStatus, userProfile?.subscriptionExpiresAt);
     if (plan !== "PRO") {
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      chatMessages = chatMessages.filter((m: any) => new Date(m.createdAt) >= sevenDaysAgo);
+      chatMessages = chatMessages.filter((m) =>
+        m.createdAt ? new Date(m.createdAt) >= sevenDaysAgo : false
+      );
     }
 
     return successResponse({

@@ -7,6 +7,7 @@ const mockCandles = Array.from({ length: 100 }, (_, i) => ({
   low: 2280 + Math.sin(i / 5) * 50,
   close: 2310 + Math.sin(i / 5) * 50 + (i > 80 ? i * 2 : 0), // Push RSI up
   volume: 1000 + Math.random() * 500,
+  source: "LIVE" as const,
 }));
 
 console.log("=== TESTING TECHNICAL CONTEXT COMPILER ===");

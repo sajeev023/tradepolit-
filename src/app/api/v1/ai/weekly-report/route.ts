@@ -105,7 +105,7 @@ Provide a concise, impact-oriented 1-page report detailing patterns and tactical
     const reportText = (raceResult.content || "").trim();
 
     return successResponse({ report: reportText });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Weekly report generation failed:", err);
     const errDetails = handleNvidiaError(err);
     if (errDetails?.message) {

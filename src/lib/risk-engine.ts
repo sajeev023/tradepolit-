@@ -5,10 +5,14 @@
  * Uses decimal.js to eliminate IEEE-754 floating-point errors.
  */
 import Decimal from "decimal.js";
+import { type AssetClass, type RiskSpec, riskSpecFor, getSupportedSymbol } from "./supported-symbols";
 
 Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_EVEN });
 
-export type AssetClass = "CRYPTO" | "FOREX" | "COMMODITY" | "INDEX";
+// `AssetClass` is re-exported here so existing callers that import it from the
+// risk engine keep compiling, but the canonical definition lives in the
+// registry (supported-symbols.ts) so the union can never diverge.
+export type { AssetClass };
 export type Direction = "LONG" | "SHORT";
 export type CalculationMode = "STANDARD" | "MAX" | "MIN";
 
@@ -45,42 +49,28 @@ export interface RiskEngineResult {
   mode: CalculationMode;
 }
 
-interface InstrumentSpec {
-  assetClass: AssetClass;
-  contractSize: number;
-  pipSize: number;
-  minTradable: number;
-  isJpyQuote: boolean;
-}
-
 const DEFAULT_MAX_LEVERAGE: Record<AssetClass, number> = {
   CRYPTO: 100,
   FOREX: 100,
   COMMODITY: 50,
   INDEX: 20,
+  STOCK: 5,
 };
 
-const INSTRUMENT_SPECS: Record<string, InstrumentSpec> = {
-  "BTC/USD": { assetClass: "CRYPTO",    contractSize: 1,       pipSize: 1,      minTradable: 0.001, isJpyQuote: false },
-  "ETH/USD": { assetClass: "CRYPTO",    contractSize: 1,       pipSize: 0.01,   minTradable: 0.01,  isJpyQuote: false },
-  "SOL/USD": { assetClass: "CRYPTO",    contractSize: 1,       pipSize: 0.01,   minTradable: 0.01,  isJpyQuote: false },
-  "EUR/USD": { assetClass: "FOREX",     contractSize: 100000,  pipSize: 0.0001, minTradable: 1000,  isJpyQuote: false },
-  "GBP/USD": { assetClass: "FOREX",     contractSize: 100000,  pipSize: 0.0001, minTradable: 1000,  isJpyQuote: false },
-  "USD/JPY": { assetClass: "FOREX",     contractSize: 100000,  pipSize: 0.01,   minTradable: 1000,  isJpyQuote: true  },
-  "EUR/JPY": { assetClass: "FOREX",     contractSize: 100000,  pipSize: 0.01,   minTradable: 1000,  isJpyQuote: true  },
-  "GBP/JPY": { assetClass: "FOREX",     contractSize: 100000,  pipSize: 0.01,   minTradable: 1000,  isJpyQuote: true  },
-  "XAU/USD": { assetClass: "COMMODITY", contractSize: 1,       pipSize: 0.01,   minTradable: 0.01,  isJpyQuote: false },
-  "NASDAQ":  { assetClass: "INDEX",     contractSize: 1,       pipSize: 1,      minTradable: 0.01,  isJpyQuote: false },
-  "S&P500":  { assetClass: "INDEX",     contractSize: 1,       pipSize: 1,      minTradable: 0.01,  isJpyQuote: false },
-};
-
-function getSpec(symbol: string): InstrumentSpec {
-  return INSTRUMENT_SPECS[symbol] ?? { assetClass: "CRYPTO", contractSize: 1, pipSize: 1, minTradable: 0.001, isJpyQuote: false };
+/**
+ * Resolve the asset class for a symbol from the registry. Previously the risk
+ * engine kept its own `AssetClass` union (without STOCK) and fell back to
+ * CRYPTO for any unknown symbol — which silently misclassified stocks. Now
+ * the registry is the source of truth; the `assetClass` field on the params is
+ * still accepted for backwards compatibility but the spec-driven path below
+ * uses the registry's assetClass when available.
+ */
+function assetClassFor(symbol: string, fallback: AssetClass): AssetClass {
+  return getSupportedSymbol(symbol)?.assetClass ?? fallback;
 }
 
 export function getMaxLeverage(symbol: string, requestedLeverage?: number): number {
-  const spec = getSpec(symbol);
-  const max = DEFAULT_MAX_LEVERAGE[spec.assetClass] ?? 1;
+  const max = DEFAULT_MAX_LEVERAGE[assetClassFor(symbol, "CRYPTO")] ?? 1;
   if (requestedLeverage === undefined || isNaN(requestedLeverage)) return max;
   return Math.min(Math.max(requestedLeverage, 1), max);
 }
@@ -132,7 +122,7 @@ export function validateInputs(params: RiskEngineParams): ValidationError[] {
 }
 
 export function computePipValue(symbol: string, positionUnits: Decimal, entryPrice: Decimal): Decimal {
-  const spec = getSpec(symbol);
+  const spec = riskSpecFor(symbol);
   const pip = new Decimal(spec.pipSize);
   if (spec.isJpyQuote) {
     return positionUnits.times(pip).dividedBy(entryPrice);
@@ -140,7 +130,7 @@ export function computePipValue(symbol: string, positionUnits: Decimal, entryPri
   return positionUnits.times(pip);
 }
 
-function roundDown(value: Decimal, spec: InstrumentSpec): Decimal {
+function roundDown(value: Decimal, spec: RiskSpec): Decimal {
   const minUnit = new Decimal(spec.minTradable);
   return value.dividedBy(minUnit).floor().times(minUnit);
 }
@@ -162,11 +152,12 @@ export function calculate(params: RiskEngineParams): RiskEngineResult {
   const balance  = new Decimal(rawBalance);
   const entry    = new Decimal(rawEntry);
   const stop     = new Decimal(rawStop);
-  const spec = getSpec(symbol);
+  const spec = riskSpecFor(symbol);
+  const assetClass = assetClassFor(symbol, params.assetClass);
   const cappedLeverage = getMaxLeverage(symbol, rawLeverage);
   const leverage = new Decimal(cappedLeverage);
   if (rawLeverage > cappedLeverage) {
-    warnings.push(`Leverage capped to ${cappedLeverage}x for ${spec.assetClass} assets`);
+    warnings.push(`Leverage capped to ${cappedLeverage}x for ${assetClass} assets`);
   }
 
   // Dollar risk capital
@@ -257,13 +248,13 @@ export function calculate(params: RiskEngineParams): RiskEngineResult {
   let standardLots: number | null = null;
   let miniLots: number | null = null;
   let microLots: number | null = null;
-  if (spec.assetClass === "FOREX") {
+  if (assetClass === "FOREX") {
     standardLots = finalPosition.dividedBy(100000).toNumber();
     miniLots     = finalPosition.dividedBy(10000).toNumber();
     microLots    = finalPosition.dividedBy(1000).toNumber();
   }
 
-  const lotSizeOrQty = spec.assetClass === "FOREX" && standardLots !== null
+  const lotSizeOrQty = assetClass === "FOREX" && standardLots !== null
     ? `${new Decimal(standardLots).toFixed(4)} Standard Lots`
     : `${finalPosition.toFixed(5)} ${symbol.split("/")[0]}`;
 

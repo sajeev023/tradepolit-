@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 import type { ApiError, ErrorCode } from "./types";
 
 function jsonError(
@@ -14,6 +15,122 @@ function jsonError(
   );
 }
 
+// ─── Unified error hierarchy ─────────────────────────────────────────────────
+// Routes throw typed `BaseError` subclasses; the route wrapper (or
+// `dispatchCaughtError`) catches them and renders the ApiError envelope via
+// `toErrorResponse`. This replaces the prior `dispatchCaughtError(err?: any)`
+// type-safety black hole where every caught value was `any` and the error code
+// was decided by sniffing duck-typed fields. With `instanceof` narrowing the
+// compiler enforces that every error maps to exactly one envelope shape.
+
+export abstract class BaseError extends Error {
+  /** Stable machine-readable code surfaced to the client as `error.code`. */
+  abstract readonly code: ErrorCode;
+  /** HTTP status the wrapper maps this error to. */
+  abstract readonly status: number;
+  /** Extra fields for `error.details`; omit when there is nothing to add. */
+  abstract details(): Record<string, unknown> | undefined;
+  /** Retry-After header value in ms; subclasses override to surface it. */
+  retryAfterMs(): number | undefined { return undefined; }
+  constructor(message: string) {
+    super(message);
+    // Restore the prototype chain after the Error subclass capture so
+    // `instanceof` works reliably under targeting older TS lib configs.
+    this.name = new.target.name;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+/** 401 — authentication failed (session expired, invalid token, missing user). */
+export class AuthError extends BaseError {
+  readonly code: ErrorCode = "AUTH_FAILED";
+  readonly status = 401;
+  details() { return undefined; }
+  constructor(message = "Your session has expired. Please sign in again.") {
+    super(message);
+  }
+}
+
+/** 503 — a transient Prisma connectivity error (P1001/P1002/...). */
+export class PrismaTransientError extends BaseError {
+  readonly code: ErrorCode = "DB_UNAVAILABLE";
+  readonly status = 503;
+  readonly retry: number;
+  constructor(retryAfterMs = 30_000) {
+    super("We're having brief trouble reaching our database. Your action will retry automatically.");
+    this.retry = retryAfterMs;
+  }
+  details() { return { layer: "database", retryAfterMs: this.retry }; }
+  retryAfterMs() { return this.retry; }
+}
+
+/** 400 — request body/query failed Zod validation. */
+export class ZodValidationError extends BaseError {
+  readonly code: ErrorCode = "VALIDATION_ERROR";
+  readonly status = 400;
+  private readonly issues: Array<{ path: string; message: string }>;
+  constructor(error: ZodError) {
+    super("Validation failed");
+    this.issues = error.issues.map((i) => ({ path: i.path.join("."), message: i.message }));
+  }
+  details() { return { issues: this.issues }; }
+}
+
+/** 502 — an upstream provider (Binance, TwelveData, Groq, Stripe, ...) is unavailable. */
+export class UpstreamError extends BaseError {
+  readonly code: ErrorCode = "UPSTREAM_UNAVAILABLE";
+  readonly status = 502;
+  readonly provider: string;
+  private readonly retry?: number;
+  constructor(provider: string, message?: string, retryAfterMs?: number) {
+    super(message || `${provider} is temporarily unavailable. Falling back where possible.`);
+    this.provider = provider;
+    this.retry = retryAfterMs;
+  }
+  details() { return { provider: this.provider, retryAfterMs: this.retry }; }
+  retryAfterMs() { return this.retry; }
+}
+
+/** 429 — rate limited. Always carries Retry-After. */
+export class RateLimitError extends BaseError {
+  readonly code: ErrorCode = "RATE_LIMITED";
+  readonly status = 429;
+  readonly retry: number;
+  constructor(retryAfterMs = 60_000, message?: string) {
+    super(message || "Too many requests. Please slow down.");
+    this.retry = retryAfterMs;
+  }
+  details() { return { retryAfterMs: this.retry }; }
+  retryAfterMs() { return this.retry; }
+}
+
+/** 502 — a Stripe API call failed. Carries the Stripe error code when present. */
+export class StripeError extends BaseError {
+  readonly code: ErrorCode = "STRIPE_ERROR";
+  readonly status = 502;
+  readonly stripeCode?: string;
+  constructor(message: string, stripeCode?: string) {
+    super(message);
+    this.stripeCode = stripeCode;
+  }
+  details() { return { stripeCode: this.stripeCode }; }
+}
+
+/**
+ * Render a `BaseError` (or subclass) into the ApiError envelope. The single
+ * dispatch point for the error hierarchy — routes throw, the wrapper catches
+ * and calls this. Narrowing is exhaustive over the hierarchy, so adding a new
+ * error class produces a compile-time reminder to map it here.
+ */
+export function toErrorResponse(err: BaseError): NextResponse<ApiError> {
+  const headers: Record<string, string> = {};
+  const retry = err.retryAfterMs();
+  if (retry !== undefined) {
+    headers["Retry-After"] = String(Math.ceil(retry / 1000));
+  }
+  return jsonError(err.code, err.message, err.status, err.details(), Object.keys(headers).length ? headers : undefined);
+}
+
 /**
  * Thrown by the market-data layer when a caller requests a symbol that is not
  * in the supported instrument registry (src/lib/supported-symbols.ts). This is
@@ -22,14 +139,15 @@ function jsonError(
  * silently receive fabricated prices — for a trading app that is the most
  * dangerous defect, so the data layer fails fast and routes map this to 422.
  */
-export class UnsupportedSymbolError extends Error {
-  readonly symbol: string;
+export class UnsupportedSymbolError extends BaseError {
+  readonly code: ErrorCode = "UNSUPPORTED_SYMBOL";
   readonly status = 422;
+  readonly symbol: string;
   constructor(symbol: string) {
-    super(`Symbol "${symbol}" is not supported. Use a symbol from the supported instrument registry.`);
-    this.name = "UnsupportedSymbolError";
+    super(`"${symbol}" is not a supported instrument. Choose from the available markets in the watchlist.`);
     this.symbol = symbol;
   }
+  details() { return { symbol: this.symbol }; }
 }
 
 /**
@@ -135,8 +253,8 @@ export function partialUpstreamError(provider: string, message: string, details?
  * connectivity error that should trigger a dbError response rather
  * than a generic 500.
  */
-export function isPrismaTransientError(err: any): boolean {
-  const code = err?.code;
+export function isPrismaTransientError(err: unknown): boolean {
+  const code = (err as { code?: string })?.code;
   if (!code) return false;
   // P1001 connection lost, P1002 timed out, P1003 cannot reach, P1008 crashed,
   // P1010 connection closed, P2024 transaction cancelled, P2034 race
@@ -150,6 +268,10 @@ export function isPrismaTransientError(err: any): boolean {
  * Dispatch the right typed response from a caught error. Drop-in
  * replacement for `internalError("Failed to X")` in route catch blocks.
  *
+ * Typed `BaseError` subclasses (thrown by the new route wrapper and migrated
+ * routes) render directly via `toErrorResponse`. Legacy non-typed errors are
+ * still classified by duck-typing so existing unmigrated routes keep working:
+ *
  * - Prisma transient → dbError (503 with Retry-After)
  * - 401/403 in the error status → authFailedError (401)
  * - Otherwise → internalError (500) with the supplied message
@@ -157,17 +279,18 @@ export function isPrismaTransientError(err: any): boolean {
  * Use this in any route whose outer catch currently lumps DB outages,
  * auth failures, and programmer bugs into the same generic 500.
  */
-export function dispatchCaughtError(message: string, err?: any) {
+export function dispatchCaughtError(message: string, err?: unknown) {
+  // Typed hierarchy: render via the single dispatch point.
+  if (err instanceof BaseError) {
+    return toErrorResponse(err);
+  }
   if (isPrismaTransientError(err)) {
-    return dbError(30_000);
+    return toErrorResponse(new PrismaTransientError(30_000));
   }
-  // Unsupported symbol from the market-data layer → 422 (not a 500).
-  if (err instanceof UnsupportedSymbolError) {
-    return unsupportedSymbolError(err.symbol);
-  }
-  const status = err?.status ?? err?.statusCode;
+  const status = (err as { status?: number; statusCode?: number })?.status
+    ?? (err as { statusCode?: number })?.statusCode;
   if (status === 401 || status === 403) {
-    return authFailedError();
+    return toErrorResponse(new AuthError());
   }
   return jsonError("INTERNAL_ERROR", message, 500);
 }

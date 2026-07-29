@@ -4,22 +4,13 @@ import { useEffect, useRef, useState, memo, useId } from "react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { profiler } from "@/lib/performance-profiler";
 import { getTradingViewSymbol } from "@/lib/supported-symbols";
+import { tradingViewIntervalFor } from "@/lib/timeframes";
 
 interface TradingViewChartProps {
   symbol: string;
   timeframe?: string;
   isMaximized?: boolean;
 }
-
-const TIMEFRAME_MAP: Record<string, string> = {
-  "1m": "1",
-  "5m": "5",
-  "15m": "15",
-  "1h": "60",
-  "4h": "240",
-  "1d": "D",
-  "1W": "W",
-};
 
 export const TradingViewChart = memo(function TradingViewChart({
   symbol,
@@ -37,11 +28,18 @@ export const TradingViewChart = memo(function TradingViewChart({
   const [retryCount, setRetryCount] = useState(0);
   const [widgetRetryKey, setWidgetRetryKey] = useState(0);
   const [wsReconnecting, setWsReconnecting] = useState(false);
-  
+
   const isWidgetReadyRef = useRef(false);
+  // Generation counter bumped every time the widget-init effect tears the
+  // widget down (symbol/timeframe change, unmount). The sleep/wake reload
+  // captures the generation before calling reload(); if it changed by the
+  // time reload() returns, a symbol change won the race and the reload's
+  // new widget must be discarded — not adopted — so it can't leak or steal
+  // the ref from the freshly-initialized widget.
+  const widgetGenerationRef = useRef(0);
 
   const tvSymbol = getTradingViewSymbol(symbol);
-  const tvInterval = TIMEFRAME_MAP[timeframe] || "60";
+  const tvInterval = tradingViewIntervalFor(timeframe);
 
   // Track React component render cycles
   useEffect(() => {
@@ -164,6 +162,9 @@ export const TradingViewChart = memo(function TradingViewChart({
 
     return () => {
       profiler.recordWidgetDestroy();
+      // Bump the generation so any in-flight sleep/wake reload() knows the
+      // widget it captured has been torn down and must NOT reassign widgetRef.
+      widgetGenerationRef.current += 1;
       if (widgetRef.current) {
         try {
           widgetRef.current.remove();
@@ -219,15 +220,28 @@ export const TradingViewChart = memo(function TradingViewChart({
       if (currentTime - lastTime > 10000) {
         const w = widgetRef.current;
         if (w && isWidgetReadyRef.current && typeof w.reload === "function") {
+          // Capture the generation BEFORE reload(). If a symbol change tears
+          // the widget down while reload() is in flight, the generation bumps
+          // and we discard the reloaded widget instead of adopting it.
+          const generation = widgetGenerationRef.current;
           try {
             const maybeNew = w.reload();
-            // tv.js reload() may return a new widget instance; capture it when it does.
+            // tv.js reload() may return a new widget instance; capture it
+            // only if our widget hasn't been torn down in the meantime.
             if (maybeNew && typeof maybeNew.remove === "function") {
-              widgetRef.current = maybeNew;
-              isWidgetReadyRef.current = false;
-              maybeNew.ready(() => {
-                isWidgetReadyRef.current = true;
-              });
+              if (widgetGenerationRef.current === generation) {
+                widgetRef.current = maybeNew;
+                isWidgetReadyRef.current = false;
+                maybeNew.ready(() => {
+                  if (widgetGenerationRef.current === generation) {
+                    isWidgetReadyRef.current = true;
+                  }
+                });
+              } else {
+                // A symbol change won the race — the new init effect owns the
+                // ref. Discard the reload result so it can't leak or steal it.
+                try { maybeNew.remove(); } catch (_) {}
+              }
             }
           } catch (_) {}
         }

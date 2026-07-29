@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`[INVALIDATE CACHE] Invalidated cache for ${symbol} ${timeframe}`);
     return successResponse({ invalidated: true, symbol, timeframe });
-  } catch (err: any) {
-    console.error("Cache invalidation error:", err?.message);
+  } catch (err: unknown) {
+    console.error("Cache invalidation error:", err instanceof Error ? err.message : err);
     return successResponse({ invalidated: false, error: "Failed to invalidate cache" });
   }
 }

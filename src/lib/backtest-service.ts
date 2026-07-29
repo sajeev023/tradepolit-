@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
+import { Prisma } from "@prisma/client";
 import { getOHLCV } from "./market";
-import type { OHLCVCandle } from "./types";
+import type { OHLCVCandle, BacktestCompleteResults, BacktestFailedResults } from "./types";
 
 export interface StrategyRule {
   indicatorA: "EMA20" | "EMA50" | "PRICE";
@@ -36,7 +37,7 @@ export async function runBacktestJob(backtestId: string, startBalance = 10000) {
 
     if (!backtest) throw new Error("Backtest job not found");
 
-    const rules = backtest.strategy.rulesConfig as any as StrategyDSL;
+    const rules = backtest.strategy.rulesConfig as unknown as StrategyDSL;
     const instrument = backtest.instrument;
     const timeframe = backtest.timeframe;
 
@@ -183,7 +184,7 @@ export async function runBacktestJob(backtestId: string, startBalance = 10000) {
       }
     }
 
-    const resultsJson = {
+    const results: BacktestCompleteResults = {
       trades: backtestTrades,
       equityCurve,
       metrics: {
@@ -210,16 +211,21 @@ export async function runBacktestJob(backtestId: string, startBalance = 10000) {
         profitFactor: Number.isFinite(profitFactor) ? profitFactor : null,
         netProfit,
         maxDrawdown,
-        resultsJson: resultsJson as any,
+        // Typed cast to Prisma's JSON input type — the result is a plain
+        // JSON-serializable object; this is the documented boundary cast for
+        // typed JSON columns (replaces the prior `as any`).
+        resultsJson: results as unknown as Prisma.InputJsonValue,
       },
     });
-  } catch (error: any) {
-    console.error("Backtest execution failed:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to execute backtest";
+    console.error("Backtest execution failed:", message);
+    const failed: BacktestFailedResults = { error: message };
     await prisma.backtest.update({
       where: { id: backtestId },
       data: {
         status: "FAILED",
-        resultsJson: { error: error.message || "Failed to execute backtest" } as any,
+        resultsJson: failed as unknown as Prisma.InputJsonValue,
       },
     });
   }

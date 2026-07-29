@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
-import { dispatchCaughtError } from "@/lib/typed-errors";
+import { dispatchCaughtError, rateLimitedError } from "@/lib/typed-errors";
+import { checkUserRateLimit } from "@/lib/rate-limit";
 import { SUPPORTED_SYMBOLS, getSymbolsForMarket, type MarketRegion } from "@/lib/supported-symbols";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,14 @@ export async function GET(request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    // Rate limit global search: 30 / min per user. A single request fans out to
+    // four parallel Prisma queries plus an in-memory symbol scan; an unbounded
+    // loop floods the DB connection pool.
+    const rl = checkUserRateLimit(user.id, request, "search", 30, 60_000);
+    if (!rl.result.allowed) {
+      return rateLimitedError(rl.result.resetAt - Date.now(), "Too many searches. Please slow down.");
+    }
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";

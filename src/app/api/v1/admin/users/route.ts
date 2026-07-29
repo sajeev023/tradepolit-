@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
       where: query
         ? {
             OR: [
-              { email: { contains: query, mode: "insensitive" as any } },
-              { displayName: { contains: query, mode: "insensitive" as any } },
+              { email: { contains: query, mode: "insensitive" } },
+              { displayName: { contains: query, mode: "insensitive" } },
             ],
           }
         : {},

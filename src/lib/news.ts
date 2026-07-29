@@ -2,6 +2,11 @@ import { prisma } from "./prisma";
 import { getCachedData, setCachedData } from "./cache";
 import { classifyArticle } from "./news-classifier";
 import { redactKey } from "./startup";
+import {
+  determineAffectedAssets,
+  newsCategoryFor,
+  newsQueryFor,
+} from "./supported-symbols";
 
 export interface NewsStory {
   id: string;
@@ -56,22 +61,6 @@ function getDomain(url: string): string {
   } catch (_) {
     return "";
   }
-}
-
-function determineAffectedAssets(title: string, summary: string): string[] {
-  const text = `${title} ${summary}`.toLowerCase();
-  const assets: string[] = [];
-
-  if (/\b(btc|bitcoin|xbt)\b/.test(text)) assets.push("BTC/USD");
-  if (/\b(eth|ethereum)\b/.test(text)) assets.push("ETH/USD");
-  if (/\b(sol|solana)\b/.test(text)) assets.push("SOL/USD");
-  if (/\b(eur|euro|ecb)\b/.test(text)) assets.push("EUR/USD");
-  if (/\b(gbp|sterling|pound|boe)\b/.test(text)) assets.push("GBP/USD");
-  if (/\b(jpy|yen|boj)\b/.test(text)) assets.push("USD/JPY");
-  if (/\b(xau|gold|bullion)\b/.test(text)) assets.push("XAU/USD");
-  if (/\b(nasdaq|qqq|s&p|dow|spx|stock|fed|rate|inflation|cpi|interest)\b/.test(text)) assets.push("NASDAQ");
-
-  return assets;
 }
 
 function parseFinnhubArticle(item: any): NewsStory {
@@ -185,37 +174,25 @@ function parseDbArticle(dbItem: any): NewsStory {
   };
 }
 
-// Map requested symbols to target Finnhub categories
-function getFinnhubCategoriesForSymbol(symbol?: string): string[] {
-  if (!symbol) return ["general", "forex", "crypto"];
-  const norm = symbol.toUpperCase();
-  if (norm.includes("BTC") || norm.includes("ETH") || norm.includes("SOL")) return ["crypto"];
-  if (norm.includes("EUR") || norm.includes("GBP") || norm.includes("JPY")) return ["forex"];
-  return ["general"];
-}
-
-// Map requested symbols to NewsAPI query queries
-function getNewsAPIQueryForSymbol(symbol?: string): string {
-  if (!symbol) return "financial markets OR stock market OR crypto OR forex";
-  const norm = symbol.toUpperCase();
-  if (norm.includes("BTC")) return "Bitcoin OR BTC";
-  if (norm.includes("ETH")) return "Ethereum OR ETH";
-  if (norm.includes("SOL")) return "Solana OR SOL";
-  if (norm.includes("EUR")) return "EUR OR Euro OR ECB";
-  if (norm.includes("GBP")) return "GBP OR Pound Sterling OR BOE";
-  if (norm.includes("JPY")) return "JPY OR Japanese Yen OR BOJ";
-  if (norm.includes("XAU")) return "Gold OR XAU OR Gold Price";
-  if (norm.includes("NASDAQ")) return "NASDAQ OR QQQ OR stock market";
-  return norm;
-}
-
 export async function getNewsFeed(
   symbol?: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  signal?: AbortSignal
 ): Promise<NewsStory[]> {
   const cleanSymbol = symbol === "ALL" ? undefined : symbol;
   const cacheKey = `news:feed:${cleanSymbol || "all"}:p${page}:l${limit}`;
+
+  // Compose the caller-supplied cancellation signal (route timeout / client
+  // disconnect) with the per-fetch 5s timeout. If the caller cancels, every
+  // in-flight upstream fetch aborts immediately instead of running to
+  // completion. AbortSignal.any ignores any non-AbortSignal entries, so we
+  // filter out the undefined caller signal.
+  const fetchSignal = (timeoutMs: number): AbortSignal => {
+    const timeout = AbortSignal.timeout(timeoutMs);
+    if (!signal) return timeout;
+    return AbortSignal.any([signal, timeout]);
+  };
 
   // 1. Try cache (5 minutes TTL = 300 seconds)
   const cached = await getCachedData<NewsStory[]>(cacheKey);
@@ -237,10 +214,10 @@ export async function getNewsFeed(
     }
     try {
       console.log(`[News] Finnhub → fetching for ${cleanSymbol || "ALL"}`);
-      const categories = getFinnhubCategoriesForSymbol(cleanSymbol);
+      const categories = newsCategoryFor(cleanSymbol);
       const fetchPromises = categories.map(async (cat) => {
         const url = `https://finnhub.io/api/v1/news?category=${cat}&token=${finnhubKey}`;
-        const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
+        const res = await fetch(url, { cache: "no-store", signal: fetchSignal(5000) });
         if (!res.ok) {
           if (res.status === 401 || res.status === 403 || res.status === 429) {
             console.error(
@@ -273,9 +250,9 @@ export async function getNewsFeed(
     }
     try {
       console.log(`[News] NewsAPI → fetching for ${cleanSymbol || "ALL"}`);
-      const query = getNewsAPIQueryForSymbol(cleanSymbol);
+      const query = newsQueryFor(cleanSymbol);
       const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=30&apiKey=${newsApiKey}`;
-      const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
+      const res = await fetch(url, { cache: "no-store", signal: fetchSignal(5000) });
       if (!res.ok) {
         if (res.status === 401 || res.status === 403 || res.status === 429) {
           console.error(
@@ -321,7 +298,15 @@ export async function getNewsFeed(
   // 4. Persist newly fetched stories to the News DB model.
   if (liveStories.length > 0) {
     console.log(`[News] Persisting ${liveStories.length} stories to database`);
-    for (const story of liveStories) {
+    for (let i = 0; i < liveStories.length; i++) {
+      // If the caller cancelled (route timeout / client disconnect), stop
+      // writing — there's no point persisting for a response that will
+      // never be delivered, and the next request will re-fetch anyway.
+      if (signal?.aborted) {
+        console.log(`[News] Caller aborted — stopping upsert loop after ${i} writes`);
+        break;
+      }
+      const story = liveStories[i];
       try {
         await prisma.news.upsert({
           where: { url: story.url },

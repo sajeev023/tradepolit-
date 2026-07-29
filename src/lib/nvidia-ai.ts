@@ -20,6 +20,25 @@
 import OpenAI from "openai";
 import { logStartupBanner, redactKey, envNameForProvider } from "./startup";
 
+// Narrow an unknown caught value into the optional-field shape that the
+// provider error handlers read (status / body / message / name / code).
+// Replaces `catch (err: any) { err?.status ... }` across the racing code.
+interface ProviderErrorLike {
+  status?: number;
+  statusCode?: number;
+  body?: string;
+  message?: string;
+  name?: string;
+  code?: string;
+}
+
+function asProviderError(err: unknown): ProviderErrorLike {
+  if (err instanceof Error) return { message: err.message, name: err.name };
+  if (err && typeof err === "object") return err as ProviderErrorLike;
+  if (typeof err === "string") return { message: err };
+  return {};
+}
+
 /* ─── Provider types ─────────────────────────────────────────────────── */
 type Provider = "groq" | "nvidia" | "openai" | "gemini";
 
@@ -342,14 +361,15 @@ async function callSingleModel(
       rank: modelDef.id,
       provider: modelDef.provider,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     clearTimeout(modelTimeout);
+    const e = asProviderError(err);
     const isAbort =
-      controller.signal.aborted || err?.name === "AbortError";
+      controller.signal.aborted || e.name === "AbortError";
     const totalMs = Date.now() - startTime;
 
-    const status = err?.status || (isAbort ? 504 : 500);
-    const body = err?.body || err?.message || String(err);
+    const status = e.status || (isAbort ? 504 : 500);
+    const body = e.body || e.message || String(err);
     const timedOut = isAbort;
 
     // Track per-key health for Groq so a recently-failed key is
@@ -471,8 +491,9 @@ export async function probeGeminiKey(apiKey: string): Promise<void> {
     } else {
       console.error(`[GEMINI-PROBE] ✗ Unexpected status | HTTP ${res.status} | ${ms}ms\nResponse: ${body}`);
     }
-  } catch (err: any) {
-    console.error(`[GEMINI-PROBE] ✗ Network/timeout error | ${Date.now() - probeStart}ms | ${err?.message ?? err}`);
+  } catch (err: unknown) {
+    const e = asProviderError(err);
+    console.error(`[GEMINI-PROBE] ✗ Network/timeout error | ${Date.now() - probeStart}ms | ${e.message ?? err}`);
   }
 }
 
@@ -682,10 +703,11 @@ export async function callFastestModel(
 }
 
 /* ─── Error normaliser ──────────────────────────────────────────────── */
-export function handleNvidiaError(error: any): NvidiaErrorResponse {
-  console.error("[AI-RACE] Error:", error?.message ?? error);
+export function handleNvidiaError(error: unknown): NvidiaErrorResponse {
+  const e = asProviderError(error);
+  console.error("[AI-RACE] Error:", e.message ?? error);
 
-  const status = error?.status ?? error?.statusCode ?? 500;
+  const status = e.status ?? e.statusCode ?? 500;
 
   if (status === 401 || status === 403)
     return { status, message: "AI API authentication failed. Check API keys." };
@@ -694,10 +716,10 @@ export function handleNvidiaError(error: any): NvidiaErrorResponse {
   if (status === 429)
     return { status, message: "AI rate limit hit. Retry in a few seconds." };
   if (
-    error?.code === "ETIMEDOUT" ||
-    error?.name === "AbortError" ||
-    error?.message?.toLowerCase().includes("timeout") ||
-    error?.message?.toLowerCase().includes("hard cap")
+    e.code === "ETIMEDOUT" ||
+    e.name === "AbortError" ||
+    (e.message?.toLowerCase().includes("timeout") ?? false) ||
+    (e.message?.toLowerCase().includes("hard cap") ?? false)
   )
     return {
       status: 504,
@@ -706,6 +728,6 @@ export function handleNvidiaError(error: any): NvidiaErrorResponse {
 
   return {
     status,
-    message: error?.message ?? "Unexpected AI backend error.",
+    message: e.message ?? "Unexpected AI backend error.",
   };
 }

@@ -6,9 +6,18 @@ import { useRouter } from "next/navigation";
 import { calculate, validateInputs, type RiskEngineResult, type CalculationMode } from "@/lib/risk-engine";
 import { toast } from "sonner";
 import { trackClarityEvent } from "@/lib/clarity";
+import {
+  type AssetClass,
+  getSymbolStringsForAssetClass,
+  getDefaultSymbolForAssetClass,
+} from "@/lib/supported-symbols";
 
 // --- Types ---------------------------------------------------------------------
-type AssetClass = "CRYPTO" | "FOREX" | "COMMODITY";
+// The calculator supports the three leveraged asset classes. This is a typed
+// subset of the registry's canonical `AssetClass` union (re-exported above) so
+// the two can never drift — adding a class to the registry won't silently
+// change the calculator's form options.
+type RiskAssetClass = Extract<AssetClass, "CRYPTO" | "FOREX" | "COMMODITY">;
 type Direction  = "LONG" | "SHORT";
 type RiskType   = "PERCENT" | "FIXED";
 
@@ -21,7 +30,7 @@ interface FormState {
   stopLoss:   string;
   takeProfit: string;
   leverage:   string;
-  assetClass: AssetClass;
+  assetClass: RiskAssetClass;
   symbol:     string;
   mode:       CalculationMode;
 }
@@ -30,18 +39,6 @@ interface FieldError {
   field: string;
   message: string;
 }
-
-const SYMBOL_MAP: Record<AssetClass, string[]> = {
-  CRYPTO:    ["BTC/USD", "ETH/USD", "SOL/USD"],
-  FOREX:     ["EUR/USD", "GBP/USD", "USD/JPY"],
-  COMMODITY: ["XAU/USD"],
-};
-
-const DEFAULT_SYMBOL: Record<AssetClass, string> = {
-  CRYPTO:    "BTC/USD",
-  FOREX:     "EUR/USD",
-  COMMODITY: "XAU/USD",
-};
 
 // --- Helpers -------------------------------------------------------------------
 function fmt(n: number | null, decimals = 2): string {
@@ -68,7 +65,7 @@ export default function RiskCalculatorPage() {
     takeProfit: "",
     leverage:   "1",
     assetClass: "CRYPTO",
-    symbol:     "BTC/USD",
+    symbol:     getDefaultSymbolForAssetClass("CRYPTO"),
     mode:       "STANDARD",
   });
 
@@ -81,7 +78,7 @@ export default function RiskCalculatorPage() {
       const next = { ...prev, [key]: val };
       // Auto-set symbol when asset class changes
       if (key === "assetClass") {
-        next.symbol = DEFAULT_SYMBOL[val as AssetClass];
+        next.symbol = getDefaultSymbolForAssetClass(val as RiskAssetClass);
       }
       return next;
     });
@@ -245,7 +242,7 @@ export default function RiskCalculatorPage() {
                 value={form.symbol}
                 onChange={e => update("symbol", e.target.value)}
               >
-                {SYMBOL_MAP[form.assetClass].map(s => (
+                {getSymbolStringsForAssetClass(form.assetClass).map(s => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>

@@ -1,5 +1,13 @@
 import { getCachedData, setCachedData } from "./cache";
 import { getLivePrice } from "./market";
+import { getPopularSymbols } from "./supported-symbols";
+
+// The "trending assets" surfaced by the market pulse are the registry's
+// popular crypto instruments. Deriving them from the registry (rather than a
+// hardcoded `["BTC/USD","ETH/USD","SOL/USD"]`) means the pulse tracks the
+// curated set automatically. `displayName` → UI name; the base currency
+// (before "/") → the short ticker.
+const TRENDING_CRYPTO = getPopularSymbols().filter((s) => s.assetClass === "CRYPTO").slice(0, 3);
 
 export interface MarketPulseResponse {
   fearGreed: {
@@ -32,23 +40,23 @@ export async function getMarketPulse(): Promise<MarketPulseResponse> {
     { symbol: "BTCUSDT", rate: 0.0001, time: new Date().toISOString() },
     { symbol: "ETHUSDT", rate: 0.00012, time: new Date().toISOString() },
   ];
-  let trendingAssets = [
-    { name: "Bitcoin", symbol: "BTC", price: 68250, change24h: 1.2 },
-    { name: "Ethereum", symbol: "ETH", price: 3480, change24h: -0.4 },
-    { name: "Solana", symbol: "SOL", price: 142.5, change24h: 4.8 },
-  ];
+  // Static fallback derived from the registry's baseline prices so the pulse
+  // still shows the curated set (with neutral change) when live prices fail.
+  let trendingAssets = TRENDING_CRYPTO.map((s) => ({
+    name: s.displayName,
+    symbol: s.symbol.split("/")[0],
+    price: s.baselinePrice,
+    change24h: 0,
+  }));
 
   try {
-    const [btc, eth, sol] = await Promise.all([
-      getLivePrice("BTC/USD"),
-      getLivePrice("ETH/USD"),
-      getLivePrice("SOL/USD"),
-    ]);
-    trendingAssets = [
-      { name: "Bitcoin", symbol: "BTC", price: btc.price, change24h: btc.changePercent24h },
-      { name: "Ethereum", symbol: "ETH", price: eth.price, change24h: eth.changePercent24h },
-      { name: "Solana", symbol: "SOL", price: sol.price, change24h: sol.changePercent24h },
-    ];
+    const live = await Promise.all(TRENDING_CRYPTO.map((s) => getLivePrice(s.symbol)));
+    trendingAssets = TRENDING_CRYPTO.map((s, i) => ({
+      name: s.displayName,
+      symbol: s.symbol.split("/")[0],
+      price: live[i].price,
+      change24h: live[i].changePercent24h,
+    }));
   } catch (err) {
     console.error("Failed to fetch live trending assets:", err);
   }

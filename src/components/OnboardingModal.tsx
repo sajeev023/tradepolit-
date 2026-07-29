@@ -5,6 +5,7 @@ import { Check, Sparkles, TrendingUp } from "lucide-react";
 import type { MarketRegion } from "@/lib/supported-symbols";
 import { MARKETS } from "@/lib/supported-symbols";
 import { useUIStore } from "@/lib/stores/ui-store";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface OnboardingModalProps {
@@ -13,7 +14,8 @@ interface OnboardingModalProps {
 }
 
 export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
-  const { setSelectedMarket, setHasCompletedOnboarding } = useUIStore();
+  const { switchMarket, setHasCompletedOnboarding } = useUIStore();
+  const queryClient = useQueryClient();
   const [selected, setSelected] = useState<MarketRegion>("US");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,8 +42,13 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
     } catch (err) {
       console.warn("Network error saving onboarding preference:", err);
     } finally {
-      setSelectedMarket(selected);
+      // Deliberate market switch: reset the symbol to the chosen market's
+      // default (the hydrator never does this — it restores the saved symbol).
+      switchMarket(selected);
+      // Optimistic mirror; the real gate is the server profile, so invalidate
+      // the profile query to make the server the source of truth for closing.
       setHasCompletedOnboarding(true);
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
       setIsSubmitting(false);
       onComplete();
       toast.success(`Market preference set to ${MARKETS[selected].label}`);

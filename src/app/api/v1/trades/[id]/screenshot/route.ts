@@ -6,7 +6,7 @@ import {
   successResponse,
   unauthorizedError,
   notFoundError,
-  validationError,
+  validationErrorFromIssues,
 } from "@/lib/api-helpers";
 import { dispatchCaughtError, upstreamError } from "@/lib/typed-errors";
 
@@ -37,9 +37,9 @@ export async function POST(
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return validationError({
-        issues: [{ path: ["file"], message: "File is required" }],
-      } as any);
+      return validationErrorFromIssues([
+        { path: ["file"], message: "File is required" },
+      ]);
     }
 
     // Basic size and type validation
@@ -47,15 +47,15 @@ export async function POST(
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
     if (file.size > maxSizeBytes) {
-      return validationError({
-        issues: [{ path: ["file"], message: "File size exceeds 5MB limit" }],
-      } as any);
+      return validationErrorFromIssues([
+        { path: ["file"], message: "File size exceeds 5MB limit" },
+      ]);
     }
 
     if (!allowedTypes.includes(file.type)) {
-      return validationError({
-        issues: [{ path: ["file"], message: "Only JPEG, PNG, and WebP are allowed" }],
-      } as any);
+      return validationErrorFromIssues([
+        { path: ["file"], message: "Only JPEG, PNG, and WebP are allowed" },
+      ]);
     }
 
     // Upload to Supabase Storage

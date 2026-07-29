@@ -14,6 +14,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { PriceData } from "@/lib/types";
 import { profiler } from "@/lib/performance-profiler";
+import { binanceStreamFor, symbolForBinanceStream } from "@/lib/supported-symbols";
 
 // ─── Singleton subscription registry ──────────────────────────────────────────
 // Maps Binance stream name → { ws, subscribers, lastPrice }
@@ -24,7 +25,16 @@ interface StreamEntry {
   ws: WebSocket | null;
   subscribers: Set<(data: PriceData) => void>;
   lastPrice: PriceData | null;
-  reconnectTimer: ReturnType<typeof setTimeout> | null;
+  // Exponential-backoff timer used by both onerror and onclose to schedule
+  // the next openStream() attempt. Centralized in scheduleReconnect() so the
+  // two paths can't double-schedule.
+  backoffTimer: ReturnType<typeof setTimeout> | null;
+  // Grace timer that tears the socket down 10s after the last subscriber
+  // leaves (see subscribe()). Kept separate from backoffTimer so an in-flight
+  // reconnect can't be accidentally cancelled by an unsubscribe, and vice
+  // versa — the prior single `reconnectTimer` field conflated both and could
+  // drop a pending reconnect or skip teardown.
+  teardownTimer: ReturnType<typeof setTimeout> | null;
   active: boolean;
   reconnectCount: number;
   statusListeners: Set<(status: "connected" | "reconnecting" | "disconnected" | "error") => void>;
@@ -48,16 +58,42 @@ function setEntryStatus(
 
 const registry = new Map<string, StreamEntry>();
 
-const BINANCE_SYMBOL_MAP: Record<string, string> = {
-  "BTC/USD": "btcusdt",
-  "ETH/USD": "ethusdt",
-  "SOL/USD": "solusdt",
-  "EUR/USD": "eurusdt",
-  "GBP/USD": "gbpusdt",
-};
-
 function getStreamName(symbol: string): string | null {
-  return BINANCE_SYMBOL_MAP[symbol] ?? null;
+  return binanceStreamFor(symbol);
+}
+
+/**
+ * Centralized reconnect scheduler. Both `onerror` and `onclose` route here so
+ * the two paths can't double-schedule a reconnect (the prior impl relied on
+ * `onclose` alone, which Binance does not always emit after an error —
+ * leaving a permanently dead socket). Clears any in-flight backoff timer
+ * first, so the most recent failure always wins.
+ *
+ * On hitting MAX_RECONNECT we clear `active` so the dead entry is eligible
+ * for GC from the module-level registry (a slow leak in the prior impl, which
+ * left `active=true` error entries sitting in the map forever).
+ */
+function scheduleReconnect(streamName: string, entry: StreamEntry) {
+  const MAX_RECONNECT = 20;
+  if (entry.reconnectCount >= MAX_RECONNECT) {
+    setEntryStatus(entry, "error");
+    entry.active = false;
+    if (entry.backoffTimer) {
+      clearTimeout(entry.backoffTimer);
+      entry.backoffTimer = null;
+    }
+    return;
+  }
+  // Exponential backoff: 1s floor, 10s ceiling. The first retry waits 1s (not
+  // 0ms) so a refused connection doesn't tight-loop.
+  const delay = Math.min(1000 * Math.pow(2, entry.reconnectCount), 10000);
+  entry.reconnectCount = entry.reconnectCount + 1;
+  if (entry.backoffTimer) clearTimeout(entry.backoffTimer);
+  entry.backoffTimer = setTimeout(() => {
+    if (registry.get(streamName)?.active) {
+      openStream(streamName);
+    }
+  }, delay);
 }
 
 function openStream(streamName: string) {
@@ -80,23 +116,15 @@ function openStream(streamName: string) {
   } catch (err) {
     console.error(`[useBinanceStream] Failed to open WebSocket for ${streamName}:`, err);
     setEntryStatus(entry, "reconnecting");
-    const delay = Math.min(1000 * Math.pow(2, entry.reconnectCount), 10000);
-    entry.reconnectCount = entry.reconnectCount + 1;
-    if (entry.reconnectTimer) clearTimeout(entry.reconnectTimer);
-    entry.reconnectTimer = setTimeout(() => {
-      if (registry.get(streamName)?.active) {
-        openStream(streamName);
-      }
-    }, delay);
+    scheduleReconnect(streamName, entry);
     return;
   }
 
-  entry.ws = ws;
+  // Assign entry.ws AFTER all handlers are attached (below). The prior impl
+  // assigned it here, before onopen/onmessage were wired, so frames arriving
+  // in the gap between CONNECTING→OPEN and handler attachment were dropped.
   setEntryStatus(entry, "reconnecting");
-  const symbol =
-    Object.keys(BINANCE_SYMBOL_MAP).find(
-      (k) => BINANCE_SYMBOL_MAP[k] === streamName
-    ) ?? streamName;
+  const symbol = symbolForBinanceStream(streamName) ?? streamName;
 
   ws.onopen = () => {
     const current = registry.get(streamName);
@@ -157,6 +185,9 @@ function openStream(streamName: string) {
           low24h: Number.isFinite(low24h) ? low24h : price,
           volume24h: Number.isFinite(volume24h) ? volume24h : 0,
           updatedAt: new Date().toISOString(),
+          // WebSocket ticks are real Binance feed data — explicitly LIVE so the
+          // PriceData discriminant can never be the (fabricated) SIMULATED shape.
+          source: "LIVE",
         };
         if (data?.E) {
           profiler.recordWebSocketTick(symbol, data.E);
@@ -170,7 +201,23 @@ function openStream(streamName: string) {
   };
 
   ws.onerror = () => {
-    // WebSocket error — will reconnect via onclose
+    // Binance does not reliably emit `onclose` after an error, so the prior
+    // "reconnect via onclose" no-op could leave a permanently dead socket.
+    // Force a close (which is a no-op if already closed) and schedule the
+    // reconnect directly here. scheduleReconnect clears any in-flight backoff
+    // timer first, so even if onclose *does* also fire it can't double-schedule.
+    const current = registry.get(streamName);
+    if (!current || !current.active) return;
+    setEntryStatus(current, "reconnecting");
+    try {
+      ws.close();
+    } catch {
+      // already closed — ignore
+    }
+    // Null the ws reference so the readyState guard in openStream() can't
+    // no-op a subsequent reconnect attempt against a half-open socket.
+    if (current.ws === ws) current.ws = null;
+    scheduleReconnect(streamName, current);
   };
 
   ws.onclose = () => {
@@ -184,27 +231,20 @@ function openStream(streamName: string) {
       current.staleWatchdog = null;
     }
 
+    // Null the ws reference before scheduling. Without this, a half-open
+    // socket in CONNECTING state could leave `entry.ws` non-null, causing
+    // the readyState guard at the top of openStream() to silently no-op the
+    // reconnect (the prior bug: a socket that errored during CONNECTING
+    // never reconnected because the guard saw readyState 0 and bailed).
+    if (current.ws === ws) current.ws = null;
+
     setEntryStatus(current, "reconnecting");
-
-    const count = current.reconnectCount;
-    // Cap reconnect attempts at 20 to avoid hammering Binance on a persistent
-    // outage. Backoff is exponential with a 1s floor and 10s ceiling — the
-    // first retry waits 1s (not 0ms) so a refused connection doesn't tight-loop.
-    const MAX_RECONNECT = 20;
-    if (count >= MAX_RECONNECT) {
-      setEntryStatus(current, "error");
-      return;
-    }
-    const delay = Math.min(1000 * Math.pow(2, count), 10000);
-    current.reconnectCount = count + 1;
-
-    if (current.reconnectTimer) clearTimeout(current.reconnectTimer);
-    current.reconnectTimer = setTimeout(() => {
-      if (registry.get(streamName)?.active) {
-        openStream(streamName);
-      }
-    }, delay);
+    scheduleReconnect(streamName, current);
   };
+
+  // Now that every handler is attached, publish the socket so early frames
+  // (arriving between CONNECTING→OPEN and handler wiring) are not dropped.
+  entry.ws = ws;
 }
 
 function subscribe(
@@ -217,7 +257,8 @@ function subscribe(
       ws: null,
       subscribers: new Set(),
       lastPrice: null,
-      reconnectTimer: null,
+      backoffTimer: null,
+      teardownTimer: null,
       active: true,
       reconnectCount: 0,
       statusListeners: new Set(),
@@ -230,6 +271,16 @@ function subscribe(
   } else if (!entry.active) {
     entry.active = true;
     entry.reconnectCount = 0;
+    // Cancel any pending teardown/backoff from the dormant period so they
+    // can't fire after we've just re-opened the stream.
+    if (entry.teardownTimer) {
+      clearTimeout(entry.teardownTimer);
+      entry.teardownTimer = null;
+    }
+    if (entry.backoffTimer) {
+      clearTimeout(entry.backoffTimer);
+      entry.backoffTimer = null;
+    }
     openStream(streamName);
   }
 
@@ -244,13 +295,19 @@ function subscribe(
     const current = registry.get(streamName);
     if (!current) return;
     current.subscribers.delete(callback);
-    // Keep WS alive for 10s after last unsubscribe in case the component remounts
+    // Keep WS alive for 10s after last unsubscribe in case the component remounts.
+    // Uses the dedicated teardownTimer (not backoffTimer) so an in-flight
+    // reconnect is never cancelled by an unsubscribe.
     if (current.subscribers.size === 0) {
-      if (current.reconnectTimer) clearTimeout(current.reconnectTimer);
-      current.reconnectTimer = setTimeout(() => {
+      if (current.teardownTimer) clearTimeout(current.teardownTimer);
+      current.teardownTimer = setTimeout(() => {
         const still = registry.get(streamName);
         if (still && still.subscribers.size === 0) {
           still.active = false;
+          if (still.backoffTimer) {
+            clearTimeout(still.backoffTimer);
+            still.backoffTimer = null;
+          }
           if (still.staleWatchdog) {
             clearInterval(still.staleWatchdog);
             still.staleWatchdog = null;

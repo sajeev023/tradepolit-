@@ -6,6 +6,7 @@ import { FlaskConical, Play, XCircle, RefreshCw, Info } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
+import { getPopularSymbolStrings, getDefaultSymbolForAssetClass } from "@/lib/supported-symbols";
 
 /* ─── Demo Backtest Result (pre-seeded sample data) ─── */
 function BacktestDemoResult() {
@@ -112,7 +113,7 @@ function BacktestDemoResult() {
 export default function BacktesterPage() {
   const queryClient = useQueryClient();
   const [selectedStrategyId, setSelectedStrategyId] = useState<string>("");
-  const [selectedAsset, setSelectedAsset] = useState("BTC/USD");
+  const [selectedAsset, setSelectedAsset] = useState(getDefaultSymbolForAssetClass("CRYPTO"));
   const [activeBacktestId, setActiveBacktestId] = useState<string | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState("1d");
   const [startBalance, setStartBalance] = useState<number>(10000);
@@ -408,7 +409,7 @@ export default function BacktesterPage() {
                     className="w-full px-3 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none"
                     style={{ color: "var(--color-text-primary)" }}
                   >
-                    {["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "XAU/USD"].map((item) => (
+                    {getPopularSymbolStrings().map((item) => (
                       <option key={item} value={item}>{item}</option>
                     ))}
                   </select>

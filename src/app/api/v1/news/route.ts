@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
 
-    const news = await getNewsFeed(symbol, page, limit);
+    const news = await getNewsFeed(symbol, page, limit, request.signal);
     return successResponse(news);
   } catch (error) {
     console.error("News API route error:", error);

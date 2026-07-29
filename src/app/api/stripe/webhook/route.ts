@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server";
+import { Prisma } from "@prisma/client";
+import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
@@ -24,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  let event: any;
+  let event: Stripe.Event;
 
   try {
     if (webhookSecret && !webhookSecret.startsWith("mock")) {
@@ -36,9 +38,10 @@ export async function POST(request: NextRequest) {
       console.error("❌ Stripe webhook signature verification unavailable. Set STRIPE_WEBHOOK_SECRET or ALLOW_UNVERIFIED_STRIPE_WEBHOOKS=true for local testing.");
       return new Response("Webhook Error: signature verification unavailable", { status: 400 });
     }
-  } catch (err: any) {
-    console.error(`❌ Webhook signature verification failed: ${err.message}`);
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`❌ Webhook signature verification failed: ${msg}`);
+    return new Response(`Webhook Error: ${msg}`, { status: 400 });
   }
 
   // Idempotency guard: ignore duplicate event IDs to prevent double-processing.
@@ -50,7 +53,7 @@ export async function POST(request: NextRequest) {
       console.log(`[Stripe Webhook] Event ${event.id} already processed. Skipping.`);
       return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
     }
-  } catch (dupCheckErr: any) {
+  } catch (dupCheckErr: unknown) {
     // If the idempotency lookup itself fails we MUST NOT proceed — without
     // the guard we'd risk double-processing on Stripe's retry. Return 500
     // so Stripe retries after backoff.
@@ -67,19 +70,38 @@ export async function POST(request: NextRequest) {
     // event record fails to write, the side-effect rolls back — Stripe
     // retries, the idempotency check finds nothing, and the handler
     // re-runs cleanly. No partial-commit / double-processing window.
-    // Prisma's transaction client type is computed; using `any` here avoids
-    // the type inference gymnastics while preserving runtime atomicity.
-    await prisma.$transaction(async (tx: any) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       switch (event.type) {
         case "checkout.session.completed": {
-          const userId = session.metadata?.userId;
-          const subscriptionId = session.subscription;
-          const customerId = session.customer;
+          // Stripe guarantees `data.object` is a Checkout.Session for this
+          // event type; narrow the union so the rest of the block is type-safe
+          // (the prior code left `session` as `any` and silently tolerated
+          // missing/wrong fields).
+          const checkout = session as Stripe.Checkout.Session;
+          const userId = checkout.metadata?.userId;
+          const subscriptionRef = checkout.subscription;
+          const customerRef = checkout.customer;
 
-          if (userId && subscriptionId) {
-            const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
-            const priceId = subscription.items?.data?.[0]?.price?.id;
-            const expiresAt = new Date(subscription.current_period_end * 1000);
+          if (userId && subscriptionRef) {
+            const subscriptionId = typeof subscriptionRef === "string"
+              ? subscriptionRef
+              : subscriptionRef.id;
+            const customerId = customerRef == null
+              ? null
+              : typeof customerRef === "string"
+                ? customerRef
+                : customerRef.id;
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            // In Stripe API 2026-06-24, `current_period_end` moved off the
+            // Subscription object onto its SubscriptionItem. The prior code read
+            // `subscription.current_period_end` through `as any`, which silently
+            // returned `undefined` → `new Date(NaN)` (Invalid Date), disabling
+            // the defensive expiry guard in `resolvePlan`. Read the real value
+            // from the first item now.
+            const firstItem = subscription.items.data[0];
+            const priceId = firstItem?.price?.id;
+            const periodEnd = firstItem?.current_period_end;
+            const expiresAt = periodEnd != null ? new Date(periodEnd * 1000) : null;
 
             await tx.userProfile.update({
               where: { userId },
@@ -98,11 +120,21 @@ export async function POST(request: NextRequest) {
         }
 
         case "customer.subscription.updated": {
-          const subscriptionId = session.id;
-          const status = session.status;
-          const customerId = session.customer;
-          const expiresAt = new Date(session.current_period_end * 1000);
-          const priceId = session.items?.data?.[0]?.price?.id;
+          const subscription = session as Stripe.Subscription;
+          const subscriptionId = subscription.id;
+          const status = subscription.status;
+          const customerRef = subscription.customer;
+          const customerId = customerRef == null
+            ? null
+            : typeof customerRef === "string"
+              ? customerRef
+              : customerRef.id;
+          // `current_period_end` lives on the SubscriptionItem in this API
+          // version (see the checkout case above for the full rationale).
+          const firstItem = subscription.items.data[0];
+          const priceId = firstItem?.price?.id;
+          const periodEnd = firstItem?.current_period_end;
+          const expiresAt = periodEnd != null ? new Date(periodEnd * 1000) : null;
 
           const isPro = status === "active" || status === "trialing";
 
@@ -127,7 +159,13 @@ export async function POST(request: NextRequest) {
         }
 
         case "customer.subscription.deleted": {
-          const customerId = session.customer;
+          const subscription = session as Stripe.Subscription;
+          const customerRef = subscription.customer;
+          const customerId = customerRef == null
+            ? null
+            : typeof customerRef === "string"
+              ? customerRef
+              : customerRef.id;
 
           const profile = await tx.userProfile.findFirst({
             where: { stripeCustomerId: customerId },
@@ -166,10 +204,10 @@ export async function POST(request: NextRequest) {
     });
 
     return new Response(JSON.stringify({ received: true }), { status: 200 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     // P2002 on webhookEvent.stripeEventId means a concurrent handler
     // already recorded this event — treat as success (duplicate).
-    if (err?.code === "P2002") {
+    if ((err as { code?: string })?.code === "P2002") {
       console.log(`[Stripe Webhook] Event ${event.id} concurrently processed (P2002). Treating as duplicate.`);
       return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
     }

@@ -9,6 +9,7 @@ import {
   validationError,
 } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
+import { parseChatMessages } from "@/lib/chat-message";
 
 const createChatSchema = z.object({
   title: z.string().min(1, "Title is required").default("New Chat Session"),
@@ -35,15 +36,15 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Enrich with preview text, symbol, timeframe, message count
-    const sessions = chats.map((chat: any) => {
-      const messages = Array.isArray(chat.messages) ? (chat.messages as any[]) : [];
-      const firstUserMsg = messages.find((m: any) => m.role === "user");
+    const sessions = chats.map((chat) => {
+      const messages = parseChatMessages(chat.messages);
+      const firstUserMsg = messages.find((m) => m.role === "user");
       const preview = firstUserMsg?.content?.slice(0, 80) ?? chat.title;
       return {
         id: chat.id,
         title: chat.title,
-        symbol: (chat as any).symbol ?? null,
-        timeframe: (chat as any).timeframe ?? null,
+        symbol: chat.symbol,
+        timeframe: chat.timeframe,
         preview,
         messageCount: messages.length,
         updatedAt: chat.updatedAt,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback, Profiler } from "react";
+import { useState, useEffect, useRef, useCallback, Profiler } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -65,9 +65,9 @@ const FOLLOW_UPS = [
 const COLLAPSE_THRESHOLD = 400;
 const COLLAPSE_PREVIEW = 300;
 
-function formatMetricNumber(val: any, decimals = 2): string {
+function formatMetricNumber(val: unknown, decimals = 2): string {
   if (val === null || val === undefined) return "—";
-  const cleaned = typeof val === "string" ? val.replace(/[^0-9.-]/g, "") : val;
+  const cleaned = typeof val === "string" ? val.replace(/[^0-9.-]/g, "") : String(val);
   const num = Number(cleaned);
   if (isNaN(num) || num === 0) return "—";
   return `$${num.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
@@ -120,25 +120,16 @@ const generateProactiveAlerts = (data: any, symbol: string) => {
 };
 
 import { useUIStore } from "@/lib/stores/ui-store";
-import { getSymbolsForMarket, getSymbolGroupsForMarket, getSupportedSymbol, getDefaultSymbolForMarket } from "@/lib/supported-symbols";
+import { getSymbolsForMarket, getSymbolGroupsForMarket, getSupportedSymbol, binanceStreamFor } from "@/lib/supported-symbols";
+import { normalizeTimeframe } from "@/lib/timeframes";
 
 export function ChartsClientPage() {
   const router = useRouter();
-  const { selectedMarket, selectedSymbol, setSelectedSymbol } = useUIStore();
-  const [selectedTimeframe, setSelectedTimeframe] = useState<"1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W">("4h");
+  const { selectedMarket, selectedSymbol, setSelectedSymbol, selectedTimeframe, setSelectedTimeframe, hydrated } = useUIStore();
 
   // Filter selector choices by the user's primary selected market
   const marketSymbols = getSymbolsForMarket(selectedMarket);
   const symbolGroups = getSymbolGroupsForMarket(selectedMarket);
-
-  // Stable ref so async callbacks (init effect) read the latest market without
-  // stale-closure issues. Updated in useLayoutEffect (runs synchronously after
-  // commit, before the browser paints) so it is always current before any async
-  // callback from the init effect can fire.
-  const selectedMarketRef = useRef(selectedMarket);
-  useLayoutEffect(() => {
-    selectedMarketRef.current = selectedMarket;
-  });
 
   const [isBackgroundUpdating, setIsBackgroundUpdating] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
@@ -218,71 +209,76 @@ export function ChartsClientPage() {
   const restoredAnalysisRef = useRef<{ symbol: string; timeframe: string } | null>(null);
   // shouldAutoScroll stored in a ref to prevent stale closure in scrollToBottom
   const shouldAutoScrollRef = useRef(true);
+  // Flips true once the chat-session restore attempt has settled (found or
+  // not). The analyze effect waits for `hydrated && sessionRestored` so that
+  // (a) it never analyzes the pre-hydration registry default, and (b) for a
+  // restored session it sees `restoredAnalysisRef` already populated and
+  // skips re-analyzing — killing the spurious on-load analysis that wasted a
+  // quota credit.
+  const [sessionRestored, setSessionRestored] = useState(false);
 
-  // Restore session on mount — all fetches run in parallel for minimal latency
+  // Profile — read from the shared `["profile"]` react-query cache (the
+  // layout fetches the same key), so there is ONE profile fetch for the whole
+  // dashboard, not a duplicate raw fetch here. The layout is also the single
+  // hydration point for the store's market/symbol/timeframe (via
+  // `hydrateFromProfile`), so this component no longer restores selection from
+  // the profile — it just reads `selectedSymbol`/`selectedTimeframe` from the
+  // store. That kills the two-write-path race where this effect's
+  // `setSelectedSymbol` fought the layout's `setSelectedMarket`.
+  const { data: profile } = useQuery<any>({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const res = await fetch("/api/v1/profile");
+      const body = await res.json();
+      if (!res.ok) return null;
+      return body.data;
+    },
+  });
+
+  const isPro = profile?.plan === "PRO" || profile?.subscriptionStatus === "ACTIVE";
+
+  // Sync the shared profile → chart-local UI state (plan, usage counts, demo
+  // flag). Runs whenever the cached profile updates (initial load + refetches).
   useEffect(() => {
-    const init = async () => {
-      isRestoringChatRef.current = true;
+    if (!profile) return;
+    setSubscriptionStatus(isPro ? "PRO_ACTIVE" : "FREE");
+    if (profile.dailyAnalysisCount !== undefined) setAnalysesCountToday(profile.dailyAnalysisCount);
+    if (profile.dailyAlertCount !== undefined) setAlertsCountToday(profile.dailyAlertCount);
+    if (profile.analysisLimit !== undefined) setAnalysisLimit(profile.analysisLimit);
+    if (profile.alertLimit !== undefined) setAlertLimit(profile.alertLimit);
+    if (profile.isDemo !== undefined) setIsDemoMode(profile.isDemo);
+  }, [profile, isPro]);
+
+  // Restore the latest chat session + market overview once we know the user's
+  // plan. These are chart-specific (not global selection state) so they stay
+  // here rather than in the layout. Runs for every user so `sessionRestored`
+  // flips true regardless of plan (FREE users simply skip the chat/overview
+  // fetches); the analyze effect waits on it to avoid a spurious on-load
+  // analysis and to respect a restored session.
+  useEffect(() => {
+    let cancelled = false;
+    isRestoringChatRef.current = true;
+    (async () => {
       try {
-        // Fire all three fetches in parallel — profile, chat, and market overview
-        const [profileRes, chatRes, overviewRes] = await Promise.all([
-          fetch("/api/v1/profile"),
+        if (!isPro) return;
+        const [chatRes, overviewRes] = await Promise.all([
           fetch("/api/v1/ai/chats/latest"),
           fetch("/api/v1/ai/market-overview"),
         ]);
-
-        const [profileBody, chatBody, overviewBody] = await Promise.all([
-          profileRes.json(),
+        const [chatBody, overviewBody] = await Promise.all([
           chatRes.json(),
           overviewRes.json(),
         ]);
+        if (cancelled) return;
 
-        let activeStatus = "FREE";
-        if (profileRes.ok && profileBody.data) {
-          const { lastSymbol, lastTimeframe, plan, subscriptionStatus: rawStatus, dailyAnalysisCount, dailyAlertCount, analysisLimit: profileLimit, alertLimit: profileAlertLimit, isDemo: profileIsDemo } = profileBody.data;
-
-          // Restore lastSymbol ONLY if it is valid for the currently active market.
-          // If the user's stored lastSymbol belongs to a different market (e.g. "BTC/USD"
-          // stored from a prior Crypto session but the user's preferredMarket is now
-          // "INDIA"), we discard it and keep whatever the global store already resolved
-          // as the correct market default. This is the primary fix for Bitcoin appearing
-          // after selecting a stock market.
-          const currentMarket = selectedMarketRef.current;
-          const validMarketSymbols = new Set(getSymbolsForMarket(currentMarket).map((s) => s.symbol));
-          const localSym = (typeof window !== "undefined" && localStorage.getItem("TradCopilot-default-symbol")) || null;
-          const localTf = (typeof window !== "undefined" && localStorage.getItem("TradCopilot-default-timeframe")) || null;
-
-          // Only restore a symbol if it belongs to the current market.
-          // Fall back to the market default, NEVER to a hardcoded crypto symbol.
-          const candidateSym = lastSymbol || localSym;
-          const serverSym = (candidateSym && validMarketSymbols.has(candidateSym))
-            ? candidateSym
-            : getDefaultSymbolForMarket(currentMarket);
-          const serverTf = lastTimeframe || localTf || "4h";
-          if (serverSym !== selectedSymbol) setSelectedSymbol(serverSym);
-          if (serverTf !== selectedTimeframe) setSelectedTimeframe(serverTf as any);
-
-          const isUserPro = plan === "PRO" || rawStatus === "ACTIVE";
-          activeStatus = isUserPro ? "PRO_ACTIVE" : "FREE";
-          setSubscriptionStatus(activeStatus);
-
-          if (dailyAnalysisCount !== undefined) setAnalysesCountToday(dailyAnalysisCount);
-          if (dailyAlertCount !== undefined) setAlertsCountToday(dailyAlertCount);
-          if (profileLimit !== undefined) setAnalysisLimit(profileLimit);
-          if (profileAlertLimit !== undefined) setAlertLimit(profileAlertLimit);
-          if (profileIsDemo !== undefined) setIsDemoMode(profileIsDemo);
-        }
-
-        const isPro = activeStatus === "PRO_ACTIVE";
-
-        // Restore latest chat session (results already fetched in parallel)
-        if (isPro && chatRes.ok && chatBody.data) {
+        // Restore latest chat session
+        if (chatRes.ok && chatBody.data) {
           const session = chatBody.data;
           setChatId(session.id);
           if (Array.isArray(session.messages) && session.messages.length > 0) {
             isRestoringChatRef.current = true;
             setMessages(session.messages);
-            const hasAnalysis = session.messages.some((m: any) => m.role === "assistant");
+            const hasAnalysis = session.messages.some((m: { role?: string }) => m.role === "assistant");
             if (hasAnalysis) {
               setAnalysisData({ _restored: true, bias: "RESTORED", confidence: "", support: "", resistance: "" });
               // Mark this exact symbol/timeframe as restored so the change effect
@@ -296,31 +292,37 @@ export function ChartsClientPage() {
           }
         }
 
-        // Load market overview one-liners (results already fetched in parallel)
-        if (isPro && overviewRes.ok && overviewBody.data) {
+        // Load market overview one-liners
+        if (overviewRes.ok && overviewBody.data) {
           setMarketOverview(overviewBody.data);
 
-          const items = Object.values(overviewBody.data as Record<string, any>);
+          const items = Object.values(overviewBody.data as Record<string, { symbol?: string; oneLiner?: string }>);
           if (items.length > 0 && chatBody?.data?.messages?.length > 0) {
-            const first = items[0] as any;
-            const sym = first.symbol?.split("/")[0] ?? first.symbol;
-            setWelcomeBack(`Welcome back! ${sym}: ${first.oneLiner}`);
+            const first = items[0];
+            const sym = first?.symbol?.split("/")[0] ?? first?.symbol;
+            setWelcomeBack(`Welcome back! ${sym}: ${first?.oneLiner}`);
             setTimeout(() => setWelcomeBack(null), 7000);
           }
         }
       } catch (err) {
         console.error("Session init failed:", err);
       } finally {
-        setTimeout(() => { isRestoringChatRef.current = false; }, 0);
+        if (!cancelled) {
+          setTimeout(() => { isRestoringChatRef.current = false; }, 0);
+          setSessionRestored(true);
+        }
       }
-    };
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    })();
+    return () => { cancelled = true; };
+  }, [isPro]);
 
 
-  // Persist symbol/timeframe changes to profile
+  // Persist symbol/timeframe changes to profile. Gated on `hydrated` so the
+  // pre-hydration default (registry default for the market) is never written
+  // over the user's saved value — the previous code PATCHed the default on
+  // first mount before the profile landed, clobbering the real lastSymbol.
   useEffect(() => {
+    if (!hydrated) return;
     const save = async () => {
       try {
         await fetch("/api/v1/profile", {
@@ -333,7 +335,7 @@ export function ChartsClientPage() {
       }
     };
     if (selectedSymbol && selectedTimeframe) save();
-  }, [selectedSymbol, selectedTimeframe]);
+  }, [selectedSymbol, selectedTimeframe, hydrated]);
 
   // REST price poll for all non-WebSocket symbols in the active market.
   // Crypto symbols that are already served by the Binance WebSocket hook are
@@ -341,29 +343,46 @@ export function ChartsClientPage() {
   // market changes so the new market's symbols are fetched immediately.
   useEffect(() => {
     // All market symbols that do NOT have a live Binance WebSocket stream.
-    const BINANCE_WS_SYMBOLS = new Set(["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD"]);
+    // A symbol is WS-streamed iff the registry maps it to a Binance stream
+    // name — no hardcoded list to keep in sync with the stream registry.
     const restSymbols = marketSymbols
       .map((s) => s.symbol)
-      .filter((sym) => !BINANCE_WS_SYMBOLS.has(sym));
+      .filter((sym) => !binanceStreamFor(sym));
 
     if (restSymbols.length === 0) return;
 
+    // `active` guards against writing state after unmount or after the
+    // market has changed (the cleanup below flips it). Without this, a slow
+    // REST poll for the OLD market could resolve after the user switched and
+    // bleed stale prices into the new market's watchlist.
+    let active = true;
+    const controller = new AbortController();
+
     const fetchRestPrices = async () => {
-      if (document.hidden) return;
+      if (document.hidden || !active) return;
       const updated: Record<string, { price: number; changePercent24h: number }> = {};
       await Promise.all(restSymbols.map(async (sym) => {
         try {
-          const res = await fetch(`/api/v1/market/price?symbol=${encodeURIComponent(sym)}`, { signal: AbortSignal.timeout(5000) });
+          // Compose the effect's abort signal with a 5s per-fetch timeout so
+          // a market switch / unmount cancels in-flight polls immediately.
+          const res = await fetch(`/api/v1/market/price?symbol=${encodeURIComponent(sym)}`, {
+            signal: AbortSignal.any([controller.signal, AbortSignal.timeout(5000)]),
+          });
           const body = await res.json();
           if (res.ok && body.data) updated[sym] = { price: body.data.price, changePercent24h: body.data.changePercent24h };
         } catch (_) {}
       }));
-      setWatchlistRestPrices(prev => ({ ...prev, ...updated }));
+      // Only commit if we're still the active effect for this market.
+      if (active) setWatchlistRestPrices(prev => ({ ...prev, ...updated }));
     };
 
     fetchRestPrices();
     const id = setInterval(fetchRestPrices, 30000);
-    return () => clearInterval(id);
+    return () => {
+      active = false;
+      controller.abort();
+      clearInterval(id);
+    };
   // marketSymbols identity changes when selectedMarket changes — correct dep.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMarket]);
@@ -465,7 +484,9 @@ export function ChartsClientPage() {
   // ── Live ticker price via shared WebSocket (crypto) or REST poll (forex/index) ─────
   const wsStatus = useBinanceStreamStatus(selectedSymbol);
   const isWsDisconnected = wsStatus === "disconnected" || wsStatus === "reconnecting";
-  const isWebSocketSymbol = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD"].includes(selectedSymbol);
+  // A symbol is served by the live WebSocket feed iff the registry maps it to
+  // a Binance stream — derived from config, not a hardcoded list.
+  const isWebSocketSymbol = !!binanceStreamFor(selectedSymbol);
 
   const { data: priceData, refetch: refetchPrice, isFetching: priceFetching } = useQuery<PriceData>({
     queryKey: ["price", selectedSymbol],
@@ -579,8 +600,8 @@ export function ChartsClientPage() {
         const body = await res.json();
         if (!res.ok) throw new Error(body.error?.message || body.message || "Analysis failed");
         return body.data;
-      } catch (err: any) {
-        console.error(`[SYNC] Client analysis fetch error: ${err?.message}`);
+      } catch (err: unknown) {
+        console.error(`[SYNC] Client analysis fetch error: ${err instanceof Error ? err.message : String(err)}`);
         throw err;
       }
     },
@@ -679,9 +700,9 @@ Timestamp: ${new Date().toISOString()}
       setAnalysisReady(true);
       toast.success(readyData.cached ? `Cached analysis loaded for ${selectedSymbol}` : `Analysis completed for ${selectedSymbol}`);
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
       setIsBackgroundUpdating(false);
-      toast.error(err?.message || "Analysis request timed out. Please try again.");
+      toast.error(err instanceof Error ? err.message : "Analysis request timed out. Please try again.");
     },
   });
 
@@ -711,8 +732,8 @@ Timestamp: ${new Date().toISOString()}
       setShowFollowUps(false);
       streamMessage(data.reply);
     },
-    onError: (err: any) => {
-      toast.error(err.message || "Failed to send message");
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Failed to send message");
     },
   });
 
@@ -820,8 +841,14 @@ Timestamp: ${new Date().toISOString()}
   // re-run every time the useMutation object changes (isPending toggles).
   const analyzeMutate = analyzeMutation.mutate;
 
-  // Run analysis ONLY on symbol/timeframe change or first mount
+  // Run analysis ONLY on symbol/timeframe change or first mount. Gated on
+  // `hydrated && sessionRestored` so the very first run uses the real
+  // server-hydrated symbol (never the pre-hydration registry default) and so a
+  // restored chat session is already registered in `restoredAnalysisRef` (set
+  // by the chat-restore effect) — preventing a spurious on-load analysis that
+  // would waste a quota credit and overwrite the restored analysis.
   useEffect(() => {
+    if (!hydrated || !sessionRestored) return;
     const hasSymbolChanged = lastAnalyzedSymbolRef.current !== selectedSymbol;
     const hasTimeframeChanged = lastAnalyzedTimeframeRef.current !== selectedTimeframe;
 
@@ -858,7 +885,7 @@ Timestamp: ${new Date().toISOString()}
 
       analyzeMutate({ symbol: selectedSymbol, timeframe: selectedTimeframe });
     }
-  }, [selectedSymbol, selectedTimeframe, analyzeMutate]);
+  }, [selectedSymbol, selectedTimeframe, analyzeMutate, hydrated, sessionRestored]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -993,9 +1020,9 @@ Timestamp: ${new Date().toISOString()}
       link.click();
 
       toast.success("Snapshot exported successfully!", { id: toastId });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Snapshot export failed:", err);
-      toast.error(`Export failed: ${err.message || err}`, { id: toastId });
+      toast.error(`Export failed: ${err instanceof Error ? err.message : String(err)}`, { id: toastId });
     } finally {
       setIsExportingSnapshot(false);
       setIsCapturingSnapshot(false);
@@ -1929,8 +1956,11 @@ Timestamp: ${new Date().toISOString()}
             changed = true;
           }
           if (timeframe && timeframe !== selectedTimeframe) {
-            setSelectedTimeframe(timeframe as any);
-            changed = true;
+            const tf = normalizeTimeframe(timeframe);
+            if (tf) {
+              setSelectedTimeframe(tf);
+              changed = true;
+            }
           }
 
           if (!changed) {

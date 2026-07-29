@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
+import { parseChatMessages } from "@/lib/chat-message";
 
 // GET /api/v1/ai/chats/latest
 // Returns the most recently updated chat session (< 4 hours old) with full messages.
@@ -26,13 +27,13 @@ export async function GET(_request: NextRequest) {
       return successResponse(null);
     }
 
-    const messages = Array.isArray(chat.messages) ? (chat.messages as any[]) : [];
+    const messages = parseChatMessages(chat.messages);
 
     return successResponse({
       id: chat.id,
       title: chat.title,
-      symbol: (chat as any).symbol ?? null,
-      timeframe: (chat as any).timeframe ?? null,
+      symbol: chat.symbol,
+      timeframe: chat.timeframe,
       messages,
       updatedAt: chat.updatedAt,
     });

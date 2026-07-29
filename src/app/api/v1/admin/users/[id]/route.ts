@@ -8,6 +8,7 @@ import {
   forbiddenError,
   notFoundError,
   validationError,
+  validationErrorFromIssues,
 } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 
@@ -32,9 +33,9 @@ export async function PATCH(
 
     // Prevent suspending yourself
     if (currentUser.id === id) {
-      return validationError({
-        issues: [{ path: ["id"], message: "You cannot suspend your own admin account" }],
-      } as any);
+      return validationErrorFromIssues([
+        { path: ["id"], message: "You cannot suspend your own admin account" },
+      ]);
     }
 
     const targetUser = await prisma.user.findUnique({

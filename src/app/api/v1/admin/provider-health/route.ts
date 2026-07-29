@@ -22,7 +22,7 @@ export async function GET(_request: NextRequest) {
     if (user.role !== "ADMIN") return forbiddenError();
 
     return successResponse(getExtendedProviderHealth());
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[ADMIN] provider-health check failed:", err);
     return dispatchCaughtError("Failed to check provider health", err);
   }

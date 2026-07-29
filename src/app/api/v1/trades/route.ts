@@ -9,7 +9,8 @@ import {
   unauthorizedError,
   validationError,
 } from "@/lib/api-helpers";
-import { dispatchCaughtError } from "@/lib/typed-errors";
+import { dispatchCaughtError, rateLimitedError } from "@/lib/typed-errors";
+import { checkUserRateLimit } from "@/lib/rate-limit";
 import { resolvePlan } from "@/lib/entitlements";
 
 // Zod schema for trade creation
@@ -47,6 +48,13 @@ export async function POST(request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    // Rate limit trade creation: 30 / min per user. Trade writes hit the DB
+    // and feed behavioral heuristics; an unbounded loop floods both.
+    const rl = checkUserRateLimit(user.id, request, "trades", 30, 60_000);
+    if (!rl.result.allowed) {
+      return rateLimitedError(rl.result.resetAt - Date.now(), "Too many trade creations. Please slow down.");
+    }
 
     const json = await request.json();
     const validation = createTradeSchema.safeParse(json);

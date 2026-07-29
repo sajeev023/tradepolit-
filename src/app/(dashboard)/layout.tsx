@@ -320,12 +320,16 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { sidebarCollapsed, setSelectedMarket, hasCompletedOnboarding, setHasCompletedOnboarding } = useUIStore();
+  const { sidebarCollapsed, setHasCompletedOnboarding, hydrateFromProfile } = useUIStore();
   const [user, setUser] = useState<User | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
 
-  // Profile data & onboarding check
+  // Profile data & onboarding check. This is the SINGLE hydration point for
+  // global chart selection: the layout is the closest thing to a root, so the
+  // store's market/symbol/timeframe are written here, once, in order — instead
+  // of the previous two-write-path race where this effect's `setSelectedMarket`
+  // wiped the symbol the charts page was simultaneously restoring.
   const { data: profile } = useQuery<any>({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -338,14 +342,18 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (profile) {
-      if (profile.preferredMarket) {
-        setSelectedMarket(profile.preferredMarket);
-      }
+      // One-shot: idempotent once `hydrated` is true, so profile refetches
+      // (window focus, mutations) never clobber an in-flight user selection.
+      hydrateFromProfile({
+        preferredMarket: profile.preferredMarket,
+        lastSymbol: profile.lastSymbol,
+        lastTimeframe: profile.lastTimeframe,
+      });
       if (typeof profile.hasCompletedOnboarding === "boolean") {
         setHasCompletedOnboarding(profile.hasCompletedOnboarding);
       }
     }
-  }, [profile, setSelectedMarket, setHasCompletedOnboarding]);
+  }, [profile, hydrateFromProfile, setHasCompletedOnboarding]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -422,7 +430,7 @@ export default function DashboardLayout({
       <SearchCommandPalette />
       <NotificationPanel />
       <OnboardingModal
-        isOpen={Boolean(user && profile && profile.hasCompletedOnboarding === false && !hasCompletedOnboarding)}
+        isOpen={Boolean(user && profile && profile.hasCompletedOnboarding === false)}
         onComplete={() => setHasCompletedOnboarding(true)}
       />
     </div>

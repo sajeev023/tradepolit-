@@ -3,12 +3,13 @@ import { getOHLCV } from "./market";
 import { compileTechnicalContext, validateAnalysisConsistency } from "./indicators";
 import { callFastestAIModel } from "./ai-providers";
 import { safeParseAIResponse } from "./ai-response-parser";
+import { getDefaultSymbolForMarket } from "./supported-symbols";
 
-const DEFAULT_SYMBOL = "BTC/USD";
+const DEFAULT_SYMBOL = getDefaultSymbolForMarket("CRYPTO");
 const DEFAULT_TIMEFRAME = "4h";
 
 export async function prewarmDefaultChart(): Promise<{ status: string; duration: number }> {
-  console.log("[PREWARM] Starting default BTC/USD 4h chart pre-warm...");
+  console.log(`[PREWARM] Starting default ${DEFAULT_SYMBOL} ${DEFAULT_TIMEFRAME} chart pre-warm...`);
   const startTime = Date.now();
 
   try {
@@ -157,10 +158,10 @@ Provide your response in EXACTLY this JSON schema format:
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[PREWARM] Complete in ${duration}ms — default BTC/USD 4h chart pre-warmed & ready for instant load`);
+    console.log(`[PREWARM] Complete in ${duration}ms — default ${DEFAULT_SYMBOL} ${DEFAULT_TIMEFRAME} chart pre-warmed & ready for instant load`);
     return { status: "warmed", duration };
-  } catch (error: any) {
-    console.error("[PREWARM] Failed:", error?.message || error);
+  } catch (error: unknown) {
+    console.error("[PREWARM] Failed:", error instanceof Error ? error.message : error);
     return { status: "error", duration: Date.now() - startTime };
   }
 }

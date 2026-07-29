@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import {
@@ -7,7 +8,8 @@ import {
   unauthorizedError,
   validationError,
 } from "@/lib/api-helpers";
-import { dispatchCaughtError } from "@/lib/typed-errors";
+import { dispatchCaughtError, rateLimitedError } from "@/lib/typed-errors";
+import { checkUserRateLimit } from "@/lib/rate-limit";
 
 const strategySchema = z.object({
   name: z.string().min(1, "Strategy name is required"),
@@ -48,6 +50,12 @@ export async function POST(request: NextRequest) {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
 
+    // Rate limit strategy creation: 20 / min per user.
+    const rl = checkUserRateLimit(user.id, request, "strategies", 20, 60_000);
+    if (!rl.result.allowed) {
+      return rateLimitedError(rl.result.resetAt - Date.now(), "Too many strategy creations. Please slow down.");
+    }
+
     const json = await request.json();
     const validation = strategySchema.safeParse(json);
     if (!validation.success) {
@@ -61,7 +69,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         name,
         description,
-        rulesConfig: rulesConfig as any,
+        rulesConfig: rulesConfig as unknown as Prisma.InputJsonValue,
       },
     });
 

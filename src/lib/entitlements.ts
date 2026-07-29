@@ -60,24 +60,27 @@ export const ENTITLEMENTS: Record<Plan, Entitlement> = {
   },
 };
 
-export const DEMO_USER_EMAILS = ["partner@tradcopilot.com", "trader@tradcopilot.com"] as const;
-export const DEMO_USER_IDS = ["partner-1234-1234-1234-123456789012", "12345678-1234-1234-1234-123456789012"] as const;
+// Typed as `readonly string[]` (not `as const` tuples) so `.includes(string)`
+// type-checks without the prior `as any` casts — `as const` narrows the element
+// type to a literal union, which then rejects a plain `string` argument.
+export const DEMO_USER_EMAILS: readonly string[] = ["partner@tradcopilot.com", "trader@tradcopilot.com"];
+export const DEMO_USER_IDS: readonly string[] = ["partner-1234-1234-1234-123456789012", "12345678-1234-1234-1234-123456789012"];
 
-export const PRO_USER_EMAILS = [
+export const PRO_USER_EMAILS: readonly string[] = [
   "sajeevajay683@gmail.com",
   "vanimadari123@gmail.com",
   "ashokmummini.msc@gmail.com",
-] as const;
+];
 
 export function isProEmail(email?: string): boolean {
   if (!email) return false;
   const normalized = email.toLowerCase().trim();
-  return PRO_USER_EMAILS.includes(normalized as any);
+  return PRO_USER_EMAILS.includes(normalized);
 }
 
 export function isDemoUser(userId: string, email?: string): boolean {
-  if (DEMO_USER_IDS.includes(userId as any)) return true;
-  if (email && DEMO_USER_EMAILS.includes(email as any)) return true;
+  if (DEMO_USER_IDS.includes(userId)) return true;
+  if (email && DEMO_USER_EMAILS.includes(email)) return true;
   return false;
 }
 

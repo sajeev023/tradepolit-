@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import {
@@ -7,6 +8,7 @@ import {
   unauthorizedError,
   notFoundError,
   validationError,
+  validationErrorFromIssues,
 } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 
@@ -55,7 +57,7 @@ export async function PATCH(
       data: {
         ...validation.data,
         rulesConfig: validation.data.rulesConfig
-          ? (validation.data.rulesConfig as any)
+          ? (validation.data.rulesConfig as unknown as Prisma.InputJsonValue)
           : undefined,
       },
     });
@@ -87,9 +89,9 @@ export async function DELETE(
     // Check if strategy has associated active trades or backtests
     const tradeCount = await prisma.trade.count({ where: { strategyId: id } });
     if (tradeCount > 0) {
-      return validationError({
-        issues: [{ path: ["id"], message: `Cannot delete strategy linked to ${tradeCount} trade logs. Archive it instead.` }],
-      } as any);
+      return validationErrorFromIssues([
+        { path: ["id"], message: `Cannot delete strategy linked to ${tradeCount} trade logs. Archive it instead.` },
+      ]);
     }
 
     await prisma.strategy.delete({

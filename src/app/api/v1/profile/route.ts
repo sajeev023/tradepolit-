@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, validationError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError, validationError, validationErrorFromIssues } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 import { getCurrentUsage } from "@/lib/limit-checker";
 
@@ -54,7 +54,7 @@ export async function GET(_request: NextRequest) {
       isDemo: usage.isDemo,
       lastAnalysisReset: userRow?.lastUsageReset ?? null,
     }, 200, headers);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Get profile API error:", err);
     return dispatchCaughtError("Failed to fetch profile", err);
   }
@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest) {
     try {
       body = await request.json();
     } catch {
-      return validationError({ issues: [{ message: "Invalid JSON body" }] } as any);
+      return validationErrorFromIssues([{ path: [], message: "Invalid JSON body" }]);
     }
 
     const validation = updateProfileSchema.safeParse(body);
@@ -110,7 +110,7 @@ export async function PATCH(request: NextRequest) {
       preferredMarket,
       hasCompletedOnboarding,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Update profile API error:", err);
     return dispatchCaughtError("Failed to update profile", err);
   }

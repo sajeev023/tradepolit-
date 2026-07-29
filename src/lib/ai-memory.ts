@@ -6,12 +6,14 @@ export interface SessionMemory {
   discussionTopics: string[];
 }
 
+import { getDefaultSymbolForMarket } from "./supported-symbols";
+
 const sessionStore = new Map<string, SessionMemory>();
 
 export function getSession(userId: string): SessionMemory {
   if (!sessionStore.has(userId)) {
     sessionStore.set(userId, {
-      symbol: "BTC/USD",
+      symbol: getDefaultSymbolForMarket("CRYPTO"),
       timeframe: "4h",
       previousResponses: [],
       discussionTopics: [],

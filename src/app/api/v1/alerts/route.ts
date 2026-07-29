@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { checkUsageLimit, recordUsage } from "@/lib/limit-checker";
@@ -7,10 +8,12 @@ import {
   successResponse,
   unauthorizedError,
   validationError,
+  validationErrorFromIssues,
   errorResponse,
 } from "@/lib/api-helpers";
 import { getDemoAlertLimitError } from "@/lib/demo-limits";
-import { dispatchCaughtError } from "@/lib/typed-errors";
+import { dispatchCaughtError, rateLimitedError } from "@/lib/typed-errors";
+import { checkUserRateLimit } from "@/lib/rate-limit";
 
 const alertSchema = z.object({
   instrument: z.string().min(1, "Asset symbol is required"),
@@ -43,6 +46,12 @@ export async function POST(request: NextRequest) {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
 
+    // Rate limit alert creation: 20 / min per user (on top of the daily quota).
+    const rl = checkUserRateLimit(user.id, request, "alerts", 20, 60_000);
+    if (!rl.result.allowed) {
+      return rateLimitedError(rl.result.resetAt - Date.now(), "Too many alert creations. Please slow down.");
+    }
+
     // Check demo limits for alert creation
     const limitCheck = await checkUsageLimit(user.id, "alerts", user.email);
     if (!limitCheck.allowed) {
@@ -65,9 +74,9 @@ export async function POST(request: NextRequest) {
     const { instrument, type, condition } = validation.data;
 
     if (condition.value < 0 && type === "PRICE") {
-      return validationError({
-        issues: [{ path: ["condition", "value"], message: "Price trigger value cannot be negative" }],
-      } as any);
+      return validationErrorFromIssues([
+        { path: ["condition", "value"], message: "Price trigger value cannot be negative" },
+      ]);
     }
 
     const alert = await prisma.alert.create({
@@ -75,7 +84,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         instrument,
         type,
-        condition: condition as any,
+        condition: condition as unknown as Prisma.InputJsonValue,
         isActive: true,
       },
     });

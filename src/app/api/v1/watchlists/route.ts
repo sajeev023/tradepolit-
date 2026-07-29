@@ -9,7 +9,8 @@ import {
   errorResponse,
 } from "@/lib/api-helpers";
 import { isDemoUser, getDemoFeatureLockedError } from "@/lib/demo-limits";
-import { dispatchCaughtError } from "@/lib/typed-errors";
+import { dispatchCaughtError, rateLimitedError } from "@/lib/typed-errors";
+import { checkUserRateLimit } from "@/lib/rate-limit";
 
 function demoWatchlistLocked() {
   const e = getDemoFeatureLockedError("watchlistEdit");
@@ -46,6 +47,12 @@ export async function POST(request: NextRequest) {
     // Demo users can't edit watchlists (per entitlements).
     if (isDemoUser(user.id, user.email ?? undefined)) {
       return demoWatchlistLocked();
+    }
+
+    // Rate limit watchlist creation: 20 / min per user.
+    const rl = checkUserRateLimit(user.id, request, "watchlists", 20, 60_000);
+    if (!rl.result.allowed) {
+      return rateLimitedError(rl.result.resetAt - Date.now(), "Too many watchlist changes. Please slow down.");
     }
 
     const json = await request.json();

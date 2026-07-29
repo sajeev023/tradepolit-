@@ -1,8 +1,9 @@
 ﻿import { NextRequest } from "next/server";
 import { z } from "zod";
 import { calculate, validateInputs, type CalculationMode } from "@/lib/risk-engine";
-import { successResponse, validationError } from "@/lib/api-helpers";
+import { successResponse, validationError, validationErrorFromIssues } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
+import { getDefaultSymbolForAssetClass } from "@/lib/supported-symbols";
 
 const calculateSchema = z.object({
   balance:     z.number().positive("Account balance must be positive"),
@@ -14,7 +15,7 @@ const calculateSchema = z.object({
   leverage:    z.number().min(0, "Leverage must be >= 0").default(1),
   direction:   z.enum(["LONG", "SHORT"]),
   assetClass:  z.enum(["CRYPTO", "FOREX", "COMMODITY"]).default("CRYPTO"),
-  symbol:      z.string().min(1).default("BTC/USD"),
+  symbol:      z.string().min(1).default(getDefaultSymbolForAssetClass("CRYPTO")),
   mode:        z.enum(["STANDARD", "MAX", "MIN"]).default("STANDARD"),
 });
 
@@ -40,9 +41,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (engineErrors.length > 0) {
-      return validationError({
-        issues: engineErrors.map(e => ({ path: [e.field], message: e.message })),
-      } as any);
+      return validationErrorFromIssues(
+        engineErrors.map(e => ({ path: [e.field], message: e.message }))
+      );
     }
 
     const result = calculate({

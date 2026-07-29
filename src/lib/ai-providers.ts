@@ -16,6 +16,27 @@ interface ProviderStatus {
   lastError?: string;
 }
 
+// Shape of the errors thrown between provider call sites. Providers throw
+// plain objects (`{ status, body, provider, timedOut }`) and fetch/abort
+// errors are `Error`/`DOMException`; this union-of-optional-fields interface
+// models what any caller may read, and `toAIError` narrows an unknown catch
+// value into it without resorting to `any`.
+export interface AIProviderError {
+  status?: number;
+  body?: string;
+  message?: string;
+  name?: string;
+  provider?: string;
+  timedOut?: boolean;
+}
+
+function toAIError(err: unknown): AIProviderError {
+  if (err instanceof Error) return { message: err.message, name: err.name };
+  if (err && typeof err === "object") return err as AIProviderError;
+  if (typeof err === "string") return { message: err };
+  return {};
+}
+
 const providerStates: Record<string, ProviderStatus> = {
   gemini: { status: "online", lastResponseTime: -1, lastChecked: new Date().toISOString(), cooldownUntil: 0, consecutiveFailures: 0 },
   groq: { status: "online", lastResponseTime: -1, lastChecked: new Date().toISOString(), cooldownUntil: 0, consecutiveFailures: 0 },
@@ -74,7 +95,7 @@ function convertMessagesToGemini(messages: Array<{ role: string; content: string
     parts: [{ text: m.content }]
   }));
 
-  const body: any = { contents };
+  const body: Record<string, unknown> = { contents };
   if (systemMsg) {
     body.systemInstruction = {
       parts: [{ text: systemMsg.content }]
@@ -86,12 +107,27 @@ function convertMessagesToGemini(messages: Array<{ role: string; content: string
 async function callSingleProviderWithRetry(
   name: "gemini" | "groq" | "nvidia",
   messages: Array<{ role: string; content: string }>,
-  options: { maxTokens?: number; temperature?: number }
+  options: { maxTokens?: number; temperature?: number },
+  externalSignal?: AbortSignal
 ): Promise<{ content: string; duration: number; provider: string; model: string }> {
-  let lastError: any = null;
+  let lastError: AIProviderError | null = null;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    // If the caller already cancelled (route timeout / client disconnect),
+    // stop immediately — don't burn another provider attempt or tokens.
+    if (externalSignal?.aborted) {
+      throw { status: 504, body: "Aborted by caller", provider: name, timedOut: true };
+    }
     const controller = new AbortController();
+    // Propagate caller cancellation into the per-attempt controller so an
+    // in-flight fetch is aborted mid-request (not just between attempts).
+    // Without this, a 55s route timeout would reject the race but the
+    // underlying fetch would run to completion, wasting provider tokens.
+    const onExternalAbort = () => controller.abort();
+    if (externalSignal) {
+      if (externalSignal.aborted) controller.abort();
+      else externalSignal.addEventListener("abort", onExternalAbort, { once: true });
+    }
     try {
       if (attempt > 0) {
         const delay = BASE_RETRY_DELAY_MS * Math.pow(2, attempt - 1) + Math.random() * 500;
@@ -100,21 +136,28 @@ async function callSingleProviderWithRetry(
       }
       const result = await callSingleProvider(name, messages, options, controller);
       return result;
-    } catch (err: any) {
-      lastError = err;
-      const isRateLimit = err?.status === 429;
-      const isTimeout = err?.timedOut || err?.status === 504;
-      const isServerError = err?.status >= 500;
+    } catch (err: unknown) {
+      const e = toAIError(err);
+      lastError = e;
+      // Caller cancelled — don't retry, surface as a timed-out abort so the
+      // route's race rejects (preserving the existing timeout→error behavior).
+      if (externalSignal?.aborted) {
+        throw { status: 504, body: "Aborted by caller", provider: name, timedOut: true } satisfies AIProviderError;
+      }
+      const isRateLimit = e.status === 429;
+      const isTimeout = e.timedOut || e.status === 504;
+      const isServerError = (e.status ?? 0) >= 500;
 
       if (isRateLimit || isTimeout || isServerError) {
         if (attempt < MAX_RETRIES) {
-          console.log(`[AI_PROVIDER] [${name.toUpperCase()}] Transient error (${err?.status}), retrying...`);
+          console.log(`[AI_PROVIDER] [${name.toUpperCase()}] Transient error (${e.status}), retrying...`);
           continue;
         }
       }
       break;
     } finally {
       controller.abort();
+      if (externalSignal) externalSignal.removeEventListener("abort", onExternalAbort);
     }
   }
 
@@ -248,31 +291,31 @@ async function callSingleProvider(
       provider: name,
       model: modelName
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     clearTimeout(timeoutId);
     state.lastChecked = new Date().toISOString();
 
-    const isAbort = controller.signal.aborted || err?.name === "AbortError";
+    const e = toAIError(err);
+    const isAbort = controller.signal.aborted || e.name === "AbortError";
     if (isAbort) {
-      throw { status: 504, body: "Timeout or Aborted", provider: name, timedOut: true };
+      throw { status: 504, body: "Timeout or Aborted", provider: name, timedOut: true } satisfies AIProviderError;
     }
 
     throw {
-      status: err?.status || 500,
-      body: err?.body || err?.message || String(err),
+      status: e.status || 500,
+      body: e.body || e.message || String(err),
       provider: name
-    };
+    } satisfies AIProviderError;
   }
 }
 
 export async function callFastestAIModel(
   messages: Array<{ role: string; content: string }>,
-  options: { maxTokens?: number; temperature?: number } = {}
+  options: { maxTokens?: number; temperature?: number } = {},
+  signal?: AbortSignal
 ): Promise<{ content: string; duration: number; provider: string; model: string }> {
   const pipelineStart = Date.now();
   const sequence: Array<"groq" | "nvidia" | "gemini"> = ["groq", "nvidia", "gemini"];
-
-  const errors: any[] = [];
 
   console.log(
     `\n[FALLBACK_PIPELINE] ======= STARTING SEQUENTIAL CHAIN (with retry) =======` +
@@ -280,24 +323,33 @@ export async function callFastestAIModel(
   );
 
   for (const name of sequence) {
+    // Stop attempting further providers once the caller has cancelled
+    // (route timeout / client disconnect) — no point burning more tokens.
+    if (signal?.aborted) {
+      throw { status: 504, body: "Aborted by caller", provider: name, timedOut: true } satisfies AIProviderError;
+    }
     if (!isProviderUsable(name)) {
       console.log(`[FALLBACK_PIPELINE] Skipping unusable/offline/limited provider: [${name.toUpperCase()}]`);
-      errors.push({ provider: name, error: "Skipped: offline or in cooldown" });
       continue;
     }
 
     console.log(`[FALLBACK_PIPELINE] Attempting provider [${name.toUpperCase()}] with exponential backoff retry...`);
     try {
-      const result = await callSingleProviderWithRetry(name, messages, options);
+      const result = await callSingleProviderWithRetry(name, messages, options, signal);
       const totalDuration = Date.now() - pipelineStart;
       console.log(
         `[FALLBACK_PIPELINE] ★ SUCCESS: [${result.provider.toUpperCase()}] ${result.model} in ${result.duration}ms` +
         `\n[FALLBACK_PIPELINE] ======= CHAIN COMPLETE in ${totalDuration}ms =======\n`
       );
       return result;
-    } catch (err: any) {
-      console.error(`[FALLBACK_PIPELINE] Provider [${name.toUpperCase()}] failed after retries:`, err?.body || err?.message || err);
-      errors.push(err);
+    } catch (err: unknown) {
+      // Caller cancelled — propagate immediately, don't fall through to the
+      // next provider (which would keep spending tokens after a disconnect).
+      if (signal?.aborted) {
+        throw { status: 504, body: "Aborted by caller", provider: name, timedOut: true } satisfies AIProviderError;
+      }
+      const e = toAIError(err);
+      console.error(`[FALLBACK_PIPELINE] Provider [${name.toUpperCase()}] failed after retries:`, e.body || e.message || err);
     }
   }
 
@@ -306,7 +358,7 @@ export async function callFastestAIModel(
 }
 
 export function getProviderHealth() {
-  const result: Record<string, { status: string; lastResponseTime: number; lastChecked: string; lastError?: string }> = {};
+  const result: Record<string, { status: string; lastResponseTime: number; lastChecked: string; lastError?: string; hasPremiumKey: boolean }> = {};
   for (const name of ["gemini", "groq", "nvidia"]) {
     const state = providerStates[name];
     const apiKey = getApiKey(name);
@@ -326,9 +378,9 @@ export function getProviderHealth() {
       status: currentStatus,
       lastResponseTime: state.lastResponseTime,
       lastChecked: state.lastChecked,
-      lastError: state.lastError
+      lastError: state.lastError,
+      hasPremiumKey: hasPremium,
     };
-    (result[name] as any).hasPremiumKey = hasPremium;
   }
   return result;
 }

@@ -30,6 +30,13 @@ export const MarketDataService = {
   },
 
   priceCache: new Map<string, { price: PriceData; timestamp: number }>(),
+  /**
+   * In-flight price fetches keyed by canonical symbol. Concurrent callers
+   * share the SAME Promise so two simultaneous `getLivePrice` calls don't
+   * both hit the upstream and race to write the cache — the slower fetch
+   * would otherwise overwrite the fresher result with staler data.
+   */
+  inflightPrices: new Map<string, Promise<PriceData>>(),
 
   /**
    * Retrieves the live price for a given symbol from the centralized source.
@@ -43,11 +50,28 @@ export const MarketDataService = {
       return cached.price;
     }
 
-    const timestamp = new Date(now).toISOString();
-    const result = await getLivePrice(symbol);
-    this.priceCache.set(canonical, { price: result, timestamp: now });
-    console.log(`[MARKET DATA SERVICE] [${timestamp}] Resolved price for ${symbol} (${result.symbol}): $${result.price}`);
-    return result;
+    // Share the in-flight fetch across concurrent callers.
+    const existing = this.inflightPrices.get(canonical);
+    if (existing) return existing;
+
+    const fetchPromise = getLivePrice(symbol)
+      .then((result: PriceData) => {
+        // Capture the timestamp AFTER the await so the cache reflects when
+        // the data arrived, not when the request was issued — a slow fetch
+        // would otherwise get a stale timestamp and shorten the cache TTL.
+        this.priceCache.set(canonical, { price: result, timestamp: Date.now() });
+        this.inflightPrices.delete(canonical);
+        console.log(
+          `[MARKET DATA SERVICE] Resolved price for ${symbol} (${result.symbol}): $${result.price}`
+        );
+        return result;
+      })
+      .catch((err: unknown) => {
+        this.inflightPrices.delete(canonical);
+        throw err;
+      });
+    this.inflightPrices.set(canonical, fetchPromise);
+    return fetchPromise;
   },
 
   /**

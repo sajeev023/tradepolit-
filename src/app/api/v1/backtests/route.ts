@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { runBacktestJob } from "@/lib/backtest-service";
@@ -7,8 +8,11 @@ import {
   successResponse,
   unauthorizedError,
   validationError,
+  validationErrorFromIssues,
 } from "@/lib/api-helpers";
-import { dispatchCaughtError } from "@/lib/typed-errors";
+import { dispatchCaughtError, rateLimitedError } from "@/lib/typed-errors";
+import { checkUserRateLimit } from "@/lib/rate-limit";
+import type { BacktestPendingResults } from "@/lib/types";
 
 const runBacktestSchema = z.object({
   strategyId: z.string().min(1, "Strategy ID is required"),
@@ -24,6 +28,14 @@ export async function POST(request: NextRequest) {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
 
+    // Rate limit backtest creation: 10 / min per user. Each backtest spawns a
+    // background job that fetches OHLCV history — an unbounded loop starves the
+    // data provider and the worker.
+    const rl = checkUserRateLimit(user.id, request, "backtests", 10, 60_000);
+    if (!rl.result.allowed) {
+      return rateLimitedError(rl.result.resetAt - Date.now(), "Too many backtests. Please slow down.");
+    }
+
     const json = await request.json();
     const validation = runBacktestSchema.safeParse(json);
     if (!validation.success) {
@@ -38,12 +50,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!strategy) {
-      return validationError({
-        issues: [{ path: ["strategyId"], message: "Strategy not found" }],
-      } as any);
+      return validationErrorFromIssues([
+        { path: ["strategyId"], message: "Strategy not found" },
+      ]);
     }
 
     // Create Backtest entry with status PENDING
+    const pendingResults: BacktestPendingResults = { metrics: { startBalance } };
     const backtest = await prisma.backtest.create({
       data: {
         userId: user.id,
@@ -52,7 +65,7 @@ export async function POST(request: NextRequest) {
         timeframe,
         dateFrom: dateFrom ? new Date(dateFrom) : new Date(Date.now() - 365 * 24 * 3600 * 1000), // default 1 year
         dateTo: dateTo ? new Date(dateTo) : new Date(),
-        resultsJson: { metrics: { startBalance } } as any,
+        resultsJson: pendingResults as unknown as Prisma.InputJsonValue,
       },
     });
 

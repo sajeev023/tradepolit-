@@ -1,22 +1,24 @@
 import { isSupportedSymbol } from "./supported-symbols";
+import { normalizeTimeframe, timeframeDurationMs } from "./timeframes";
 
 export function validateMarketData(data: any, symbol: string, timeframe: string): string[] {
   const errors: string[] = [];
 
   // 1. Check symbol format. Accept any symbol in the supported-instrument
-  // registry (covers pairs like BTC/USD, bare indices like NASDAQ, and bare
-  // stock tickers like AAPL / SHEL.L / 7203 / RELIANCE), OR a BASE/QUOTE pair,
-  // OR a known bare index ticker. The registry is the source of truth.
+  // registry (covers pairs like BTC/USD, bare indices like NASDAQ / NIFTY50,
+  // and bare stock tickers like AAPL / SHEL.L / 7203 / RELIANCE), OR a
+  // BASE/QUOTE pair. The registry is the source of truth — every bare index
+  // ticker is a registry entry, so a separate hardcoded index set would just
+  // drift out of sync (it previously listed "FTSE" while the registry has
+  // "FTSE100").
   const PAIR_PATTERN = /^[A-Z0-9.\-]+\/[A-Z0-9]+$/;
-  const KNOWN_BARE_INDICES = new Set(["NASDAQ", "S&P500", "DJI", "NIKKEI", "FTSE", "DAX"]);
   const sym = typeof data.symbol === "string" ? data.symbol.toUpperCase() : "";
   const isPair = PAIR_PATTERN.test(sym);
-  const isKnownIndex = KNOWN_BARE_INDICES.has(sym);
   const isSupported = isSupportedSymbol(sym);
-  if (!sym || (!isPair && !isKnownIndex && !isSupported)) {
+  if (!sym || (!isPair && !isSupported)) {
     errors.push(`Invalid symbol format: ${data.symbol}`);
   }
-  
+
   // 2. Check current price exists and is reasonable
   if (!data.currentPrice || isNaN(data.currentPrice) || data.currentPrice <= 0) {
     errors.push(`Invalid current price: ${data.currentPrice}`);
@@ -24,12 +26,12 @@ export function validateMarketData(data: any, symbol: string, timeframe: string)
   if (data.currentPrice > 1000000) {
     errors.push(`Price suspiciously high: ${data.currentPrice}`);
   }
-  
+
   // 3. Check OHLCV data
   if (!data.ohlcv || !Array.isArray(data.ohlcv) || data.ohlcv.length < 50) {
     errors.push(`Insufficient OHLCV data: ${data.ohlcv?.length || 0} candles (minimum 50 required)`);
   }
-  
+
   // 4. Validate each candle
   if (data.ohlcv) {
     data.ohlcv.forEach((candle: any, index: number) => {
@@ -44,20 +46,21 @@ export function validateMarketData(data: any, symbol: string, timeframe: string)
       }
     });
   }
-  
-  // 5. Check timeframe
-  const validTimeframes = ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1W', '1H', '4H', '1D', '30m'];
-  const formattedTimeframe = timeframe;
-  if (!validTimeframes.some(tf => tf.toLowerCase() === formattedTimeframe.toLowerCase())) {
+
+  // 5. Check timeframe against the canonical timeframe union (timeframes.ts).
+  // Previously a separate hardcoded list here accepted "30m" — a phantom TF
+  // no provider actually maps — so validation passed but market.ts silently
+  // fell back to a default. Sharing one source of truth closes that gap.
+  if (normalizeTimeframe(timeframe) === null) {
     errors.push(`Invalid timeframe: ${timeframe}`);
   }
-  
+
   if (errors.length > 0) {
     console.error(`[DATA VALIDATION] FAILED for ${symbol} ${timeframe}:`, errors);
   } else {
     console.log(`[DATA VALIDATION] PASSED for ${symbol} ${timeframe}`);
   }
-  
+
   return errors;
 }
 
@@ -135,22 +138,9 @@ export function isDataFresh(timestamp: number, timeframe: string): boolean {
   // candle fetches because a 4h candle is up to 4h old at the time of read.
   // Grace = min(5min, 50% of candle duration) so sub-hour TFs stay tight
   // (1m candle is at most 1m old, 2min-old is stale) while long TFs are
-  // accepted.
-  const candleDurationMs: Record<string, number> = {
-    '1m': 60 * 1000,
-    '5m': 5 * 60 * 1000,
-    '15m': 15 * 60 * 1000,
-    '30m': 30 * 60 * 1000,
-    '1h': 60 * 60 * 1000,
-    '1H': 60 * 60 * 1000,
-    '4h': 4 * 60 * 60 * 1000,
-    '4H': 4 * 60 * 60 * 1000,
-    '1d': 24 * 60 * 60 * 1000,
-    '1D': 24 * 60 * 60 * 1000,
-    '1w': 7 * 24 * 60 * 60 * 1000,
-    '1W': 7 * 24 * 60 * 60 * 1000,
-  };
-  const duration = candleDurationMs[timeframe] || 60 * 60 * 1000;
+  // accepted. The duration itself comes from the shared timeframes module so
+  // this can't drift from the provider interval mappings.
+  const duration = timeframeDurationMs(timeframe);
   const grace = Math.min(5 * 60 * 1000, duration * 0.5);
   const max = duration + grace;
 

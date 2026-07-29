@@ -16,7 +16,7 @@ export async function GET(_request: NextRequest) {
 
     const health = getProviderHealth();
     return successResponse(health);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("AI health check failed:", err);
     return dispatchCaughtError("Failed to check AI health status", err);
   }

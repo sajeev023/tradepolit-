@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
-import { getSupportedSymbol, getSymbolGroups } from "@/lib/supported-symbols";
+import { getSupportedSymbol, getSymbolGroups, getDefaultSymbolForAssetClass } from "@/lib/supported-symbols";
+import type { Trade } from "@/lib/types";
 
 // Enums and tags list
 const EMOTIONS = ["CONFIDENT", "FEARFUL", "GREEDY", "REVENGE", "FOMO", "DISCIPLINED", "NEUTRAL"];
@@ -62,22 +63,25 @@ function JournalPageContent() {
   const limit = 10;
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingTrade, setEditingTrade] = useState<any | null>(null);
-  const [viewingTrade, setViewingTrade] = useState<any | null>(null);
+  const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
+  const [viewingTrade, setViewingTrade] = useState<Trade | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // 1. Fetch trades
   const { data: tradesResponse, isLoading } = useQuery({
     queryKey: ["trades", filterStatus, filterSymbol, page],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ data: Trade[]; pagination: { page: number; limit: number; total: number } }> => {
       let url = `/api/v1/trades?page=${page}&limit=${limit}`;
       if (filterStatus !== "ALL") url += `&status=${filterStatus}`;
       if (filterSymbol) url += `&instrument=${encodeURIComponent(filterSymbol)}`;
       const res = await fetch(url);
-      const body = await res.json();
+      const body: { data?: Trade[]; pagination?: { page: number; limit: number; total: number }; error?: { message?: string } } = await res.json();
       if (!res.ok) throw new Error(body.error?.message || "Failed to load trades");
-      return body;
+      return {
+        data: body.data ?? [],
+        pagination: body.pagination ?? { page: 1, limit: 10, total: 0 },
+      };
     },
   });
 
@@ -104,8 +108,8 @@ function JournalPageContent() {
       setIsCreateOpen(false);
       reset();
     },
-    onError: (err: any) => {
-      toast.error(err.message);
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Failed to save trade");
     },
   });
 
@@ -127,8 +131,8 @@ function JournalPageContent() {
       setEditingTrade(null);
       if (viewingTrade?.id === data.id) setViewingTrade(data);
     },
-    onError: (err: any) => {
-      toast.error(err.message);
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Failed to update trade");
     },
   });
 
@@ -145,8 +149,8 @@ function JournalPageContent() {
       toast.success("Trade deleted");
       setViewingTrade(null);
     },
-    onError: (err: any) => {
-      toast.error(err.message);
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Failed to delete trade");
     },
   });
 
@@ -158,10 +162,15 @@ function JournalPageContent() {
     watch,
     reset,
     formState: { errors },
-  } = useForm<any>({
-    resolver: zodResolver(tradeFormSchema) as any,
+  } = useForm<TradeFormData>({
+    // `zodResolver` infers the schema's *input* type (coerced fields are
+    // `unknown` pre-transform), which doesn't match `TradeFormData` (the parsed
+    // *output* type). This typed cast at the library seam — not `as any` —
+    // keeps the form values pinned to the output shape so `handleSubmit`
+    // receives fully-parsed `TradeFormData`.
+    resolver: zodResolver(tradeFormSchema) as unknown as Resolver<TradeFormData>,
     defaultValues: {
-      instrument: "BTC/USD",
+      instrument: getDefaultSymbolForAssetClass("CRYPTO"),
       assetClass: "CRYPTO",
       direction: "LONG",
       leverage: 1,
@@ -177,13 +186,13 @@ function JournalPageContent() {
   // parallel hardcoded lists here.
   const assetClassFor = (instrument: string): "CRYPTO" | "FOREX" | "COMMODITY" | "INDEX" | "STOCK" => {
     const entry = getSupportedSymbol(instrument);
-    return (entry?.assetClass as any) ?? "CRYPTO";
+    return entry?.assetClass ?? "CRYPTO";
   };
 
   useEffect(() => {
     const prefill = searchParams.get("prefill") === "true";
     if (prefill) {
-      const instrument = searchParams.get("instrument") || "BTC/USD";
+      const instrument = searchParams.get("instrument") || getDefaultSymbolForAssetClass("CRYPTO");
       const direction = searchParams.get("direction") as "LONG" | "SHORT" || "LONG";
       const entryPrice = searchParams.get("entryPrice") || "";
       const stopLoss = searchParams.get("stopLoss") || "";
@@ -196,10 +205,13 @@ function JournalPageContent() {
       setValue("instrument", instrument);
       setValue("assetClass", assetClass);
       setValue("direction", direction);
-      setValue("entryPrice", entryPrice ? Number(entryPrice) : undefined);
+      // Only set the required numeric fields when a value is present — setting
+      // them to `undefined` would be a type error (they're required in
+      // `TradeFormData`) and leaving them unset simply lets the user fill them.
+      if (entryPrice) setValue("entryPrice", Number(entryPrice));
       setValue("stopLoss", stopLoss ? Number(stopLoss) : undefined);
       setValue("takeProfit", takeProfit ? Number(takeProfit) : undefined);
-      setValue("size", size ? Number(size) : undefined);
+      if (size) setValue("size", Number(size));
       setValue("leverage", leverage ? Number(leverage) : 1);
       setValue("openedAt", new Date().toISOString().substring(0, 16));
 
@@ -219,7 +231,7 @@ function JournalPageContent() {
     createMutation.mutate(data);
   };
 
-  const handleEditClick = (trade: any) => {
+  const handleEditClick = (trade: Trade) => {
     setEditingTrade(trade);
     setValue("instrument", trade.instrument);
     setValue("assetClass", trade.assetClass);
@@ -256,18 +268,16 @@ function JournalPageContent() {
         method: "POST",
         body: formData,
       });
-      const body = await res.json();
+      const body: { data?: { screenshots?: string[] }; error?: { message?: string } } = await res.json();
       if (!res.ok) throw new Error(body.error?.message || "Failed to upload image");
 
       toast.success("Screenshot uploaded");
       // Update viewingTrade details state inline
-      setViewingTrade((prev: any) => ({
-        ...prev,
-        screenshots: body.data.screenshots,
-      }));
+      const newScreenshots = body.data?.screenshots ?? [];
+      setViewingTrade((prev) => (prev ? { ...prev, screenshots: newScreenshots } : null));
       queryClient.invalidateQueries({ queryKey: ["trades"] });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload image");
     } finally {
       setIsUploading(false);
     }
@@ -390,7 +400,7 @@ function JournalPageContent() {
                 </tr>
               </thead>
               <tbody className="divide-y text-sm font-medium" style={{ borderColor: "var(--color-border-subtle)" }}>
-                {trades.map((trade: any) => {
+                {trades.map((trade) => {
                   const isLong = trade.direction === "LONG";
                   const pnlNum = trade.pnl ? Number(trade.pnl) : null;
                   const isWin = pnlNum && pnlNum > 0;

@@ -5,33 +5,35 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, ToggleRight, Trash2, Plus, RefreshCw, Volume2 } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
+import { getPopularSymbolStrings, getDefaultSymbolForAssetClass } from "@/lib/supported-symbols";
+import type { Alert, Notification } from "@/lib/types";
 
 export default function AlertsPage() {
   const queryClient = useQueryClient();
-  const [selectedAsset, setSelectedAsset] = useState("BTC/USD");
+  const [selectedAsset, setSelectedAsset] = useState(getDefaultSymbolForAssetClass("CRYPTO"));
   const [operator, setOperator] = useState("gt");
   const [triggerPrice, setTriggerPrice] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   // 1. Fetch user's alerts
-  const { data: alerts, isLoading: alertsLoading, isError: alertsError, refetch: refetchAlerts } = useQuery<any[]>({
+  const { data: alerts, isLoading: alertsLoading, isError: alertsError, refetch: refetchAlerts } = useQuery<Alert[]>({
     queryKey: ["alerts"],
     queryFn: async () => {
       const res = await fetch("/api/v1/alerts");
-      const body = await res.json();
+      const body: { data?: Alert[]; error?: { message?: string } } = await res.json();
       if (!res.ok) throw new Error(body.error?.message || "Failed to load alerts");
-      return body.data;
+      return body.data ?? [];
     },
   });
 
   // 2. Fetch notifications
-  const { data: notifications, isLoading: notificationsLoading, isError: notificationsError, refetch: refetchNotifications } = useQuery<any[]>({
+  const { data: notifications, isLoading: notificationsLoading, isError: notificationsError, refetch: refetchNotifications } = useQuery<Notification[]>({
     queryKey: ["notifications"],
     queryFn: async () => {
       const res = await fetch("/api/v1/notifications");
-      const body = await res.json();
+      const body: { data?: Notification[]; error?: { message?: string } } = await res.json();
       if (!res.ok) throw new Error(body.error?.message || "Failed to load notifications");
-      return body.data;
+      return body.data ?? [];
     },
   });
 
@@ -56,8 +58,8 @@ export default function AlertsPage() {
       setTriggerPrice("");
       toast.success("Price alert set successfully");
     },
-    onError: (err: any) => {
-      toast.error(err.message);
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Failed to create alert");
     },
   });
 
@@ -76,8 +78,8 @@ export default function AlertsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["alerts"] });
     },
-    onError: (err: any) => {
-      toast.error(err.message);
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Failed to toggle alert");
     },
   });
 
@@ -93,8 +95,8 @@ export default function AlertsPage() {
       queryClient.invalidateQueries({ queryKey: ["alerts"] });
       toast.success("Alert removed");
     },
-    onError: (err: any) => {
-      toast.error(err.message);
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Failed to delete alert");
     },
   });
 
@@ -155,7 +157,7 @@ export default function AlertsPage() {
                   className="w-full px-3 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none"
                   style={{ color: "var(--color-text-primary)" }}
                 >
-                  {["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "XAU/USD"].map((item) => (
+                  {getPopularSymbolStrings().map((item) => (
                     <option key={item} value={item}>{item}</option>
                   ))}
                 </select>
@@ -271,7 +273,7 @@ export default function AlertsPage() {
             ) : (
               <div className="divide-y space-y-2" style={{ borderColor: "var(--color-border-subtle)" }}>
                 {activeAlertsList.map((alert) => {
-                  const cond = alert.condition as any;
+                  const cond = alert.condition;
                   return (
                     <div key={alert.id} className="flex items-center justify-between py-2 text-xs">
                       <div>

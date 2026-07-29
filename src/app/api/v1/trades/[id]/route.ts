@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import Decimal from "decimal.js";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getMaxLeverage } from "@/lib/risk-engine";
@@ -115,8 +116,11 @@ export async function PATCH(
         return null;
       }
 
-      // Build update payload
-      const updateData: any = {};
+      // Build update payload. `TradeUncheckedUpdateInput` is used (not
+      // `TradeUpdateInput`) because we set the `strategyId` foreign-key scalar
+      // directly; the relation-typed `TradeUpdateInput` only exposes `strategy`
+      // (connect/disconnect), not the scalar column.
+      const updateData: Prisma.TradeUncheckedUpdateInput = {};
 
       // Cap leverage to the per-asset maximum defined by the risk engine.
       if (data.leverage !== undefined) {

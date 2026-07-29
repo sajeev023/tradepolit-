@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       message: "Default chart pre-warmed successfully",
       ...result,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Prewarm endpoint error:", error);
     return dispatchCaughtError("Prewarm failed", error);
   }
