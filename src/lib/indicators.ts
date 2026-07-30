@@ -160,6 +160,66 @@ export function calculateMACD(
 }
 
 /**
+ * Calculates Volume Weighted Average Price (VWAP)
+ * Resets daily (uses the candle's timestamp to group by day).
+ */
+export function calculateVWAP(candles: OHLCVCandle[]): number[] {
+  const result: number[] = [];
+  let cumulativeTPV = 0;
+  let cumulativeVolume = 0;
+  let lastDay = "";
+
+  for (const candle of candles) {
+    const day = new Date(candle.timestamp).toISOString().slice(0, 10);
+    if (day !== lastDay) {
+      // Reset at each new trading day
+      cumulativeTPV = 0;
+      cumulativeVolume = 0;
+      lastDay = day;
+    }
+    const typicalPrice = (candle.high + candle.low + candle.close) / 3;
+    cumulativeTPV += typicalPrice * candle.volume;
+    cumulativeVolume += candle.volume;
+    result.push(cumulativeVolume > 0 ? cumulativeTPV / cumulativeVolume : typicalPrice);
+  }
+  return result;
+}
+
+export interface BollingerBandsResult {
+  upper: number[];
+  middle: number[];
+  lower: number[];
+}
+
+/**
+ * Calculates Bollinger Bands (middle = SMA, upper/lower = SMA ± stdDev * σ)
+ */
+export function calculateBollingerBands(
+  closes: number[],
+  period = 20,
+  stdDev = 2
+): BollingerBandsResult {
+  const middle = calculateSMA(closes, period);
+  const upper: number[] = [];
+  const lower: number[] = [];
+
+  for (let i = 0; i < closes.length; i++) {
+    if (i < period - 1) {
+      upper.push(NaN);
+      lower.push(NaN);
+    } else {
+      const slice = closes.slice(i - period + 1, i + 1);
+      const mean = middle[i];
+      const variance = slice.reduce((sum, v) => sum + (v - mean) ** 2, 0) / period;
+      const sigma = Math.sqrt(variance);
+      upper.push(mean + stdDev * sigma);
+      lower.push(mean - stdDev * sigma);
+    }
+  }
+  return { upper, middle, lower };
+}
+
+/**
  * Calculates Volatility & ATR (Average True Range)
  */
 export interface VolatilityResult {
