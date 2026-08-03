@@ -16,7 +16,7 @@ import { compileTechnicalContext, validateAnalysisConsistency, appendTelemetryMe
 import { callFastestModel } from "@/lib/nvidia-ai";
 import { getAnalyzeChartSystemPrompt } from "@/lib/prompt-cache";
 import { safeParseAIResponse } from "@/lib/ai-response-parser";
-import { validateMarketData, validateIndicators, validateLevels, isDataFresh } from "@/lib/validate-market-data";
+import { validateMarketData, validateIndicators, validateLevels, isDataFresh, isSimulatedCandles } from "@/lib/validate-market-data";
 import { checkTokenBudget } from "@/lib/token-budget";
 import { getEntitlementForUser } from "@/lib/entitlements";
 import { checkUserRateLimit } from "@/lib/rate-limit";
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
     const candles = await MarketDataService.getOHLCV(resolvedSymbol, resolvedTimeframe, 100).catch(() => []);
     const lastCandle = candles[candles.length - 1];
     const livePrice = lastCandle ? lastCandle.close : null;
+    const dataSimulated = isSimulatedCandles(candles);
     let staleNotice = "";
 
     let activeChartState = chartState;
@@ -191,7 +192,7 @@ LIVE CHART TECHNICAL DATA (from real-time exchange telemetry — use as primary 
 - Symbol: ${resolvedSymbol}
 - Exchange: ${exchangeName}
 - Timeframe: ${resolvedTimeframe}
-- Telemetry Status: CONNECTED
+- Telemetry Status: ${dataSimulated ? "SIMULATED (educational demo data — NOT a live exchange feed)" : "CONNECTED"}
 - Current Price: $${tech.currentPrice.toLocaleString()}
 - Volume: ${tech.volume.toLocaleString()}
 - ATR (14): ${tech.atr.toFixed(4)}
@@ -222,8 +223,12 @@ RSI INTERPRETATION RULES (Follow EXACTLY):
 - NEVER state "neutral" when RSI > 60.
 
 TELEMETRY USAGE RULE:
-- You HAVE live real-time market data. The LIVE CHART TECHNICAL DATA above is from the exchange feed.
-- Never say "I don't have real-time market data" or "I cannot see the chart."
+${
+  dataSimulated
+    ? "- The data above is SIMULATED educational demo data, NOT a live exchange feed. You must NOT claim or imply it is live, real-time, or sourced from an exchange. If asked whether the data is live, state clearly that it is simulated for educational purposes and should not be traded on."
+    : `- You HAVE live real-time market data. The LIVE CHART TECHNICAL DATA above is from the exchange feed.
+- Never say "I don't have real-time market data" or "I cannot see the chart."`
+}
 - If asked about live data, respond with the current price and indicators from the data above.
 - Tag every specific data point with [CONFIRMED] (from telemetry), [ESTIMATED] (calculated), or [UNVERIFIED] (historical knowledge — avoid).
 - If unsure about a historical price or date, respond "VERIFICATION NEEDED" rather than guessing.
@@ -247,7 +252,7 @@ REQUIRED JSON RESPONSE SCHEMA:
   "stopLossIdea": "string",
   "takeProfitIdea": "string",
   "shortTermScenario": "string",
-  "coachNarrative": "Analysis Source: TradCopilot Telemetry | Symbol: ${resolvedSymbol} | Exchange: ${exchangeName} | TF: ${resolvedTimeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\\n\\n## Market Structure\\n[Provide institutional discretionary analysis of structure]\\n\\n## Momentum\\n[Synthesize RSI, MACD, volume, and trend together - no indicator lists]\\n\\n## Key Levels\\n[Explain importance of support/resistance pivots]\\n\\n## Trade Thesis\\n[Step-by-step thesis with telemetry backup]\\n\\n## Invalidation\\n[Exact structural invalidation close event]\\n\\n## Risk Assessment\\n[Detail uncertainties, conflicting signals, volatility risk]\\n\\n## Bottom Line\\n[Concise firm-level summary of highest probability path]"
+  "coachNarrative": "Analysis Source: TradCopilot Telemetry | Symbol: ${resolvedSymbol} | Exchange: ${exchangeName} | TF: ${resolvedTimeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: ${dataSimulated ? "Simulated (educational demo data)" : "Synchronized"}\\n\\n## Market Structure\\n[Provide institutional discretionary analysis of structure]\\n\\n## Momentum\\n[Synthesize RSI, MACD, volume, and trend together - no indicator lists]\\n\\n## Key Levels\\n[Explain importance of support/resistance pivots]\\n\\n## Trade Thesis\\n[Step-by-step thesis with telemetry backup]\\n\\n## Invalidation\\n[Exact structural invalidation close event]\\n\\n## Risk Assessment\\n[Detail uncertainties, conflicting signals, volatility risk]\\n\\n## Bottom Line\\n[Concise firm-level summary of highest probability path]"
 }`;
 
         try {

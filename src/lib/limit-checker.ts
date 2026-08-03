@@ -179,6 +179,39 @@ export async function recordUsage(
   return result.count === 1;
 }
 
+/**
+ * Release a previously-reserved usage slot by decrementing the daily counter.
+ *
+ * `recordUsage` reserves a slot atomically BEFORE the work that consumes it
+ * (e.g. creating an alert, running an AI call). If that work then fails, the
+ * reservation must be released or the user is charged for a unit they never
+ * received. This is the symmetric pair to `recordUsage`.
+ *
+ * The decrement is conditional (count > 0) so a day-boundary reset between
+ * reserve and release cannot drive the counter negative. Failures are
+ * swallowed and logged: a release failure must never mask the original error
+ * the caller is recovering from.
+ */
+export async function releaseUsage(
+  userId: string,
+  type: "analyses" | "alerts"
+): Promise<void> {
+  try {
+    const countField = type === "analyses" ? "analysesCountToday" : "alertsCountToday";
+    await prisma.user.updateMany({
+      where: {
+        id: userId,
+        [countField]: { gt: 0 },
+      },
+      data: {
+        [countField]: { decrement: 1 },
+      },
+    });
+  } catch (e) {
+    console.warn(`[limit-checker] releaseUsage failed for ${userId} (${type}):`, e);
+  }
+}
+
 export async function getCurrentUsage(
   userId: string,
   userEmail?: string

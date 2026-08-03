@@ -4,15 +4,28 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { handleNvidiaError } from "@/lib/nvidia-ai";
 import { callFastestAIModel } from "@/lib/ai-providers";
-import { dispatchCaughtError } from "@/lib/typed-errors";
+import { dispatchCaughtError, rateLimitedError } from "@/lib/typed-errors";
+import { checkUserRateLimit } from "@/lib/rate-limit";
 
 import { resolvePlan } from "@/lib/entitlements";
 
 // POST /api/v1/ai/weekly-report
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
+
+    // Per-user rate limit: 3 reports / 10 min. Weekly-report generation runs a
+    // 2000-token AI race (expensive). The endpoint is PRO-gated but had NO
+    // rate limit, so a PRO user could loop it to burn AI budget. The 429
+    // carries Retry-After so the client backs off cleanly.
+    const rl = checkUserRateLimit(user.id, request, "weekly-report", 3, 600_000);
+    if (!rl.result.allowed) {
+      return rateLimitedError(
+        rl.result.resetAt - Date.now(),
+        "Weekly report rate limit reached. Please try again later."
+      );
+    }
 
     const userProfile = await prisma.userProfile.findUnique({
       where: { userId: user.id },

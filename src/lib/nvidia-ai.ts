@@ -17,7 +17,6 @@
  *   if NVIDIA is fast (rare), its higher-quality model wins. If not, Groq already answered.
  */
 
-import OpenAI from "openai";
 import { logStartupBanner, redactKey, envNameForProvider } from "./startup";
 
 /* ─── Provider types ─────────────────────────────────────────────────── */
@@ -183,14 +182,6 @@ export function markGroqKeySuccess(index: 0 | 1) {
 export function getGroqKeyHealth(): Record<"key1" | "key2", GroqKeyHealth> {
   return { key1: { ...groqKeyHealth[0] }, key2: { ...groqKeyHealth[1] } };
 }
-
-/* ─── OpenAI SDK client (kept for backward compat) ───────────────────── */
-export const nvidiaClient = new OpenAI({
-  apiKey: process.env.NVIDIA_API_KEY || "placeholder-key",
-  baseURL: process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1",
-  timeout: 18000,
-  maxRetries: 0,
-});
 
 export const NVIDIA_MODEL = MODELS[1].name; // default NVIDIA model
 

@@ -23,7 +23,7 @@ import { getEntitlementForUser, getAnalysisLimitError } from "@/lib/entitlements
 import { callFastestModel } from "@/lib/nvidia-ai";
 import { getAnalyzeChartSystemPrompt } from "@/lib/prompt-cache";
 import { safeParseAIResponse } from "@/lib/ai-response-parser";
-import { validateMarketData, validateIndicators, validateLevels, isDataFresh } from "@/lib/validate-market-data";
+import { validateMarketData, validateIndicators, validateLevels, isDataFresh, isSimulatedCandles } from "@/lib/validate-market-data";
 import { checkTokenBudget } from "@/lib/token-budget";
 
 const telemetrySchema = z.object({
@@ -78,7 +78,7 @@ const analyzeChartSchema = z.object({
 // Allow up to 60s for AI model race — overrides Next.js default 10s timeout
 export const maxDuration = 60;
 
-function buildFallbackAnalysis(symbol: string, timeframe: string, tech: any, exchange: string, traderName = "Trader", behavioralCtx = "", aiOffline: boolean = false) {
+function buildFallbackAnalysis(symbol: string, timeframe: string, tech: any, exchange: string, traderName = "Trader", behavioralCtx = "", aiOffline: boolean = false, dataSimulated: boolean = false) {
   // Hard guard: if no verified telemetry, refuse to fabricate a Synchronized narrative.
   // Callers MUST handle the null return (e.g. 503 upstream-unavailable).
   if (!tech || !tech.currentPrice || tech.currentPrice <= 0 || !tech.support || !tech.resistance) {
@@ -107,7 +107,15 @@ function buildFallbackAnalysis(symbol: string, timeframe: string, tech: any, exc
   const sourceTag = aiOffline
     ? "Analysis Source: TradCopilot Telemetry (Indicators Only) | "
     : "Analysis Source: TradCopilot Telemetry | ";
-  const statusTag = aiOffline ? "Status: Indicator-Only (AI unavailable)" : "Status: Synchronized";
+  // Never label simulated data as "Synchronized" — that would assert live
+  // exchange provenance the data does not have. Simulated data is an
+  // educational fallback; label it honestly so the user (and the narrative)
+  // cannot mistake it for a live feed.
+  const statusTag = dataSimulated
+    ? "Status: Simulated (educational demo data)"
+    : aiOffline
+      ? "Status: Indicator-Only (AI unavailable)"
+      : "Status: Synchronized";
 
   return {
     symbol,
@@ -166,6 +174,9 @@ export async function POST(request: NextRequest) {
   let behavioralContext = "";
   let validatedSymbol = "";
   let validatedTimeframe: "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W" = "1h";
+  // Hoisted so the outer-catch fallback can label simulated data honestly.
+  // Set after candles are fetched; false until then.
+  let dataSimulated = false;
 
   const releaseReservation = async () => {
     if (reservedUserId) {
@@ -309,7 +320,11 @@ COACHING MANDATE:
       return errorResponse("INTERNAL_ERROR", "No historical data available for selected asset", 500);
     }
     candles = fetchedCandles;
-    console.log(`[STEP 4: OHLCV fetched] candleCount=${candles.length} | lastPrice=${candles[candles.length - 1]?.close}`);
+    dataSimulated = isSimulatedCandles(candles);
+    if (dataSimulated) {
+      console.warn(`[ANALYZE-CHART] Candle source is SIMULATED for ${symbol} ${timeframe} — analysis will be labeled as simulated, not live.`);
+    }
+    console.log(`[STEP 4: OHLCV fetched] candleCount=${candles.length} | lastPrice=${candles[candles.length - 1]?.close} | source=${dataSimulated ? "SIMULATED" : "LIVE"}`);
 
     const lastCandle = candles[candles.length - 1];
     const lastCandleTime: string = lastCandle ? new Date(lastCandle.timestamp).toISOString() : new Date().toISOString();
@@ -330,28 +345,6 @@ COACHING MANDATE:
     validateAnalysisConsistency(tech);
     console.log(`[STEP 5: Indicators calculated] RSI=${tech.rsi.toFixed(2)} | MACD=${tech.macdValue.toFixed(4)}`);
     console.log(`[STEP 6: Support calculated] Support=$${tech.support} | Resistance=$${tech.resistance} | Invalidation=$${tech.invalidationLevel}`);
-
-    // ── Live Price Override ────────────────────────────────────────────────────
-    // The client sends the Binance WebSocket price (sub-100ms latency).
-    // The telemetry currentPrice is derived from the last closed candle (up to
-    // 60s stale on 1h timeframe). We override with the live WebSocket price
-    // if it is within 5% of the candle price (sanity guard against bad data).
-    if (livePrice && livePrice > 0 && tech.currentPrice > 0) {
-      const deviation = Math.abs(livePrice - tech.currentPrice) / tech.currentPrice;
-      if (deviation <= 0.05) {
-        console.log(
-          `[LIVE PRICE OVERRIDE] Replacing stale candle price $${tech.currentPrice.toFixed(4)} ` +
-          `with live WebSocket price $${livePrice.toFixed(4)} ` +
-          `(deviation: ${(deviation * 100).toFixed(4)}%)`
-        );
-        tech = { ...tech, currentPrice: livePrice };
-      } else {
-        console.warn(
-          `[LIVE PRICE OVERRIDE REJECTED] Deviation ${(deviation * 100).toFixed(2)}% exceeds 5% threshold. ` +
-          `livePrice=$${livePrice} candle=$${tech.currentPrice} — keeping candle price.`
-        );
-      }
-    }
 
     // VALIDATION: Reject if price, indicators, or pivot levels are incomplete/NaN
     const dataErrors: string[] = [];
@@ -448,7 +441,7 @@ COACHING MANDATE:
             let narrative = analysis.coachNarrative || "";
             const expectedHeader = `Symbol: ${symbol}`;
             if (!narrative.includes(expectedHeader)) {
-              const headerLine = `Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized`;
+              const headerLine = `Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: ${dataSimulated ? "Simulated (educational demo data)" : "Synchronized"}`;
               narrative = narrative.replace(/^Analysis Source:[^\n]*\n?/, "");
               narrative = `${headerLine}\n\n${narrative.trim()}`;
             }
@@ -516,7 +509,7 @@ COACHING MANDATE:
 
     const budget = checkTokenBudget("chart analysis", systemPrompt, [], "FREE");
     if (!budget.isWithinLimit) {
-      const fallback = buildFallbackAnalysis(symbol, timeframe, tech, exchangeName, userName, behavioralContext, true);
+      const fallback = buildFallbackAnalysis(symbol, timeframe, tech, exchangeName, userName, behavioralContext, true, dataSimulated);
       if (!fallback) {
         return errorResponse("TELEMETRY_UNAVAILABLE", "Live market data is temporarily unavailable. Please try again in a moment.", 503);
       }
@@ -533,7 +526,7 @@ LIVE CHART TECHNICAL DATA (from real-time exchange telemetry — use as primary 
 - Symbol: ${symbol}
 - Exchange: ${exchangeName}
 - Timeframe: ${timeframe}
-- Telemetry Status: CONNECTED
+- Telemetry Status: ${dataSimulated ? "SIMULATED (educational demo data — NOT a live exchange feed)" : "CONNECTED"}
 - Current Price: $${tech.currentPrice.toLocaleString()}
 - Volume: ${tech.volume.toLocaleString()}
 - ATR (14): ${tech.atr.toFixed(4)}
@@ -568,8 +561,12 @@ RSI INTERPRETATION RULES (Follow EXACTLY):
 - NEVER state "neutral" when RSI > 60.
 
 TELEMETRY USAGE RULE:
-- You HAVE live real-time market data. The LIVE CHART TECHNICAL DATA above is from the exchange feed.
-- Never say "I don't have real-time market data" or "I cannot see the chart."
+${
+  dataSimulated
+    ? "- The data above is SIMULATED educational demo data, NOT a live exchange feed. You must NOT claim or imply it is live, real-time, or sourced from an exchange. If asked whether the data is live, state clearly that it is simulated for educational purposes and should not be traded on."
+    : `- You HAVE live real-time market data. The LIVE CHART TECHNICAL DATA above is from the exchange feed.
+- Never say "I don't have real-time market data" or "I cannot see the chart."`
+}
 - If asked about live data, respond with the current price and indicators from the data above.
 - Tag every specific data point with [CONFIRMED] (from telemetry), [ESTIMATED] (calculated), or [UNVERIFIED] (historical knowledge — avoid).
 - If unsure about a historical price or date, respond "VERIFICATION NEEDED" rather than guessing.
@@ -593,7 +590,7 @@ REQUIRED JSON RESPONSE SCHEMA:
   "stopLossIdea": "string",
   "takeProfitIdea": "string",
   "shortTermScenario": "string",
-  "coachNarrative": "Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\\n\\n## Market Structure\\n[Provide institutional discretionary analysis of structure]\\n\\n## Momentum\\n[Synthesize RSI, MACD, volume, and trend together - no indicator lists]\\n\\n## Key Levels\\n[Explain importance of support/resistance pivots]\\n\\n## Trade Thesis\\n[Step-by-step thesis with telemetry backup]\\n\\n## Invalidation\\n[Exact structural invalidation close event]\\n\\n## Risk Assessment\\n[Detail uncertainties, conflicting signals, volatility risk]\\n\\n## Bottom Line\\n[Concise firm-level summary of highest probability path]"
+  "coachNarrative": "Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: ${dataSimulated ? "Simulated (educational demo data)" : "Synchronized"}\\n\\n## Market Structure\\n[Provide institutional discretionary analysis of structure]\\n\\n## Momentum\\n[Synthesize RSI, MACD, volume, and trend together - no indicator lists]\\n\\n## Key Levels\\n[Explain importance of support/resistance pivots]\\n\\n## Trade Thesis\\n[Step-by-step thesis with telemetry backup]\\n\\n## Invalidation\\n[Exact structural invalidation close event]\\n\\n## Risk Assessment\\n[Detail uncertainties, conflicting signals, volatility risk]\\n\\n## Bottom Line\\n[Concise firm-level summary of highest probability path]"
 }`;
     console.log(`[STEP 7: Prompt generated] userPromptLength=${userPrompt.length}B`);
 
@@ -624,7 +621,7 @@ REQUIRED JSON RESPONSE SCHEMA:
       // for the same failed analysis. We keep the reservation (user is charged
       // for the attempt) and return the deterministic fallback.
       console.log(`[STEP 9 FALLBACK] Returning indicator-derived analysis for ${symbol} ${timeframe}`);
-      const fallbackAnalysis = buildFallbackAnalysis(symbol, timeframe, tech, exchangeName, userName, behavioralContext, true);
+      const fallbackAnalysis = buildFallbackAnalysis(symbol, timeframe, tech, exchangeName, userName, behavioralContext, true, dataSimulated);
       if (!fallbackAnalysis) {
         // No verified telemetry reached the AI race — surface the upstream error
         // rather than fabricating a Synchronized narrative with N/A values.
@@ -901,7 +898,8 @@ Timestamp: ${new Date().toISOString()}
           "AUTO",
           userName || "Trader",
           behavioralContext || "",
-          true
+          true,
+          dataSimulated
         )
       : null;
     if (catchFallback) {

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { checkUsageLimit, recordUsage } from "@/lib/limit-checker";
+import { checkUsageLimit, recordUsage, releaseUsage } from "@/lib/limit-checker";
 import {
   successResponse,
   unauthorizedError,
@@ -70,19 +70,35 @@ export async function POST(request: NextRequest) {
       } as any);
     }
 
-    const alert = await prisma.alert.create({
-      data: {
-        userId: user.id,
-        instrument,
-        type,
-        condition: condition as any,
-        isActive: true,
-      },
-    });
+    // Reserve the alert quota atomically BEFORE creating the row. The prior
+    // check→create→record sequence allowed two concurrent requests to both
+    // pass the read-only check and both create an alert, then both increment
+    // — exceeding the daily limit by one under concurrency. recordUsage is a
+    // conditional increment (race-safe); if it returns false another request
+    // took the last slot between our check and our reservation, so we refuse
+    // without creating the row. On a create failure we release the slot so
+    // the user is not charged for an alert that was never persisted.
+    const reserved = await recordUsage(user.id, "alerts", user.email);
+    if (!reserved) {
+      return errorResponse("FORBIDDEN", "Daily alert limit reached. Upgrade to Pro.", 403);
+    }
 
-    await recordUsage(user.id, "alerts", user.email);
+    try {
+      const alert = await prisma.alert.create({
+        data: {
+          userId: user.id,
+          instrument,
+          type,
+          condition: condition as any,
+          isActive: true,
+        },
+      });
 
-    return successResponse(alert, 201);
+      return successResponse(alert, 201);
+    } catch (createErr) {
+      await releaseUsage(user.id, "alerts");
+      throw createErr;
+    }
   } catch (error) {
     console.error("Create alert API error:", error);
     return dispatchCaughtError("Failed to create alert", error);

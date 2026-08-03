@@ -157,3 +157,27 @@ export function isDataFresh(timestamp: number, timeframe: string): boolean {
 
   return true;
 }
+
+/**
+ * Returns true when the candle set was produced by the simulated-data
+ * fallback (market.ts tags every fallback candle with `source: "SIMULATED"`).
+ *
+ * The market layer is honest about this — it stamps a `warning` on every
+ * simulated candle. The integrity problem is one layer up: the AI routes
+ * (analyze-chart, chat) previously never inspected `source`, then hardcoded
+ * "Telemetry Status: CONNECTED" / "Status: Synchronized" in the prompt. That
+ * presented simulated data to the model as live exchange telemetry, causing
+ * the AI to assert "you HAVE live real-time market data" about fabricated
+ * values — a hallucination of live provenance. Callers use this to label
+ * the prompt honestly ("SIMULATED") so the model never claims live data it
+ * does not have, and so the response is flagged for the user.
+ */
+export function isSimulatedCandles(candles: { source?: string }[]): boolean {
+  if (!Array.isArray(candles) || candles.length === 0) return false;
+  // Any simulated candle in the set means the analysis is not built on live
+  // exchange data. Check the most recent candle first (it carries the
+  // authoritative source for the current bar), then fall back to scanning.
+  const last = candles[candles.length - 1];
+  if (last?.source === "SIMULATED") return true;
+  return candles.some((c) => c?.source === "SIMULATED");
+}

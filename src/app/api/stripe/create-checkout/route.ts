@@ -49,13 +49,31 @@ export async function POST(request: NextRequest) {
     const priceId = process.env.STRIPE_PRICE_ID || "price_mock_pro_tier";
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+    // Production must use a real, pre-created Stripe Price (STRIPE_PRICE_ID
+    // starting with "price_"). The ad-hoc price_data fallback below creates a
+    // throwaway $7.49 product on every checkout — fine for dev/demo, but in
+    // production it would silently bill through an unmanaged, untracked
+    // product (no dashboard control, no coupon/upgrade reconciliation, revenue
+    // not tied to the canonical plan). Fail loud instead of mis-billing.
+    // NOTE: the dev default "price_mock_pro_tier" also starts with "price_",
+    // so it must be excluded explicitly or the guard would let the mock
+    // fallback through in production.
+    const hasRealPrice = priceId.startsWith("price_") && priceId !== "price_mock_pro_tier";
+    if (process.env.NODE_ENV === "production" && !hasRealPrice) {
+      console.error("[STRIPE] Production checkout rejected: STRIPE_PRICE_ID is missing or not a real Stripe price id.");
+      return NextResponse.json(
+        { error: { message: "Checkout is temporarily unavailable. Please try again later." } },
+        { status: 503 }
+      );
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
       line_items: [
         {
-          price: priceId.startsWith("price_") ? priceId : undefined,
-          price_data: !priceId.startsWith("price_") ? {
+          price: hasRealPrice ? priceId : undefined,
+          price_data: !hasRealPrice ? {
             currency: "usd",
             product_data: {
               name: "TradCopilot Pro Membership",
@@ -76,6 +94,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
     console.error("Create stripe checkout session failed:", err);
-    return NextResponse.json({ error: { message: err.message || "Failed to initiate checkout" } }, { status: 500 });
+    // Never surface the raw Stripe error to the client — it can contain
+    // account/identifier details. Log the full error server-side only.
+    return NextResponse.json({ error: { message: "Failed to initiate checkout" } }, { status: 500 });
   }
 }
