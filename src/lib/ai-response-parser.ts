@@ -231,6 +231,10 @@ export function safeParseAIResponse(
     volatility?: number;
     isVolatilitySpike?: boolean;
     atr?: number;
+    // Deterministic server-side Stop Loss (=== invalidationLevel by
+    // construction). When supplied it overrides the AI's stopLossIdea so the
+    // displayed and validated stop can never contradict the invalidation.
+    stopLoss?: number;
   }
 ): SafeParseResult {
   const symbol = techTelemetry.symbol;
@@ -325,7 +329,9 @@ export function safeParseAIResponse(
       parsedObj.whyItMatters ||
       `${symbol} is trading in a ${techTelemetry.trend.toLowerCase()} regime on the ${timeframe} interval. RSI is ${techTelemetry.rsi.toFixed(1)} (${techTelemetry.rsiLabel}).`,
     entryIdeas: parsedObj.entryIdeas || `Limit entry near support level $${techTelemetry.support.toLocaleString()}`,
-    stopLossIdea: parsedObj.stopLossIdea || `$${techTelemetry.invalidationLevel.toLocaleString()}`,
+    stopLossIdea: (typeof techTelemetry.stopLoss === "number" && !isNaN(techTelemetry.stopLoss) && techTelemetry.stopLoss > 0)
+      ? `$${techTelemetry.stopLoss.toLocaleString()}`
+      : (parsedObj.stopLossIdea || `$${techTelemetry.invalidationLevel.toLocaleString()}`),
     takeProfitIdea: parsedObj.takeProfitIdea || `$${techTelemetry.resistance.toLocaleString()}`,
     shortTermScenario:
       parsedObj.shortTermScenario ||

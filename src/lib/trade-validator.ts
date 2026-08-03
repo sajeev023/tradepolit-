@@ -27,6 +27,12 @@ export interface TradeTelemetryContext {
   emaCrossover?: "BULLISH" | "BEARISH" | null;
   macdCrossover?: "BULLISH" | "BEARISH" | null;
   volume?: number;
+  // Deterministic server-side Stop Loss from compileTechnicalContext.
+  // When present, it takes precedence over the AI-authored stopLossIdea
+  // string. By construction tech.stopLoss === tech.invalidationLevel, so
+  // preferring it makes a Stop-Loss / Invalidation contradiction (e.g. a
+  // SHORT whose stop is below the structural invalidation) impossible.
+  stopLoss?: number;
 }
 
 export interface AIAnalysisPayload {
@@ -206,10 +212,20 @@ export function validateTradeAnalysis(
   const invalidation = parsePriceNumber(analysis.invalidationLevel ?? tech.invalidationLevel);
 
   // Extract Entry, SL, TP
+  // The Stop Loss is taken from the DETERMINISTIC server-side skeleton
+  // (compileTechnicalContext) when present. By construction tech.stopLoss ===
+  // tech.invalidationLevel, so preferring it guarantees the validated
+  // structure can never contain a Stop-Loss / Invalidation contradiction
+  // (e.g. a SHORT whose AI-authored stop falls below the structural
+  // invalidation). Entry and Take Profit remain AI-authored so the model can
+  // still propose limit entries and targets beyond the range; they are
+  // validated against the now-deterministic stop and the structural levels.
   let entry = extractFirstNumber(analysis.entryIdeas);
   if (isNaN(entry)) entry = currentPrice;
 
-  let stopLoss = extractFirstNumber(analysis.stopLossIdea);
+  let stopLoss = (typeof tech.stopLoss === "number" && !isNaN(tech.stopLoss) && tech.stopLoss > 0)
+    ? tech.stopLoss
+    : extractFirstNumber(analysis.stopLossIdea);
   if (isNaN(stopLoss)) stopLoss = invalidation;
 
   let takeProfit = extractFirstNumber(analysis.takeProfitIdea);

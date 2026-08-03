@@ -464,10 +464,23 @@ COACHING MANDATE:
               support: tech.support,
               resistance: tech.resistance,
               invalidationLevel: tech.invalidationLevel,
+              // Overwrite the cached AI-authored stop with the deterministic
+              // server value so the served Stop Loss always matches the
+              // freshly-overwritten invalidationLevel. Prevents a stale cached
+              // stop (from the original price) from contradicting the current
+              // structural invalidation on a cache hit.
+              stopLossIdea: (tech.stopLoss && tech.stopLoss > 0)
+                ? `$${tech.stopLoss.toLocaleString()}`
+                : (analysis.stopLossIdea ?? `$${tech.invalidationLevel.toLocaleString()}`),
               rsi: tech.rsi,
               rsiLabel: tech.rsiLabel,
               currentPrice: tech.currentPrice,
               sourceMetadata: tech.sourceMetadata,
+              levels: {
+                support: tech.support,
+                resistance: tech.resistance,
+                invalidation: tech.invalidationLevel,
+              },
               cached: true,
             });
           }
@@ -655,6 +668,10 @@ REQUIRED JSON RESPONSE SCHEMA:
       volatility: tech.volatility,
       isVolatilitySpike: tech.isVolatilitySpike,
       atr: tech.atr,
+      // Deterministic server-side Stop Loss. By construction this equals
+      // tech.invalidationLevel, so the validator (which prefers it over the
+      // AI's stopLossIdea) can never produce a SL/invalidation contradiction.
+      stopLoss: tech.stopLoss,
     };
 
     let activeContent = raceResult.content;
@@ -671,7 +688,7 @@ ${issues.map(i => `- ${i}`).join("\n")}
 
 REQUIREMENTS TO FIX:
 1. MACD: MACD Value ${tech.macdValue.toFixed(4)}, Signal ${tech.macdSignal.toFixed(4)}. If MACD > Signal, describe MACD as BULLISH. If MACD < Signal, describe MACD as BEARISH.
-2. STOP LOSS: For ${tech.bias}, Stop Loss MUST be strictly ${tech.bias.includes("BUY") || tech.bias.includes("LONG") ? `below Entry ($${tech.currentPrice}) and <= Support ($${tech.support})` : `above Entry ($${tech.currentPrice}) and >= Resistance ($${tech.resistance})`}.
+2. STOP LOSS: For ${tech.bias}, Stop Loss MUST be strictly ${tech.bias.includes("BUY") || tech.bias.includes("LONG") ? `below Entry ($${tech.currentPrice}) and <= Support ($${tech.support})` : `above Entry ($${tech.currentPrice}) and >= Resistance ($${tech.resistance})`}. The structural invalidation is $${tech.invalidationLevel.toLocaleString()}; the Stop Loss MUST be ${tech.bias.includes("BUY") || tech.bias.includes("LONG") ? `at or below` : `at or above`} that invalidation level.
 3. RSI: RSI is ${tech.rsi.toFixed(2)}. Narrative must describe it as "${parseResult.validationResult?.rsiClassification || tech.rsiLabel}".
 4. RISK LEVEL: Dynamic telemetry risk is calculated as ${parseResult.validationResult?.calculatedRisk || "Medium"}. Set JSON riskLevel and narrative to reflect this.
 5. REWARD TO RISK: Ensure Take Profit is positioned to achieve R:R ratio >= 1.5.
