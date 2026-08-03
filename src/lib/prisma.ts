@@ -43,8 +43,43 @@ if (isLocalhostDb) {
   console.log(`[PRISMA RUNTIME] Supabase PostgreSQL active`);
 }
 
+// Production must never serve users from the in-memory mock database — a missing
+// or localhost/mockproject DATABASE_URL would otherwise boot silently, serve
+// fabricated demo data, and lose every write on cold start.
+//
+// We cannot throw at module load because `next build` evaluates route modules in
+// production mode without a runtime DATABASE_URL (the build does not serve users
+// and may legitimately lack DB access). Instead, in production-with-mock we
+// export a Proxy that throws on the first DB operation. All prisma access in
+// this codebase happens inside route handlers / exported functions (never at
+// module top level), so:
+//   - `next build` succeeds (handlers are not invoked during build).
+//   - A misconfigured production runtime fails loudly on the first request that
+//     touches the database, instead of silently serving mock data.
+function productionMockGuard(): any {
+  const fail = (): never => {
+    throw new Error(
+      "FATAL: Production cannot run on a mock database. DATABASE_URL is missing or points to localhost/mockproject. Set a real PostgreSQL DATABASE_URL environment variable."
+    );
+  };
+  return new Proxy(
+    {},
+    {
+      get: () => fail(),
+      has: () => true,
+    }
+  );
+}
+
+// NOTE: the mock / guard branches are intentionally typed `any` (matching the
+// prior `prismaMock as any`), so the exported `prisma` keeps its original
+// effective type. Widening it to `PrismaClient` would surface unrelated latent
+// type errors across callers (e.g. analyze-chart) that are out of scope for
+// this hardening pass.
 export const prisma = isLocalhostDb
-  ? (prismaMock as any)
+  ? process.env.NODE_ENV === "production"
+    ? productionMockGuard()
+    : (prismaMock as any)
   : (globalForPrisma.prisma ?? createPrismaClient());
 
 if (process.env.NODE_ENV !== "production" && !isLocalhostDb) {

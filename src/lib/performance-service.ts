@@ -17,6 +17,15 @@ export async function recomputeUserPerformance(userId: string) {
     process.env.DATABASE_URL.includes("localhost") ||
     process.env.DATABASE_URL.includes("mockproject");
 
+  // Defense in depth: prisma.ts already refuses to boot in production on a mock
+  // DB, but this service must never fabricate performance data in production
+  // even if reached via a code path that bypassed that guard.
+  if (process.env.NODE_ENV === "production" && isLocalhostDb) {
+    throw new Error(
+      "FATAL: Production cannot compute performance from mock data. DATABASE_URL is misconfigured."
+    );
+  }
+
   if (isLocalhostDb) {
     memoryDb.recomputePerformance();
     return memoryDb.performance;

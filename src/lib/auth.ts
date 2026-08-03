@@ -20,24 +20,29 @@ export async function getAuthUser() {
     return { user, error: null };
   }
 
-  // Demo session fallback for YC Instant Demo mode
-  try {
-    const cookieStore = await cookies();
-    if (cookieStore.get("sb-mock-session")?.value === "true") {
-      const mockEmail = cookieStore.get("sb-mock-email")?.value || "partner@tradcopilot.com";
-      return {
-        user: {
-          id: "partner-1234-1234-1234-123456789012",
-          email: decodeURIComponent(mockEmail),
-          user_metadata: { full_name: "YC Demo Trader" },
-          app_metadata: { role: "USER" },
-          aud: "authenticated",
-          created_at: new Date().toISOString(),
-        } as any,
-        error: null,
-      };
-    }
-  } catch (_) {}
+  // Demo session fallback for YC Instant Demo mode — DEV/TEST ONLY.
+  // The sb-mock-session cookie fabricates an authenticated user without any
+  // Supabase verification. It must never be honored in production, otherwise
+  // anyone who sets that one cookie bypasses auth entirely.
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      const cookieStore = await cookies();
+      if (cookieStore.get("sb-mock-session")?.value === "true") {
+        const mockEmail = cookieStore.get("sb-mock-email")?.value || "partner@tradcopilot.com";
+        return {
+          user: {
+            id: "partner-1234-1234-1234-123456789012",
+            email: decodeURIComponent(mockEmail),
+            user_metadata: { full_name: "YC Demo Trader" },
+            app_metadata: { role: "USER" },
+            aud: "authenticated",
+            created_at: new Date().toISOString(),
+          } as any,
+          error: null,
+        };
+      }
+    } catch (_) {}
+  }
 
   return { user: null, error: unauthorizedError() };
 }

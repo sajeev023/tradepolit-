@@ -30,7 +30,12 @@ export async function updateSession(request: NextRequest) {
 
   // Refresh session — important for Server Components
   let user = null;
-  const isMockSession = request.cookies.get("sb-mock-session")?.value === "true";
+  // The sb-mock-session cookie is a DEV/TEST-only demo backdoor (it fabricates a
+  // logged-in user with no Supabase verification). It must never be honored in
+  // production, otherwise anyone who sets that cookie is authenticated.
+  const isMockSession =
+    process.env.NODE_ENV !== "production" &&
+    request.cookies.get("sb-mock-session")?.value === "true";
 
   if (isMockSession) {
     const mockEmail = request.cookies.get("sb-mock-email")?.value || "partner@tradcopilot.com";
