@@ -37,14 +37,14 @@ export function NotificationPanel() {
     },
   });
 
-  // 3. Mark all read
+  // 3. Mark all read — fire the PATCH requests in parallel rather than
+  // awaiting them one at a time.
   const markAllReadMutation = useMutation({
     mutationFn: async () => {
-      // Mark all in-memory notifications as read via batching
       const unreads = notifications.filter((n) => !n.isRead);
-      for (const n of unreads) {
-        await fetch(`/api/v1/notifications/${n.id}/read`, { method: "PATCH" });
-      }
+      await Promise.all(
+        unreads.map((n) => fetch(`/api/v1/notifications/${n.id}/read`, { method: "PATCH" }))
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -78,7 +78,6 @@ export function NotificationPanel() {
   return (
     <div
       ref={panelRef}
-      onMouseLeave={() => setNotificationPanelOpen(false)}
       className="fixed right-0 top-0 h-screen w-80 z-50 flex flex-col justify-between border-l glass shadow-2xl animate-fade-in"
       style={{
         backgroundColor: "rgba(18, 18, 20, 0.9)",

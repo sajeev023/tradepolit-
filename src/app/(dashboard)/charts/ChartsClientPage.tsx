@@ -171,16 +171,12 @@ export function ChartsClientPage() {
   // Subscription Plan & Usage counts
   const [subscriptionStatus, setSubscriptionStatus] = useState("FREE");
   const [analysesCountToday, setAnalysesCountToday] = useState(0);
-  const [_alertsCountToday, setAlertsCountToday] = useState(0);
   // Quota comes from the server (/api/v1/profile) — never hardcode a default.
   // The server is the single source of truth (see entitlements.ts YC_DEMO).
   const [analysisLimit, setAnalysisLimit] = useState<number | null>(null);
-  const [_alertLimit, setAlertLimit] = useState<number | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [showDemoConversionModal, setShowDemoConversionModal] = useState(false);
   const [demoAnalysesCount, setDemoAnalysesCount] = useState(0);
-  const [_showOnboardingBanner, _setShowOnboardingBanner] = useState(false);
-  const [_analysisReady, setAnalysisReady] = useState(false);
 
   // Chat state
   const [chatId, setChatId] = useState<string | null>(null);
@@ -194,6 +190,9 @@ export function ChartsClientPage() {
   const [_shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [mobileTab, setMobileTab] = useState<"watchlist" | "chart" | "copilot">("chart");
   const [isMobile, setIsMobile] = useState(false);
+  // Mobile chart-options menu (three-dot). React state instead of imperative
+  // getElementById / classList so the UI stays in sync with React's render.
+  const [mobileChartMenuOpen, setMobileChartMenuOpen] = useState(false);
 
   // Rate-limiting refs for background alerts
   const triggeredAlertsRef = useRef<Set<string>>(new Set());
@@ -246,9 +245,7 @@ export function ChartsClientPage() {
           setSubscriptionStatus(activeStatus);
 
           if (dailyAnalysisCount !== undefined) setAnalysesCountToday(dailyAnalysisCount);
-          if (dailyAlertCount !== undefined) setAlertsCountToday(dailyAlertCount);
           if (profileLimit !== undefined) setAnalysisLimit(profileLimit);
-          if (profileAlertLimit !== undefined) setAlertLimit(profileAlertLimit);
           if (profileIsDemo !== undefined) setIsDemoMode(profileIsDemo);
         }
 
@@ -365,7 +362,6 @@ export function ChartsClientPage() {
     const threshold = 80;
     const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
     shouldAutoScrollRef.current = isAtBottom;
-    setShouldAutoScroll(isAtBottom);
   }, []);
 
   const scrollToBottom = useCallback((force = false) => {
@@ -642,7 +638,6 @@ Timestamp: ${new Date().toISOString()}
       }
 
       setIsBackgroundUpdating(false);
-      setAnalysisReady(true);
       toast.success(readyData.cached ? `Cached analysis loaded for ${selectedSymbol}` : `Analysis completed for ${selectedSymbol}`);
     },
     onError: (err: any) => {
@@ -741,7 +736,6 @@ Timestamp: ${new Date().toISOString()}
                 console.log(`[ALERT] Daily limit of 3 alerts reached. Alert suppressed.`);
                 return;
               }
-              setAlertsCountToday(prev => prev + 1);
             }
           } catch (recordErr) {
             console.error("Failed to check/record alert limit:", recordErr);
@@ -813,14 +807,12 @@ Timestamp: ${new Date().toISOString()}
 
       if (isRestoredForCurrent) {
         // Keep restored analysis intact; just mark the panel ready.
-        setAnalysisReady(true);
         restoredAnalysisRef.current = null;
         return;
       }
 
       // Immediately clear stale analysis state for previous symbol
       setAnalysisData(null);
-      setAnalysisReady(false);
 
       analyzeMutate({ symbol: selectedSymbol, timeframe: selectedTimeframe });
     }
@@ -1228,66 +1220,53 @@ Timestamp: ${new Date().toISOString()}
               <div className="flex lg:hidden">
                 <div className="relative">
                   <button
-                    onClick={() => {
-                      const el = document.getElementById("mobile-chart-menu");
-                      if (el) el.classList.toggle("hidden");
-                    }}
+                    onClick={() => setMobileChartMenuOpen((v) => !v)}
                     className="flex items-center justify-center w-11 h-11 rounded-lg hover:bg-[var(--color-bg-hover)] cursor-pointer"
                     aria-label="Chart options"
+                    aria-expanded={mobileChartMenuOpen}
                   >
                     <MoreHorizontal size={18} style={{ color: "var(--color-text-tertiary)" }} />
                   </button>
-                  <div
-                    id="mobile-chart-menu"
-                    className="hidden absolute right-0 top-full mt-1 z-50 min-w-[150px] rounded-lg border shadow-xl overflow-hidden"
-                    style={{
-                      backgroundColor: "var(--color-bg-elevated, var(--color-bg-secondary))",
-                      borderColor: "var(--color-border-subtle)",
-                    }}
-                  >
-                    <button
-                      onClick={() => {
-                        document.getElementById("mobile-chart-menu")?.classList.add("hidden");
-                        handleCaptureSnapshot();
+                  {mobileChartMenuOpen && (
+                    <div
+                      className="absolute right-0 top-full mt-1 z-50 min-w-[150px] rounded-lg border shadow-xl overflow-hidden"
+                      style={{
+                        backgroundColor: "var(--color-bg-elevated, var(--color-bg-secondary))",
+                        borderColor: "var(--color-border-subtle)",
                       }}
-                      className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
-                      style={{ color: "var(--color-text-secondary)" }}
                     >
-                      <Camera size={14} /> Export PNG
-                    </button>
-                    <button
-                      onClick={() => {
-                        document.getElementById("mobile-chart-menu")?.classList.add("hidden");
-                        setIsChartMaximized(v => !v);
-                      }}
-                      className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      <Maximize2 size={14} /> {isChartMaximized ? "Exit Fullscreen" : "Fullscreen"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        document.getElementById("mobile-chart-menu")?.classList.add("hidden");
-                        setAiPanelOpen(v => !v);
-                      }}
-                      className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      <Bot size={14} /> {aiPanelOpen ? "Close AI" : "Open AI"}
-                    </button>
-                    {subscriptionStatus !== "PRO_ACTIVE" && (
                       <button
-                        onClick={() => {
-                          document.getElementById("mobile-chart-menu")?.classList.add("hidden");
-                          router.push("/pricing");
-                        }}
+                        onClick={() => { setMobileChartMenuOpen(false); handleCaptureSnapshot(); }}
                         className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
-                        style={{ color: "var(--color-accent-primary)" }}
+                        style={{ color: "var(--color-text-secondary)" }}
                       >
-                        <Zap size={14} /> Upgrade to Pro
+                        <Camera size={14} /> Export PNG
                       </button>
-                    )}
-                  </div>
+                      <button
+                        onClick={() => { setMobileChartMenuOpen(false); setIsChartMaximized(v => !v); }}
+                        className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        <Maximize2 size={14} /> {isChartMaximized ? "Exit Fullscreen" : "Fullscreen"}
+                      </button>
+                      <button
+                        onClick={() => { setMobileChartMenuOpen(false); setAiPanelOpen(v => !v); }}
+                        className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        <Bot size={14} /> {aiPanelOpen ? "Close AI" : "Open AI"}
+                      </button>
+                      {subscriptionStatus !== "PRO_ACTIVE" && (
+                        <button
+                          onClick={() => { setMobileChartMenuOpen(false); router.push("/pricing"); }}
+                          className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
+                          style={{ color: "var(--color-accent-primary)" }}
+                        >
+                          <Zap size={14} /> Upgrade to Pro
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

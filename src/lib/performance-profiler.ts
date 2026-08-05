@@ -33,34 +33,60 @@ export interface PerformanceStats {
 
 type Subscriber = (stats: PerformanceStats) => void;
 
+const DEFAULT_STATS: PerformanceStats = {
+  navigationTime: 0,
+  initialChartLoadTime: 0,
+  symbolSwitchTime: 0,
+  timeframeSwitchTime: 0,
+  widgetInitCount: 0,
+  widgetDestroyCount: 0,
+  renderCounts: {},
+  renderTimes: {},
+  apiTimings: [],
+  wsTimings: [],
+  fps: 60,
+  memoryUsed: 0,
+  memoryLimit: 0,
+};
+
+/**
+ * Returns true when the expensive profiler subsystems (FPS loop, memory
+ * tracker, fetch interceptor) should run. We only enable them in development
+ * or when the user explicitly opts in via `?debug=perf` — shipping a
+ * continuous rAF loop + fetch interceptor to production would waste CPU and
+ * memory for no user-facing benefit (the PerformanceOverlay is a dev HUD).
+ */
+function isProfilingEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  if (process.env.NODE_ENV === "development") return true;
+  try {
+    return window.location.search.includes("debug=perf");
+  } catch {
+    return false;
+  }
+}
+
 class PerformanceProfiler {
-  private stats: PerformanceStats = {
-    navigationTime: 0,
-    initialChartLoadTime: 0,
-    symbolSwitchTime: 0,
-    timeframeSwitchTime: 0,
-    widgetInitCount: 0,
-    widgetDestroyCount: 0,
-    renderCounts: {},
-    renderTimes: {},
-    apiTimings: [],
-    wsTimings: [],
-    fps: 60,
-    memoryUsed: 0,
-    memoryLimit: 0,
-  };
+  private stats: PerformanceStats = { ...DEFAULT_STATS };
 
   private subscribers = new Set<Subscriber>();
   private isInitialized = false;
   private frameCount = 0;
   private lastFpsUpdateTime = 0;
+  private profilingEnabled: boolean;
 
   constructor() {
+    this.profilingEnabled = isProfilingEnabled();
     if (typeof window !== "undefined") {
       this.lastFpsUpdateTime = performance.now();
-      this.initInterceptors();
-      this.startFpsLoop();
-      this.startMemoryTracker();
+      // Only start the expensive background loops when profiling is enabled.
+      // In production these are skipped entirely — no rAF loop, no fetch
+      // interceptor, no memory interval.
+      if (this.profilingEnabled) {
+        this.initInterceptors();
+        this.startFpsLoop();
+        this.startMemoryTracker();
+      }
     }
   }
 

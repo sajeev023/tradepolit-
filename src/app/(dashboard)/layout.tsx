@@ -320,7 +320,6 @@ export default function DashboardLayout({
   const { sidebarCollapsed } = useUIStore();
   const [user, setUser] = useState<User | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
     const supabase = createClient();
@@ -338,31 +337,15 @@ export default function DashboardLayout({
     handleResize();
     window.addEventListener("resize", handleResize);
 
-    setIsOnline(navigator.onLine);
-    const goOnline = () => setIsOnline(true);
-    const goOffline = () => setIsOnline(false);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-
     return () => {
       subscription.unsubscribe();
       window.removeEventListener("resize", handleResize);
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
     };
   }, []);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg-primary)" }}>
-      {/* Offline Banner */}
-      {!isOnline && (
-        <div className="fixed top-0 left-0 right-0 h-8 bg-[var(--color-warning-bg)] border-b border-[rgba(234,179,8,0.2)] text-[var(--color-warning)] text-[12px] font-medium flex items-center justify-center gap-2 z-[9999] animate-enter backdrop-blur-md">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-warning)] animate-pulse" />
-          <span>Connection offline. Reconnecting...</span>
-        </div>
-      )}
-
-      {/* Demo Banner - appears below offline banner */}
+      {/* Demo Banner */}
       <DemoBanner />
 
       <Sidebar />

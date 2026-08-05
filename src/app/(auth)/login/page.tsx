@@ -509,7 +509,6 @@ function LoginPageContent() {
                   display: "flex",
                   transition: "color 0.15s ease",
                 }}
-                tabIndex={-1}
               >
                 <EyeIcon open={showPassword} />
               </button>

@@ -63,6 +63,12 @@ export function LiquidCursor() {
     let animationFrameId: number;
 
     const render = () => {
+      // Pause the loop when the tab is backgrounded — the browser throttles
+      // rAF anyway, but skipping the canvas work saves CPU/GPU on laptops.
+      if (document.hidden) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
       ctx.clearRect(0, 0, width, height);
 
       // Linear Interpolation (lerp) delay for fluid inertia

@@ -185,27 +185,6 @@ export const TradingViewChart = memo(function TradingViewChart({
     };
   }, [scriptLoaded, tvSymbol, tvInterval, widgetRetryKey, containerId]);
 
-  // ResizeObserver for responsive chart container. The tv.js iframe is
-  // width:100%/height:100%, so it auto-resizes with its container — we just
-  // need to nudge TradingView to recalculate when the container changes
-  // (sidebar collapse, AI panel toggle, mobile tab switch, orientation change).
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || typeof window === "undefined") return;
-
-    // The TradingView iframe fills its container via CSS width/height:100%.
-    // We observe the container for telemetry only; no synthetic resize events
-    // are needed because the embed widget recalculates on its own reflow.
-    const observer = new ResizeObserver(() => {
-      // no-op: the widget handles its own resize
-    });
-    observer.observe(container);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [containerId]);
-
   // Event-driven WebSocket status (no polling)
   useEffect(() => {
     const handleOnline = () => setWsReconnecting(false);
@@ -225,8 +204,22 @@ export const TradingViewChart = memo(function TradingViewChart({
   // to recover from stale data after sleep/wake (no `chart().resetData()` exists).
   useEffect(() => {
     let lastTime = Date.now();
+    let pausedAt: number | null = null;
     const interval = setInterval(() => {
+      // While the tab is backgrounded the interval keeps firing but the
+      // clock drift check is meaningless — skip work and track the pause so
+      // we can decide whether to reload on resume.
+      if (document.hidden) {
+        if (pausedAt === null) pausedAt = Date.now();
+        return;
+      }
       const currentTime = Date.now();
+      if (pausedAt !== null) {
+        // We just came back into the foreground — treat the pause duration as
+        // the drift so a long sleep triggers a reload below.
+        lastTime = pausedAt;
+        pausedAt = null;
+      }
       if (currentTime - lastTime > 10000) {
         const w = widgetRef.current;
         if (w && isWidgetReadyRef.current && typeof w.reload === "function") {

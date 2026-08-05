@@ -1,12 +1,28 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Lenis from "lenis";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+interface LenisInstance {
+  destroy: () => void;
+  on: (_e: string, _cb: () => void) => void;
+  raf: (_time: number) => void;
+}
+
+interface GsapTicker {
+  add: (_cb: (time: number) => void) => void;
+  remove: (_cb: (time: number) => void) => void;
+  lagSmoothing: (_v: number) => void;
+}
+interface GsapWithTicker {
+  registerPlugin: (_p: unknown) => void;
+  ticker: GsapTicker;
+}
 
 export function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
-  const lenisRef = useRef<Lenis | null>(null);
+  // Hold the live Lenis instance and its GSAP ticker callback in refs so the
+  // effect teardown can tear them down without depending on stale state.
+  const lenisRef = useRef<LenisInstance | null>(null);
+  const updateGSAPRef = useRef<((time: number) => void) | null>(null);
 
   useEffect(() => {
     // Check prefers-reduced-motion & touch device (mobile)
@@ -14,34 +30,66 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
     const isTouch = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     if (prefersReducedMotion || isTouch) return;
 
-    gsap.registerPlugin(ScrollTrigger);
+    let active = true;
+    // Dynamically import the heavy smooth-scroll libraries (~150KB) so they
+    // never touch the main bundle — only desktop users without reduced-motion
+    // ever download them.
+    (async () => {
+      try {
+        const [{ default: Lenis }, { gsap }, { ScrollTrigger }] = await Promise.all([
+          import("lenis"),
+          import("gsap"),
+          import("gsap/ScrollTrigger"),
+        ]);
+        if (!active) return;
 
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: "vertical",
-      gestureOrientation: "vertical",
-      smoothWheel: true,
-      wheelMultiplier: 1.0,
-      touchMultiplier: 2.0,
-    });
+        const typedGsap = gsap as unknown as GsapWithTicker;
+        typedGsap.registerPlugin(ScrollTrigger);
 
-    lenisRef.current = lenis;
+        const lenis = new Lenis({
+          duration: 1.2,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          orientation: "vertical",
+          gestureOrientation: "vertical",
+          smoothWheel: true,
+          wheelMultiplier: 1.0,
+          touchMultiplier: 2.0,
+        });
 
-    // Sync Lenis scroll updates with GSAP ScrollTrigger
-    lenis.on("scroll", ScrollTrigger.update);
+        lenisRef.current = lenis as unknown as LenisInstance;
 
-    const updateGSAP = (time: number) => {
-      lenis.raf(time * 1000);
-    };
+        // Sync Lenis scroll updates with GSAP ScrollTrigger
+        lenis.on("scroll", ScrollTrigger.update);
 
-    gsap.ticker.add(updateGSAP);
-    gsap.ticker.lagSmoothing(0);
+        const updateGSAP = (time: number) => {
+          (lenis as { raf: (t: number) => void }).raf(time * 1000);
+        };
+        updateGSAPRef.current = updateGSAP;
+
+        typedGsap.ticker.add(updateGSAP);
+        typedGsap.ticker.lagSmoothing(0);
+      } catch (err) {
+        // Smooth-scroll is enhancement-only; a load failure must never break
+        // scrolling or crash the page. Stay on native scroll silently.
+        console.warn("[SmoothScroll] Failed to load smooth-scroll libraries:", err);
+      }
+    })();
 
     return () => {
-      gsap.ticker.remove(updateGSAP);
-      lenis.destroy();
+      active = false;
+      const lenis = lenisRef.current;
+      const updateGSAP = updateGSAPRef.current;
+      lenisRef.current = null;
+      updateGSAPRef.current = null;
+      if (lenis && updateGSAP) {
+        // Both libs are present only when the dynamic import resolved.
+        import("gsap").then(({ gsap }) => {
+          (gsap as unknown as GsapWithTicker).ticker.remove(updateGSAP);
+        });
+        lenis.destroy();
+      }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;
