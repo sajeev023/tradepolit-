@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError } from "@/lib/api-helpers";
+import { successResponse, unauthorizedError, serverTimingHeader } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 import { getCurrentUsage } from "@/lib/limit-checker";
 
@@ -20,9 +20,11 @@ export async function GET(_request: NextRequest) {
     const usage = await getCurrentUsage(user.id, user.email);
 
     const apiDuration = performance.now() - apiStart;
-    const headers = {
-      "Server-Timing": `db;dur=${dbDuration.toFixed(2)};desc="Prisma queries", api;dur=${apiDuration.toFixed(2)};desc="API Execution"`,
-    };
+    // Server-Timing is emitted only in non-production (see serverTimingHeader).
+    const headers = serverTimingHeader(
+      { name: "db", durMs: dbDuration, desc: "Prisma queries" },
+      { name: "api", durMs: apiDuration, desc: "API Execution" },
+    );
 
     return successResponse({
       id: profile.id,

@@ -6,13 +6,15 @@ const ALGORITHM = "aes-256-gcm";
 // intentional: a hardcoded default key would let anyone decrypt at-rest data
 // (e.g. UserApiKey.encryptedKey). Generate one with:
 //   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-const KEY_HEX = process.env.ENCRYPTION_KEY;
-if (!KEY_HEX || KEY_HEX.length !== 64) {
+const KEY_HEX_RAW = process.env.ENCRYPTION_KEY;
+if (!KEY_HEX_RAW || KEY_HEX_RAW.length !== 64) {
   throw new Error(
     "ENCRYPTION_KEY must be set to a 64-char hex string (32 bytes). " +
     "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
   );
 }
+// After the guard above, TypeScript narrows KEY_HEX to `string`.
+const KEY_HEX: string = KEY_HEX_RAW;
 
 export function encrypt(text: string): string {
   const iv = crypto.randomBytes(12);

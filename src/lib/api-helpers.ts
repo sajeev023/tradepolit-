@@ -80,3 +80,26 @@ export function aiUnavailableError() {
 export function internalError(message = "Internal server error") {
   return errorResponse("INTERNAL_ERROR", message, 500);
 }
+
+/**
+ * Build a `Server-Timing` response header value from a list of
+ * `name;desc="...";dur=...` entries.
+ *
+ * Server-Timing leaks internal latency (DB query time, AI model latency,
+ * upstream fetch duration) to the client. That is useful developer
+ * observability in dev/staging but an information-disclosure side channel in
+ * production (timing differences reveal cache hits/misses, AI provider
+ * choice, DB load). We therefore emit the header ONLY when not running in
+ * production. The client-side PerformanceProfiler reads it; when absent it
+ * gracefully falls back to measuring end-to-end fetch duration.
+ *
+ * @param entries One or more `name;dur=...;desc="..."` segments.
+ */
+export function serverTimingHeader(...entries: { name: string; durMs: number; desc?: string }[]): HeadersInit | undefined {
+  if (process.env.NODE_ENV === "production") return undefined;
+  const parts = entries.map((e) => {
+    const desc = e.desc ? `desc="${e.desc}"` : "";
+    return `${e.name};dur=${e.durMs.toFixed(2)};${desc}`;
+  });
+  return { "Server-Timing": parts.join(", ") };
+}

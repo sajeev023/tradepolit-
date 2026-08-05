@@ -17,7 +17,6 @@
  *   if NVIDIA is fast (rare), its higher-quality model wins. If not, Groq already answered.
  */
 
-import OpenAI from "openai";
 import { logStartupBanner, redactKey, envNameForProvider } from "./startup";
 
 /* ─── Provider types ─────────────────────────────────────────────────── */
@@ -183,16 +182,6 @@ export function markGroqKeySuccess(index: 0 | 1) {
 export function getGroqKeyHealth(): Record<"key1" | "key2", GroqKeyHealth> {
   return { key1: { ...groqKeyHealth[0] }, key2: { ...groqKeyHealth[1] } };
 }
-
-/* ─── OpenAI SDK client (kept for backward compat) ───────────────────── */
-export const nvidiaClient = new OpenAI({
-  apiKey: process.env.NVIDIA_API_KEY || "placeholder-key",
-  baseURL: process.env.NVIDIA_BASE_URL || "https://integrate.api.nvidia.com/v1",
-  timeout: 18000,
-  maxRetries: 0,
-});
-
-export const NVIDIA_MODEL = MODELS[1].name; // default NVIDIA model
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 export interface RaceResult {
@@ -450,32 +439,6 @@ function isKeyValid(key?: string, _provider?: Provider): boolean {
  * quota, endpoint, request-body, model, or other) is visible in the
  * server console without making any inference about key format.
  */
-export async function probeGeminiKey(apiKey: string): Promise<void> {
-  const probeUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-  const probeStart = Date.now();
-  try {
-    const res = await fetch(probeUrl, {
-      method: "GET",
-      signal: AbortSignal.timeout(5000),
-    });
-    const body = await res.text().catch(() => "(could not read body)");
-    const ms = Date.now() - probeStart;
-    if (res.status === 200) {
-      console.log(`[GEMINI-PROBE] ✓ Key valid | HTTP 200 | ${ms}ms`);
-    } else if (res.status === 401 || res.status === 403) {
-      console.error(`[GEMINI-PROBE] ✗ Authentication failure | HTTP ${res.status} | ${ms}ms\nResponse: ${body}`);
-    } else if (res.status === 429) {
-      console.error(`[GEMINI-PROBE] ✗ Quota exhausted | HTTP 429 | ${ms}ms\nResponse: ${body}`);
-    } else if (res.status === 400) {
-      console.error(`[GEMINI-PROBE] ✗ Bad request | HTTP 400 | ${ms}ms\nResponse: ${body}`);
-    } else {
-      console.error(`[GEMINI-PROBE] ✗ Unexpected status | HTTP ${res.status} | ${ms}ms\nResponse: ${body}`);
-    }
-  } catch (err: any) {
-    console.error(`[GEMINI-PROBE] ✗ Network/timeout error | ${Date.now() - probeStart}ms | ${err?.message ?? err}`);
-  }
-}
-
 function getApiKey(provider: Provider): string | undefined {
   if (provider === "groq") return process.env.GROQ_API_KEY;
   if (provider === "nvidia") return process.env.NVIDIA_API_KEY;

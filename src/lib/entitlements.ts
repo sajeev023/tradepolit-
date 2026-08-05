@@ -63,22 +63,13 @@ export const ENTITLEMENTS: Record<Plan, Entitlement> = {
 export const DEMO_USER_EMAILS = ["partner@tradcopilot.com", "trader@tradcopilot.com"] as const;
 export const DEMO_USER_IDS = ["partner-1234-1234-1234-123456789012", "12345678-1234-1234-1234-123456789012"] as const;
 
-// NOTE: The PRO email allowlist is intentionally NOT used in resolvePlan().
-// Entitlements must come from verified billing (Stripe webhook) or explicit
-// admin action on the UserProfile record — never from a client-influenced
-// email. This list exists only as a reference for manual admin grants.
-export const PRO_USER_EMAILS = [
-  "sajeevajay683@gmail.com",
-  "vanimadari123@gmail.com",
-  "ashokmummini.msc@gmail.com",
-] as const;
-
-export function isProEmail(email?: string): boolean {
-  if (!email) return false;
-  const normalized = email.toLowerCase().trim();
-  return PRO_USER_EMAILS.includes(normalized as any);
-}
-
+// REMOVED (Hardcoded PII): A previous version of this file shipped a
+// hard-coded list of PRO user email addresses. That list contained real
+// people's personal email addresses — a GDPR/privacy violation and a data
+// leak (the module is imported by client-reachable code paths). Entitlements
+// now come ONLY from verified billing (Stripe webhook) or an explicit admin
+// action on the UserProfile record. Never derive plan from a client-influenced
+// identifier again.
 export function isDemoUser(userId: string, email?: string): boolean {
   if (DEMO_USER_IDS.includes(userId as any)) return true;
   if (email && DEMO_USER_EMAILS.includes(email as any)) return true;

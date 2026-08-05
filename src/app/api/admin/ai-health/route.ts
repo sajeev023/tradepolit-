@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, forbiddenError } from "@/lib/api-helpers";
+import { getAuthenticatedUser, requireAdmin } from "@/lib/auth";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { getProviderHealth } from "@/lib/ai-providers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 
@@ -9,10 +9,10 @@ export async function GET(_request: NextRequest) {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
 
-    // Enforce Admin Role
-    if (user.role !== "ADMIN") {
-      return forbiddenError();
-    }
+    // Enforce Admin Role — single source of truth via requireAdmin (M-1).
+    const isDemo = user.email?.endsWith("@tradcopilot.local") === true;
+    const adminCheck = await requireAdmin(user.id, isDemo);
+    if (!adminCheck.ok) return adminCheck.response;
 
     const health = getProviderHealth();
     return successResponse(health);

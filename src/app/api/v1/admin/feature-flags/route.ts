@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, forbiddenError, validationError } from "@/lib/api-helpers";
+import { getAuthenticatedUser, requireAdmin } from "@/lib/auth";
+import { successResponse, unauthorizedError, validationError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 import { z } from "zod";
 
@@ -11,17 +11,15 @@ const DEFAULT_FLAGS = [
   { key: "paper_execution", name: "Instant Paper Execution", description: "Permit virtual trade orders to execute directly on chart event triggers", isActive: false },
 ];
 
-async function requireAdmin() {
-  const { user, error } = await getAuthenticatedUser();
-  if (error || !user) return { user: null, response: error ?? unauthorizedError() };
-  if (user.role !== "ADMIN") return { user: null, response: forbiddenError() };
-  return { user, response: null };
-}
-
 export async function GET(_request: NextRequest) {
   try {
-    const { response } = await requireAdmin();
-    if (response) return response;
+    const { user, error } = await getAuthenticatedUser();
+    if (error || !user) return error ?? unauthorizedError();
+
+    // Enforce Admin Role — single source of truth via requireAdmin (M-1).
+    const isDemo = user.email?.endsWith("@tradcopilot.local") === true;
+    const adminCheck = await requireAdmin(user.id, isDemo);
+    if (!adminCheck.ok) return adminCheck.response;
 
     let flags = await prisma.featureFlag.findMany({
       orderBy: { name: "asc" },
@@ -48,8 +46,13 @@ const patchSchema = z.object({
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { response } = await requireAdmin();
-    if (response) return response;
+    const { user, error } = await getAuthenticatedUser();
+    if (error || !user) return error ?? unauthorizedError();
+
+    // Enforce Admin Role — single source of truth via requireAdmin (M-1).
+    const isDemo = user.email?.endsWith("@tradcopilot.local") === true;
+    const adminCheck = await requireAdmin(user.id, isDemo);
+    if (!adminCheck.ok) return adminCheck.response;
 
     const json = await request.json();
     const validation = patchSchema.safeParse(json);

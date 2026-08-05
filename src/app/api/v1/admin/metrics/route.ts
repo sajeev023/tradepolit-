@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/auth";
-import { successResponse, unauthorizedError, forbiddenError } from "@/lib/api-helpers";
+import { getAuthenticatedUser, requireAdmin } from "@/lib/auth";
+import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 
 export async function GET(_request: NextRequest) {
@@ -9,9 +9,10 @@ export async function GET(_request: NextRequest) {
     const { user, error } = await getAuthenticatedUser();
     if (error || !user) return error ?? unauthorizedError();
 
-    if (user.role !== "ADMIN") {
-      return forbiddenError();
-    }
+    // Enforce Admin Role — single source of truth via requireAdmin (M-1).
+    const isDemo = user.email?.endsWith("@tradcopilot.local") === true;
+    const adminCheck = await requireAdmin(user.id, isDemo);
+    if (!adminCheck.ok) return adminCheck.response;
 
     // Compute real metrics from the database. No fabricated data.
     const now = new Date();

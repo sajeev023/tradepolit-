@@ -319,11 +319,16 @@ export async function getNewsFeed(
   }
 
   // 4. Persist newly fetched stories to the News DB model.
+  // Persist concurrently: the old per-story `await` inside the loop serialized
+  // the round-trips. Promise.all fires the upserts concurrently (the mock client
+  // used in tests / USE_DB_MOCK mode has no $transaction, so we avoid it). Each
+  // upsert keeps its own `.catch()` so a duplicate-URL constraint hiccup on one
+  // story does not abort the others (the prior loop swallowed per-item errors).
   if (liveStories.length > 0) {
     console.log(`[News] Persisting ${liveStories.length} stories to database`);
-    for (const story of liveStories) {
-      try {
-        await prisma.news.upsert({
+    const ops = liveStories.map((story) =>
+      prisma.news
+        .upsert({
           where: { url: story.url },
           update: {
             source: story.source,
@@ -348,11 +353,12 @@ export async function getNewsFeed(
             publishedAt: new Date(story.publishedAt),
             ...(story.provider ? { provider: story.provider } : {}),
           } as any,
-        });
-      } catch (_e) {
-        // Log clean or ignore constraint updates
-      }
-    }
+        })
+        .catch((_e: unknown) => {
+          // Log clean or ignore constraint updates
+        })
+    );
+    await Promise.all(ops);
   }
 
   // 5. Always read from DB so deduplication is consistent across
