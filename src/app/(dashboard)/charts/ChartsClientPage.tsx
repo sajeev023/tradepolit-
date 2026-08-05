@@ -41,11 +41,20 @@ import { motion } from "framer-motion";
 import { getInstantFallbackAnalysis } from "@/lib/fallback-analysis";
 import { SnapshotExportCard } from "@/components/charts/SnapshotExportCard";
 import { formatPrice } from "@/lib/format-price";
+import {
+  CRYPTO_SYMBOLS,
+  FOREX_SYMBOLS,
+  INDEX_SYMBOLS,
+  COMMODITY_SYMBOLS,
+  BINANCE_WS_SYMBOLS,
+} from "@/lib/market-registry";
 
+// Symbol groups for the chart selector UI. Driven by the market registry —
+// adding a new market auto-populates this menu with no edit here.
 const SYMBOLS = [
-  { group: "Crypto", items: ["BTC/USD", "ETH/USD", "SOL/USD"] },
-  { group: "Forex & Commodities", items: ["EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD"] },
-  { group: "Indices", items: ["NASDAQ", "S&P500"] },
+  { group: "Crypto", items: CRYPTO_SYMBOLS },
+  { group: "Forex & Commodities", items: [...FOREX_SYMBOLS, ...COMMODITY_SYMBOLS] },
+  { group: "Indices", items: INDEX_SYMBOLS },
 ];
 
 interface ChatMessage {
@@ -143,13 +152,16 @@ export function ChartsClientPage() {
   const [liveIndicators, setLiveIndicators] = useState<any | null>(null);
 
   // ── Live watchlist prices via shared Binance WebSocket streams ──────────────────
-  const watchlistSymbols = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD"];
+  // WS-supported symbols stream live; the rest fall back to REST polling.
+  const watchlistSymbols = BINANCE_WS_SYMBOLS;
   const watchlistStreamPrices = useBinanceMultiStream(watchlistSymbols);
   const [watchlistRestPrices, setWatchlistRestPrices] = useState<Record<string, { price: number; changePercent24h: number }>>({});
 
-  // Merge: WebSocket prices override REST prices
+  // Merge: WebSocket prices override REST prices. Iterate the full registry
+  // so every known symbol gets a price slot (live or polled).
   const watchlistPrices: Record<string, { price: number; changePercent24h: number }> = {};
-  for (const sym of ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ", "S&P500"]) {
+  const ALL_WATCHLIST_SYMBOLS = [...CRYPTO_SYMBOLS, ...FOREX_SYMBOLS, ...INDEX_SYMBOLS, ...COMMODITY_SYMBOLS];
+  for (const sym of ALL_WATCHLIST_SYMBOLS) {
     const ws = watchlistStreamPrices[sym];
     if (ws) {
       watchlistPrices[sym] = { price: ws.price, changePercent24h: ws.changePercent24h };
@@ -427,7 +439,7 @@ export function ChartsClientPage() {
   // ── Live ticker price via shared WebSocket (crypto) or REST poll (forex/index) ─────
   const wsStatus = useBinanceStreamStatus(selectedSymbol);
   const isWsDisconnected = wsStatus === "disconnected" || wsStatus === "reconnecting";
-  const isWebSocketSymbol = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD"].includes(selectedSymbol);
+  const isWebSocketSymbol = BINANCE_WS_SYMBOLS.includes(selectedSymbol);
 
   const { data: priceData, refetch: refetchPrice, isFetching: priceFetching } = useQuery<PriceData>({
     queryKey: ["price", selectedSymbol],

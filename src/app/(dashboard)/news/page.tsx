@@ -16,8 +16,11 @@ import {
   Layers
 } from "lucide-react";
 import type { NewsStory } from "@/lib/news";
+import { SYMBOLS } from "@/lib/market-registry";
 
-const FILTER_ASSETS = ["ALL", "BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ"];
+// News filter tabs — driven by the market registry so new markets appear
+// automatically. "ALL" is prepended for the unfiltered view.
+const FILTER_ASSETS = ["ALL", ...SYMBOLS];
 
 export default function NewsPage() {
   const [selectedAsset, setSelectedAsset] = useState("ALL");

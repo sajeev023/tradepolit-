@@ -21,11 +21,13 @@ import {
 } from "lucide-react";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
+import { SYMBOLS } from "@/lib/market-registry";
 
 // Enums and tags list
 const EMOTIONS = ["CONFIDENT", "FEARFUL", "GREEDY", "REVENGE", "FOMO", "DISCIPLINED", "NEUTRAL"];
 const MISTAKES = ["FOMO Entry", "Overleveraging", "Moving Stop Loss", "Early Exit", "Revenge Trade", "No Plan", "Poor Sizing"];
-const SUPPORTED_ASSETS = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ", "S&P500"];
+// Supported assets for journal trade entry — driven by the market registry.
+const SUPPORTED_ASSETS = SYMBOLS;
 
 const tradeFormSchema = z.object({
   instrument: z.string().min(1, "Asset symbol is required"),

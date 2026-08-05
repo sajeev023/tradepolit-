@@ -4,6 +4,7 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError, rateLimitedError } from "@/lib/typed-errors";
 import { checkUserRateLimit } from "@/lib/rate-limit";
+import { SYMBOLS } from "@/lib/market-registry";
 
 export const dynamic = "force-dynamic";
 
@@ -66,9 +67,9 @@ export async function GET(request: NextRequest) {
       take: 5,
     });
 
-    // 4. Search matching symbols
-    const AVAILABLE_SYMBOLS = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ", "S&P500"];
-    const matchingSymbols = AVAILABLE_SYMBOLS.filter((symbol) =>
+    // 4. Search matching symbols from the canonical registry.
+    // New markets are picked up automatically — no edit needed here.
+    const matchingSymbols = SYMBOLS.filter((symbol) =>
       symbol.toLowerCase().includes(cleanQuery)
     );
 

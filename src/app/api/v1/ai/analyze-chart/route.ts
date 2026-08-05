@@ -18,6 +18,7 @@ import {
 import { dbError, authFailedError, isPrismaTransientError } from "@/lib/typed-errors";
 import { checkUserRateLimit } from "@/lib/rate-limit";
 import { rateLimitedError } from "@/lib/typed-errors";
+import { getExchangeName } from "@/lib/market-registry";
 import { checkUsageLimit, recordUsage } from "@/lib/limit-checker";
 import { getEntitlementForUser, getAnalysisLimitError } from "@/lib/entitlements";
 import { callFastestModel } from "@/lib/nvidia-ai";
@@ -166,14 +167,24 @@ export async function POST(request: NextRequest) {
   let behavioralContext = "";
   let validatedSymbol = "";
   let validatedTimeframe: "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W" = "1h";
+  // Hoisted out of the behavioral-context try block below so the token-budget
+  // tier resolution (which runs later in the same outer try) can read it.
+  // Declared inside that try it was in scope for the behavioral context but
+  // out of scope for the entitlement lookup — a ReferenceError the outer catch
+  // silently swallowed, so PRO users were occasionally graded as FREE.
+  let userProfile: any = null;
 
   const releaseReservation = async () => {
     if (reservedUserId) {
-      await prisma.user.update({
-        where: { id: reservedUserId },
+      const uid = reservedUserId;
+      reservedUserId = null;
+      // Floor at 0 — a bare `decrement` can drive the counter negative if this
+      // ever runs twice for the same reservation (e.g. outer catch after the
+      // success path already nulled it). Conditional update makes it idempotent.
+      await prisma.user.updateMany({
+        where: { id: uid, analysesCountToday: { gt: 0 } },
         data: { analysesCountToday: { decrement: 1 } },
       }).catch(() => {});
-      reservedUserId = null;
     }
   };
 
@@ -189,15 +200,9 @@ export async function POST(request: NextRequest) {
     validatedSymbol = symbol;
     validatedTimeframe = timeframe;
 
-    const getExchangeForSymbol = (sym: string): string => {
-      if (["BTC/USD", "ETH/USD", "SOL/USD"].includes(sym)) return "BINANCE";
-      if (["EUR/USD", "GBP/USD", "USD/JPY"].includes(sym)) return "FX";
-      if (sym === "XAU/USD") return "OANDA";
-      if (sym === "NASDAQ") return "NASDAQ";
-      if (sym === "S&P500") return "FOREXCOM";
-      return "BINANCE";
-    };
-    const exchangeName = getExchangeForSymbol(symbol);
+    // Exchange name comes from the market registry so new markets are
+    // picked up automatically without touching this route.
+    const exchangeName = getExchangeName(symbol);
 
     // Check user auth first
     const { user, error } = await getAuthenticatedUser();
@@ -225,7 +230,8 @@ export async function POST(request: NextRequest) {
         prisma.behavioralEvent.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 10 }),
         prisma.userProfile.findUnique({ where: { userId: user.id } }),
       ]);
-      const [dbUser, rawTrades, journalEntries, behavioralEvents, userProfile] = settled.map(r => r.status === "fulfilled" ? r.value : null);
+      const [dbUser, rawTrades, journalEntries, behavioralEvents, fetchedProfile] = settled.map(r => r.status === "fulfilled" ? r.value : null);
+      userProfile = fetchedProfile;
       const userTrades = rawTrades || [];
 
       if (dbUser) {
@@ -815,45 +821,6 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
       }
     } catch (cacheErr) {
       console.warn("Failed to update cache", cacheErr);
-    }
-
-    // Add debug logs and validation checks
-    const telemetryPrice = tech.currentPrice;
-    const aiPrice = finalResponse.currentPrice;
-    let chartPrice = telemetryPrice;
-
-    try {
-      const binanceSymbol = symbol.replace("/USD", "USDT");
-      const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`, { signal: AbortSignal.timeout(2000) });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.price) {
-          chartPrice = parseFloat(data.price);
-        }
-      }
-    } catch (_) {}
-
-    const diff = Math.abs(chartPrice - telemetryPrice);
-    const diffPercent = telemetryPrice > 0 ? (diff / telemetryPrice) * 100 : 0;
-
-    console.log(`[VALIDATION]
-Chart Price: ${chartPrice.toFixed(4)}
-Telemetry Price: ${telemetryPrice.toFixed(4)}
-AI Price: ${aiPrice.toFixed(4)}
-Timestamp: ${new Date().toISOString()}
-Exchange: ${exchangeName}
-Timeframe: ${timeframe}
-Symbol: ${symbol}
-`);
-
-    if (diffPercent > 0.01) {
-      console.warn(`⚠ PRICE MISMATCH DETECTED
-Chart: ${chartPrice.toFixed(4)}
-Telemetry: ${telemetryPrice.toFixed(4)}
-Difference: ${diff.toFixed(4)} (${diffPercent.toFixed(4)}%)
-Source: ${exchangeName}
-Timestamp: ${new Date().toISOString()}
-`);
     }
 
     console.log(`[STEP 11: Response returned] FRESH ANALYSIS SUCCESSFUL | totalDuration=${Date.now() - t0}ms`);

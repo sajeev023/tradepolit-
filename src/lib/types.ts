@@ -35,7 +35,22 @@ export type ErrorCode =
   | "TELEMETRY_UNAVAILABLE";
 
 // Mirror Prisma enums as string unions for client-side use
-export type AssetClass = "CRYPTO" | "FOREX";
+export type AssetClass =
+  | "CRYPTO"
+  | "FOREX"
+  | "COMMODITY"
+  | "INDEX"
+  | "INDIAN_MARKET"
+  | "US_MARKET"
+  | "EUROPEAN_MARKET"
+  | "ASIAN_MARKET"
+  | "AUSTRALIAN_MARKET"
+  | "ETF"
+  | "OPTIONS"
+  | "FUTURES"
+  | "BONDS"
+  | "REIT"
+  | "MUTUAL_FUND";
 export type Direction = "LONG" | "SHORT";
 export type TradeStatus = "OPEN" | "CLOSED";
 export type EmotionTag = "CONFIDENT" | "FEARFUL" | "GREEDY" | "REVENGE" | "FOMO" | "DISCIPLINED" | "NEUTRAL";

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, ToggleRight, Trash2, Plus, RefreshCw, Volume2 } from "lucide-react";
+import { CRYPTO_SYMBOLS, FOREX_SYMBOLS, COMMODITY_SYMBOLS } from "@/lib/market-registry";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
 
@@ -154,7 +155,8 @@ export default function AlertsPage() {
                   className="w-full px-3 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none"
                   style={{ color: "var(--color-text-primary)" }}
                 >
-                  {["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "XAU/USD"].map((item) => (
+                  {/* Alertable assets — crypto, forex, commodities from the registry. */}
+                  {[...CRYPTO_SYMBOLS, ...FOREX_SYMBOLS, ...COMMODITY_SYMBOLS].map((item) => (
                     <option key={item} value={item}>{item}</option>
                   ))}
                 </select>

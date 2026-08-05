@@ -1,22 +1,27 @@
 import { getCachedData, setCachedData } from "./cache";
 import { redactKey } from "./startup";
 import type { PriceData, OHLCVCandle } from "./types";
+import {
+  SYMBOLS,
+  CRYPTO_SYMBOLS,
+  FOREX_SYMBOLS,
+  INDEX_SYMBOLS,
+  BASELINE_PRICES,
+  VOLATILITIES,
+  BINANCE_SYMBOL_MAP,
+  TWELVEDATA_SYMBOL_MAP,
+  wantsTwelveData,
+  wantsBinance,
+} from "./market-registry";
 
-// Supported instrument mapping
-const CRYPTO_SYMBOLS = ["BTC/USD", "ETH/USD", "SOL/USD"];
-const FOREX_SYMBOLS = ["EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD"];
-const INDEX_SYMBOLS = ["NASDAQ", "S&P500"];
+// Re-export the canonical symbol arrays so existing imports of
+// CRYPTO_SYMBOLS / FOREX_SYMBOLS / INDEX_SYMBOLS from market.ts keep working.
+export { CRYPTO_SYMBOLS, FOREX_SYMBOLS, INDEX_SYMBOLS };
 
-const ALL_SYMBOLS = [...CRYPTO_SYMBOLS, ...FOREX_SYMBOLS, ...INDEX_SYMBOLS];
+/** All known display symbols (back-compat for the old ALL_SYMBOLS). */
+const ALL_SYMBOLS = SYMBOLS;
 
-// TwelveData's symbol universe uses tickers like NDX/SPX rather than the
-// display names. Map app symbols to upstream tickers before calling.
-const TWELVEDATA_SYMBOL_MAP: Record<string, string> = {
-  "NASDAQ": "NDX",
-  "S&P500": "SPX",
-  "XAU/USD": "XAU/USD",
-};
-
+/** Resolve the TwelveData ticker for a symbol (falls back to the symbol itself). */
 function twelvedataSymbolFor(symbol: string): string {
   return TWELVEDATA_SYMBOL_MAP[symbol] ?? symbol;
 }
@@ -25,32 +30,6 @@ function isTwelvedataKeyValid(): boolean {
   const k = process.env.TWELVEDATA_API_KEY;
   return !!k && k.trim() !== "" && k.trim() !== "mock-key" && k.trim() !== "placeholder-key";
 }
-
-// Mock baseline values for realistic pricing when API is unconfigured/fails
-const BASELINE_PRICES: Record<string, number> = {
-  "BTC/USD": 68250.0,
-  "ETH/USD": 3480.0,
-  "SOL/USD": 142.5,
-  "EUR/USD": 1.08,
-  "GBP/USD": 1.25,
-  "USD/JPY": 155.0,
-  "XAU/USD": 2300,
-  NASDAQ: 18000,
-  "S&P500": 5000,
-};
-
-// Daily volatilities for random walk simulation (mock data)
-const VOLATILITIES: Record<string, number> = {
-  "BTC/USD": 0.02,
-  "ETH/USD": 0.03,
-  "SOL/USD": 0.05,
-  "EUR/USD": 0.003,
-  "GBP/USD": 0.004,
-  "USD/JPY": 0.005,
-  "XAU/USD": 0.01,
-  NASDAQ: 0.012,
-  "S&P500": 0.008,
-};
 
 export function normalizeSymbol(symbol: string): string {
   const clean = symbol.toUpperCase().replace("-", "/").replace("USDT", "/USD");
@@ -107,14 +86,12 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
     //   - All other forex, indices, XAU  → TwelveData (if key set).
     //
     // Each provider returns silently on failure so the next one can run.
-    const isPrimaryForex = FOREX_SYMBOLS.includes(normSymbol);
-    const isIndex = INDEX_SYMBOLS.includes(normSymbol);
-    const isXau = normSymbol === "XAU/USD";
-    const isCrypto = CRYPTO_SYMBOLS.includes(normSymbol);
-    const wantsTwelveData = isIndex || isXau || (isPrimaryForex && isTwelvedataKeyValid());
-    const wantsBinance = isCrypto || ["EUR/USD", "GBP/USD"].includes(normSymbol);
+    // Provider selection is driven by the market registry, not hardcoded here.
+    const tdKeyValid = isTwelvedataKeyValid();
+    const symbolWantsTwelveData = wantsTwelveData(normSymbol, tdKeyValid);
+    const symbolWantsBinance = wantsBinance(normSymbol);
 
-    if (wantsTwelveData && isTwelvedataKeyValid()) {
+    if (symbolWantsTwelveData && tdKeyValid) {
       const tdSymbol = twelvedataSymbolFor(normSymbol);
       const url = `https://api.twelvedata.com/price?symbol=${tdSymbol}&apikey=${process.env.TWELVEDATA_API_KEY}`;
       try {
@@ -167,7 +144,7 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
           }
         } catch (_) {}
       }
-    } else if (wantsTwelveData && !isTwelvedataKeyValid()) {
+    } else if (symbolWantsTwelveData && !tdKeyValid) {
       // The symbol requires TwelveData (forex/indices/XAU) and the key
       // is missing — log explicitly so the operator sees it. We do NOT
       // hard-error 503 here; the call falls through to SIMULATED and
@@ -177,8 +154,8 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
       );
     }
 
-    if (!price && wantsBinance) {
-      const binanceSymbol = normSymbol.replace("/USD", "USDT"); // BTC/USD -> BTCUSDT, EUR/USD -> EURUSDT
+    if (!price && symbolWantsBinance) {
+      const binanceSymbol = BINANCE_SYMBOL_MAP[normSymbol] ?? normSymbol.replace("/USD", "USDT");
 
       // ── Step A: Fetch absolute real-time transaction price (120ms latency, zero lag)
       try {
@@ -359,14 +336,12 @@ export async function getOHLCV(
   try {
     // TwelveData first when key is set and the symbol requires it
     // (forex / indices / XAU). Crypto and EUR/GBP prefer Binance.
-    const isPrimaryForex = FOREX_SYMBOLS.includes(normSymbol);
-    const isIndex = INDEX_SYMBOLS.includes(normSymbol);
-    const isXau = normSymbol === "XAU/USD";
-    const isCrypto = CRYPTO_SYMBOLS.includes(normSymbol);
-    const wantsTwelveData = isIndex || isXau || (isPrimaryForex && isTwelvedataKeyValid());
-    const wantsBinance = isCrypto || ["EUR/USD", "GBP/USD"].includes(normSymbol);
+    // Provider selection is driven by the market registry, not hardcoded here.
+    const tdKeyValid = isTwelvedataKeyValid();
+    const symbolWantsTwelveData = wantsTwelveData(normSymbol, tdKeyValid);
+    const symbolWantsBinance = wantsBinance(normSymbol);
 
-    if (wantsTwelveData && isTwelvedataKeyValid()) {
+    if (symbolWantsTwelveData && tdKeyValid) {
       const tdInterval =
         timeframe === "1m" ? "1min" :
         timeframe === "5m" ? "5min" :
@@ -412,15 +387,15 @@ export async function getOHLCV(
       } catch (tdErr) {
         console.warn(`[Market] TwelveData ✗ OHLCV ${normSymbol}: ${(tdErr as Error).message}`);
       }
-    } else if (wantsTwelveData && !isTwelvedataKeyValid()) {
+    } else if (symbolWantsTwelveData && !tdKeyValid) {
       console.warn(
         `[Market] TwelveData ✗ key missing for OHLCV ${normSymbol} — falling back to SIMULATED`
       );
     }
 
-    if (candles.length === 0 && wantsBinance) {
+    if (candles.length === 0 && symbolWantsBinance) {
       // Fetch crypto/forex klines from Binance multi-endpoints
-      const binanceSymbol = normSymbol.replace("/USD", "USDT");
+      const binanceSymbol = BINANCE_SYMBOL_MAP[normSymbol] ?? normSymbol.replace("/USD", "USDT");
       const binanceInterval =
         timeframe === "1m" ? "1m" :
         timeframe === "5m" ? "5m" :

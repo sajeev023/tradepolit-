@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Bell, RefreshCw, Key, Lock, AlertTriangle, Loader2, User, Palette, CreditCard, Zap } from "lucide-react";
+import { SYMBOLS } from "@/lib/market-registry";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -592,7 +593,8 @@ export default function SettingsPage() {
                       onChange={(e) => setDefaultSymbol(e.target.value)}
                       className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-accent"
                     >
-                      {["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD", "NASDAQ", "S&P500"].map((sym) => (
+                      {/* Default symbol dropdown — driven by the market registry. */}
+                      {SYMBOLS.map((sym) => (
                         <option key={sym} value={sym}>{sym}</option>
                       ))}
                     </select>

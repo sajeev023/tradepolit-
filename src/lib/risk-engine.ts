@@ -8,7 +8,22 @@ import Decimal from "decimal.js";
 
 Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_EVEN });
 
-export type AssetClass = "CRYPTO" | "FOREX" | "COMMODITY" | "INDEX";
+export type AssetClass =
+  | "CRYPTO"
+  | "FOREX"
+  | "COMMODITY"
+  | "INDEX"
+  | "INDIAN_MARKET"
+  | "US_MARKET"
+  | "EUROPEAN_MARKET"
+  | "ASIAN_MARKET"
+  | "AUSTRALIAN_MARKET"
+  | "ETF"
+  | "OPTIONS"
+  | "FUTURES"
+  | "BONDS"
+  | "REIT"
+  | "MUTUAL_FUND";
 export type Direction = "LONG" | "SHORT";
 export type CalculationMode = "STANDARD" | "MAX" | "MIN";
 
@@ -58,6 +73,17 @@ const DEFAULT_MAX_LEVERAGE: Record<AssetClass, number> = {
   FOREX: 100,
   COMMODITY: 50,
   INDEX: 20,
+  INDIAN_MARKET: 10,
+  US_MARKET: 5,
+  EUROPEAN_MARKET: 5,
+  ASIAN_MARKET: 5,
+  AUSTRALIAN_MARKET: 5,
+  ETF: 4,
+  OPTIONS: 5,
+  FUTURES: 20,
+  BONDS: 10,
+  REIT: 4,
+  MUTUAL_FUND: 1,
 };
 
 const INSTRUMENT_SPECS: Record<string, InstrumentSpec> = {

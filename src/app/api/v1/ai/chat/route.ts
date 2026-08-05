@@ -10,6 +10,7 @@ import {
   validationError,
   errorResponse,
   rateLimitError as rateLimitResponse,
+  serverTimingHeader,
 } from "@/lib/api-helpers";
 import { MarketDataService } from "@/lib/market-data-service";
 import { compileTechnicalContext, validateAnalysisConsistency, appendTelemetryMetadata, calculateEMA } from "@/lib/indicators";
@@ -21,6 +22,7 @@ import { checkTokenBudget } from "@/lib/token-budget";
 import { getEntitlementForUser } from "@/lib/entitlements";
 import { checkUserRateLimit } from "@/lib/rate-limit";
 import { dispatchCaughtError } from "@/lib/typed-errors";
+import { getExchangeName } from "@/lib/market-registry";
 
 const chartStateSchema = z.object({
   symbol: z.string().max(20).optional(),
@@ -94,15 +96,9 @@ export async function POST(request: NextRequest) {
     const resolvedSymbol: string = symbol || userProfile?.lastSymbol || "BTC/USD";
     const resolvedTimeframe: string = timeframe || userProfile?.lastTimeframe || "4h";
 
-    const getExchangeForSymbol = (sym: string): string => {
-      if (["BTC/USD", "ETH/USD", "SOL/USD"].includes(sym)) return "BINANCE";
-      if (["EUR/USD", "GBP/USD", "USD/JPY"].includes(sym)) return "FX";
-      if (sym === "XAU/USD") return "OANDA";
-      if (sym === "NASDAQ") return "NASDAQ";
-      if (sym === "S&P500") return "FOREXCOM";
-      return "BINANCE";
-    };
-    const exchangeName = getExchangeForSymbol(resolvedSymbol);
+    // Exchange name comes from the market registry so new markets are
+    // picked up automatically without touching this route.
+    const exchangeName = getExchangeName(resolvedSymbol);
 
     console.log(`[STEP 2] Check telemetry cache for asset: ${resolvedSymbol}, timeframe: ${resolvedTimeframe}`);
     
@@ -112,7 +108,10 @@ export async function POST(request: NextRequest) {
     const livePrice = lastCandle ? lastCandle.close : null;
     let staleNotice = "";
 
-    let activeChartState = chartState;
+    // chartState from the client is validated by chartStateSchema (optional).
+    // We explicitly widen to include null because we reset it to null whenever
+    // the symbol mismatches or the price goes stale.
+    let activeChartState: (typeof chartState) | null = chartState;
     if (activeChartState && activeChartState.symbol && activeChartState.symbol !== resolvedSymbol) {
       console.warn(`[CHAT ROUTE] Mismatched chartState symbol (${activeChartState.symbol}) vs resolvedSymbol (${resolvedSymbol}). Discarding stale state.`);
       activeChartState = null;
@@ -198,9 +197,11 @@ export async function POST(request: NextRequest) {
         const tier = userEntitlement.isUnlimitedAnalyses ? "PRO" : "FREE";
         const budget = checkTokenBudget(message, systemPrompt, [], tier);
         if (!budget.isWithinLimit) {
-          const headers = {
-            "Server-Timing": `db;dur=${totalDbTime.toFixed(2)};desc="Prisma queries", api;dur=${(Date.now() - startTime).toFixed(2)};desc="API Total"`,
-          };
+          // Server-Timing is emitted only in non-production (see serverTimingHeader).
+          const headers = serverTimingHeader(
+            { name: "db", durMs: totalDbTime, desc: "Prisma queries" },
+            { name: "api", durMs: Date.now() - startTime, desc: "API Total" },
+          );
           return successResponse({
             reply: `Not financial advice — for educational purposes.\n\n${budget.warning}`,
             budget,
@@ -298,6 +299,10 @@ REQUIRED JSON RESPONSE SCHEMA:
             sourceMetadata: tech.sourceMetadata,
           });
 
+          // Server-computed analysis object — cast because the analysis shape
+          // (with indicators/levels/sourceMetadata) extends the client
+          // chartState schema. The cast is safe: every field here is derived
+          // from server-side telemetry, not client input.
           activeChartState = {
             ...parsedData,
             symbol: resolvedSymbol,
@@ -319,7 +324,7 @@ REQUIRED JSON RESPONSE SCHEMA:
               resistance: tech.resistance,
               invalidation: tech.invalidationLevel,
             },
-          };
+          } as typeof chartState;
 
           const lastCandleTime = lastCandle ? new Date(lastCandle.timestamp).toISOString() : new Date().toISOString();
           const cachePayload = {
@@ -419,7 +424,10 @@ REQUIRED JSON RESPONSE SCHEMA:
       runAIChat(
         user.id,
         updatedMessages as any,
-        { symbol: resolvedSymbol, timeframe: resolvedTimeframe, chartState: activeChartState },
+        // activeChartState is server-computed analysis (or null). Cast to the
+        // runAIChat chartState shape; runAIChat treats a missing/partial
+        // chartState as "no chart context" and falls back to profile defaults.
+        { symbol: resolvedSymbol, timeframe: resolvedTimeframe, chartState: activeChartState as any },
         user.email
       ),
       new Promise<never>((_, reject) =>
@@ -471,9 +479,12 @@ REQUIRED JSON RESPONSE SCHEMA:
     // Demo users: don't save chat history
     if (isDemoUser(user.id, user.email)) {
       const totalDuration = Date.now() - startTime;
-      const headers = {
-        "Server-Timing": `db;dur=${totalDbTime.toFixed(2)};desc="Prisma queries", ai;dur=${apiDuration.toFixed(2)};desc="AI Model Latency", api;dur=${totalDuration.toFixed(2)};desc="API Total"`,
-      };
+      // Server-Timing is emitted only in non-production (see serverTimingHeader).
+      const headers = serverTimingHeader(
+        { name: "db", durMs: totalDbTime, desc: "Prisma queries" },
+        { name: "ai", durMs: apiDuration, desc: "AI Model Latency" },
+        { name: "api", durMs: totalDuration, desc: "API Total" },
+      );
       console.log(`[STEP 6] Return response to client (demo mode - no DB save). Total: ${totalDuration}ms`);
       return successResponse({
         chat: { ...chat, messages: finalMessages },
@@ -493,9 +504,12 @@ REQUIRED JSON RESPONSE SCHEMA:
     }));
 
     const totalDuration = Date.now() - startTime;
-    const headers = {
-      "Server-Timing": `db;dur=${totalDbTime.toFixed(2)};desc="Prisma queries", ai;dur=${apiDuration.toFixed(2)};desc="AI Model Latency", api;dur=${totalDuration.toFixed(2)};desc="API Total"`,
-    };
+    // Server-Timing is emitted only in non-production (see serverTimingHeader).
+    const headers = serverTimingHeader(
+      { name: "db", durMs: totalDbTime, desc: "Prisma queries" },
+      { name: "ai", durMs: apiDuration, desc: "AI Model Latency" },
+      { name: "api", durMs: totalDuration, desc: "API Total" },
+    );
     // STEP 6: Return response
     console.log(`[STEP 6] Return response to client. Total processing time: ${totalDuration}ms | NVIDIA API Latency: ${apiDuration}ms`);
 

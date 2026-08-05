@@ -1,5 +1,6 @@
 // In-memory mock database for TradCopilot when real Postgres is offline
 import { MOCK_USER } from "./supabase/mock";
+import { CRYPTO_SYMBOLS } from "./market-registry";
 
 let backtestIdCounter = 0;
 
@@ -17,7 +18,7 @@ class MemoryDb {
   trades: any[] = [];
   journalEntries: any[] = [];
   behavioralEvents: any[] = [];
-  watchlists: any[] = [{ id: "wl-1", name: "My Watchlist", instruments: ["BTC/USD", "ETH/USD"], userId: MOCK_USER.id }];
+  watchlists: any[] = [{ id: "wl-1", name: "My Watchlist", instruments: CRYPTO_SYMBOLS.slice(0, 2), userId: MOCK_USER.id }];
   alerts: any[] = [];
   notifications: any[] = [];
   performance: any | null = null;

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { unauthorizedError, forbiddenError } from "@/lib/api-helpers";
 import { cookies } from "next/headers";
 import { decodeDemoCookie } from "@/lib/demo-session";
+import { CRYPTO_SYMBOLS } from "@/lib/market-registry";
 
 /**
  * Single source of truth for admin authorization (M-1 fix).
@@ -54,7 +55,7 @@ export async function getAuthUser() {
   try {
     const cookieStore = await cookies();
     const demoCookie = cookieStore.get("tp-demo-session")?.value;
-    const demoSession = demoCookie ? decodeDemoCookie(demoCookie) : null;
+    const demoSession = demoCookie ? await decodeDemoCookie(demoCookie) : null;
     if (demoSession) {
       return {
         user: {
@@ -175,7 +176,8 @@ export async function ensurePrismaUser(supabaseUser: {
         data: {
           userId: dbUser.id,
           name: "My Watchlist",
-          instruments: ["BTC/USD", "ETH/USD", "SOL/USD"],
+          // Seed the default watchlist with crypto symbols from the registry.
+          instruments: CRYPTO_SYMBOLS.length > 0 ? CRYPTO_SYMBOLS.slice(0, 3) : ["BTC/USD", "ETH/USD", "SOL/USD"],
         },
       });
     } catch (e: any) {

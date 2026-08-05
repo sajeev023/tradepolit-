@@ -5,6 +5,7 @@ import { calculateEMA, calculateRSI, calculateVolatility } from "@/lib/indicator
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 import { secureBearerMatch } from "@/lib/secure-compare";
+import { CRYPTO_SYMBOLS, FOREX_SYMBOLS, INDEX_SYMBOLS, COMMODITY_SYMBOLS } from "@/lib/market-registry";
 
 export async function GET(request: NextRequest) {
   try {
@@ -114,11 +115,20 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Proactive system intelligence checks:
-    // Fetch unique watchlist items or standard symbols to check volatility & sharp returns
-    const standardAssets = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "XAU/USD"];
-    
-    // Select all user settings to see who gets notifications
+    // Fetch standard symbols across all asset classes to check volatility & sharp returns.
+    // Driven by the market registry — adding a new market auto-enables monitoring.
+    const standardAssets = [...CRYPTO_SYMBOLS, ...FOREX_SYMBOLS, ...INDEX_SYMBOLS, ...COMMODITY_SYMBOLS];
+
+    // Everyone receives proactive system notifications (sharp moves, volatility spikes).
     const users = await prisma.user.findMany({ select: { id: true } });
+    const userIds = users.map((u: { id: string }) => u.id);
+
+    // Collect notification payloads during the scan, then batch-insert once.
+    // The old per-user `create` inside the symbol loop was O(users × symbols) sequential
+    // round-trips — at scale that blows past the cron timeout. A single createMany is one
+    // round-trip regardless of user count. The per-symbol spam guard (findFirst in the
+    // last hour) is preserved, so we never queue duplicates.
+    const notificationsToCreate: { userId: string; type: string; title: string; body: string }[] = [];
 
     for (const symbol of standardAssets) {
       try {
@@ -146,15 +156,10 @@ export async function GET(request: NextRequest) {
           });
 
           if (!recentNotice) {
-            for (const u of users) {
-              await prisma.notification.create({
-                data: {
-                  userId: u.id,
-                  type: "SHARP_MOVE",
-                  title: `Sharp Move: ${symbol}`,
-                  body: `${symbol} experienced a sharp fluctuation of ${returnChange.toFixed(2)}% in the last hour. Price stands at $${lastCandle.close.toLocaleString()}.`,
-                },
-              });
+            const title = `Sharp Move: ${symbol}`;
+            const body = `${symbol} experienced a sharp fluctuation of ${returnChange.toFixed(2)}% in the last hour. Price stands at $${lastCandle.close.toLocaleString()}.`;
+            for (const userId of userIds) {
+              notificationsToCreate.push({ userId, type: "SHARP_MOVE", title, body });
             }
           }
         }
@@ -171,21 +176,20 @@ export async function GET(request: NextRequest) {
           });
 
           if (!recentVolNotice) {
-            for (const u of users) {
-              await prisma.notification.create({
-                data: {
-                  userId: u.id,
-                  type: "VOLATILITY_SPIKE",
-                  title: `Volatility Spike: ${symbol}`,
-                  body: `Standard deviation percentage return on ${symbol} has spiked to ${vol.standardDeviationPercent.toFixed(2)}%. High turbulence expected.`,
-                },
-              });
+            const title = `Volatility Spike: ${symbol}`;
+            const body = `Standard deviation percentage return on ${symbol} has spiked to ${vol.standardDeviationPercent.toFixed(2)}%. High turbulence expected.`;
+            for (const userId of userIds) {
+              notificationsToCreate.push({ userId, type: "VOLATILITY_SPIKE", title, body });
             }
           }
         }
       } catch (err) {
         console.error(`Proactive check failed for asset ${symbol}:`, err);
       }
+    }
+
+    if (notificationsToCreate.length > 0) {
+      await prisma.notification.createMany({ data: notificationsToCreate });
     }
 
     return successResponse({ evaluated: activeAlerts.length, triggered: triggeredCount });

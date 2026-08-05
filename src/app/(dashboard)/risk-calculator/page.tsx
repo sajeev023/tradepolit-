@@ -6,9 +6,15 @@ import { useRouter } from "next/navigation";
 import { calculate, validateInputs, type RiskEngineResult, type CalculationMode } from "@/lib/risk-engine";
 import { toast } from "sonner";
 import { trackClarityEvent } from "@/lib/clarity";
+import {
+  CRYPTO_SYMBOLS,
+  FOREX_SYMBOLS,
+  INDEX_SYMBOLS,
+  COMMODITY_SYMBOLS,
+} from "@/lib/market-registry";
 
 // --- Types ---------------------------------------------------------------------
-type AssetClass = "CRYPTO" | "FOREX" | "COMMODITY";
+type AssetClass = "CRYPTO" | "FOREX" | "COMMODITY" | "INDEX";
 type Direction  = "LONG" | "SHORT";
 type RiskType   = "PERCENT" | "FIXED";
 
@@ -31,16 +37,20 @@ interface FieldError {
   message: string;
 }
 
+// Symbol lists per asset class — sourced from the market registry so new
+// markets are picked up automatically in the risk calculator UI.
 const SYMBOL_MAP: Record<AssetClass, string[]> = {
-  CRYPTO:    ["BTC/USD", "ETH/USD", "SOL/USD"],
-  FOREX:     ["EUR/USD", "GBP/USD", "USD/JPY"],
-  COMMODITY: ["XAU/USD"],
+  CRYPTO:    CRYPTO_SYMBOLS,
+  FOREX:     FOREX_SYMBOLS,
+  COMMODITY: COMMODITY_SYMBOLS,
+  INDEX:     INDEX_SYMBOLS,
 };
 
 const DEFAULT_SYMBOL: Record<AssetClass, string> = {
-  CRYPTO:    "BTC/USD",
-  FOREX:     "EUR/USD",
-  COMMODITY: "XAU/USD",
+  CRYPTO:    CRYPTO_SYMBOLS[0] ?? "BTC/USD",
+  FOREX:     FOREX_SYMBOLS[0] ?? "EUR/USD",
+  COMMODITY: COMMODITY_SYMBOLS[0] ?? "XAU/USD",
+  INDEX:     INDEX_SYMBOLS[0] ?? "NASDAQ",
 };
 
 // --- Helpers -------------------------------------------------------------------

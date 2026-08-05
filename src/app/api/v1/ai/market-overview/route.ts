@@ -3,12 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { successResponse, unauthorizedError } from "@/lib/api-helpers";
 import { dispatchCaughtError } from "@/lib/typed-errors";
-
-const ALL_SYMBOLS = [
-  "BTC/USD", "ETH/USD", "SOL/USD",
-  "EUR/USD", "GBP/USD", "USD/JPY", "XAU/USD",
-  "NASDAQ", "S&P500",
-];
+import { SYMBOLS } from "@/lib/market-registry";
 
 // GET /api/v1/ai/market-overview
 // Reads cached analyses from ConversationMemory for all watched symbols.
@@ -55,7 +50,7 @@ export async function GET(_request: NextRequest) {
         // symbol is everything except the last hyphen segment
         const sym = record.chatId?.slice(0, record.chatId.lastIndexOf("-")) ?? "";
 
-        if (!sym || !ALL_SYMBOLS.includes(sym)) continue;
+        if (!sym || !SYMBOLS.includes(sym)) continue;
 
         const bias: string = analysis.bias ?? "NEUTRAL";
         const whyItMatters: string = analysis.whyItMatters ?? "";

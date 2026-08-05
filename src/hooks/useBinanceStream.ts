@@ -14,6 +14,20 @@
 import { useState, useEffect, useRef } from "react";
 import type { PriceData } from "@/lib/types";
 import { profiler } from "@/lib/performance-profiler";
+import { BINANCE_SYMBOL_MAP } from "@/lib/market-registry";
+
+/**
+ * Binance WebSocket stream names are the lowercase form of the spot ticker
+ * (e.g. BTCUSDT -> btcusdt). Derived from BINANCE_SYMBOL_MAP so there is a
+ * single source of truth for symbol-ticker mapping.
+ */
+const BINANCE_WS_MAP: Record<string, string> = (() => {
+  const m: Record<string, string> = {};
+  for (const [sym, ticker] of Object.entries(BINANCE_SYMBOL_MAP)) {
+    m[sym] = ticker.toLowerCase();
+  }
+  return m;
+})();
 
 // ─── Singleton subscription registry ──────────────────────────────────────────
 // Maps Binance stream name → { ws, subscribers, lastPrice }
@@ -48,16 +62,8 @@ function setEntryStatus(
 
 const registry = new Map<string, StreamEntry>();
 
-const BINANCE_SYMBOL_MAP: Record<string, string> = {
-  "BTC/USD": "btcusdt",
-  "ETH/USD": "ethusdt",
-  "SOL/USD": "solusdt",
-  "EUR/USD": "eurusdt",
-  "GBP/USD": "gbpusdt",
-};
-
 function getStreamName(symbol: string): string | null {
-  return BINANCE_SYMBOL_MAP[symbol] ?? null;
+  return BINANCE_WS_MAP[symbol] ?? null;
 }
 
 function openStream(streamName: string) {
@@ -93,9 +99,10 @@ function openStream(streamName: string) {
 
   entry.ws = ws;
   setEntryStatus(entry, "reconnecting");
+  // Reverse-lookup the display symbol from the lowercase WS stream name.
   const symbol =
-    Object.keys(BINANCE_SYMBOL_MAP).find(
-      (k) => BINANCE_SYMBOL_MAP[k] === streamName
+    Object.keys(BINANCE_WS_MAP).find(
+      (k) => BINANCE_WS_MAP[k] === streamName
     ) ?? streamName;
 
   ws.onopen = () => {
