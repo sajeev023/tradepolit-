@@ -1,0 +1,405 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// Enums
+// ============================================================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AssetClass {
+  CRYPTO
+  FOREX
+  COMMODITY
+  INDEX
+}
+
+enum Direction {
+  LONG
+  SHORT
+}
+
+enum TradeStatus {
+  OPEN
+  CLOSED
+}
+
+enum EmotionTag {
+  CONFIDENT
+  FEARFUL
+  GREEDY
+  REVENGE
+  FOMO
+  DISCIPLINED
+  NEUTRAL
+}
+
+enum BacktestStatus {
+  PENDING
+  RUNNING
+  COMPLETE
+  FAILED
+}
+
+enum AlertType {
+  PRICE
+  RSI
+  MACD
+  EMA_CROSS
+  SUPPORT_BREAK
+  RESISTANCE_BREAK
+  TREND_CHANGE
+}
+
+// ============================================================
+// Models
+// ============================================================
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  displayName  String?
+  avatarUrl    String?
+  baseCurrency String   @default("USD")
+  timezone     String   @default("UTC")
+  language     String   @default("en")
+  role         Role     @default(USER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Subscription state lives in UserProfile. These counters stay on User.
+  analysesCountToday    Int       @default(0)
+  alertsCountToday      Int       @default(0)
+  lastUsageReset        DateTime  @default(now())
+
+  trades         Trade[]
+  strategies     Strategy[]
+  watchlists     Watchlist[]
+  alerts         Alert[]
+  journalEntries JournalEntry[]
+  backtests      Backtest[]
+  notifications  Notification[]
+  performance    Performance?
+  settings       Setting?
+  aiChats        AIChat[]
+  apiKeys        UserApiKey[]
+  profile             UserProfile?
+  behavioralEvents    BehavioralEvent[]
+  sessionPerformance  SessionPerformance[]
+  conversationMemory  ConversationMemory[]
+  savedAnalyses       SavedAnalysis[]
+}
+
+model Trade {
+  id             String      @id @default(uuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instrument     String
+  assetClass     AssetClass
+  direction      Direction
+  entryPrice     Decimal
+  exitPrice      Decimal?
+  size           Decimal
+  leverage       Decimal     @default(1)
+  stopLoss       Decimal?
+  takeProfit     Decimal?
+  pnl            Decimal?
+  rMultiple      Decimal?
+  status         TradeStatus @default(OPEN)
+  openedAt       DateTime
+  closedAt       DateTime?
+  strategyId     String?
+  strategy       Strategy?   @relation(fields: [strategyId], references: [id], onDelete: SetNull)
+  emotionTag     EmotionTag?
+  mistakeTags    String[]
+  lessonsLearned String?
+  notes          String?
+  screenshots    String[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  journalEntries JournalEntry[]
+
+  @@index([userId, openedAt])
+  @@index([userId, status])
+  @@index([userId, instrument])
+}
+
+model JournalEntry {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tradeId   String?
+  trade     Trade?      @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+  title     String
+  body      String
+  mood      EmotionTag?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+model Strategy {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  rulesConfig Json
+  isActive    Boolean    @default(true)
+  trades      Trade[]
+  backtests   Backtest[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([userId])
+}
+
+model Backtest {
+  id           String         @id @default(uuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  strategyId   String
+  strategy     Strategy       @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  instrument   String
+  timeframe    String
+  dateFrom     DateTime
+  dateTo       DateTime
+  resultsJson  Json?
+  winRate      Decimal?
+  profitFactor Decimal?
+  maxDrawdown  Decimal?
+  netProfit    Decimal?
+  status       BacktestStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+
+  @@index([userId])
+}
+
+model Watchlist {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String   @default("My Watchlist")
+  instruments String[]
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Alert {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instrument  String
+  type        AlertType
+  condition   Json
+  isActive    Boolean   @default(true)
+  triggeredAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, isActive])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+model Performance {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  equityCurve Json
+  metricsJson Json
+  computedAt  DateTime @default(now())
+}
+
+model News {
+  id             String   @id @default(uuid())
+  source         String
+  headline       String
+  summary        String
+  url            String   @unique
+  sentiment      Decimal
+  importance     Int
+  affectedAssets String[]
+  publishedAt    DateTime
+
+  // Provenance — which upstream API the row was sourced from.
+  // Optional so legacy rows continue to load (parseDbArticle defaults to "DB").
+  provider       String?
+
+  @@index([publishedAt])
+}
+
+model Setting {
+  id             String  @id @default(uuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme          String  @default("dark")
+  notifyEmail    Boolean @default(true)
+  notifyInApp    Boolean @default(true)
+  alertPrefsJson Json    @default("{}")
+}
+
+model AIChat {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  symbol    String?  // e.g. "BTC/USD" — set when chat is created from chart context
+  timeframe String?  // e.g. "4h" — set when chat is created from chart context
+  messages  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, updatedAt])
+}
+
+model UserApiKey {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     String
+  encryptedKey String
+  createdAt    DateTime @default(now())
+
+  @@index([userId, provider])
+}
+
+model MarketCache {
+  id        String   @id @default(uuid())
+  cacheKey  String   @unique
+  data      Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([cacheKey])
+  @@index([expiresAt])
+}
+
+model UserProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountSize     Decimal  @default(10000.0)
+  maxRiskPercent  Decimal  @default(1.0)
+  preferredRR     Decimal  @default(2.0)
+  maxDrawdown     Decimal  @default(10.0)
+  winRate         Decimal  @default(0.0)
+  profitFactor    Decimal  @default(0.0)
+  avgWinLoss      Decimal  @default(0.0)
+  totalTrades     Int      @default(0)
+  holdTimeAvg     Float    @default(0.0)
+  lastSymbol      String   @default("BTC/USD")
+  lastTimeframe   String   @default("4h")
+  updatedAt       DateTime @updatedAt
+
+  // Single source of truth for subscription / plan gating.
+  plan                    String    @default("FREE")
+  stripeCustomerId        String?   @unique
+  stripeSubscriptionId    String?
+  stripePriceId           String?
+  subscriptionStatus      String    @default("INACTIVE")
+  subscriptionExpiresAt   DateTime?
+
+  @@map("user_profiles")
+}
+
+model WebhookEvent {
+  id            String   @id @default(uuid())
+  stripeEventId String   @unique
+  eventType     String
+  processedAt   DateTime @default(now())
+
+  @@map("webhook_events")
+}
+
+model BehavioralEvent {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventType   String   // "stop_moved", "revenge_trade", "overtrading", "early_winner", "warnings_ignored", "hesitation"
+  description String
+  instrument  String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, eventType])
+  @@map("behavioral_events")
+}
+
+model SessionPerformance {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionType String   // "LONDON", "NY", "ASIA"
+  tradesCount Int      @default(0)
+  winRate     Decimal  @default(0.0)
+  netProfit   Decimal  @default(0.0)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("session_performance")
+}
+
+model ConversationMemory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatId    String?
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("conversation_memory")
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String?
+  isActive    Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+
+  @@map("feature_flags")
+}
+
+model SavedAnalysis {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol      String
+  timeframe   String
+  bias        String
+  confidence  String
+  support     String
+  resistance  String
+  aiSummary   String
+  savedAt     DateTime @default(now())
+
+  @@index([userId])
+  @@map("saved_analyses")
+}
