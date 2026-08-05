@@ -18,6 +18,7 @@
  */
 
 import { logStartupBanner, redactKey, envNameForProvider } from "./startup";
+import { getApiKey } from "./ai-providers";
 
 /* ─── Provider types ─────────────────────────────────────────────────── */
 type Provider = "groq" | "nvidia" | "openai" | "gemini";
@@ -439,14 +440,6 @@ function isKeyValid(key?: string, _provider?: Provider): boolean {
  * quota, endpoint, request-body, model, or other) is visible in the
  * server console without making any inference about key format.
  */
-function getApiKey(provider: Provider): string | undefined {
-  if (provider === "groq") return process.env.GROQ_API_KEY;
-  if (provider === "nvidia") return process.env.NVIDIA_API_KEY;
-  if (provider === "openai") return process.env.OPENAI_API_KEY;
-  if (provider === "gemini") return process.env.GEMINI_API_KEY;
-  return undefined;
-}
-
 function getKeyLogInfo(key?: string): string {
   if (!key) return "false (missing)";
   const trimmed = key.trim();

@@ -26,7 +26,7 @@ const COOLDOWN_DURATION_MS = 60_000;
 const MAX_RETRIES = 3;
 const BASE_RETRY_DELAY_MS = 1_000;
 
-function getApiKey(name: string): string | undefined {
+export function getApiKey(name: string): string | undefined {
   if (name === "gemini") return process.env.GEMINI_API_KEY || process.env.GEMINI_PREMIUM_API_KEY;
   if (name === "groq") return process.env.GROQ_API_KEY || process.env.GROQ_PREMIUM_API_KEY;
   if (name === "nvidia") return process.env.NVIDIA_API_KEY || process.env.NVIDIA_PREMIUM_API_KEY;

@@ -416,6 +416,13 @@ export interface TechnicalContext {
   fakeBreakout: boolean;
   approachingKeyLevel: "SUPPORT" | "RESISTANCE" | null;
   activeSession: "LONDON" | "NEWYORK" | "ASIA" | null;
+  // Structural-break / streak / volatility-regime flags
+  reclaimedVWAP: boolean;
+  brokenSupport: boolean;
+  brokenResistance: boolean;
+  atrExpansion: boolean;
+  consecutiveCandles: number;
+  rsiCrossedBelow40: boolean;
 }
 
 export function compileTechnicalContext(
@@ -739,7 +746,7 @@ export function compileTechnicalContext(
     atrExpansion,
     consecutiveCandles,
     rsiCrossedBelow40,
-  } as any;
+  };
 }
 
 export function appendTelemetryMetadata(
