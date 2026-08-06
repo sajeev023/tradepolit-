@@ -58,7 +58,14 @@ function createPrismaClient() {
   const meta = parseDbUrl(connectionString);
   console.log(`[PRISMA RUNTIME] DATABASE_URL loaded | exists=${meta.exists}`);
 
-  const pool = new pg.Pool({ connectionString });
+  const isLocal =
+    connectionString?.includes("localhost") ||
+    connectionString?.includes("127.0.0.1");
+
+  const pool = new pg.Pool({
+    connectionString,
+    ssl: isLocal ? false : { rejectUnauthorized: false },
+  });
   const adapter = new PrismaPg(pool);
 
   return new PrismaClient({
