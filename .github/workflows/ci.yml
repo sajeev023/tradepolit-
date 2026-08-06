@@ -10,6 +10,8 @@ jobs:
   quality:
     name: Quality Checks
     runs-on: ubuntu-latest
+    env:
+      USE_DB_MOCK: "true"
 
     steps:
       - uses: actions/checkout@v4
