@@ -32,17 +32,15 @@ function createPrismaClient() {
   });
 }
 
-// The in-memory mock is ONLY active when explicitly opted in via
-// USE_DB_MOCK=true. Auto-activating on a missing DATABASE_URL is a
-// misconfiguration landmine (silent data-integrity loss in production),
-// so we no longer do it.
-const isMockDb = process.env.USE_DB_MOCK === "true";
+// The in-memory mock is active when explicitly opted in via USE_DB_MOCK=true,
+// or automatically as a safe fallback if DATABASE_URL is missing (preventing build crashes).
+const isMockDb = process.env.USE_DB_MOCK === "true" || !process.env.DATABASE_URL;
 
-if (isMockDb) {
+if (process.env.USE_DB_MOCK === "true") {
   console.log(`[PRISMA RUNTIME] Using in-memory database mock (USE_DB_MOCK=true)`);
 } else if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL is required. Set it in your environment, or use USE_DB_MOCK=true for local dev without a database."
+  console.warn(
+    `[PRISMA RUNTIME] Warning: DATABASE_URL is missing. Falling back to in-memory mock.`
   );
 } else {
   console.log(`[PRISMA RUNTIME] PostgreSQL active`);

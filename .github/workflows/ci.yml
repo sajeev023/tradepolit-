@@ -53,7 +53,13 @@ jobs:
       - name: Check for console.log with error dumps
         run: |
           echo "Checking for raw error dumps in console.log..."
-          ! grep -r "console.log.*JSON.stringify" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules --exclude-dir=.next src/ | grep -i "error" && echo "No raw error dumps in console.log"
+          matches=$(grep -r "console.log.*JSON.stringify" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules --exclude-dir=.next src/ | grep -i "error" || true)
+          if [ -n "$matches" ]; then
+            echo "Raw error dumps found in console.log:"
+            echo "$matches"
+            exit 1
+          fi
+          echo "No raw error dumps in console.log"
 
   build:
     name: Build Check
