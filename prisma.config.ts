@@ -4,16 +4,25 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: path.join(__dirname, ".env") });
 
-// No fallback URL. A hardcoded postgres:postgres default credential is a
-// misconfiguration landmine (M-5 fix). Require DIRECT_URL to be set.
-const directUrl = process.env.DIRECT_URL;
-if (!directUrl) {
-  throw new Error("DIRECT_URL env var is required. Set it in your environment.");
-}
-
+// DIRECT_URL is read here but NOT validated at import time. This file is loaded by
+// the Prisma CLI on every invocation, including `prisma generate`, which only reads
+// the schema and never opens a database connection. Throwing here would force
+// production secrets to be present during `npm ci` / `next build`, which CI
+// deliberately does not inject.
+//
+// Validation is deferred to connection time, where it actually matters:
+//   - `prisma generate` needs no URL (schema-only) -> works without secrets.
+//   - `prisma migrate` / `db push` / `validate` / `studio` need a live connection
+//     -> Prisma enforces `datasource.url` natively and fails clearly if it is
+//     missing ("The datasource.url property is required in your Prisma config...").
+//   - The application runtime validates DATABASE_URL separately in
+//     src/lib/prisma.ts when it creates a real (non-mock) PrismaClient.
+//
+// No hardcoded fallback URL is ever supplied, so there is no "connect to a default
+// database" landmine (preserves the M-5 fix).
 export default defineConfig({
   schema: path.join(__dirname, "prisma", "schema.prisma"),
   datasource: {
-    url: directUrl,
+    url: process.env.DIRECT_URL,
   },
 });

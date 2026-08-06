@@ -15,8 +15,46 @@ function parseDbUrl(url?: string) {
   }
 }
 
+/**
+ * Validate that a real PostgreSQL DATABASE_URL is present and well-formed.
+ *
+ * This runs on the real-client path only — i.e. when the application has actually
+ * started and committed to opening a database connection (not at module import).
+ * A missing or malformed URL fails LOUD and EARLY here, rather than surfacing as
+ * an opaque connection error on the first query. This is the application-runtime
+ * counterpart to Prisma's own connection-time enforcement of DIRECT_URL.
+ *
+ * The in-memory mock path (see `isMockDb` below) is untouched: when USE_DB_MOCK is
+ * set or no DATABASE_URL is configured, the app boots on the mock without ever
+ * calling this. So CI / `next build` / `prisma generate` never need the secret,
+ * but a production process that expects a real DB still refuses to start misconfigured.
+ */
+export function assertDbConfig(): string {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "DATABASE_URL env var is required when USE_DB_MOCK is not set. " +
+      "Set it in your environment, or opt into the in-memory mock with USE_DB_MOCK=true."
+    );
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(
+      `DATABASE_URL is not a valid URL: "${url}". Expected a postgresql:// connection string.`
+    );
+  }
+  if (parsed.protocol !== "postgresql:" && parsed.protocol !== "postgres:") {
+    throw new Error(
+      `DATABASE_URL must use the postgresql:// protocol, got "${parsed.protocol}".`
+    );
+  }
+  return url;
+}
+
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = assertDbConfig();
   const meta = parseDbUrl(connectionString);
   console.log(`[PRISMA RUNTIME] DATABASE_URL loaded | exists=${meta.exists}`);
 
