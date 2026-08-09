@@ -1,5 +1,12 @@
 # TradCopilot — Production Readiness Audit Report
 
+> ⚠️ **SUPERSEDED — 2026-08-09.** This report's blockers (10 TS build errors,
+> failing tests, Node-`crypto` Edge incompatibility) have since been resolved
+> and re-verified. See `docs/RELEASE_REPORT_2026-08-09.md` for the current
+> green-build state. The items below that remain valid (CVEs, middleware→proxy
+> migration, observability gaps, L1 cache bound, per-process rate limiter) are
+> carried forward as tech debt in the new report.
+
 **Date:** 2026-08-05
 **Auditor:** Principal QA & SRE (Claude)
 **Scope:** Full-stack audit — build, type safety, tests, security, performance, caching, resilience, observability, CI/CD, Vercel deployment
