@@ -10,13 +10,27 @@ async function main() {
     return;
   }
 
-  const emails = [
-    "sajeevajay683@gmail.com",
-    "vanimadari123@gmail.com",
-    "ashokmummini.msc@gmail.com",
-  ];
+  // Emails are never hardcoded here — that would ship real user PII in the
+  // repo and silently bypass Stripe-gated upgrades. Pass them explicitly:
+  //   GRANT_PRO_EMAILS="a@x.com,b@x.com" node scripts/grant-pro.js
+  //   node scripts/grant-pro.js a@x.com b@x.com
+  const fromEnv = (process.env.GRANT_PRO_EMAILS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const fromArgv = process.argv.slice(2);
+  const emails = [...fromEnv, ...fromArgv];
 
-  console.log(`[GRANT PRO SCRIPT] Granting PRO plan to ${emails.length} emails in Supabase DB...`);
+  if (emails.length === 0) {
+    console.error(
+      "[GRANT PRO SCRIPT] No emails provided. Set GRANT_PRO_EMAILS or pass emails as CLI args."
+    );
+    console.error("  GRANT_PRO_EMAILS=\"a@x.com,b@x.com\" node scripts/grant-pro.js");
+    console.error("  node scripts/grant-pro.js a@x.com b@x.com");
+    process.exit(1);
+  }
+
+  console.log(`[GRANT PRO SCRIPT] Granting PRO plan to ${emails.length} email(s) in Supabase DB...`);
 
   const pool = new pg.Pool({ connectionString });
   const adapter = new PrismaPg(pool);

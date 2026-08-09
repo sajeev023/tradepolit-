@@ -47,7 +47,11 @@ function isStaticAsset(pathname: string): boolean {
   );
 }
 
-export async function middleware(request: NextRequest) {
+// Next.js 16 renamed the "middleware" file convention to "proxy". The
+// functionality is identical (see node_modules/next/dist/docs/.../16-proxy.md).
+// This is the request-time auth/CSRF gate; session logic lives in
+// @/lib/supabase/middleware (a helper module, unrelated to the convention).
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (isStaticAsset(pathname)) {
@@ -59,7 +63,7 @@ export async function middleware(request: NextRequest) {
     // If no Supabase session cookies OR demo session cookie exist, return
     // response immediately without remote auth network call.
     const hasAuthCookie = request.cookies.getAll().some(
-      (c) => c.name.startsWith("sb-") || c.name === "tp-demo-session"
+      (c) => c.name.startsWith("sb-") || c.name === "tp_demo-session"
     );
     if (!hasAuthCookie) {
       return NextResponse.next();

@@ -1,6 +1,6 @@
 # TradCopilot MVP
 
-A production-grade decision-support system for retail day and swing traders. Built using Next.js 15, Prisma, Supabase Auth/Storage, and OpenAI.
+A production-grade decision-support system for retail day and swing traders. Built using Next.js 16, Prisma 7, Supabase Auth/Storage, and multi-provider AI (Groq → NVIDIA → Gemini fallback).
 
 ---
 
@@ -36,10 +36,10 @@ Navigate to [http://localhost:3000](http://localhost:3000) to inspect.
 ## 🛠️ Adding a New Instrument Reference
 
 To expand the list of tradeable instruments:
-1. Open [src/lib/market.ts](file:///C:/Users/Lenovo/.gemini/antigravity-ide/scratch/tradepilot/src/lib/market.ts).
+1. Open [src/lib/market-registry.ts](src/lib/market-registry.ts).
 2. Append the target symbol (e.g. `ETH/USD`) to `CRYPTO_SYMBOLS` or `FOREX_SYMBOLS`.
 3. Configure baseline mock values inside the `BASELINE_PRICES` and `VOLATILITIES` maps to ensure simulated random walks function correctly offline.
-4. Update the front-end asset options array inside [src/app/(dashboard)/journal/page.tsx](file:///C:/Users/Lenovo/.gemini/antigravity-ide/scratch/tradepilot/src/app/(dashboard)/journal/page.tsx).
+4. Update the front-end asset options array inside [src/app/(dashboard)/journal/page.tsx](src/app/(dashboard)/journal/page.tsx).
 
 ---
 
