@@ -168,7 +168,7 @@ return (
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-40">
-          <RefreshCw className="animate-spin text-teal-400 mb-2" size={24} />
+          <RefreshCw className="animate-spin text-cyan-400 mb-2" size={24} />
           <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading watchlists...</span>
         </div>
       ) : (
@@ -230,11 +230,11 @@ return (
                         }}
                       >
                         <div className="flex items-center gap-2 text-xs font-medium flex-1 min-w-0">
-                          <Eye size={14} className={isActive ? "text-teal-400 shrink-0" : "text-zinc-500 shrink-0"} />
+                          <Eye size={14} className={isActive ? "text-cyan-400 shrink-0" : "text-[var(--color-text-quaternary)] shrink-0"} />
                           {isEditing ? (
                             <input
                               autoFocus
-                              className="flex-1 bg-transparent border-b border-teal-400 outline-none text-xs py-0.5"
+                              className="flex-1 bg-transparent border-b border-cyan-400 outline-none text-xs py-0.5"
                               value={editingName}
                               onClick={e => e.stopPropagation()}
                               onChange={e => setEditingName(e.target.value)}
@@ -246,21 +246,21 @@ return (
                           ) : (
                             <span className="truncate">{w.name}</span>
                           )}
-                          <span className="text-[10px] text-zinc-500 shrink-0">({w.instruments?.length || 0})</span>
+                          <span className="text-[10px] text-[var(--color-text-quaternary)] shrink-0">({w.instruments?.length || 0})</span>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           {isEditing ? (
                             <button
                               onClick={e => { e.stopPropagation(); commitRename(w.id); }}
                               disabled={renameMutation.isPending}
-                              className="text-teal-400 hover:text-teal-300 p-1 disabled:opacity-40"
+                              className="text-cyan-400 hover:text-cyan-300 p-1 disabled:opacity-40"
                             >
                               {renameMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
                             </button>
                           ) : (
                             <button
                               onClick={e => { e.stopPropagation(); startRename(w); }}
-                              className="text-zinc-400 hover:text-zinc-200 p-1"
+                              className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] p-1"
                             >
                               <Pencil size={11} />
                             </button>
@@ -295,7 +295,7 @@ return (
                 <div>
                   <div className="flex items-center justify-between border-b pb-3 mb-5" style={{ borderColor: "var(--color-border-subtle)" }}>
                     <h3 className="text-sm font-bold text-white">{activeWatchlist.name}</h3>
-                    <span className="text-[10px] text-zinc-500">{activeWatchlist.instruments?.length || 0} assets</span>
+                    <span className="text-[10px] text-[var(--color-text-quaternary)]">{activeWatchlist.instruments?.length || 0} assets</span>
                   </div>
 
                   {/* Group filter tabs */}

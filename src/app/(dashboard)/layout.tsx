@@ -160,7 +160,7 @@ function MobileBottomNav() {
             width: 44,
             height: 44,
             background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)",
-            boxShadow: "0 4px 16px rgba(30,212,168,0.35)",
+            boxShadow: "0 4px 16px rgba(6, 182, 212,0.35)",
             marginTop: -12,
           }}
           aria-label="Analyze"
@@ -344,7 +344,7 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg-primary)" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "transparent" }}>
       {/* Demo Banner */}
       <DemoBanner />
 

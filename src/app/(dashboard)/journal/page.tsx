@@ -350,7 +350,7 @@ function JournalPageContent() {
       {/* Trades List Table */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="animate-spin text-teal-400 mb-2" size={24} />
+          <Loader2 className="animate-spin text-cyan-400 mb-2" size={24} />
           <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading trades...</span>
         </div>
       ) : trades.length === 0 ? (
@@ -447,7 +447,7 @@ function JournalPageContent() {
                             </button>
                             <button
                               onClick={() => setDeleteConfirmId(null)}
-                              className="px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 text-xs font-semibold hover:bg-zinc-700"
+                              className="px-2 py-1 rounded bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] border border-[var(--color-border-default)] text-xs font-semibold hover:bg-[var(--color-bg-hover)]"
                             >
                               No
                             </button>
@@ -797,7 +797,7 @@ function JournalPageContent() {
               </div>
               <div className="bg-[var(--color-bg-tertiary)] p-3 rounded-lg">
                 <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>R-Multiple</p>
-                <p className="font-mono font-semibold text-sm text-teal-400">
+                <p className="font-mono font-semibold text-sm text-cyan-400">
                   {viewingTrade.rMultiple ? `${Number(viewingTrade.rMultiple).toFixed(2)}R` : "—"}
                 </p>
               </div>
@@ -819,7 +819,7 @@ function JournalPageContent() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span style={{ color: "var(--color-text-tertiary)" }}>Emotion</span>
-                    <span className="flex items-center gap-1 font-semibold text-teal-400">
+                    <span className="flex items-center gap-1 font-semibold text-cyan-400">
                       <Smile size={14} /> {viewingTrade.emotionTag || "NEUTRAL"}
                     </span>
                   </div>
@@ -890,7 +890,7 @@ function JournalPageContent() {
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--color-border-subtle)")}
               >
                 {isUploading ? (
-                  <Loader2 size={24} className="animate-spin text-teal-400" />
+                  <Loader2 size={24} className="animate-spin text-cyan-400" />
                 ) : (
                   <>
                     <Upload size={20} style={{ color: "var(--color-text-tertiary)" }} className="mb-2" />
@@ -922,7 +922,7 @@ function JournalPageContent() {
                   </button>
                   <button
                     onClick={() => setDeleteConfirmId(null)}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold transition-colors border border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold transition-colors border border-[var(--color-border-default)] text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)]"
                   >
                     Cancel
                   </button>
@@ -956,7 +956,7 @@ function JournalPageContent() {
 
 export default function JournalPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-zinc-400">Loading Journal...</div>}>
+    <Suspense fallback={<div className="p-6 text-[var(--color-text-tertiary)]">Loading Journal...</div>}>
       <JournalPageContent />
     </Suspense>
   );

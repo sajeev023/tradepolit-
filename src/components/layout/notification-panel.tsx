@@ -87,7 +87,7 @@ export function NotificationPanel() {
       {/* Header */}
       <div className="p-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--color-border-subtle)" }}>
         <div className="flex items-center gap-2">
-          <Bell size={16} className="text-teal-400" />
+          <Bell size={16} className="text-cyan-400" />
           <span className="text-sm font-bold text-white">Notifications</span>
           {unreadCount > 0 && (
             <span className="badge badge-info">{unreadCount} unread</span>
@@ -95,7 +95,7 @@ export function NotificationPanel() {
         </div>
         <button
           onClick={() => setNotificationPanelOpen(false)}
-          className="text-zinc-400 hover:text-white p-1"
+          className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] p-1"
         >
           <X size={16} />
         </button>
@@ -105,9 +105,9 @@ export function NotificationPanel() {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3 min-h-0">
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Bell size={24} className="text-zinc-600 mb-2" />
-            <p className="text-xs text-zinc-500 font-medium">No notifications yet</p>
-            <p className="text-[10px] text-zinc-700 mt-1 max-w-[160px]">
+            <Bell size={24} className="text-[var(--color-text-quaternary)] mb-2" />
+            <p className="text-xs text-[var(--color-text-quaternary)] font-medium">No notifications yet</p>
+            <p className="text-[10px] text-[var(--color-text-quaternary)] mt-1 max-w-[160px]">
               Set up price or technical indicator alerts in the monitor tab.
             </p>
           </div>
@@ -129,19 +129,19 @@ export function NotificationPanel() {
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-white">
-                    {isAlert && <ShieldAlert size={12} className="text-teal-400" />}
+                    {isAlert && <ShieldAlert size={12} className="text-cyan-400" />}
                     {isVol && <Volume2 size={12} className="text-amber-500" />}
                     {isSharp && <Bell size={12} className="text-cyan-400" />}
                     <span>{n.title}</span>
                   </div>
                   {!n.isRead && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0 mt-1" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0 mt-1" />
                   )}
                 </div>
-                <p className="text-zinc-400 leading-relaxed font-medium">
+                <p className="text-[var(--color-text-tertiary)] leading-relaxed font-medium">
                   {n.body}
                 </p>
-                <p className="text-[9px] text-zinc-600 mt-2 font-mono">
+                <p className="text-[9px] text-[var(--color-text-quaternary)] mt-2 font-mono">
                   {new Date(n.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>

@@ -158,7 +158,7 @@ ${analysis.aiSummary}`;
                 </div>
               </div>
               <div className="border-l border-[var(--color-border-default)] pl-2">
-                <p className="text-teal-400 mb-1 font-semibold">Current Setup</p>
+                <p className="text-cyan-400 mb-1 font-semibold">Current Setup</p>
                 <div className="space-y-1 font-mono text-[10px]">
                   <p>Bias: <span className="font-bold text-[var(--color-text-primary)]">{currentAnalysis.bias}</span></p>
                   <p>Support: <span className="text-emerald-400 font-bold">${currentAnalysis.support}</span></p>

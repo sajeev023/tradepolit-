@@ -126,7 +126,7 @@ export default function NewsPage() {
       );
     }
     return (
-      <span className="text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 bg-zinc-900 text-zinc-400 border border-zinc-800">
+      <span className="text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] border border-[var(--color-border-subtle)]">
         <Minus size={10} /> Neutral
       </span>
     );
@@ -148,7 +148,7 @@ export default function NewsPage() {
       );
     }
     return (
-      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-zinc-900 text-zinc-500 border border-zinc-800">
+      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-[var(--color-bg-tertiary)] text-[var(--color-text-quaternary)] border border-[var(--color-border-subtle)]">
         Low Impact
       </span>
     );
@@ -256,19 +256,19 @@ export default function NewsPage() {
           {[...Array(6)].map((_, i) => (
             <div key={i} className="card p-5 border border-[var(--color-border-subtle)] rounded-xl animate-pulse space-y-4">
               <div className="flex justify-between items-center">
-                <div className="h-4 w-20 bg-zinc-800 rounded" />
-                <div className="h-4 w-12 bg-zinc-800 rounded" />
+                <div className="h-4 w-20 bg-[var(--color-bg-tertiary)] rounded" />
+                <div className="h-4 w-12 bg-[var(--color-bg-tertiary)] rounded" />
               </div>
-              <div className="h-10 bg-zinc-800 rounded w-full" />
-              <div className="h-16 bg-zinc-800 rounded w-full" />
-              <div className="h-4 bg-zinc-800 rounded w-1/3" />
+              <div className="h-10 bg-[var(--color-bg-tertiary)] rounded w-full" />
+              <div className="h-16 bg-[var(--color-bg-tertiary)] rounded w-full" />
+              <div className="h-4 bg-[var(--color-bg-tertiary)] rounded w-1/3" />
             </div>
           ))}
         </div>
       ) : stories.length === 0 ? (
         /* Empty State */
         <div className="card py-20 text-center flex flex-col items-center justify-center rounded-xl border border-[var(--color-border-subtle)]">
-          <Newspaper size={40} className="text-zinc-600 mb-3" />
+          <Newspaper size={40} className="text-[var(--color-text-quaternary)] mb-3" />
           <p className="text-sm font-bold" style={{ color: "var(--color-text-secondary)" }}>
             Unable to load market news. Please try again shortly.
           </p>
@@ -294,7 +294,7 @@ export default function NewsPage() {
               >
                 {/* News Image Header */}
                 {story.image && (
-                  <div className="h-40 w-full relative overflow-hidden bg-zinc-950 border-b border-[var(--color-border-subtle)]">
+                  <div className="h-40 w-full relative overflow-hidden bg-[var(--color-bg-deepest)] border-b border-[var(--color-border-subtle)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={story.image}
@@ -324,7 +324,7 @@ export default function NewsPage() {
                             }}
                           />
                         ) : (
-                          <Globe size={11} className="text-zinc-500" />
+                          <Globe size={11} className="text-[var(--color-text-quaternary)]" />
                         )}
                         <span className="font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
                           {story.publisher}
@@ -353,7 +353,7 @@ export default function NewsPage() {
                       {getSentimentBadge(story.sentimentLabel, story.sentimentConfidence)}
                       {getImpactBadge(story.impactScore)}
                       {story.isCached && (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-zinc-950 text-zinc-500 border border-zinc-900">
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-[var(--color-bg-deepest)] text-[var(--color-text-quaternary)] border border-[var(--color-border-subtle)]">
                           Offline DB
                         </span>
                       )}
@@ -379,7 +379,7 @@ export default function NewsPage() {
                         <button
                           key={asset}
                           onClick={() => handleAssetChange(asset)}
-                          className="text-[9px] font-mono font-bold px-1.5 py-0.2 bg-zinc-950 text-zinc-400 border border-zinc-900 hover:border-zinc-700 rounded transition-colors"
+                          className="text-[9px] font-mono font-bold px-1.5 py-0.2 bg-[var(--color-bg-deepest)] text-[var(--color-text-tertiary)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-default)] rounded transition-colors"
                         >
                           {asset}
                         </button>

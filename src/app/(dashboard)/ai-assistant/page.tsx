@@ -183,7 +183,7 @@ export default function AIAssistantPage() {
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {listLoading ? (
             <div className="flex justify-center py-10">
-              <Loader2 className="animate-spin text-teal-400" size={18} />
+              <Loader2 className="animate-spin text-cyan-400" size={18} />
             </div>
           ) : chatSessions.length === 0 ? (
             <div className="text-[11px] text-center py-10" style={{ color: "var(--color-text-tertiary)" }}>
@@ -240,7 +240,7 @@ export default function AIAssistantPage() {
             >
               <MessageSquare size={14} />
             </button>
-            <Bot size={16} className="text-teal-400" />
+            <Bot size={16} className="text-cyan-400" />
             <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
               AI Trading Discipline Coach
             </span>
@@ -251,10 +251,10 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Message Thread */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#0E0E10]/40">
+        <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[var(--color-bg-deepest)]/40">
           {/* Static warning banner */}
-          <div className="p-3 rounded-lg flex items-center gap-3 border border-teal-500/10 bg-teal-500/5 max-w-2xl mx-auto">
-            <Sparkles size={16} className="text-teal-400 shrink-0" />
+          <div className="p-3 rounded-lg flex items-center gap-3 border border-cyan-500/10 bg-cyan-500/5 max-w-2xl mx-auto">
+            <Sparkles size={16} className="text-cyan-400 shrink-0" />
             <p className="text-[10px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
               Every response is grounded in your journal logs and performance stats. Responses are purely for educational reviews, not financial advice.
             </p>
@@ -276,8 +276,8 @@ export default function AIAssistantPage() {
                   <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-tertiary)" }}>
                     The AI Coach needs at least 5 closed trades to analyze your behavioral patterns and provide personalized feedback.
                   </p>
-                  <div className="mt-4 px-4 py-2 rounded-lg border border-teal-500/20 bg-teal-500/5">
-                    <p className="text-[11px] text-teal-400 font-medium">{tradeCount}/5 trades logged</p>
+                  <div className="mt-4 px-4 py-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5">
+                    <p className="text-[11px] text-cyan-400 font-medium">{tradeCount}/5 trades logged</p>
                   </div>
                 </>
               ) : (
@@ -341,7 +341,7 @@ export default function AIAssistantPage() {
                       className={`p-3.5 rounded-xl text-sm leading-relaxed flex-1 ${
                         isAI
                           ? "bg-[var(--color-bg-secondary)] border border-[var(--color-border-subtle)]"
-                          : "bg-teal-950/20 border border-teal-500/20 text-teal-100"
+                          : "bg-cyan-950/20 border border-cyan-500/20 text-cyan-100"
                       }`}
                     >
                       <div className="whitespace-pre-line">{msg.content}</div>
@@ -373,7 +373,7 @@ export default function AIAssistantPage() {
                     <Bot size={16} style={{ color: "var(--color-accent-primary)" }} />
                   </div>
                   <div className="p-3 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border-subtle)] flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin text-teal-400" />
+                    <Loader2 size={14} className="animate-spin text-cyan-400" />
                     <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>AI Coach is reviewing your data...</span>
                   </div>
                 </div>
@@ -392,7 +392,7 @@ export default function AIAssistantPage() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Ask the coach: 'Why did I lose on my EUR/USD trade?'"
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] transition-colors focus:border-teal-500/40"
+              className="flex-1 px-4 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] transition-colors focus:border-cyan-500/40"
               disabled={sendMutation.isPending}
             />
             <button

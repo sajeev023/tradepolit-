@@ -11,8 +11,8 @@ export default function NotFound() {
 
       <div className="text-center space-y-6 max-w-md relative z-10 animate-fade-in">
         {/* Symbol Icon */}
-        <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center border border-[#1C1F27] bg-[#111318] shadow-md">
-          <HelpCircle size={28} className="text-zinc-500 animate-pulse" />
+        <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center border border-[var(--color-border-default)] bg-[var(--color-bg-tertiary)] shadow-md">
+          <HelpCircle size={28} className="text-[var(--color-text-quaternary)] animate-pulse" />
         </div>
 
         <div className="space-y-2">
@@ -30,7 +30,7 @@ export default function NotFound() {
             className="inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer text-black"
             style={{
               backgroundColor: "var(--color-accent-primary)",
-              boxShadow: "0 0 16px rgba(30, 212, 168, 0.15)",
+              boxShadow: "0 0 16px rgba(6, 182, 212, 0.15)",
             }}
           >
             <TrendingUp size={14} />

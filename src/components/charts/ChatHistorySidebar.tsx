@@ -162,8 +162,8 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
           style={{ height: "56px" }}
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-              <Clock size={14} className="text-teal-400" />
+            <div className="w-7 h-7 rounded-md bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+              <Clock size={14} className="text-cyan-400" />
             </div>
             <span className="text-sm font-bold text-[var(--color-text-primary)]">
               Chat History
@@ -186,7 +186,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
         <div className="px-4 py-3 shrink-0 border-b border-[var(--color-border-subtle)]">
           <button
             onClick={() => { onNewChat(); onClose(); }}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-teal-500/20 bg-teal-500/5 hover:bg-teal-500/10 text-teal-400 text-xs font-semibold transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/10 text-cyan-400 text-xs font-semibold transition-all cursor-pointer"
           >
             <PlusCircle size={14} />
             New Chat Session
@@ -201,7 +201,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Filter by symbol or topic..."
-              className="w-full h-8 pl-8 pr-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-teal-500/40 transition-colors"
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-cyan-500/40 transition-colors"
             />
           </div>
         </div>
@@ -235,7 +235,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
                   key={session.id}
                   className={`group relative rounded-xl border transition-all duration-150 overflow-hidden ${
                     isActive
-                      ? "border-teal-500/25 bg-teal-500/5"
+                      ? "border-cyan-500/25 bg-cyan-500/5"
                       : "border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)]"
                   }`}
                 >
@@ -275,7 +275,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
                         {session.messageCount} messages
                       </span>
                       {isActive && (
-                        <span className="ml-auto text-[9px] text-teal-400 font-semibold">ACTIVE</span>
+                        <span className="ml-auto text-[9px] text-cyan-400 font-semibold">ACTIVE</span>
                       )}
                     </div>
                   </button>

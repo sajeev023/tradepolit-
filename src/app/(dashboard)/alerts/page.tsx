@@ -204,7 +204,7 @@ export default function AlertsPage() {
           {/* Trigger Alert Test Engine */}
           <div className="card p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <Volume2 size={16} className="text-teal-400 shrink-0" />
+              <Volume2 size={16} className="text-cyan-400 shrink-0" />
               <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
                 Alert Evaluation Engine
               </span>
@@ -250,7 +250,7 @@ export default function AlertsPage() {
 
             {alertsLoading ? (
               <div className="flex justify-center py-6">
-                <RefreshCw className="animate-spin text-teal-400" size={18} />
+                <RefreshCw className="animate-spin text-cyan-400" size={18} />
               </div>
             ) : activeAlertsList.length === 0 ? (
               <div className="text-xs text-center py-8" style={{ color: "var(--color-text-tertiary)" }}>
@@ -271,7 +271,7 @@ export default function AlertsPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => toggleAlertMutation.mutate({ id: alert.id, isActive: false })}
-                          className="text-teal-400 hover:text-teal-300"
+                          className="text-cyan-400 hover:text-cyan-300"
                         >
                           <ToggleRight size={20} />
                         </button>
@@ -302,7 +302,7 @@ export default function AlertsPage() {
 
             {notificationsLoading ? (
               <div className="flex justify-center py-6">
-                <RefreshCw className="animate-spin text-teal-400" size={18} />
+                <RefreshCw className="animate-spin text-cyan-400" size={18} />
               </div>
             ) : !notifications || notifications.length === 0 ? (
               <div className="text-xs text-center py-8" style={{ color: "var(--color-text-tertiary)" }}>
@@ -322,7 +322,7 @@ export default function AlertsPage() {
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5">
-                        <Bell size={12} className={n.isRead ? "text-zinc-500" : "text-teal-400 animate-bounce"} />
+                        <Bell size={12} className={n.isRead ? "text-[var(--color-text-quaternary)]" : "text-cyan-400 animate-bounce"} />
                         <span className="font-bold text-white">{n.title}</span>
                       </div>
                       <p style={{ color: "var(--color-text-secondary)" }}>{n.body}</p>

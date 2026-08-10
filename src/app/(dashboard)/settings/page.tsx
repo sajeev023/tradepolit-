@@ -301,7 +301,7 @@ export default function SettingsPage() {
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-40">
-          <RefreshCw className="animate-spin text-teal-400 mb-2" size={24} />
+          <RefreshCw className="animate-spin text-cyan-400 mb-2" size={24} />
           <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading settings...</span>
         </div>
       ) : (
@@ -311,14 +311,14 @@ export default function SettingsPage() {
             <div className="animate-fade-in space-y-6">
               <form onSubmit={handleUpdateProfile} className="card p-5 space-y-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <User size={16} className="text-teal-400" />
+                  <User size={16} className="text-cyan-400" />
                   <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                     Personal Profile Details
                   </h2>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-6 pb-2 border-b border-zinc-800">
-                  <div className="w-16 h-16 rounded-full bg-zinc-800 border-2 border-teal-400 flex items-center justify-center text-xl font-bold font-mono text-teal-400 tracking-wider">
+                  <div className="w-16 h-16 rounded-full bg-zinc-800 border-2 border-cyan-400 flex items-center justify-center text-xl font-bold font-mono text-cyan-400 tracking-wider">
                     {getInitials()}
                   </div>
                   <div className="text-center sm:text-left space-y-0.5">
@@ -375,7 +375,7 @@ export default function SettingsPage() {
                 {/* Notifications Panel */}
                 <div className="card p-5 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Bell size={16} className="text-teal-400" />
+                    <Bell size={16} className="text-cyan-400" />
                     <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                       Notification Preferences
                     </h2>
@@ -387,7 +387,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={notifyEmail}
                         onChange={(e) => setNotifyEmail(e.target.checked)}
-                        className="rounded border-zinc-700 bg-zinc-900 text-teal-400 focus:ring-0 w-4 h-4"
+                        className="rounded border-zinc-700 bg-zinc-900 text-cyan-400 focus:ring-0 w-4 h-4"
                       />
                       <div className="space-y-0.5">
                         <span className="font-semibold block text-white">Email Alerts</span>
@@ -400,7 +400,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={notifyInApp}
                         onChange={(e) => setNotifyInApp(e.target.checked)}
-                        className="rounded border-zinc-700 bg-zinc-900 text-teal-400 focus:ring-0 w-4 h-4"
+                        className="rounded border-zinc-700 bg-zinc-900 text-cyan-400 focus:ring-0 w-4 h-4"
                       />
                       <div className="space-y-0.5">
                         <span className="font-semibold block text-white">In-App Notifications</span>
@@ -413,7 +413,7 @@ export default function SettingsPage() {
                 {/* Credentials Panel */}
                 <div className="card p-5 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Key size={16} className="text-teal-400" />
+                    <Key size={16} className="text-cyan-400" />
                     <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                       API Keys (Encrypted at Rest)
                     </h2>
@@ -465,7 +465,7 @@ export default function SettingsPage() {
               {/* Change Password Panel */}
               <form onSubmit={handleUpdatePassword} className="card p-5 space-y-4 border border-zinc-800">
                 <div className="flex items-center gap-2 mb-2">
-                  <Lock size={16} className="text-teal-400" />
+                  <Lock size={16} className="text-cyan-400" />
                   <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                     Change Password
                   </h2>
@@ -556,7 +556,7 @@ export default function SettingsPage() {
             <div className="animate-fade-in space-y-6">
               <form onSubmit={handleSavePreferences} className="card p-5 space-y-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <Palette size={16} className="text-teal-400" />
+                  <Palette size={16} className="text-cyan-400" />
                   <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                     Trading & Terminal Preferences
                   </h2>
@@ -648,10 +648,10 @@ export default function SettingsPage() {
           {/* BILLING TAB */}
           {activeTab === "billing" && (
             <div className="animate-fade-in space-y-6">
-              <div className="card p-6 border-[#1C1F27] bg-[#0E0E10]/15 space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+              <div className="card p-6 border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]/40 space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border-subtle)]">
                   <div className="flex items-center gap-2.5">
-                    <CreditCard size={18} className="text-teal-400" />
+                    <CreditCard size={18} className="text-cyan-400" />
                     <div>
                       <h2 className="text-sm font-bold text-white">Subscription & Billing</h2>
                       <p className="text-[11px] text-zinc-500">Manage plan memberships, usage limits, and invoices.</p>
@@ -686,9 +686,9 @@ export default function SettingsPage() {
                         )}
                       </div>
                       {profileData?.subscriptionStatus !== "PRO_ACTIVE" && (
-                        <div className="w-full bg-zinc-900 rounded-full h-1.5 overflow-hidden border border-[#1C1F27]">
+                        <div className="w-full bg-[var(--color-bg-tertiary)] rounded-full h-1.5 overflow-hidden border border-[var(--color-border-subtle)]">
                           <div
-                            className="bg-teal-400 h-1.5 rounded-full"
+                            className="bg-cyan-400 h-1.5 rounded-full"
                             style={{ width: `${Math.min(100, ((profileData?.dailyAnalysisCount ?? 0) / 5) * 100)}%` }}
                           />
                         </div>
@@ -705,26 +705,26 @@ export default function SettingsPage() {
                         )}
                       </div>
                       {profileData?.subscriptionStatus !== "PRO_ACTIVE" && (
-                        <div className="w-full bg-zinc-900 rounded-full h-1.5 overflow-hidden border border-[#1C1F27]">
+                        <div className="w-full bg-[var(--color-bg-tertiary)] rounded-full h-1.5 overflow-hidden border border-[var(--color-border-subtle)]">
                           <div
-                            className="bg-teal-400 h-1.5 rounded-full"
+                            className="bg-cyan-400 h-1.5 rounded-full"
                             style={{ width: `${Math.min(100, ((profileData?.dailyAlertCount ?? 0) / 3) * 100)}%` }}
                           />
                         </div>
                       )}
                     </div>
 
-                    <div className="p-4 rounded-xl bg-[#111318] border border-[#1C1F27] text-[11px] leading-relaxed text-zinc-400 space-y-2">
-                      <p className="font-bold text-zinc-300">Free limits resets daily at UTC midnight.</p>
+                    <div className="p-4 rounded-xl bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] text-[11px] leading-relaxed text-[var(--color-text-tertiary)] space-y-2">
+                      <p className="font-bold text-[var(--color-text-secondary)]">Free limits resets daily at UTC midnight.</p>
                       <p>Upgrade to Pro to unlock weekly AI reports, saved analyses compare views, unlimited alert channels, and behavioral coaching modules.</p>
                     </div>
                   </div>
 
                   {/* Pricing Tiers & Action Cards */}
-                  <div className="flex flex-col justify-between p-5 rounded-2xl border border-zinc-800 bg-[#111318] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-teal-400/5 blur-2xl rounded-full" />
+                  <div className="flex flex-col justify-between p-5 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-tertiary)] relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-2xl rounded-full" />
                     <div>
-                      <span className="text-[10px] uppercase font-bold tracking-widest text-teal-400 font-mono">Premium Access</span>
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-cyan-400 font-mono">Premium Access</span>
                       <h4 className="text-lg font-black text-white mt-1">TradCopilot Pro</h4>
                       <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
                         Become an institutional-grade day trader with complete contextual AI scanning, full journal persistence, and alerts.
@@ -743,7 +743,7 @@ export default function SettingsPage() {
                           className="w-full btn-secondary text-xs font-semibold py-2.5 flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           {stripeLoading ? (
-                            <RefreshCw className="animate-spin text-teal-400" size={14} />
+                            <RefreshCw className="animate-spin text-cyan-400" size={14} />
                           ) : (
                             "Manage Billing & Invoices"
                           )}

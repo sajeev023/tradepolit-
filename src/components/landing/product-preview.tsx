@@ -255,7 +255,7 @@ export function DesktopProductPreview() {
               </div>
               <div className="flex justify-between items-center pt-1 border-t border-zinc-800/60">
                 <span className="text-zinc-400">Risk Level:</span>
-                <span className="text-teal-300 font-bold">MODERATE (2.0 R:R)</span>
+                <span className="text-cyan-300 font-bold">MODERATE (2.0 R:R)</span>
               </div>
             </div>
 

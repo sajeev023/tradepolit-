@@ -32,7 +32,7 @@ export const SnapshotExportCard: React.FC<SnapshotExportCardProps> = ({
       style={{
         width: "600px",
         backgroundColor: "#0A0A0B",
-        borderColor: "rgba(30, 212, 168, 0.15)",
+        borderColor: "rgba(6, 182, 212, 0.15)",
         color: "#E4E4E7",
         fontFamily: "Inter, system-ui, sans-serif",
       }}
@@ -43,9 +43,9 @@ export const SnapshotExportCard: React.FC<SnapshotExportCardProps> = ({
           <div
             className="w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs"
             style={{
-              backgroundColor: "rgba(30, 212, 168, 0.1)",
-              color: "#1ED4A8",
-              border: "1px solid rgba(30, 212, 168, 0.2)",
+              backgroundColor: "rgba(6, 182, 212, 0.1)",
+              color: "#06b6d4",
+              border: "1px solid rgba(6, 182, 212, 0.2)",
             }}
           >
             TP
@@ -56,7 +56,7 @@ export const SnapshotExportCard: React.FC<SnapshotExportCardProps> = ({
           </div>
         </div>
         <div className="text-right">
-          <span className="text-xs font-mono font-bold text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded">
+          <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded">
             {symbol} ({timeframe})
           </span>
         </div>

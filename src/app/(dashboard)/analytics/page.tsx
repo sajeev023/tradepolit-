@@ -152,7 +152,7 @@ export default function AnalyticsPage() {
           </p>
           <button
             onClick={() => refetch()}
-            className="px-3 py-1.5 rounded text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500/20 transition"
+            className="px-3 py-1.5 rounded text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition"
           >
             Retry
           </button>
