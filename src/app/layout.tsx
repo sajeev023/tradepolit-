@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SmoothScrollProvider } from "@/components/ui/smooth-scroll-provider";
@@ -14,6 +15,21 @@ import { MicrosoftClarity } from "@/components/MicrosoftClarity";
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://tradcopilot.com";
 const siteName = "TradCopilot";
+
+/* Self-hosted variable fonts (next/font) — no external requests at runtime.
+   Inter = body/UI sans, Space Grotesk = display headlines (technical/terminal).
+   CSS variables are consumed by --font-sans / --font-display in globals.css. */
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display-font",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -69,7 +85,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.clarity.ms" />

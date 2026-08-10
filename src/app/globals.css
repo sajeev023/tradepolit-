@@ -4,62 +4,78 @@
 @custom-variant dark (&:where(.dark,.dark *));
 
 :root {
-  /* Premium Minimalist Space Dark Mode (Default visual identity) */
-  --background: #09090b;         /* Matte Off-Black */
-  --foreground: #f4f4f5;         /* Soft Off-White */
-  --card: #121214;               /* Rich Charcoal card surfaces */
-  --card-foreground: #f4f4f5;    /* Soft white text inside cards */
-  --muted-foreground: #a1a1aa;   /* Muted grey for subheadings */
-  --border: rgba(255, 255, 255, 0.08); /* Subtle glowing border */
-  --accent: #1ed4a8;             /* Standard brand green */
+  /* Institutional Intelligence — Futuristic Market Terminal
+     Deeper base, layered surface tier, cyan interaction accent.
+     Semantic market colors (bull/bear/warn) are kept distinct from the
+     interaction accent so state is never communicated by accent alone. */
+  --background: #030712;          /* Primary — deepest space black */
+  --background-secondary: #0b0f19;/* Secondary — elevated base */
+  --surface: #111827;             /* Surface — card substrate */
+  --foreground: #e7e9ee;          /* Crisp off-white (slightly cooler) */
+  --card: #0b0f19;                /* Translucent card base */
+  --card-foreground: #e7e9ee;
+  --muted-foreground: #8b909f;    /* Cool muted grey */
+  --border: rgba(255, 255, 255, 0.08); /* Subtle translucent border */
+  --border-active: rgba(6, 182, 212, 0.5); /* Cyan active border */
+  --accent: #06b6d4;              /* Cyan interaction accent */
 }
 
 @theme {
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-surface: var(--surface);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-border-active: var(--border-active);
   --color-accent: var(--accent);
 
-  /* Maintain backward compatibility with old theme tokens to avoid breaking the rest of the application styling */
+  /* Maintain backward compatibility with old theme tokens to avoid breaking the rest of the application styling.
+     Three subtle tiers over the deep base so layered surfaces read with depth. */
   --color-bg-primary: var(--background);
-  --color-bg-secondary: var(--card);
-  --color-bg-tertiary: var(--card);
-  --color-bg-elevated: var(--card);
-  --color-bg-deepest: var(--background);
-  --color-bg-hover: var(--border);
-  --color-bg-active: var(--border);
+  --color-bg-secondary: var(--card);            /* #0b0f19 — primary card base */
+  --color-bg-tertiary: var(--surface);           /* #111827 — raised surface */
+  --color-bg-elevated: var(--surface);           /* #111827 — elevated surface */
+  --color-bg-deepest: var(--background);         /* #030712 — sidebar/topbar chrome */
+  --color-bg-hover: rgba(255, 255, 255, 0.05);
+  --color-bg-active: rgba(6, 182, 212, 0.10);
 
   --color-border-default: var(--border);
-  --color-border-subtle: var(--border);
-  --color-border-strong: var(--border);
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-strong: rgba(255, 255, 255, 0.12);
   --color-border-accent: var(--accent);
 
   --color-text-primary: var(--foreground);
-  --color-text-secondary: var(--muted-foreground);
+  --color-text-secondary: #b9bdc9;
   --color-text-tertiary: var(--muted-foreground);
-  --color-text-quaternary: var(--muted-foreground);
+  --color-text-quaternary: #5f6573;
   --color-text-accent: var(--accent);
 
+  /* Cyan interaction accent — futuristic terminal identity */
   --color-accent-primary: var(--accent);
-  --color-accent-primary-hover: #17BE96;
-  --color-accent-primary-muted: rgba(30, 212, 168, 0.12);
-  --color-accent-primary-subtle: rgba(30, 212, 168, 0.06);
+  --color-accent-primary-hover: #0891b2;             /* cyan-600 */
+  --color-accent-primary-muted: rgba(6, 182, 212, 0.12);
+  --color-accent-primary-subtle: rgba(6, 182, 212, 0.06);
 
-  --color-profit: #22C55E;
-  --color-profit-bg: rgba(34, 197, 94, 0.08);
-  --color-loss: #EF4444;
-  --color-loss-bg: rgba(239, 68, 68, 0.08);
+  /* Semantic market colors — bull/bear/warn, distinct from the interaction accent */
+  --color-profit: #10b981;                            /* bullish — emerald */
+  --color-profit-bg: rgba(16, 185, 129, 0.10);
+  --color-loss: #f43f5e;                              /* bearish / risk — rose */
+  --color-loss-bg: rgba(244, 63, 94, 0.10);
 
-  --color-warning: #EAB308;
-  --color-warning-bg: rgba(234, 179, 8, 0.10);
-  --color-info: #3B82F6;
-  --color-info-bg: rgba(59, 130, 246, 0.10);
+  --color-warning: #f59e0b;                           /* behavioral warning — amber */
+  --color-warning-bg: rgba(245, 158, 11, 0.10);
+  --color-info: #06b6d4;                             /* info aligned to accent */
+  --color-info-bg: rgba(6, 182, 212, 0.10);
 
-  /* ── Typography ── */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* ── Typography ──
+     --font-inter / --font-display are injected at <html> by next/font/google
+     in src/app/layout.tsx. Fall back to system stacks if the variable is absent
+     (e.g. before hydration / in isolation tests). */
+  --font-sans: var(--font-inter, "Inter"), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-display-font, "Space Grotesk"), var(--font-inter, "Inter"), ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
 
   /* ── Layout Spacing ── */
@@ -142,7 +158,17 @@ html {
 }
 
 body {
+  /* Atmospheric depth — layered ambient glows fixed to the viewport so content
+     scrolls over a stable, non-distracting light field. Cyan ambient upper-left,
+     a faint emerald hint upper-right (market), and a soft cyan wash rising from
+     the bottom. All very low opacity: readable under trading data. */
   background-color: var(--background);
+  background-image:
+    radial-gradient(64rem 64rem at 12% -8%, rgba(6, 182, 212, 0.08), transparent 55%),
+    radial-gradient(56rem 56rem at 105% -6%, rgba(16, 185, 129, 0.05), transparent 50%),
+    radial-gradient(90rem 90rem at 50% 118%, rgba(6, 182, 212, 0.045), transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--foreground);
   transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   min-height: 100dvh;
@@ -151,7 +177,7 @@ body {
 }
 
 ::selection {
-  background-color: rgba(30, 212, 168, 0.2);
+  background-color: rgba(6, 182, 212, 0.22);
   color: var(--color-text-primary);
 }
 
@@ -195,10 +221,20 @@ body {
    ═══════════════════════════════════════════════════════════ */
 
 .card {
-  background-color: var(--color-bg-secondary);
+  position: relative;
+  isolation: isolate;
+  /* Translucent surface so the body atmosphere reads through subtly — depth
+     without per-card backdrop-filter (blur is reserved for .glass overlays to
+     keep scroll performance high). Top sheen gives a "lit from above" feel. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0) 50%),
+    rgba(11, 15, 25, 0.72);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 8px 24px -14px rgba(0, 0, 0, 0.5);
   transition:
     border-color var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease,
@@ -206,8 +242,33 @@ body {
     background-color var(--duration-fast) ease;
 }
 
+/* Gradient edge lighting — a 1px ring composited via mask, a bright top-left
+   highlight fading to a faint cyan edge. Always on at low intensity; strengthens
+   on hover/active. Cheap: a static gradient with an opacity transition. */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03) 28%, rgba(6, 182, 212, 0.12) 100%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.65;
+  transition: opacity var(--duration-normal) ease;
+}
+
 .card:hover {
   border-color: var(--color-border-strong);
+}
+
+.card:hover::before {
+  opacity: 1;
 }
 
 .card-interactive {
@@ -216,8 +277,15 @@ body {
 
 .card-interactive:hover {
   border-color: var(--color-border-strong);
-  box-shadow: var(--shadow-card-hover);
+  box-shadow:
+    0 0 0 1px rgba(6, 182, 212, 0.14),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 12px 32px -14px rgba(0, 0, 0, 0.6);
   transform: translateY(-1px);
+}
+
+.card-interactive:hover::before {
+  opacity: 1;
 }
 
 .card-interactive:active {
@@ -229,10 +297,10 @@ body {
    ═══════════════════════════════════════════════════════════ */
 
 .glass {
-  background: rgba(17, 17, 19, 0.85);
+  background: rgba(11, 15, 25, 0.72);
   backdrop-filter: blur(16px) saturate(150%);
   -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -246,7 +314,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-accent-primary), #06B6D4);
+  background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 45%, #10b981 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -261,11 +329,61 @@ body {
 
 /* Section eyebrow — used above section headings */
 .section-eyebrow {
+  font-family: var(--font-display);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-accent-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DISPLAY TYPOGRAPHY — Space Grotesk, tight tracking, dramatic hierarchy.
+   Applied deliberately to specific headings; base h1–h3 are NOT overridden
+   so landing/SEO/markdown layouts keep their existing rhythm.
+   ═══════════════════════════════════════════════════════════ */
+
+.tp-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+  color: var(--color-text-primary);
+}
+
+.tp-display-lg {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2rem, 1.4rem + 2.4vw, 3.25rem);
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  color: var(--color-text-primary);
+}
+
+.tp-display-sm {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.6rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--color-text-primary);
+}
+
+/* Eyebrow — crisp metadata label above headings */
+.tp-eyebrow {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent-primary);
+}
+
+/* Mono stat — tabular numerics for prices / metrics */
+.tp-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -284,12 +402,13 @@ body {
   border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 600;
-  background-color: var(--color-text-primary);
-  color: var(--color-bg-primary);
+  background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
+  color: #030712;
   border: none;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(6, 182, 212, 0.20), 0 6px 16px -6px rgba(6, 182, 212, 0.45);
   transition:
-    background-color var(--duration-fast) ease,
+    background var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease,
     transform var(--duration-micro) ease;
   user-select: none;
@@ -297,8 +416,8 @@ body {
 }
 
 .btn-primary:hover {
-  background-color: #E4E4E7;
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.28), 0 10px 22px -6px rgba(6, 182, 212, 0.5);
 }
 
 .btn-primary:active {
@@ -432,7 +551,7 @@ body {
 .badge-info {
   background-color: var(--color-accent-primary-subtle);
   color: var(--color-accent-primary);
-  border: 1px solid rgba(30, 212, 168, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.16);
 }
 
 .badge-neutral {
@@ -674,11 +793,14 @@ body {
 
 .surface-panel {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
-    var(--color-bg-secondary);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 50%),
+    rgba(11, 15, 25, 0.72);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    0 8px 24px -14px rgba(0, 0, 0, 0.5);
 }
 
 /* ═══════════════════════════════════════════════════════════
