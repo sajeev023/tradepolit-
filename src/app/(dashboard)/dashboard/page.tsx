@@ -290,7 +290,7 @@ function DashboardContent() {
             return (
               <div
                 key={idx}
-                className="card p-5 flex flex-col justify-between min-h-[130px] border-[var(--color-border-subtle)] hover:border-[var(--color-border-default)] transition-colors"
+                className={`card p-5 flex flex-col justify-between min-h-[130px] border-[var(--color-border-subtle)] hover:border-[var(--color-border-default)] transition-colors animate-fade-in-delay-${(idx % 6) + 1}`}
               >
                 <div>
                   <div className="flex items-center gap-2 mb-2">
