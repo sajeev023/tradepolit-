@@ -521,7 +521,9 @@ export function ChartsClientPage() {
       let telemetry = liveIndicators;
       if (!telemetry || telemetry.symbol !== sym || telemetry.timeframe !== tf) {
         console.log(`[SYNC] Client telemetry not found or mismatched for ${sym} ${tf}. Fetching indicators first...`);
-        const indRes = await fetch(`/api/v1/market/indicators?symbol=${encodeURIComponent(sym)}&tf=${tf}`);
+        const indRes = await fetch(`/api/v1/market/indicators?symbol=${encodeURIComponent(sym)}&tf=${tf}`, {
+          signal: AbortSignal.timeout(15000), // 15s — the analyze-chart fetch below has 30s; this pre-fetch must not hang indefinitely or the AI panel stays stuck on "AI analyzing..." forever.
+        });
         const indBody = await indRes.json();
         if (!indRes.ok || !indBody.data) {
           throw new Error(indBody.error?.message || "Failed to fetch indicators snapshot before analysis");
