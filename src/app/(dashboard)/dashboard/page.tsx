@@ -36,10 +36,10 @@ function KPISkeleton() {
   return (
     <div className="card p-5 flex flex-col justify-between min-h-[130px] animate-pulse">
       <div>
-        <div className="h-3 w-24 bg-zinc-800 rounded mb-3" />
-        <div className="h-8 w-32 bg-zinc-800 rounded mb-2" />
+        <div className="h-3 w-24 bg-[var(--color-bg-tertiary)] rounded mb-3" />
+        <div className="h-8 w-32 bg-[var(--color-bg-tertiary)] rounded mb-2" />
       </div>
-      <div className="h-3 w-40 bg-zinc-800 rounded" />
+      <div className="h-3 w-40 bg-[var(--color-bg-tertiary)] rounded" />
     </div>
   );
 }
@@ -48,14 +48,14 @@ function ChartSkeleton() {
   return (
     <div className="card p-5 lg:col-span-2 min-h-[380px] flex flex-col animate-pulse">
       <div className="flex items-center justify-between mb-6">
-        <div className="h-4 w-32 bg-zinc-800 rounded" />
-        <div className="h-3 w-48 bg-zinc-800 rounded" />
+        <div className="h-4 w-32 bg-[var(--color-bg-tertiary)] rounded" />
+        <div className="h-3 w-48 bg-[var(--color-bg-tertiary)] rounded" />
       </div>
       <div className="flex-1 flex items-end gap-1 px-4 pb-4">
         {[40, 55, 45, 65, 50, 70, 60, 75, 65, 80, 70, 85].map((h, i) => (
           <div
             key={i}
-            className="flex-1 bg-zinc-800 rounded-t"
+            className="flex-1 bg-[var(--color-bg-tertiary)] rounded-t"
             style={{ height: `${h}%` }}
           />
         ))}
@@ -70,12 +70,12 @@ function CustomTooltip({ active, payload, label }: any) {
     <div
       className="px-3 py-2.5 rounded-lg text-xs"
       style={{
-        backgroundColor: "#0B0D10",
-        border: "1px solid #1C1F27",
+        backgroundColor: "var(--color-bg-deepest)",
+        border: "1px solid var(--color-border-default)",
         boxShadow: "0 10px 15px -3px rgba(0,0,0,0.5)",
       }}
     >
-      <p className="text-[10px] mb-1 text-zinc-500">{label}</p>
+      <p className="text-[10px] mb-1 text-[var(--color-text-quaternary)]">{label}</p>
       <p className="font-mono font-bold text-sm text-cyan-400">
         ${Number(payload[0].value).toFixed(2)}
       </p>
@@ -203,15 +203,15 @@ function DashboardContent() {
   if (profileData?.subscriptionStatus !== "PRO_ACTIVE") {
     return (
       <div className="flex flex-col gap-6 max-w-4xl mx-auto py-12 animate-fade-in">
-        <div className="card p-8 border-[#1C1F27] bg-[#0E0E10]/15 flex flex-col items-center justify-center text-center space-y-6 relative overflow-hidden">
+        <div className="card p-8 border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]/40 flex flex-col items-center justify-center text-center space-y-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 blur-3xl rounded-full" />
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-400">
             <Zap size={28} className="fill-amber-400 text-amber-400" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-black text-white font-mono uppercase tracking-wide">PRO feature</h2>
-            <h3 className="text-md font-bold text-zinc-300">Performance Dashboard Locked</h3>
-            <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
+            <h2 className="text-xl font-black text-[var(--color-text-primary)] font-mono uppercase tracking-wide">PRO feature</h2>
+            <h3 className="text-md font-bold text-[var(--color-text-secondary)]">Performance Dashboard Locked</h3>
+            <p className="text-xs text-[var(--color-text-quaternary)] max-w-md mx-auto leading-relaxed">
               Visual analytics, win/loss ratio distributions, cumulative equity curves, and automated AI weekly insights are available exclusively for PRO members.
             </p>
           </div>
@@ -231,10 +231,13 @@ function DashboardContent() {
       {/* Welcome & Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
+          <span className="tp-eyebrow text-[var(--color-accent-primary)]/80 mb-2 block">
+            {metrics.totalTrades > 0 ? "Workstation · Performance" : "Workstation · Overview"}
+          </span>
+          <h1 className="tp-display-sm tracking-tight text-[var(--color-text-primary)]">
             {metrics.totalTrades > 0 ? "Workstation Dashboard" : "Welcome to TradCopilot"}
           </h1>
-          <p className="text-sm mt-1 text-[var(--color-text-secondary)]">
+          <p className="text-sm mt-1.5 text-[var(--color-text-secondary)]">
             {metrics.totalTrades > 0
               ? `${metrics.totalTrades} closed trade${metrics.totalTrades !== 1 ? "s" : ""} analyzed · Real-time workstation pulse.`
               : "Ground control for your trading discipline. Start by logging your first trade."}
@@ -287,7 +290,7 @@ function DashboardContent() {
             return (
               <div
                 key={idx}
-                className="card p-5 flex flex-col justify-between min-h-[130px] border-[#1C1F27] hover:border-zinc-800 transition-colors"
+                className="card p-5 flex flex-col justify-between min-h-[130px] border-[var(--color-border-subtle)] hover:border-[var(--color-border-default)] transition-colors"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -304,7 +307,7 @@ function DashboardContent() {
                       {stat.label}
                     </p>
                   </div>
-                  <p className="text-2xl font-bold font-mono tabular-nums mt-1" style={{ color: valColor }}>
+                  <p className="text-2xl font-bold tp-mono mt-1" style={{ color: valColor }}>
                     {stat.value}
                   </p>
                 </div>
@@ -323,10 +326,11 @@ function DashboardContent() {
         {summaryLoading ? (
           <ChartSkeleton />
         ) : (
-          <div className="card p-5 lg:col-span-2 flex flex-col justify-between min-h-[380px] border-[#1C1F27]">
+          <div className="card p-5 lg:col-span-2 flex flex-col justify-between min-h-[380px] border-[var(--color-border-subtle)]">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
+                  <span className="tp-eyebrow text-[var(--color-text-quaternary)] mb-1 block">Equity Curve</span>
                   <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
                     Equity Performance Curve
                   </h2>
@@ -344,14 +348,14 @@ function DashboardContent() {
               {equityCurveData.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-zinc-900 border border-dashed border-zinc-800"
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-[var(--color-bg-tertiary)] border border-dashed border-[var(--color-border-default)]"
                   >
                     <BookOpen size={22} className="text-cyan-400" />
                   </div>
                   <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                     No performance data logged yet
                   </p>
-                  <p className="text-xs mt-1.5 text-zinc-500 text-center max-w-xs">
+                  <p className="text-xs mt-1.5 text-[var(--color-text-quaternary)] text-center max-w-xs">
                     Once you log closed trades, your cumulative equity curve will automatically render here.
                   </p>
                 </div>
@@ -400,35 +404,35 @@ function DashboardContent() {
         {/* Behavioral Insight & Performance insights */}
         <div className="flex flex-col gap-4">
           {/* Behavioral Insights Card */}
-          <div className="card p-5 border-[#1C1F27] flex-1 flex flex-col justify-between">
+          <div className="card p-5 border-[var(--color-border-subtle)] flex-1 flex flex-col justify-between">
             <div>
               <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 flex items-center gap-1.5">
                 <Flame size={15} className="text-amber-400" /> Behavioral Pathology
               </h2>
-              <div className="p-3.5 bg-zinc-950/20 rounded-xl border border-[#1C1F27] text-xs leading-relaxed text-zinc-300">
+              <div className="p-3.5 bg-[var(--color-bg-deepest)]/40 rounded-xl border border-[var(--color-border-subtle)] text-xs leading-relaxed text-[var(--color-text-secondary)]">
                 {behavioralInsight}
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-[#1C1F27] grid grid-cols-2 gap-2 text-center text-xs">
-              <div className="bg-[#111318] p-2.5 rounded-lg border border-[#1C1F27]">
-                <span className="text-[10px] text-zinc-500 block">Best Session</span>
+            <div className="mt-4 pt-3 border-t border-[var(--color-border-subtle)] grid grid-cols-2 gap-2 text-center text-xs">
+              <div className="bg-[var(--color-bg-tertiary)] p-2.5 rounded-lg border border-[var(--color-border-subtle)]">
+                <span className="text-[10px] text-[var(--color-text-quaternary)] block">Best Session</span>
                 <span className="font-bold text-cyan-400 mt-1 block font-mono">{metrics.bestSession}</span>
               </div>
-              <div className="bg-[#111318] p-2.5 rounded-lg border border-[#1C1F27]">
-                <span className="text-[10px] text-zinc-500 block">Best Asset</span>
+              <div className="bg-[var(--color-bg-tertiary)] p-2.5 rounded-lg border border-[var(--color-border-subtle)]">
+                <span className="text-[10px] text-[var(--color-text-quaternary)] block">Best Asset</span>
                 <span className="font-bold text-cyan-400 mt-1 block font-mono">{metrics.bestSymbol}</span>
               </div>
             </div>
           </div>
 
           {/* AI Weekly Report Trigger Card */}
-          <div className="card p-5 border-[#1C1F27] flex flex-col justify-between">
+          <div className="card p-5 border-[var(--color-border-subtle)] flex flex-col justify-between">
             <div>
               <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-1.5">
                 <Sparkles size={15} className="text-cyan-400" /> Weekly AI Report
               </h2>
-              <p className="text-xs text-zinc-500 leading-relaxed mb-3">
+              <p className="text-xs text-[var(--color-text-quaternary)] leading-relaxed mb-3">
                 Aggregate trading performance, mistakes, and behavioral metrics for a comprehensive review.
               </p>
             </div>
@@ -456,18 +460,18 @@ function DashboardContent() {
       {/* Bottom Row: Recent Trades & AI Weekly Report view if generated */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Trades list */}
-        <div className="card p-5 lg:col-span-2 border-[#1C1F27]">
+        <div className="card p-5 lg:col-span-2 border-[var(--color-border-subtle)]">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-1.5">
             <Calendar size={15} className="text-cyan-400" /> Recent Closed Trades
           </h2>
           {recentTrades.length === 0 ? (
-            <p className="text-xs text-zinc-600 py-4 text-center">No trades logged yet.</p>
+            <p className="text-xs text-[var(--color-text-quaternary)] py-4 text-center">No trades logged yet.</p>
           ) : (
             <div className="space-y-3">
               {recentTrades.map((t: any) => {
                 const isWin = t.pnl > 0;
                 return (
-                  <div key={t.id} className="flex items-center justify-between border-b border-[#1C1F27]/60 pb-3 last:border-b-0 last:pb-0">
+                  <div key={t.id} className="flex items-center justify-between border-b border-[var(--color-border-subtle)] pb-3 last:border-b-0 last:pb-0">
                     <div className="flex items-center gap-3">
                       <div className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono ${
                         t.direction === "LONG" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
@@ -475,8 +479,8 @@ function DashboardContent() {
                         {t.direction}
                       </div>
                       <div>
-                        <span className="text-xs font-semibold text-white block font-mono">{t.instrument}</span>
-                        <span className="text-[10px] text-zinc-500 block">
+                        <span className="text-xs font-semibold text-[var(--color-text-primary)] block font-mono">{t.instrument}</span>
+                        <span className="text-[10px] text-[var(--color-text-quaternary)] block">
                           {new Date(t.openedAt).toLocaleDateString()}
                         </span>
                       </div>
@@ -503,25 +507,25 @@ function DashboardContent() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={handleCopyReport}
-                      className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                      className="p-1 rounded hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
                       title="Copy report to clipboard"
                     >
                       {copied ? <Check size={14} className="text-emerald-400" /> : <Clipboard size={14} />}
                     </button>
                     <button
                       onClick={() => setWeeklyReport(null)}
-                      className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+                      className="p-1 rounded hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
                     >
                       <X size={14} />
                     </button>
                   </div>
                 </div>
-                <div className="text-[11px] leading-relaxed text-zinc-300 overflow-y-auto max-h-[220px] whitespace-pre-wrap font-sans pr-1 custom-scrollbar">
+                <div className="text-[11px] leading-relaxed text-[var(--color-text-secondary)] overflow-y-auto max-h-[220px] whitespace-pre-wrap font-sans pr-1 custom-scrollbar">
                   {weeklyReport}
                 </div>
               </div>
               <div className="mt-4 pt-3 border-t border-cyan-500/10 text-center">
-                <p className="text-[10px] text-zinc-500">Auto-saved to session logs</p>
+                <p className="text-[10px] text-[var(--color-text-quaternary)]">Auto-saved to session logs</p>
               </div>
             </div>
           )}
