@@ -1030,7 +1030,7 @@ Timestamp: ${new Date().toISOString()}
           </div>
           <button
             onClick={() => setWelcomeBack(null)}
-            className="text-zinc-500 hover:text-zinc-300 transition-colors p-1"
+            className="text-[var(--color-text-quaternary)] hover:text-[var(--color-text-secondary)] transition-colors p-1"
           >
             <X size={14} />
           </button>
@@ -1057,7 +1057,7 @@ Timestamp: ${new Date().toISOString()}
       </div>
 
       {/* ── Mobile tab switcher ───────────────────────────────────────────────── */}
-      <div className="flex lg:hidden bg-zinc-950 p-1 rounded-lg border border-zinc-800 gap-1 w-full shrink-0">
+      <div className="flex lg:hidden bg-[var(--color-bg-tertiary)] p-1 rounded-lg border border-[var(--color-border-default)] gap-1 w-full shrink-0">
         {(["watchlist", "chart", "copilot"] as const).map(tab => (
           <button
             key={tab}
@@ -1070,7 +1070,7 @@ Timestamp: ${new Date().toISOString()}
             className={`flex-1 py-2 text-center text-xs font-semibold rounded-md transition-all capitalize ${
               mobileTab === tab
                 ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-cyan-500/20"
-                : "text-zinc-400 hover:text-white"
+                : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
             }`}
           >
             {tab === "copilot" ? "AI Copilot" : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -1095,7 +1095,7 @@ Timestamp: ${new Date().toISOString()}
             <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
               {SYMBOLS.map(group => (
                 <div key={group.group} className="space-y-0.5">
-                  <h3 className="text-[8px] font-bold tracking-widest uppercase text-zinc-500 select-none">{group.group}</h3>
+                  <h3 className="text-[8px] font-bold tracking-widest uppercase text-[var(--color-text-quaternary)] select-none">{group.group}</h3>
                   <div className="flex flex-col gap-0.5">
                     {group.items.map(item => {
                       const active = item === selectedSymbol;
@@ -1142,7 +1142,7 @@ Timestamp: ${new Date().toISOString()}
                           </div>
                           {/* Market overview one-liner */}
                           {ovr?.oneLiner && (
-                            <p className="text-[9px] leading-relaxed mt-1 text-zinc-600 font-sans font-normal line-clamp-2 whitespace-normal">
+                            <p className="text-[9px] leading-relaxed mt-1 text-[var(--color-text-quaternary)] font-sans font-normal line-clamp-2 whitespace-normal">
                               {ovr.oneLiner}
                             </p>
                           )}
@@ -1339,7 +1339,7 @@ Timestamp: ${new Date().toISOString()}
                       {liveIndicators.emaCrossover || "Aligned"}
                     </span>
                   ) : (
-                    <span className="text-zinc-600 text-[11px] font-bold">PRO</span>
+                    <span className="text-[var(--color-text-quaternary)] text-[11px] font-bold">PRO</span>
                   )}
                 </div>
                 <span className="shrink-0 text-[var(--color-border-default)] text-[10px]">|</span>
@@ -1348,7 +1348,7 @@ Timestamp: ${new Date().toISOString()}
                   {subscriptionStatus === "PRO_ACTIVE" ? (
                     <span className="text-[var(--color-text-primary)] text-[11px]">{typeof liveIndicators.atr === "number" ? liveIndicators.atr.toFixed(2) : "—"}</span>
                   ) : (
-                    <span className="text-zinc-600 text-[11px] font-bold">PRO</span>
+                    <span className="text-[var(--color-text-quaternary)] text-[11px] font-bold">PRO</span>
                   )}
                 </div>
               </div>
@@ -1369,7 +1369,7 @@ Timestamp: ${new Date().toISOString()}
               <div className="flex items-center gap-2.5">
                 <div className="relative flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent-primary-muted)] border border-cyan-500/10 shrink-0">
                   <BrainCircuit size={15} className="text-cyan-400" />
-                  <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse border border-zinc-900" />
+                  <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse border border-[var(--color-bg-deepest)]" />
                 </div>
                 <span className="text-sm font-bold tracking-tight text-[var(--color-text-primary)]">TradCopilot</span>
               </div>
@@ -1383,7 +1383,7 @@ Timestamp: ${new Date().toISOString()}
                       toast.error("Upgrade to PRO to access Bookmarked analyses!");
                     }
                   }}
-                  className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-amber-400 transition-all text-zinc-400 cursor-pointer flex items-center justify-center"
+                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-amber-400 transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
                   title="Saved Analyses"
                 >
                   <Bookmark size={13} />
@@ -1397,7 +1397,7 @@ Timestamp: ${new Date().toISOString()}
                       toast.error("Upgrade to PRO to access Chat History!");
                     }
                   }}
-                  className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-cyan-400 transition-all text-zinc-400 cursor-pointer flex items-center justify-center"
+                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-cyan-400 transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
                   title="Chat History"
                 >
                   <Clock size={13} />
@@ -1406,7 +1406,7 @@ Timestamp: ${new Date().toISOString()}
                 <button
                   onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe, bypassCache: true })}
                   disabled={isPending}
-                  className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-white transition-all text-zinc-400 cursor-pointer flex items-center justify-center"
+                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-white transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
                   title="Recalculate Chart Analysis"
                 >
                   <RefreshCw size={12} className={isPending ? "animate-spin text-cyan-400" : ""} />
@@ -1482,7 +1482,7 @@ Timestamp: ${new Date().toISOString()}
                     <span className="text-emerald-400 font-bold block">
                       {formatMetricNumber(analysisData.support || analysisData.levels?.support)}
                     </span>
-                    <span className="text-[8px] font-sans text-zinc-500 block truncate mt-0.5" title={analysisData.sourceMetadata?.supportSource}>
+                    <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.supportSource}>
                       {analysisData.sourceMetadata?.supportSource || "Swing-low detector"}
                     </span>
                   </motion.div>
@@ -1498,7 +1498,7 @@ Timestamp: ${new Date().toISOString()}
                     <span className="text-rose-400 font-bold block">
                       {formatMetricNumber(analysisData.resistance || analysisData.levels?.resistance)}
                     </span>
-                    <span className="text-[8px] font-sans text-zinc-500 block truncate mt-0.5" title={analysisData.sourceMetadata?.resistanceSource}>
+                    <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.resistanceSource}>
                       {analysisData.sourceMetadata?.resistanceSource || "Swing-high detector"}
                     </span>
                   </motion.div>
@@ -1514,7 +1514,7 @@ Timestamp: ${new Date().toISOString()}
                     <span className="text-amber-400 font-bold block">
                       {formatMetricNumber(analysisData.invalidationLevel || analysisData.levels?.invalidation)}
                     </span>
-                    <span className="text-[8px] font-sans text-zinc-500 block truncate mt-0.5" title={analysisData.sourceMetadata?.stopLossSource}>
+                    <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.stopLossSource}>
                       {analysisData.sourceMetadata?.stopLossSource || "Below support"}
                     </span>
                   </motion.div>

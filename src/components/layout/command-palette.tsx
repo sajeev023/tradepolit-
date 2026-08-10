@@ -75,7 +75,7 @@ export function SearchCommandPalette() {
           {isLoading && <Loader2 size={16} className="animate-spin text-cyan-400" />}
           <button
             onClick={() => setCommandPaletteOpen(false)}
-            className="text-zinc-500 hover:text-white p-1 rounded-md hover:bg-white/5 transition-colors"
+            className="text-[var(--color-text-quaternary)] hover:text-[var(--color-text-primary)] p-1 rounded-md hover:bg-white/5 transition-colors"
           >
             <X size={16} />
           </button>
@@ -106,7 +106,7 @@ export function SearchCommandPalette() {
                         setCommandPaletteOpen(false);
                         router.push(`/charts?symbol=${encodeURIComponent(asset.symbol)}`);
                       }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-zinc-800/30 text-xs font-semibold"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       <LineChart size={14} className="text-cyan-400" />
@@ -129,7 +129,7 @@ export function SearchCommandPalette() {
                         setCommandPaletteOpen(false);
                         router.push("/journal");
                       }}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer hover:bg-zinc-800/30 text-xs font-semibold"
+                      className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       <div className="flex items-center gap-2.5">
@@ -157,7 +157,7 @@ export function SearchCommandPalette() {
                         setCommandPaletteOpen(false);
                         router.push("/backtester");
                       }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-zinc-800/30 text-xs font-semibold"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       <FlaskConical size={14} className="text-cyan-400" />
@@ -180,7 +180,7 @@ export function SearchCommandPalette() {
                       target="_blank"
                       rel="noreferrer"
                       onClick={() => setCommandPaletteOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-zinc-800/30 text-xs font-semibold block truncate"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-[var(--color-bg-hover)] text-xs font-semibold block truncate"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       <Newspaper size={14} className="text-cyan-400 shrink-0" />
