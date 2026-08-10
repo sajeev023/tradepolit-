@@ -146,7 +146,15 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
         )}
         {activeBtcPrice && (
           <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-[var(--color-bg-secondary)] border border-[var(--color-border-subtle)]">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--color-text-quaternary)]">BTC</span>
+            {/* Honest live-source dot: green + pulse when the Binance WS is
+                connected for BTC/USD; amber when on the REST fallback. Never
+                implies "live" when the feed is unavailable. */}
+            <span
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${!isWsDisconnected ? "animate-pulse" : ""}`}
+              style={{ background: !isWsDisconnected ? "var(--color-profit)" : "var(--color-warning)" }}
+              title={!isWsDisconnected ? "Live via WebSocket" : "Polled — WebSocket reconnecting"}
+            />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-quaternary)]">BTC</span>
             <span className="text-[12px] font-mono font-medium text-[var(--color-text-primary)] tabular-nums">
               ${activeBtcPrice.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>

@@ -1167,7 +1167,7 @@ Timestamp: ${new Date().toISOString()}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
-                  <TrendingUp size={14} style={{ color: "#2dd4bf" }} />
+                  <TrendingUp size={14} style={{ color: "#22d3ee" }} />
                 </div>
                 <span className="text-xs font-semibold text-[var(--color-text-primary)]">{selectedSymbol}</span>
                 <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] px-1.5 py-0.5 rounded font-mono select-none">BINANCE</span>
@@ -1188,7 +1188,7 @@ Timestamp: ${new Date().toISOString()}
                     onClick={() => setSelectedTimeframe(tf)}
                     className={`h-7 px-2 rounded-md text-[10px] font-semibold font-mono transition-all cursor-pointer flex items-center justify-center press-scale ${
                       selectedTimeframe === tf
-                        ? "bg-[var(--color-bg-hover)] text-[var(--color-text-primary)] shadow-sm font-bold"
+                        ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] shadow-sm font-bold border border-cyan-500/20"
                         : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
                     }`}
                   >
@@ -1222,7 +1222,7 @@ Timestamp: ${new Date().toISOString()}
                   style={{ padding: 0 }}
                   title="Export Setup PNG"
                 >
-                  <Camera size={15} style={{ color: "#2dd4bf" }} />
+                  <Camera size={15} style={{ color: "#22d3ee" }} />
                 </button>
                 <button
                   onClick={() => setIsChartMaximized(v => !v)}
@@ -1230,13 +1230,13 @@ Timestamp: ${new Date().toISOString()}
                   style={{ padding: 0 }}
                   title={isChartMaximized ? "Exit Fullscreen" : "Maximize Chart"}
                 >
-                  {isChartMaximized ? <Minimize2 size={15} style={{ color: "#2dd4bf" }} /> : <Maximize2 size={15} style={{ color: "#2dd4bf" }} />}
+                  {isChartMaximized ? <Minimize2 size={15} style={{ color: "#22d3ee" }} /> : <Maximize2 size={15} style={{ color: "#22d3ee" }} />}
                 </button>
                 <button
                   onClick={() => setAiPanelOpen(v => !v)}
                   className="btn-secondary h-8 text-[10px] px-3 flex items-center gap-1.5 rounded-md border-[var(--color-border-default)] hover:border-cyan-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
                 >
-                  <Bot size={12} style={{ color: "#2dd4bf" }} />
+                  <Bot size={12} style={{ color: "#22d3ee" }} />
                   <span>{aiPanelOpen ? "Close AI" : "Open AI"}</span>
                 </button>
               </div>
