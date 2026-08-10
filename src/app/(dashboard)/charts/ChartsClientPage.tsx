@@ -1362,10 +1362,10 @@ Timestamp: ${new Date().toISOString()}
 
         {/* ── AI Copilot Panel ───────────────────────────────────────────────── */}
         {aiPanelOpen && (
-          <div id="ai-copilot-panel" className={`card flex flex-col overflow-hidden border-[#1C1F27] h-full min-h-0 min-w-0 ${mobileTab === "copilot" ? "flex" : "hidden lg:flex"}`}>
+          <div id="ai-copilot-panel" className={`card flex flex-col overflow-hidden border-[var(--color-border-subtle)] h-full min-h-0 min-w-0 ${mobileTab === "copilot" ? "flex" : "hidden lg:flex"}`}>
 
             {/* Panel header */}
-            <div className="px-3 border-b flex items-center justify-between shrink-0" style={{ height: "38px", borderColor: "#1C1F27" }}>
+            <div className="px-3 border-b flex items-center justify-between shrink-0" style={{ height: "38px", borderColor: "var(--color-border-subtle)" }}>
               <div className="flex items-center gap-2.5">
                 <div className="relative flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent-primary-muted)] border border-cyan-500/10 shrink-0">
                   <BrainCircuit size={15} className="text-cyan-400" />

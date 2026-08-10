@@ -251,7 +251,7 @@ export default function AIAssistantPage() {
         </div>
 
         {/* Message Thread */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[#0E0E10]/40">
+        <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[var(--color-bg-deepest)]/40">
           {/* Static warning banner */}
           <div className="p-3 rounded-lg flex items-center gap-3 border border-cyan-500/10 bg-cyan-500/5 max-w-2xl mx-auto">
             <Sparkles size={16} className="text-cyan-400 shrink-0" />
