@@ -322,7 +322,7 @@ export default function AlertsPage() {
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5">
-                        <Bell size={12} className={n.isRead ? "text-zinc-500" : "text-cyan-400 animate-bounce"} />
+                        <Bell size={12} className={n.isRead ? "text-[var(--color-text-quaternary)]" : "text-cyan-400 animate-bounce"} />
                         <span className="font-bold text-white">{n.title}</span>
                       </div>
                       <p style={{ color: "var(--color-text-secondary)" }}>{n.body}</p>

@@ -447,7 +447,7 @@ function JournalPageContent() {
                             </button>
                             <button
                               onClick={() => setDeleteConfirmId(null)}
-                              className="px-2 py-1 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 text-xs font-semibold hover:bg-zinc-700"
+                              className="px-2 py-1 rounded bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] border border-[var(--color-border-default)] text-xs font-semibold hover:bg-[var(--color-bg-hover)]"
                             >
                               No
                             </button>
@@ -922,7 +922,7 @@ function JournalPageContent() {
                   </button>
                   <button
                     onClick={() => setDeleteConfirmId(null)}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold transition-colors border border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold transition-colors border border-[var(--color-border-default)] text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)]"
                   >
                     Cancel
                   </button>
@@ -956,7 +956,7 @@ function JournalPageContent() {
 
 export default function JournalPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-zinc-400">Loading Journal...</div>}>
+    <Suspense fallback={<div className="p-6 text-[var(--color-text-tertiary)]">Loading Journal...</div>}>
       <JournalPageContent />
     </Suspense>
   );

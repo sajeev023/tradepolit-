@@ -230,7 +230,7 @@ return (
                         }}
                       >
                         <div className="flex items-center gap-2 text-xs font-medium flex-1 min-w-0">
-                          <Eye size={14} className={isActive ? "text-cyan-400 shrink-0" : "text-zinc-500 shrink-0"} />
+                          <Eye size={14} className={isActive ? "text-cyan-400 shrink-0" : "text-[var(--color-text-quaternary)] shrink-0"} />
                           {isEditing ? (
                             <input
                               autoFocus
@@ -246,7 +246,7 @@ return (
                           ) : (
                             <span className="truncate">{w.name}</span>
                           )}
-                          <span className="text-[10px] text-zinc-500 shrink-0">({w.instruments?.length || 0})</span>
+                          <span className="text-[10px] text-[var(--color-text-quaternary)] shrink-0">({w.instruments?.length || 0})</span>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           {isEditing ? (
@@ -260,7 +260,7 @@ return (
                           ) : (
                             <button
                               onClick={e => { e.stopPropagation(); startRename(w); }}
-                              className="text-zinc-400 hover:text-zinc-200 p-1"
+                              className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] p-1"
                             >
                               <Pencil size={11} />
                             </button>
@@ -295,7 +295,7 @@ return (
                 <div>
                   <div className="flex items-center justify-between border-b pb-3 mb-5" style={{ borderColor: "var(--color-border-subtle)" }}>
                     <h3 className="text-sm font-bold text-white">{activeWatchlist.name}</h3>
-                    <span className="text-[10px] text-zinc-500">{activeWatchlist.instruments?.length || 0} assets</span>
+                    <span className="text-[10px] text-[var(--color-text-quaternary)]">{activeWatchlist.instruments?.length || 0} assets</span>
                   </div>
 
                   {/* Group filter tabs */}
