@@ -74,6 +74,17 @@ const FOLLOW_UPS = [
   "What would invalidate this trade?",
 ];
 
+// AI analysis diagnostic steps. Each step is bound to a REAL phase of the
+// analyze mutation (set inside mutationFn) — never to a cosmetic timer. If a
+// phase is skipped (e.g. indicators already cached → no "connecting" fetch),
+// that step is simply never marked active. This keeps the diagnostic honest:
+// it reflects actual processing, not fabricated progress.
+type AnalysisPhase = "connecting" | "analyzing";
+const ANALYSIS_STEPS: { key: AnalysisPhase; label: string }[] = [
+  { key: "connecting", label: "Connecting to market feed" },
+  { key: "analyzing", label: "Running multi-model analysis" },
+];
+
 const COLLAPSE_THRESHOLD = 400;
 const COLLAPSE_PREVIEW = 300;
 
@@ -146,7 +157,7 @@ export function ChartsClientPage() {
   const [isBackgroundUpdating, setIsBackgroundUpdating] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [analysisData, setAnalysisData] = useState<any | null>(null);
-  const [loadingText, setLoadingText] = useState("ANALYZING MARKET STRUCTURE...");
+  const [analysisPhase, setAnalysisPhase] = useState<AnalysisPhase | null>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
 
   const [liveIndicators, setLiveIndicators] = useState<any | null>(null);
@@ -519,7 +530,10 @@ export function ChartsClientPage() {
       });
 
       let telemetry = liveIndicators;
-      if (!telemetry || telemetry.symbol !== sym || telemetry.timeframe !== tf) {
+      const needsIndicatorFetch = !telemetry || telemetry.symbol !== sym || telemetry.timeframe !== tf;
+      if (needsIndicatorFetch) {
+        // REAL phase 1: fetching a live indicators snapshot from the market feed.
+        setAnalysisPhase("connecting");
         console.log(`[SYNC] Client telemetry not found or mismatched for ${sym} ${tf}. Fetching indicators first...`);
         const indRes = await fetch(`/api/v1/market/indicators?symbol=${encodeURIComponent(sym)}&tf=${tf}`, {
           signal: AbortSignal.timeout(15000), // 15s — the analyze-chart fetch below has 30s; this pre-fetch must not hang indefinitely or the AI panel stays stuck on "AI analyzing..." forever.
@@ -546,6 +560,9 @@ export function ChartsClientPage() {
       console.log("[TELEMETRY-3] Payload to API:", payload);
 
       try {
+        // REAL phase 2: the server-side multi-model AI race (Groq → NVIDIA →
+        // Gemini → OpenAI) over the compiled telemetry. This is the long step.
+        setAnalysisPhase("analyzing");
         const res = await fetch("/api/v1/ai/analyze-chart", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -776,19 +793,12 @@ Timestamp: ${new Date().toISOString()}
     return () => { active = false; clearInterval(iv); };
   }, [selectedSymbol, selectedTimeframe]);
 
-  // Rotate loading text sequentially through data preparation and AI analysis stages
+  // Reset the (real) analysis phase when the mutation stops — success or error.
+  // The phase itself is set inside mutationFn at the actual fetch boundaries,
+  // never on a cosmetic timer, so the diagnostic reflects real progress only.
   useEffect(() => {
-    if (!isPending) return;
-    setLoadingText("Fetching live market data...");
-    const t1 = setTimeout(() => setLoadingText("Calculating technical indicators..."), 600);
-    const t2 = setTimeout(() => setLoadingText("Detecting support & resistance levels..."), 1200);
-    const t3 = setTimeout(() => setLoadingText(`AI analyzing ${selectedSymbol} on ${selectedTimeframe}...`), 1800);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  }, [isPending, selectedSymbol, selectedTimeframe]);
+    if (!isPending) setAnalysisPhase(null);
+  }, [isPending]);
 
   // Stable reference to the mutate function so the effect below doesn't
   // re-run every time the useMutation object changes (isPending toggles).
@@ -1005,11 +1015,11 @@ Timestamp: ${new Date().toISOString()}
 
       {/* Welcome Back Banner */}
       {welcomeBack && (
-        <div className="flex items-center justify-between p-3.5 rounded-xl border border-teal-500/20 bg-teal-500/5 text-xs text-[#EDEEF0] animate-message-in shrink-0">
+        <div className="flex items-center justify-between p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 text-xs text-[#EDEEF0] animate-message-in shrink-0">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
             </span>
             <span>{welcomeBack}</span>
           </div>
@@ -1054,7 +1064,7 @@ Timestamp: ${new Date().toISOString()}
             }}
             className={`flex-1 py-2 text-center text-xs font-semibold rounded-md transition-all capitalize ${
               mobileTab === tab
-                ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-teal-500/20"
+                ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-cyan-500/20"
                 : "text-zinc-400 hover:text-white"
             }`}
           >
@@ -1156,7 +1166,7 @@ Timestamp: ${new Date().toISOString()}
           <div className="flex flex-wrap items-center justify-between px-3 py-1.5 border-b shrink-0 bg-[var(--color-bg-secondary)] border-[var(--color-border-subtle)] gap-2" style={{ minHeight: "40px" }}>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
+                <div className="w-7 h-7 rounded bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
                   <TrendingUp size={14} style={{ color: "#2dd4bf" }} />
                 </div>
                 <span className="text-xs font-semibold text-[var(--color-text-primary)]">{selectedSymbol}</span>
@@ -1195,7 +1205,7 @@ Timestamp: ${new Date().toISOString()}
                     style={{ minWidth: "44px", minHeight: "44px" }}
                     className={`rounded-md text-[13px] font-semibold font-mono transition-all cursor-pointer flex items-center justify-center timeframe-pill ${
                       selectedTimeframe === tf
-                        ? "bg-[var(--color-bg-hover)] text-[var(--color-accent-primary)] shadow-sm font-bold border border-teal-500/20"
+                        ? "bg-[var(--color-bg-hover)] text-[var(--color-accent-primary)] shadow-sm font-bold border border-cyan-500/20"
                         : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
                     }`}
                   >
@@ -1208,7 +1218,7 @@ Timestamp: ${new Date().toISOString()}
                 <button
                   onClick={handleCaptureSnapshot}
                   disabled={isExportingSnapshot}
-                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-teal-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
+                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-cyan-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
                   style={{ padding: 0 }}
                   title="Export Setup PNG"
                 >
@@ -1216,7 +1226,7 @@ Timestamp: ${new Date().toISOString()}
                 </button>
                 <button
                   onClick={() => setIsChartMaximized(v => !v)}
-                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-teal-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
+                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-cyan-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
                   style={{ padding: 0 }}
                   title={isChartMaximized ? "Exit Fullscreen" : "Maximize Chart"}
                 >
@@ -1224,7 +1234,7 @@ Timestamp: ${new Date().toISOString()}
                 </button>
                 <button
                   onClick={() => setAiPanelOpen(v => !v)}
-                  className="btn-secondary h-8 text-[10px] px-3 flex items-center gap-1.5 rounded-md border-[var(--color-border-default)] hover:border-teal-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
+                  className="btn-secondary h-8 text-[10px] px-3 flex items-center gap-1.5 rounded-md border-[var(--color-border-default)] hover:border-cyan-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
                 >
                   <Bot size={12} style={{ color: "#2dd4bf" }} />
                   <span>{aiPanelOpen ? "Close AI" : "Open AI"}</span>
@@ -1344,8 +1354,8 @@ Timestamp: ${new Date().toISOString()}
             {/* Panel header */}
             <div className="px-3 border-b flex items-center justify-between shrink-0" style={{ height: "38px", borderColor: "#1C1F27" }}>
               <div className="flex items-center gap-2.5">
-                <div className="relative flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent-primary-muted)] border border-teal-500/10 shrink-0">
-                  <BrainCircuit size={15} className="text-teal-400" />
+                <div className="relative flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent-primary-muted)] border border-cyan-500/10 shrink-0">
+                  <BrainCircuit size={15} className="text-cyan-400" />
                   <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse border border-zinc-900" />
                 </div>
                 <span className="text-sm font-bold tracking-tight text-[var(--color-text-primary)]">TradCopilot</span>
@@ -1374,7 +1384,7 @@ Timestamp: ${new Date().toISOString()}
                       toast.error("Upgrade to PRO to access Chat History!");
                     }
                   }}
-                  className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-teal-400 transition-all text-zinc-400 cursor-pointer flex items-center justify-center"
+                  className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-cyan-400 transition-all text-zinc-400 cursor-pointer flex items-center justify-center"
                   title="Chat History"
                 >
                   <Clock size={13} />
@@ -1386,7 +1396,7 @@ Timestamp: ${new Date().toISOString()}
                   className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-white transition-all text-zinc-400 cursor-pointer flex items-center justify-center"
                   title="Recalculate Chart Analysis"
                 >
-                  <RefreshCw size={12} className={isPending ? "animate-spin text-teal-400" : ""} />
+                  <RefreshCw size={12} className={isPending ? "animate-spin text-cyan-400" : ""} />
                 </button>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-profit)] animate-ping" />
@@ -1510,10 +1520,10 @@ Timestamp: ${new Date().toISOString()}
               {!analysisData && !isPending && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-dashed border-teal-500/30"
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-dashed border-cyan-500/30"
                     style={{ background: "linear-gradient(135deg, var(--color-accent-primary-subtle), var(--color-bg-tertiary))" }}
                   >
-                    <Bot size={20} className="text-teal-400 animate-pulse" />
+                    <Bot size={20} className="text-cyan-400 animate-pulse" />
                   </div>
                   <h3 className="text-xs font-bold text-[var(--color-text-primary)] mb-1.5">Chart Analysis Inactive</h3>
                   <p className="text-[10px] leading-relaxed text-[var(--color-text-tertiary)] max-w-[200px] mb-4">
@@ -1534,26 +1544,94 @@ Timestamp: ${new Date().toISOString()}
                 </div>
               )}
 
-              {/* Sequential thinking dots during full analysis */}
+              {/* AI diagnostic — bound to real mutation phases, never faked */}
               {isPending && (
-                <div className="space-y-6 animate-fade-in">
-                  <div className="p-3.5 rounded-lg border border-teal-500/15 bg-teal-500/5 flex items-center gap-3 shadow-sm">
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className="thinking-dot" />
-                      <span className="thinking-dot" />
-                      <span className="thinking-dot" />
+                <div className="space-y-4 animate-fade-in">
+                  {/* Header + honest telemetry state */}
+                  <div
+                    className="relative overflow-hidden rounded-xl border p-3.5"
+                    style={{
+                      borderColor: "rgba(6, 182, 212, 0.22)",
+                      background:
+                        "linear-gradient(180deg, rgba(6,182,212,0.08), rgba(6,182,212,0.02) 70%)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <BrainCircuit size={14} style={{ color: "var(--color-accent-primary)" }} />
+                        <span className="tp-eyebrow">AI Market Intelligence</span>
+                      </div>
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-[0.12em] uppercase"
+                        style={{ color: "var(--color-accent-primary)", background: "var(--color-accent-primary-muted)" }}
+                      >
+                        <span className="flex items-center gap-0.5">
+                          <span className="thinking-dot" />
+                          <span className="thinking-dot" />
+                          <span className="thinking-dot" />
+                        </span>
+                        Processing
+                      </span>
                     </div>
-                    <motion.span
-                      key={loadingText}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                      className="text-[10px] text-teal-300/60 font-semibold font-sans tracking-wider select-none"
-                    >
-                      {loadingText}
-                    </motion.span>
+                    {/* Telemetry row — honest data-source label, never "LIVE" when disconnected/simulated */}
+                    <div className="flex items-center gap-2 text-[10px] font-mono" style={{ color: "var(--color-text-tertiary)" }}>
+                      <span style={{ color: "var(--color-text-primary)" }}>{selectedSymbol}</span>
+                      <span style={{ color: "var(--color-text-quaternary)" }}>·</span>
+                      <span>{selectedTimeframe}</span>
+                      <span style={{ color: "var(--color-text-quaternary)" }}>·</span>
+                      <span style={{ color: isWebSocketSymbol && !isWsDisconnected ? "var(--color-profit)" : "var(--color-warning)" }}>
+                        {isWebSocketSymbol && !isWsDisconnected ? "WS LIVE" : isWebSocketSymbol && isWsDisconnected ? "REST FALLBACK" : "REST"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="space-y-4">
+
+                  {/* Real phase stepper — reflects actual fetch boundaries, not timers */}
+                  <div className="space-y-2">
+                    {(() => {
+                      const currentIndex = analysisPhase ? ANALYSIS_STEPS.findIndex((s) => s.key === analysisPhase) : -1;
+                      return ANALYSIS_STEPS.map((step, i) => {
+                        const isDone = currentIndex > i;
+                        const isActive = currentIndex === i;
+                        return (
+                          <div
+                            key={step.key}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors duration-200"
+                            style={{
+                              borderColor: isActive ? "var(--color-border-active)" : isDone ? "var(--color-border-default)" : "transparent",
+                              background: isActive ? "var(--color-accent-primary-subtle)" : "transparent",
+                            }}
+                          >
+                            <span
+                              className="flex items-center justify-center w-4 h-4 rounded-full shrink-0"
+                              style={{
+                                background: isDone ? "var(--color-profit)" : isActive ? "var(--color-accent-primary)" : "var(--color-bg-hover)",
+                              }}
+                            >
+                              {isDone ? (
+                                <Check size={10} color="#030712" strokeWidth={3} />
+                              ) : isActive ? (
+                                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#030712" }} />
+                              ) : (
+                                <span className="w-1 h-1 rounded-full" style={{ background: "var(--color-text-quaternary)" }} />
+                              )}
+                            </span>
+                            <span
+                              className="text-[11px]"
+                              style={{
+                                color: isActive ? "var(--color-text-primary)" : isDone ? "var(--color-text-secondary)" : "var(--color-text-quaternary)",
+                                fontWeight: 500,
+                              }}
+                            >
+                              {step.label}
+                            </span>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+
+                  {/* Skeleton intelligence cards */}
+                  <div className="space-y-3">
                     {[1, 2, 3].map((i, idx) => (
                       <motion.div
                         key={i}
@@ -1581,7 +1659,7 @@ Timestamp: ${new Date().toISOString()}
                         <div
                           key={msg.id || index}
                           className="p-3.5 rounded-lg border flex items-start gap-3 animate-message-in"
-                          style={{ backgroundColor: "rgba(30, 212, 168, 0.06)", borderColor: "rgba(30, 212, 168, 0.15)" }}
+                          style={{ backgroundColor: "rgba(6, 182, 212, 0.06)", borderColor: "rgba(6, 182, 212, 0.15)" }}
                         >
                           <AlertTriangle className="text-[var(--color-accent-primary)] shrink-0 mt-0.5" size={15} />
                           <div className="text-[12px] leading-relaxed text-[var(--color-text-primary)] font-sans">
@@ -1605,7 +1683,7 @@ Timestamp: ${new Date().toISOString()}
                       return (
                         <div key={msgId} className="flex items-start gap-3 animate-message-in">
                           <div
-                            className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-teal-500/10 mt-0.5"
+                            className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-cyan-500/10 mt-0.5"
                             style={{ backgroundColor: "var(--color-accent-primary-subtle)" }}
                           >
                             <Bot size={13} style={{ color: "var(--color-accent-primary)" }} />
@@ -1678,7 +1756,7 @@ Timestamp: ${new Date().toISOString()}
                                   {/* Copy */}
                                   <button
                                     onClick={() => handleCopy(msg.content, msgId)}
-                                    className="flex items-center gap-1 text-[10px] text-[var(--color-text-tertiary)] hover:text-[var(--color-accent-primary)] transition-colors px-1.5 py-0.5 rounded hover:bg-teal-500/5"
+                                    className="flex items-center gap-1 text-[10px] text-[var(--color-text-tertiary)] hover:text-[var(--color-accent-primary)] transition-colors px-1.5 py-0.5 rounded hover:bg-cyan-500/5"
                                     aria-label="Copy message"
                                   >
                                     {copiedId === msgId
@@ -1696,7 +1774,7 @@ Timestamp: ${new Date().toISOString()}
                                   <button
                                     key={action}
                                     onClick={() => handleQuickAction(action)}
-                                    className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-teal-500/30 hover:text-teal-400 hover:bg-teal-500/5 transition-all duration-150 press-scale"
+                                    className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-cyan-500/30 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all duration-150 press-scale"
                                   >
                                     {action}
                                   </button>
@@ -1733,7 +1811,7 @@ Timestamp: ${new Date().toISOString()}
                   {chatMutation.isPending && (
                     <div className="flex items-start gap-3">
                       <div
-                        className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-teal-500/10 mt-0.5"
+                        className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-cyan-500/10 mt-0.5"
                         style={{ backgroundColor: "var(--color-accent-primary-subtle)" }}
                       >
                         <Bot size={13} style={{ color: "var(--color-accent-primary)" }} />
@@ -1763,7 +1841,7 @@ Timestamp: ${new Date().toISOString()}
                     <button
                       key={q}
                       onClick={() => { setInputText(q); setShowFollowUps(false); }}
-                      className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-teal-500/30 hover:text-teal-400 hover:bg-teal-500/5 transition-all duration-150 active:scale-95 max-w-full truncate"
+                      className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-cyan-500/30 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all duration-150 active:scale-95 max-w-full truncate"
                     >
                       {q}
                     </button>
@@ -1811,7 +1889,7 @@ Timestamp: ${new Date().toISOString()}
                     disabled={isPending}
                     className="btn-secondary w-full text-xs flex justify-center items-center gap-2 py-3 rounded-lg cursor-pointer border-[var(--color-border-default)]"
                   >
-                    <RefreshCw size={14} className={analyzeMutation.isPending ? "animate-spin text-teal-400" : "text-teal-400"} />
+                    <RefreshCw size={14} className={analyzeMutation.isPending ? "animate-spin text-cyan-400" : "text-cyan-400"} />
                     Run Chart Technical Scan
                   </button>
                 )}
@@ -1840,7 +1918,7 @@ Timestamp: ${new Date().toISOString()}
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
                 placeholder="Ask TradCopilot about this chart..."
-                className="flex-grow bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] rounded-lg px-4 py-2.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-teal-500/40 transition-colors"
+                className="flex-grow bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] rounded-lg px-4 py-2.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-cyan-500/40 transition-colors"
                 disabled={chatMutation.isPending}
               />
               <button
