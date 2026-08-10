@@ -110,7 +110,7 @@ export default function LandingPage() {
 
           <h1 className="hero-headline animate-enter-delay-1 leading-[1.12] font-extrabold tracking-[-0.03em] text-white text-3xl sm:text-4xl lg:text-5xl">
             The AI copilot for{" "}
-            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-emerald-400 via-cyan-300 to-cyan-400 bg-clip-text text-transparent">
               disciplined traders.
             </span>
           </h1>

@@ -64,7 +64,7 @@ export function PerformanceOverlay() {
           {/* Header */}
           <div className="flex items-center justify-between border-b pb-2 border-zinc-800">
             <div className="flex items-center gap-1.5 text-white font-bold text-xs">
-              <Cpu size={14} className="text-teal-400" />
+              <Cpu size={14} className="text-cyan-400" />
               <span>Performance Telemetry</span>
             </div>
             <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function PerformanceOverlay() {
             </div>
             <div className="flex justify-between items-center py-0.5">
               <span>TV Widget Inits / Destroys:</span>
-              <span className="text-teal-400 font-bold">
+              <span className="text-cyan-400 font-bold">
                 {stats.widgetInitCount} / {stats.widgetDestroyCount}
               </span>
             </div>

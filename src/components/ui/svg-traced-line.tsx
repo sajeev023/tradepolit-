@@ -8,7 +8,7 @@ interface SvgTracedLineProps {
   color?: string;
 }
 
-export function SvgTracedLine({ className = "", color = "rgba(30, 212, 168, 0.4)" }: SvgTracedLineProps) {
+export function SvgTracedLine({ className = "", color = "rgba(6, 182, 212, 0.4)" }: SvgTracedLineProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,

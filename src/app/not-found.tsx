@@ -30,7 +30,7 @@ export default function NotFound() {
             className="inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer text-black"
             style={{
               backgroundColor: "var(--color-accent-primary)",
-              boxShadow: "0 0 16px rgba(30, 212, 168, 0.15)",
+              boxShadow: "0 0 16px rgba(6, 182, 212, 0.15)",
             }}
           >
             <TrendingUp size={14} />

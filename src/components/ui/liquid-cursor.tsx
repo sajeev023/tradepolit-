@@ -98,9 +98,9 @@ export function LiquidCursor() {
       ctx.beginPath();
       ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, Math.PI * 2);
       ctx.fillStyle = isHoveringInteractive
-        ? "rgba(30, 212, 168, 0.25)"
-        : "rgba(30, 212, 168, 0.4)";
-      ctx.strokeStyle = "rgba(30, 212, 168, 0.8)";
+        ? "rgba(6, 182, 212, 0.25)"
+        : "rgba(6, 182, 212, 0.4)";
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.8)";
       ctx.lineWidth = 1.5;
       ctx.fill();
       ctx.stroke();
@@ -108,7 +108,7 @@ export function LiquidCursor() {
       // Core center dot
       ctx.beginPath();
       ctx.arc(0, 0, 3, 0, Math.PI * 2);
-      ctx.fillStyle = "#1ED4A8";
+      ctx.fillStyle = "#06b6d4";
       ctx.fill();
 
       ctx.restore();

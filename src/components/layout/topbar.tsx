@@ -204,7 +204,7 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
               style={{
                 backgroundColor: "var(--color-accent-primary-muted)",
                 color: "var(--color-accent-primary)",
-                border: "1px solid rgba(30, 212, 168, 0.1)",
+                border: "1px solid rgba(6, 182, 212, 0.1)",
               }}
             >
               {avatarUrl ? (

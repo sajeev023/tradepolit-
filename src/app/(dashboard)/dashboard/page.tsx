@@ -76,7 +76,7 @@ function CustomTooltip({ active, payload, label }: any) {
       }}
     >
       <p className="text-[10px] mb-1 text-zinc-500">{label}</p>
-      <p className="font-mono font-bold text-sm text-teal-400">
+      <p className="font-mono font-bold text-sm text-cyan-400">
         ${Number(payload[0].value).toFixed(2)}
       </p>
     </div>
@@ -194,7 +194,7 @@ function DashboardContent() {
   if (profileLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-40">
-        <RefreshCw className="animate-spin text-teal-400 mb-2" size={24} />
+        <RefreshCw className="animate-spin text-cyan-400 mb-2" size={24} />
         <span className="text-sm text-[var(--color-text-secondary)]">Loading profile details...</span>
       </div>
     );
@@ -266,7 +266,7 @@ function DashboardContent() {
           </p>
           <button
             onClick={() => refetchSummary()}
-            className="px-3 py-1.5 rounded text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 hover:bg-teal-500/20 transition"
+            className="px-3 py-1.5 rounded text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition"
           >
             Retry
           </button>
@@ -335,7 +335,7 @@ function DashboardContent() {
                   </p>
                 </div>
                 {equityCurveData.length > 0 && (
-                  <span className="text-[10px] bg-teal-500/10 border border-teal-500/20 text-teal-400 font-mono px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono px-2 py-0.5 rounded-full font-bold">
                     Peak ${Math.max(...equityCurveData.map((d: any) => d.pnl), 0).toFixed(0)}
                   </span>
                 )}
@@ -346,7 +346,7 @@ function DashboardContent() {
                   <div
                     className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-zinc-900 border border-dashed border-zinc-800"
                   >
-                    <BookOpen size={22} className="text-teal-400" />
+                    <BookOpen size={22} className="text-cyan-400" />
                   </div>
                   <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                     No performance data logged yet
@@ -413,11 +413,11 @@ function DashboardContent() {
             <div className="mt-4 pt-3 border-t border-[#1C1F27] grid grid-cols-2 gap-2 text-center text-xs">
               <div className="bg-[#111318] p-2.5 rounded-lg border border-[#1C1F27]">
                 <span className="text-[10px] text-zinc-500 block">Best Session</span>
-                <span className="font-bold text-teal-400 mt-1 block font-mono">{metrics.bestSession}</span>
+                <span className="font-bold text-cyan-400 mt-1 block font-mono">{metrics.bestSession}</span>
               </div>
               <div className="bg-[#111318] p-2.5 rounded-lg border border-[#1C1F27]">
                 <span className="text-[10px] text-zinc-500 block">Best Asset</span>
-                <span className="font-bold text-teal-400 mt-1 block font-mono">{metrics.bestSymbol}</span>
+                <span className="font-bold text-cyan-400 mt-1 block font-mono">{metrics.bestSymbol}</span>
               </div>
             </div>
           </div>
@@ -426,7 +426,7 @@ function DashboardContent() {
           <div className="card p-5 border-[#1C1F27] flex flex-col justify-between">
             <div>
               <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-1.5">
-                <Sparkles size={15} className="text-teal-400" /> Weekly AI Report
+                <Sparkles size={15} className="text-cyan-400" /> Weekly AI Report
               </h2>
               <p className="text-xs text-zinc-500 leading-relaxed mb-3">
                 Aggregate trading performance, mistakes, and behavioral metrics for a comprehensive review.
@@ -439,7 +439,7 @@ function DashboardContent() {
             >
               {reportMutation.isPending ? (
                 <>
-                  <RefreshCw size={13} className="animate-spin text-teal-400" />
+                  <RefreshCw size={13} className="animate-spin text-cyan-400" />
                   Generating...
                 </>
               ) : (
@@ -458,7 +458,7 @@ function DashboardContent() {
         {/* Recent Trades list */}
         <div className="card p-5 lg:col-span-2 border-[#1C1F27]">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-1.5">
-            <Calendar size={15} className="text-teal-400" /> Recent Closed Trades
+            <Calendar size={15} className="text-cyan-400" /> Recent Closed Trades
           </h2>
           {recentTrades.length === 0 ? (
             <p className="text-xs text-zinc-600 py-4 text-center">No trades logged yet.</p>
@@ -494,10 +494,10 @@ function DashboardContent() {
         {/* Weekly Report container (renders here once generated) */}
         <div className="flex flex-col">
           {weeklyReport && (
-            <div className="card p-5 border-teal-500/20 bg-teal-500/5 flex flex-col justify-between flex-1">
+            <div className="card p-5 border-cyan-500/20 bg-cyan-500/5 flex flex-col justify-between flex-1">
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold text-teal-400 flex items-center gap-1.5">
+                  <h3 className="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
                     <Sparkles size={14} /> Weekly Performance Report
                   </h3>
                   <div className="flex items-center gap-1">
@@ -520,7 +520,7 @@ function DashboardContent() {
                   {weeklyReport}
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-teal-500/10 text-center">
+              <div className="mt-4 pt-3 border-t border-cyan-500/10 text-center">
                 <p className="text-[10px] text-zinc-500">Auto-saved to session logs</p>
               </div>
             </div>
@@ -535,7 +535,7 @@ export default function DashboardPage() {
   return (
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center py-40">
-        <RefreshCw className="animate-spin text-teal-400 mb-2" size={24} />
+        <RefreshCw className="animate-spin text-cyan-400 mb-2" size={24} />
         <span className="text-sm text-[var(--color-text-secondary)] font-mono">LOADING WORKSTATION...</span>
       </div>
     }>

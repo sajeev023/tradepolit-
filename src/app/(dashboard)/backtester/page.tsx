@@ -51,15 +51,15 @@ function BacktestDemoResult() {
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
           <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Total Trades</span>
-          <span className="text-lg font-bold font-mono text-teal-400">{demoMetrics.totalTrades}</span>
+          <span className="text-lg font-bold font-mono text-cyan-400">{demoMetrics.totalTrades}</span>
         </div>
         <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
           <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Win Rate</span>
-          <span className="text-lg font-bold font-mono text-teal-400">{(demoMetrics.winRate * 100).toFixed(1)}%</span>
+          <span className="text-lg font-bold font-mono text-cyan-400">{(demoMetrics.winRate * 100).toFixed(1)}%</span>
         </div>
         <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
           <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Loss Rate</span>
-          <span className="text-lg font-bold font-mono text-teal-400">{(demoMetrics.lossRate * 100).toFixed(1)}%</span>
+          <span className="text-lg font-bold font-mono text-cyan-400">{(demoMetrics.lossRate * 100).toFixed(1)}%</span>
         </div>
         <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
           <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Net Return</span>
@@ -67,7 +67,7 @@ function BacktestDemoResult() {
         </div>
         <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
           <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Profit Factor</span>
-          <span className="text-lg font-bold font-mono text-teal-400">{demoMetrics.profitFactor.toFixed(2)}</span>
+          <span className="text-lg font-bold font-mono text-cyan-400">{demoMetrics.profitFactor.toFixed(2)}</span>
         </div>
         <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
           <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Max Drawdown</span>
@@ -98,7 +98,7 @@ function BacktestDemoResult() {
           {demoTrades.map((t, idx) => (
             <div key={idx} className="bg-[var(--color-bg-tertiary)] p-2 rounded border border-[var(--color-border-subtle)] flex items-center justify-between text-xs font-mono">
               <div>
-                <span className={`font-bold mr-2 ${t.direction === 'SHORT' ? 'text-rose-400' : 'text-teal-400'}`}>{t.direction}</span>
+                <span className={`font-bold mr-2 ${t.direction === 'SHORT' ? 'text-rose-400' : 'text-cyan-400'}`}>{t.direction}</span>
                 <span style={{ color: "var(--color-text-tertiary)" }}>{t.entryDate} → {t.exitDate}</span>
               </div>
               <div className={t.pnlPercent >= 0 ? "text-emerald-400" : "text-rose-500"}>{t.pnlPercent >= 0 ? "+" : ""}{t.pnlPercent.toFixed(2)}%</div>
@@ -281,7 +281,7 @@ export default function BacktesterPage() {
             {/* Select strategy */}
             {isCreatingStrategy ? (
               <form onSubmit={handleCreateStrategy} className="space-y-4 pt-2 border-t" style={{ borderColor: "var(--color-border-subtle)" }}>
-                <h3 className="text-xs font-bold text-teal-400">New Strategy Details</h3>
+                <h3 className="text-xs font-bold text-cyan-400">New Strategy Details</h3>
                 <div>
                   <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
                     Strategy Name
@@ -303,7 +303,7 @@ export default function BacktesterPage() {
 
                 {/* Entry parameters */}
                 <div className="space-y-2">
-                  <span className="block text-[10px] uppercase font-bold text-teal-400">Entry Buy Signal</span>
+                  <span className="block text-[10px] uppercase font-bold text-cyan-400">Entry Buy Signal</span>
                   <div className="grid grid-cols-3 gap-1 text-[11px]">
                     <select value={entryIndA} onChange={(e) => setEntryIndA(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-white">
                       <option value="EMA20">EMA 20</option>
@@ -350,7 +350,7 @@ export default function BacktesterPage() {
                 <div className="flex gap-2 pt-2">
                   <button
                     type="submit"
-                    className="flex-1 py-2 rounded text-xs font-semibold bg-teal-400 text-zinc-950 hover:bg-teal-300 transition-colors"
+                    className="flex-1 py-2 rounded text-xs font-semibold bg-cyan-400 text-zinc-950 hover:bg-cyan-300 transition-colors"
                   >
                     Save Ruleset
                   </button>
@@ -371,7 +371,7 @@ export default function BacktesterPage() {
                   </label>
                   {stratLoading ? (
                     <div className="flex justify-center p-4">
-                      <RefreshCw className="animate-spin text-teal-400" size={16} />
+                      <RefreshCw className="animate-spin text-cyan-400" size={16} />
                     </div>
                   ) : strategies && strategies.length > 0 ? (
                     <select
@@ -390,7 +390,7 @@ export default function BacktesterPage() {
                   )}
                   <button
                     onClick={() => setIsCreatingStrategy(true)}
-                    className="mt-2.5 text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors block"
+                    className="mt-2.5 text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors block"
                   >
                     + Define New Crossover Ruleset
                   </button>
@@ -482,7 +482,7 @@ export default function BacktesterPage() {
           </div>
 
           <div className="card p-4 flex gap-3">
-            <Info size={16} className="text-teal-400 shrink-0 mt-0.5" />
+            <Info size={16} className="text-cyan-400 shrink-0 mt-0.5" />
             <p className="text-[11px] leading-relaxed" style={{ color: "var(--color-text-tertiary)" }}>
               Backtests run using daily OHLCV data with EMA crossover signals. <strong className="text-yellow-500">Note:</strong> Results assume zero transaction costs, perfect fill prices, and no slippage. Simulated past performance does not predict future results.
             </p>
@@ -513,7 +513,7 @@ export default function BacktesterPage() {
               <BacktestDemoResult />
             ) : activeBacktest?.status === "PENDING" || activeBacktest?.status === "RUNNING" ? (
               <div className="flex flex-col items-center justify-center py-28 text-center my-auto">
-                <RefreshCw className="animate-spin text-teal-400 mb-2" size={24} />
+                <RefreshCw className="animate-spin text-cyan-400 mb-2" size={24} />
                 <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-secondary)" }}>
                   Backtest Execution is Running
                 </h3>
@@ -554,7 +554,7 @@ export default function BacktesterPage() {
                     <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
                       Total Trades
                     </span>
-                    <span className="text-lg font-bold font-mono text-teal-400">
+                    <span className="text-lg font-bold font-mono text-cyan-400">
                       {metrics.totalTrades || 0}
                     </span>
                   </div>
@@ -562,7 +562,7 @@ export default function BacktesterPage() {
                     <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
                       Win Rate
                     </span>
-                    <span className="text-lg font-bold font-mono text-teal-400">
+                    <span className="text-lg font-bold font-mono text-cyan-400">
                       {((metrics.winRate || 0) * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -570,7 +570,7 @@ export default function BacktesterPage() {
                     <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
                       Loss Rate
                     </span>
-                    <span className="text-lg font-bold font-mono text-teal-400">
+                    <span className="text-lg font-bold font-mono text-cyan-400">
                       {((metrics.lossRate || 0) * 100).toFixed(1)}%
                     </span>
                   </div>
@@ -586,7 +586,7 @@ export default function BacktesterPage() {
                     <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
                       Profit Factor
                     </span>
-                    <span className="text-lg font-bold font-mono text-teal-400">
+                    <span className="text-lg font-bold font-mono text-cyan-400">
                       {(metrics.profitFactor || 0).toFixed(2)}
                     </span>
                   </div>
@@ -640,7 +640,7 @@ export default function BacktesterPage() {
                       {trades.map((t: any, idx: number) => (
                         <div key={idx} className="bg-[var(--color-bg-tertiary)] p-2 rounded border border-[var(--color-border-subtle)] flex items-center justify-between text-xs font-mono">
                           <div>
-                            <span className={`font-bold mr-2 ${t.direction === 'SHORT' ? 'text-rose-400' : 'text-teal-400'}`}>
+                            <span className={`font-bold mr-2 ${t.direction === 'SHORT' ? 'text-rose-400' : 'text-cyan-400'}`}>
                               {t.direction || 'LONG'}
                             </span>
                             <span style={{ color: "var(--color-text-tertiary)" }}>

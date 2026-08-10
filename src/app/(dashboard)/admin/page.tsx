@@ -103,7 +103,7 @@ export default function AdminPage() {
       {/* KPI Stats Panel */}
       {statsLoading ? (
         <div className="flex justify-center py-6">
-          <RefreshCw className="animate-spin text-teal-400" size={24} />
+          <RefreshCw className="animate-spin text-cyan-400" size={24} />
         </div>
       ) : stats ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -119,7 +119,7 @@ export default function AdminPage() {
               <span className="text-[10px] uppercase font-bold tracking-wider mb-1 block" style={{ color: "var(--color-text-tertiary)" }}>
                 {stat.label}
               </span>
-              <p className="text-2xl font-bold font-mono text-teal-400">{stat.value}</p>
+              <p className="text-2xl font-bold font-mono text-cyan-400">{stat.value}</p>
               <p className="text-[10px] mt-2" style={{ color: "var(--color-text-tertiary)" }}>
                 {stat.sub}
               </p>
@@ -147,7 +147,7 @@ export default function AdminPage() {
 
             {usersLoading ? (
               <div className="flex justify-center py-6">
-                <RefreshCw className="animate-spin text-teal-400" size={18} />
+                <RefreshCw className="animate-spin text-cyan-400" size={18} />
               </div>
             ) : !users || users.length === 0 ? (
               <div className="text-xs text-center py-10" style={{ color: "var(--color-text-tertiary)" }}>
@@ -231,7 +231,7 @@ export default function AdminPage() {
             </h3>
             {flagsLoading ? (
               <div className="flex justify-center py-4">
-                <RefreshCw className="animate-spin text-teal-400" size={16} />
+                <RefreshCw className="animate-spin text-cyan-400" size={16} />
               </div>
             ) : featureFlags && featureFlags.length > 0 ? (
               featureFlags.map((flag) => (

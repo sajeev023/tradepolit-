@@ -174,7 +174,7 @@ export default function SignupPage() {
         
         <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-teal-400 hover:underline">
+          <Link href="/login" className="font-semibold text-cyan-400 hover:underline">
             Sign in
           </Link>
         </p>

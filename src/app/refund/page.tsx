@@ -15,7 +15,7 @@ export default function RefundPage() {
           <ArrowLeft size={14} /> Back to Home
         </Link>
 
-        <div className="flex items-center gap-2 mb-6 text-teal-400">
+        <div className="flex items-center gap-2 mb-6 text-cyan-400">
           <Landmark size={24} />
           <h1 className="text-2xl font-bold text-white">Refund Policy</h1>
         </div>

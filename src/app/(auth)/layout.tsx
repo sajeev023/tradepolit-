@@ -69,7 +69,7 @@ function AmbientCanvas() {
           width: 520,
           height: 520,
           borderRadius: "50%",
-          background: "radial-gradient(circle at center, rgba(30,212,168,0.13) 0%, transparent 70%)",
+          background: "radial-gradient(circle at center, rgba(6, 182, 212,0.13) 0%, transparent 70%)",
           filter: "blur(40px)",
           transition: "transform 0.1s linear",
           willChange: "transform",
@@ -148,8 +148,8 @@ function TrustBadge() {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 999,
-        border: "1px solid rgba(30,212,168,0.25)",
-        background: "rgba(30,212,168,0.06)",
+        border: "1px solid rgba(6, 182, 212,0.25)",
+        background: "rgba(6, 182, 212,0.06)",
         backdropFilter: "blur(12px)",
         marginBottom: 28,
       }}
@@ -159,13 +159,13 @@ function TrustBadge() {
           width: 6,
           height: 6,
           borderRadius: "50%",
-          background: "#1ED4A8",
-          boxShadow: "0 0 8px rgba(30,212,168,0.8)",
+          background: "#06b6d4",
+          boxShadow: "0 0 8px rgba(6, 182, 212,0.8)",
           flexShrink: 0,
           animation: "pulse-dot 2s ease infinite",
         }}
       />
-      <span style={{ fontSize: 12, fontWeight: 500, color: "#1ED4A8", letterSpacing: "0.02em" }}>
+      <span style={{ fontSize: 12, fontWeight: 500, color: "#06b6d4", letterSpacing: "0.02em" }}>
         Early Access · Free during beta
       </span>
     </div>
@@ -181,8 +181,8 @@ function FeatureRow({ icon, label, sub }: { icon: string; label: string; sub: st
           width: 34,
           height: 34,
           borderRadius: 8,
-          background: "rgba(30,212,168,0.08)",
-          border: "1px solid rgba(30,212,168,0.12)",
+          background: "rgba(6, 182, 212,0.08)",
+          border: "1px solid rgba(6, 182, 212,0.12)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -227,7 +227,7 @@ function Testimonial() {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            background: "linear-gradient(135deg,#1ED4A8,#6366F1)",
+            background: "linear-gradient(135deg,#06b6d4,#6366F1)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -310,11 +310,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 width: 32,
                 height: 32,
                 borderRadius: 9,
-                background: "linear-gradient(135deg,#1ED4A8 0%,#06B6D4 100%)",
+                background: "linear-gradient(135deg,#06b6d4 0%,#06B6D4 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 0 20px rgba(30,212,168,0.35)",
+                boxShadow: "0 0 20px rgba(6, 182, 212,0.35)",
               }}
             >
               <TrendingUp size={16} color="#09090B" strokeWidth={2.5} />
@@ -349,7 +349,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <br />
               <span
                 style={{
-                  background: "linear-gradient(100deg,#1ED4A8 0%,#06B6D4 50%,#6366F1 100%)",
+                  background: "linear-gradient(100deg,#06b6d4 0%,#06B6D4 50%,#6366F1 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}

@@ -58,8 +58,8 @@ export function DemoBanner() {
         left: 0,
         right: 0,
         zIndex: 9999,
-        background: "linear-gradient(90deg, rgba(30,212,168,0.15) 0%, rgba(6,182,212,0.15) 100%)",
-        borderBottom: "1px solid rgba(30,212,168,0.3)",
+        background: "linear-gradient(90deg, rgba(6, 182, 212,0.15) 0%, rgba(6,182,212,0.15) 100%)",
+        borderBottom: "1px solid rgba(6, 182, 212,0.3)",
         padding: "8px 16px",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
@@ -80,7 +80,7 @@ export function DemoBanner() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 280 }}>
           <AlertCircle
             size={16}
-            style={{ color: "#1ED4A8", flexShrink: 0 }}
+            style={{ color: "#06b6d4", flexShrink: 0 }}
             aria-hidden="true"
           />
           <span
@@ -124,22 +124,22 @@ export function DemoBanner() {
               justifyContent: "center",
               gap: 6,
               padding: "8px 16px",
-              background: "linear-gradient(135deg, #1ED4A8 0%, #06B6D4 100%)",
+              background: "linear-gradient(135deg, #06b6d4 0%, #06B6D4 100%)",
               color: "#09090B",
               fontSize: 12,
               fontWeight: 700,
               borderRadius: 8,
               textDecoration: "none",
-              boxShadow: "0 2px 8px rgba(30,212,168,0.3)",
+              boxShadow: "0 2px 8px rgba(6, 182, 212,0.3)",
               transition: "transform 0.15s ease, box-shadow 0.15s ease",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 4px 16px rgba(30,212,168,0.4)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(6, 182, 212,0.4)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(30,212,168,0.3)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(6, 182, 212,0.3)";
             }}
           >
             Create Free Account
@@ -198,12 +198,12 @@ export function LockedFeatureBadge({ feature }: { feature: string }) {
         alignItems: "center",
         gap: 6,
         padding: "6px 10px",
-        background: isPro ? "rgba(139,92,246,0.1)" : "rgba(30,212,168,0.1)",
-        border: isPro ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(30,212,168,0.3)",
+        background: isPro ? "rgba(139,92,246,0.1)" : "rgba(6, 182, 212,0.1)",
+        border: isPro ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(6, 182, 212,0.3)",
         borderRadius: 8,
         fontSize: 11,
         fontWeight: 500,
-        color: isPro ? "#A78BFA" : "#1ED4A8",
+        color: isPro ? "#A78BFA" : "#06b6d4",
       }}
     >
       <Crown size={10} style={{ flexShrink: 0 }} aria-hidden="true" />

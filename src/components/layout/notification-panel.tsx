@@ -87,7 +87,7 @@ export function NotificationPanel() {
       {/* Header */}
       <div className="p-4 border-b flex items-center justify-between shrink-0" style={{ borderColor: "var(--color-border-subtle)" }}>
         <div className="flex items-center gap-2">
-          <Bell size={16} className="text-teal-400" />
+          <Bell size={16} className="text-cyan-400" />
           <span className="text-sm font-bold text-white">Notifications</span>
           {unreadCount > 0 && (
             <span className="badge badge-info">{unreadCount} unread</span>
@@ -129,13 +129,13 @@ export function NotificationPanel() {
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-white">
-                    {isAlert && <ShieldAlert size={12} className="text-teal-400" />}
+                    {isAlert && <ShieldAlert size={12} className="text-cyan-400" />}
                     {isVol && <Volume2 size={12} className="text-amber-500" />}
                     {isSharp && <Bell size={12} className="text-cyan-400" />}
                     <span>{n.title}</span>
                   </div>
                   {!n.isRead && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0 mt-1" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0 mt-1" />
                   )}
                 </div>
                 <p className="text-zinc-400 leading-relaxed font-medium">

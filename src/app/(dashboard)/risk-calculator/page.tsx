@@ -492,7 +492,7 @@ export default function RiskCalculatorPage() {
                     <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--color-text-tertiary)" }}>
                       Position Size ({results.mode})
                     </p>
-                    <p className="text-3xl font-extrabold font-mono text-teal-400 tabular-nums">
+                    <p className="text-3xl font-extrabold font-mono text-cyan-400 tabular-nums">
                       {results.standardLots !== null
                         ? fmt(results.standardLots, 4)
                         : fmt(results.positionSize, 5)}
@@ -507,7 +507,7 @@ export default function RiskCalculatorPage() {
                     {[
                       { label: "Dollar Risk",       val: fmtUSD(results.dollarRisk),    cls: "text-rose-400" },
                       { label: "Stop Distance",      val: fmt(results.stopDistance, 5),  cls: "" },
-                      { label: "Pip Value / Tick",   val: fmtUSD(results.pipValue, 4),   cls: "text-teal-400" },
+                      { label: "Pip Value / Tick",   val: fmtUSD(results.pipValue, 4),   cls: "text-cyan-400" },
                       { label: "Margin Required",    val: fmtUSD(results.marginRequired), cls: "" },
                     ].map(({ label, val, cls }) => (
                       <div key={label} className="flex justify-between">
@@ -538,7 +538,7 @@ export default function RiskCalculatorPage() {
                     {/* R:R */}
                     <div className="flex justify-between">
                       <span style={{ color: "var(--color-text-tertiary)" }}>R:R Ratio</span>
-                      <span className="font-mono text-teal-400">
+                      <span className="font-mono text-cyan-400">
                         {results.rMultiple ? `${fmt(results.rMultiple, 2)}:1` : "�"}
                       </span>
                     </div>
@@ -567,7 +567,7 @@ export default function RiskCalculatorPage() {
           </div>
 
           <div className="card p-4 flex items-center gap-3">
-            <ShieldCheck size={20} className="text-teal-400 shrink-0" />
+            <ShieldCheck size={20} className="text-cyan-400 shrink-0" />
             <p className="text-[11px] leading-relaxed" style={{ color: "var(--color-text-tertiary)" }}>
               Calculations use decimal.js precision arithmetic. Always verify contract specifications on your broker terminal before executing.
             </p>

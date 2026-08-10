@@ -121,9 +121,9 @@ function PremiumInput({ id, label, icon, rightEl, error, ...rest }: InputProps) 
           display: "flex",
           alignItems: "center",
           borderRadius: 10,
-          border: `1px solid ${hasError ? "rgba(239,68,68,0.6)" : focused ? "rgba(30,212,168,0.5)" : "rgba(255,255,255,0.08)"}`,
-          background: focused ? "rgba(30,212,168,0.04)" : "rgba(255,255,255,0.03)",
-          boxShadow: focused && !hasError ? "0 0 0 3px rgba(30,212,168,0.08)" : "none",
+          border: `1px solid ${hasError ? "rgba(239,68,68,0.6)" : focused ? "rgba(6, 182, 212,0.5)" : "rgba(255,255,255,0.08)"}`,
+          background: focused ? "rgba(6, 182, 212,0.04)" : "rgba(255,255,255,0.03)",
+          boxShadow: focused && !hasError ? "0 0 0 3px rgba(6, 182, 212,0.08)" : "none",
           transition: "all 0.2s cubic-bezier(0.16,1,0.3,1)",
         }}
       >
@@ -132,7 +132,7 @@ function PremiumInput({ id, label, icon, rightEl, error, ...rest }: InputProps) 
             style={{
               position: "absolute",
               left: 13,
-              color: focused ? "#1ED4A8" : "#52525B",
+              color: focused ? "#06b6d4" : "#52525B",
               transition: "color 0.2s ease",
               display: "flex",
               pointerEvents: "none",
@@ -233,15 +233,15 @@ function SuccessOverlay() {
           width: 52,
           height: 52,
           borderRadius: "50%",
-          background: "rgba(30,212,168,0.12)",
-          border: "2px solid rgba(30,212,168,0.4)",
+          background: "rgba(6, 182, 212,0.12)",
+          border: "2px solid rgba(6, 182, 212,0.4)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           animation: "auth-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1ED4A8" strokeWidth={2.5} strokeLinecap="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth={2.5} strokeLinecap="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </div>
@@ -344,9 +344,9 @@ function LoginPageContent() {
           75%      { transform: translateX(4px); }
         }
         @keyframes pulse-ring {
-          0%   { box-shadow: 0 0 0 0 rgba(30,212,168,0.25); }
-          70%  { box-shadow: 0 0 0 10px rgba(30,212,168,0); }
-          100% { box-shadow: 0 0 0 0 rgba(30,212,168,0); }
+          0%   { box-shadow: 0 0 0 0 rgba(6, 182, 212,0.25); }
+          70%  { box-shadow: 0 0 0 10px rgba(6, 182, 212,0); }
+          100% { box-shadow: 0 0 0 0 rgba(6, 182, 212,0); }
         }
         .login-card {
           animation: auth-enter 0.6s cubic-bezier(0.16,1,0.3,1) both;
@@ -378,14 +378,14 @@ function LoginPageContent() {
           transition: opacity 0.2s;
         }
         .primary-btn:hover:not(:disabled)::after { opacity: 1; }
-        .primary-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(30,212,168,0.3); }
+        .primary-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(6, 182, 212,0.3); }
         .primary-btn:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
         .demo-btn {
           transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
           cursor: pointer;
         }
         .eye-btn:hover { color: #A1A1AA !important; }
-        .remember-check:hover { border-color: rgba(30,212,168,0.5) !important; }
+        .remember-check:hover { border-color: rgba(6, 182, 212,0.5) !important; }
       `}</style>
 
       <div
@@ -552,7 +552,7 @@ function LoginPageContent() {
               href="/forgot-password"
               style={{
                 fontSize: 12,
-                color: "#1ED4A8",
+                color: "#06b6d4",
                 textDecoration: "none",
                 fontWeight: 500,
                 transition: "opacity 0.15s",
@@ -578,7 +578,7 @@ function LoginPageContent() {
               gap: 8,
               borderRadius: 10,
               border: "none",
-              background: "linear-gradient(135deg,#1ED4A8 0%,#06B6D4 100%)",
+              background: "linear-gradient(135deg,#06b6d4 0%,#06B6D4 100%)",
               color: "#09090B",
               fontSize: 14,
               fontWeight: 700,

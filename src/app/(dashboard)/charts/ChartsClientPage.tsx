@@ -2008,7 +2008,7 @@ Timestamp: ${new Date().toISOString()}
             style={{
               background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)",
               color: "#09090B",
-              boxShadow: "0 4px 20px rgba(30,212,168,0.4)",
+              boxShadow: "0 4px 20px rgba(6, 182, 212,0.4)",
             }}
           >
             <Sparkles size={16} strokeWidth={2.5} />

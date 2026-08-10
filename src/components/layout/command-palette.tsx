@@ -72,7 +72,7 @@ export function SearchCommandPalette() {
             placeholder="Search trades, assets, strategies..."
             className="flex-1 text-sm bg-transparent outline-none border-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)]"
           />
-          {isLoading && <Loader2 size={16} className="animate-spin text-teal-400" />}
+          {isLoading && <Loader2 size={16} className="animate-spin text-cyan-400" />}
           <button
             onClick={() => setCommandPaletteOpen(false)}
             className="text-zinc-500 hover:text-white p-1 rounded-md hover:bg-white/5 transition-colors"
@@ -109,7 +109,7 @@ export function SearchCommandPalette() {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-zinc-800/30 text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      <LineChart size={14} className="text-teal-400" />
+                      <LineChart size={14} className="text-cyan-400" />
                       <span>{asset.symbol}</span>
                     </div>
                   ))}
@@ -133,7 +133,7 @@ export function SearchCommandPalette() {
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       <div className="flex items-center gap-2.5">
-                        <BookOpen size={14} className="text-teal-400" />
+                        <BookOpen size={14} className="text-cyan-400" />
                         <span>{trade.instrument} {trade.direction}</span>
                       </div>
                       <span className="font-mono text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
@@ -160,7 +160,7 @@ export function SearchCommandPalette() {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-zinc-800/30 text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      <FlaskConical size={14} className="text-teal-400" />
+                      <FlaskConical size={14} className="text-cyan-400" />
                       <span>{strat.name}</span>
                     </div>
                   ))}
@@ -183,7 +183,7 @@ export function SearchCommandPalette() {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-zinc-800/30 text-xs font-semibold block truncate"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      <Newspaper size={14} className="text-teal-400 shrink-0" />
+                      <Newspaper size={14} className="text-cyan-400 shrink-0" />
                       <span className="truncate">{n.headline}</span>
                     </a>
                   ))}

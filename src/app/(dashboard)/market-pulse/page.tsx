@@ -107,7 +107,7 @@ export default function MarketPulsePage() {
 
   const getFearGreedColor = (value: number) => {
     if (value >= 75) return "text-emerald-400";
-    if (value >= 55) return "text-teal-400";
+    if (value >= 55) return "text-cyan-400";
     if (value >= 45) return "text-yellow-400";
     if (value >= 25) return "text-orange-400";
     return "text-rose-500";
@@ -115,7 +115,7 @@ export default function MarketPulsePage() {
 
   const getFearGreedBg = (value: number) => {
     if (value >= 75) return "bg-emerald-950/20 border-emerald-500/15";
-    if (value >= 55) return "bg-teal-950/20 border-teal-500/15";
+    if (value >= 55) return "bg-cyan-950/20 border-cyan-500/15";
     if (value >= 45) return "bg-yellow-950/20 border-yellow-500/15";
     if (value >= 25) return "bg-orange-950/20 border-orange-500/15";
     return "bg-rose-950/20 border-rose-500/15";
@@ -243,7 +243,7 @@ export default function MarketPulsePage() {
                             {rate.symbol}
                           </div>
                         </td>
-                        <td className={`py-3.5 font-mono text-xs font-bold ${rate.rate >= 0 ? "text-teal-400" : "text-rose-400"}`}>
+                        <td className={`py-3.5 font-mono text-xs font-bold ${rate.rate >= 0 ? "text-cyan-400" : "text-rose-400"}`}>
                           <div className="flex items-center gap-1.5">
                             {rate.rate >= 0 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
                             {rate.rate >= 0 ? "+" : ""}{(rate.rate * 100).toFixed(4)}%

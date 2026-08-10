@@ -43,7 +43,7 @@ export function GlobalLoader() {
         right: 0,
         height: "2.5px",
         zIndex: 9999,
-        backgroundColor: "rgba(30, 212, 168, 0.15)",
+        backgroundColor: "rgba(6, 182, 212, 0.15)",
         pointerEvents: "none",
       }}
     >
@@ -51,8 +51,8 @@ export function GlobalLoader() {
         style={{
           height: "100%",
           width: `${progress}%`,
-          backgroundColor: "#1ED4A8",
-          boxShadow: "0 0 10px #1ED4A8, 0 0 5px #1ED4A8",
+          backgroundColor: "#06b6d4",
+          boxShadow: "0 0 10px #06b6d4, 0 0 5px #06b6d4",
           transition: "width 200ms ease-out, opacity 150ms ease-in-out",
         }}
       />
