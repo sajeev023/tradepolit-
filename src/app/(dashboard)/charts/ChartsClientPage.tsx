@@ -50,6 +50,8 @@ import {
   INDEX_SYMBOLS,
   COMMODITY_SYMBOLS,
   BINANCE_WS_SYMBOLS,
+  SYMBOL_REGISTRY,
+  getExchangeName,
 } from "@/lib/market-registry";
 
 // Symbol groups for the chart selector UI. Driven by the market registry —
@@ -623,7 +625,7 @@ Chart Price: ${chartPrice}
 Telemetry Price: ${telemetryPrice}
 AI Price: ${aiPrice}
 Timestamp: ${new Date().toISOString()}
-Exchange: BINANCE
+Exchange: ${getExchangeName(readyData.symbol || selectedSymbol)}
 Timeframe: ${readyData.timeframe || selectedTimeframe}
 Symbol: ${readyData.symbol || selectedSymbol}
 `);
@@ -633,7 +635,7 @@ Symbol: ${readyData.symbol || selectedSymbol}
 Chart: ${chartPrice}
 Telemetry: ${telemetryPrice}
 Difference: ${diff.toFixed(2)} (${diffPercent.toFixed(4)}%)
-Source: BINANCE
+Source: ${getExchangeName(readyData.symbol || selectedSymbol)}
 Timestamp: ${new Date().toISOString()}
 `);
       }
@@ -1173,7 +1175,15 @@ Timestamp: ${new Date().toISOString()}
                   <TrendingUp size={14} style={{ color: "#22d3ee" }} />
                 </div>
                 <span className="text-xs font-semibold text-[var(--color-text-primary)]">{selectedSymbol}</span>
-                <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] px-1.5 py-0.5 rounded font-mono select-none">BINANCE</span>
+                {/* MARKET → EXCHANGE → INSTRUMENT hierarchy (registry-driven, no hardcoding) */}
+                {SYMBOL_REGISTRY[selectedSymbol]?.assetClass && (
+                  <span className="text-[9px] font-bold text-[var(--color-text-quaternary)] uppercase tracking-wider bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] px-1.5 py-0.5 rounded font-mono select-none">
+                    {SYMBOL_REGISTRY[selectedSymbol].assetClass}
+                  </span>
+                )}
+                <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] px-1.5 py-0.5 rounded font-mono select-none">
+                  {getExchangeName(selectedSymbol)}
+                </span>
               </div>
 
               <LivePriceTag
