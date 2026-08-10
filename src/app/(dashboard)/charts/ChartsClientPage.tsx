@@ -35,6 +35,9 @@ import {
   Minimize2,
   Camera,
   MoreHorizontal,
+  Activity,
+  Target,
+  Gauge,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -1506,6 +1509,105 @@ Timestamp: ${new Date().toISOString()}
                     </span>
                   </motion.div>
                 </div>
+              </motion.div>
+            )}
+
+            {/* ── Intelligence Brief — structured real-field snapshot ─────────── */}
+            {analysisData && !analysisData.loading && !isPending && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="p-3 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border-subtle)] flex flex-col gap-3 shrink-0"
+              >
+                {/* Momentum / indicator snapshot — real indicators field only */}
+                {analysisData.indicators && (
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {/* Trend regime */}
+                    <div className="p-2 bg-[var(--color-bg-tertiary)] rounded-lg border border-[var(--color-border-default)]">
+                      <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold block">TREND</span>
+                      <span
+                        className="font-bold text-xs block mt-1"
+                        style={{
+                          color:
+                            analysisData.trend === "BULLISH" ? "var(--color-profit)"
+                            : analysisData.trend === "BEARISH" ? "var(--color-loss)"
+                            : "var(--color-text-secondary)",
+                        }}
+                      >
+                        {analysisData.trend
+                          ? analysisData.trend.charAt(0) + analysisData.trend.slice(1).toLowerCase()
+                          : "Range"}
+                      </span>
+                    </div>
+                    {/* RSI(14) */}
+                    <div className="p-2 bg-[var(--color-bg-tertiary)] rounded-lg border border-[var(--color-border-default)]">
+                      <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold block">RSI(14)</span>
+                      <span
+                        className="font-bold text-xs block mt-1 tp-mono"
+                        style={{
+                          color:
+                            Number(analysisData.indicators.rsi) >= 70 ? "var(--color-warning)"
+                            : Number(analysisData.indicators.rsi) <= 30 ? "var(--color-profit)"
+                            : "var(--color-text-primary)",
+                        }}
+                      >
+                        {analysisData.indicators.rsi !== undefined && !isNaN(Number(analysisData.indicators.rsi))
+                          ? Number(analysisData.indicators.rsi).toFixed(1)
+                          : "—"}
+                      </span>
+                    </div>
+                    {/* MACD posture */}
+                    <div className="p-2 bg-[var(--color-bg-tertiary)] rounded-lg border border-[var(--color-border-default)]">
+                      <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold block">MACD</span>
+                      {(() => {
+                        const m = analysisData.indicators.macd;
+                        const hasMacd = m && (Number(m.macd) !== 0 || Number(m.signal) !== 0);
+                        const bullish = hasMacd && Number(m.macd) >= Number(m.signal);
+                        return (
+                          <span
+                            className="font-bold text-xs block mt-1"
+                            style={{ color: !hasMacd ? "var(--color-text-quaternary)" : bullish ? "var(--color-profit)" : "var(--color-loss)" }}
+                          >
+                            {!hasMacd ? "—" : bullish ? "Bullish" : "Bearish"}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Trade thesis — real whyItMatters / shortTermScenario one-liners */}
+                {(analysisData.whyItMatters || analysisData.shortTermScenario) && (
+                  <div className="space-y-2">
+                    {analysisData.whyItMatters && (
+                      <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)]">
+                        <Target size={12} className="text-[var(--color-accent-primary)] shrink-0 mt-0.5" />
+                        <p className="text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-text-tertiary)] block mb-0.5">Why it matters</span>
+                          {analysisData.whyItMatters}
+                        </p>
+                      </div>
+                    )}
+                    {analysisData.shortTermScenario && (
+                      <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)]">
+                        <Activity size={12} className="text-[var(--color-accent-primary)] shrink-0 mt-0.5" />
+                        <p className="text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-text-tertiary)] block mb-0.5">Near-term scenario</span>
+                          {analysisData.shortTermScenario}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Source provenance — real sourceMetadata */}
+                {analysisData.sourceMetadata?.aiModelSource && (
+                  <div className="flex items-center gap-1.5 text-[9px] font-mono text-[var(--color-text-quaternary)] pt-0.5 border-t border-[var(--color-border-subtle)]">
+                    <Gauge size={10} />
+                    <span className="truncate">{analysisData.sourceMetadata.aiModelSource}</span>
+                  </div>
+                )}
               </motion.div>
             )}
 
