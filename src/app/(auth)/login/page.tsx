@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -264,29 +264,6 @@ function LoginPageContent() {
   const [success, setSuccess] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Card tilt on hover
-  useEffect(() => {
-    const card = cardRef.current;
-    if (!card) return;
-    const handleMouse = (e: MouseEvent) => {
-      const rect = card.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = (e.clientX - cx) / (rect.width / 2);
-      const dy = (e.clientY - cy) / (rect.height / 2);
-      card.style.transform = `perspective(900px) rotateX(${-dy * 2}deg) rotateY(${dx * 2}deg) translateY(-2px)`;
-    };
-    const handleLeave = () => {
-      card.style.transform = "perspective(900px) rotateX(0) rotateY(0) translateY(0)";
-    };
-    card.addEventListener("mousemove", handleMouse);
-    card.addEventListener("mouseleave", handleLeave);
-    return () => {
-      card.removeEventListener("mousemove", handleMouse);
-      card.removeEventListener("mouseleave", handleLeave);
-    };
-  }, []);
-
   const {
     register,
     handleSubmit,
@@ -350,8 +327,6 @@ function LoginPageContent() {
         }
         .login-card {
           animation: auth-enter 0.6s cubic-bezier(0.16,1,0.3,1) both;
-          will-change: transform;
-          transition: transform 0.18s cubic-bezier(0.16,1,0.3,1), box-shadow 0.18s ease;
         }
         .social-btn {
           transition: all 0.18s cubic-bezier(0.16,1,0.3,1);
@@ -390,16 +365,10 @@ function LoginPageContent() {
 
       <div
         ref={cardRef}
-        className="login-card"
+        className="login-card card"
         style={{
           position: "relative",
-          background: "rgba(17,17,19,0.7)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: 20,
           padding: "36px 32px",
-          boxShadow: "0 0 0 1px rgba(255,255,255,0.03), 0 24px 64px rgba(0,0,0,0.6)",
         }}
       >
         {success && <SuccessOverlay />}

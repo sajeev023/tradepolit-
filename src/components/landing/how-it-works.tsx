@@ -1,5 +1,6 @@
 import { MousePointerClick, Sparkles, ShieldCheck } from "lucide-react";
 import { AnimatedSection } from "./scroll-animator";
+import { StaggerChildren, StaggerChild } from "@/components/ui/animated-section";
 
 const steps = [
   {
@@ -35,25 +36,24 @@ export function HowItWorks() {
         </p>
       </AnimatedSection>
 
-      <AnimatedSection className="grid md:grid-cols-3 gap-5 sm:gap-6" delay={150}>
+      <StaggerChildren className="grid md:grid-cols-3 gap-5 sm:gap-6">
         {steps.map((s, i) => (
-          <div
-            key={i}
-            className="relative rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-6 space-y-4"
-          >
-            <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
-                {s.icon}
+          <StaggerChild key={i}>
+            <div className="card p-6 space-y-4 h-full">
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--color-accent-primary-subtle)", color: "var(--color-accent-primary)", border: "1px solid rgba(6,182,212,0.12)" }}>
+                  {s.icon}
+                </div>
+                <span className="text-[11px] font-mono font-semibold tracking-wider" style={{ color: "var(--color-text-quaternary)" }}>
+                  {s.n}
+                </span>
               </div>
-              <span className="text-[11px] font-mono font-semibold text-muted-foreground/70 tracking-wider">
-                {s.n}
-              </span>
+              <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">{s.title}</h3>
+              <p className="text-[13px] text-[var(--color-text-tertiary)] leading-relaxed">{s.body}</p>
             </div>
-            <h3 className="text-[15px] font-semibold text-foreground">{s.title}</h3>
-            <p className="text-[13px] text-muted-foreground leading-relaxed">{s.body}</p>
-          </div>
+          </StaggerChild>
         ))}
-      </AnimatedSection>
+      </StaggerChildren>
     </section>
   );
 }

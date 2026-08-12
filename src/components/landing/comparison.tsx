@@ -35,10 +35,10 @@ export function Comparison() {
     <section className="max-w-4xl mx-auto px-6 lg:px-10 py-20 lg:py-28">
       <AnimatedSection className="text-center space-y-3 mb-12 sm:mb-14">
         <span className="section-eyebrow">How it compares</span>
-        <h2 className="text-[26px] sm:text-[36px] font-bold tracking-tight text-white">
+        <h2 className="tp-display text-[var(--color-text-primary)]">
           A factual look at what each tool offers
         </h2>
-        <p className="text-[14px] text-zinc-400 max-w-md mx-auto leading-relaxed">
+        <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-md mx-auto leading-relaxed">
           TradCopilot doesn&apos;t replace your charting platform — it adds an analysis, journaling, and coaching layer on top.
         </p>
       </AnimatedSection>

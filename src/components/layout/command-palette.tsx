@@ -60,7 +60,7 @@ export function SearchCommandPalette() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-xl border glass-elevated overflow-hidden shadow-2xl" style={{ borderColor: "var(--color-border-subtle)" }}>
+      <div className="w-full max-w-xl rounded-xl border glass overflow-hidden shadow-2xl" style={{ borderColor: "var(--color-border-subtle)" }}>
         {/* Input area */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor: "var(--color-border-subtle)", backgroundColor: "var(--color-bg-secondary)" }}>
           <Search size={18} style={{ color: "var(--color-text-tertiary)" }} />
@@ -72,7 +72,7 @@ export function SearchCommandPalette() {
             placeholder="Search trades, assets, strategies..."
             className="flex-1 text-sm bg-transparent outline-none border-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)]"
           />
-          {isLoading && <Loader2 size={16} className="animate-spin text-cyan-400" />}
+          {isLoading && <Loader2 size={16} className="animate-spin" style={{ color: "var(--color-accent-primary)" }} />}
           <button
             onClick={() => setCommandPaletteOpen(false)}
             className="text-[var(--color-text-quaternary)] hover:text-[var(--color-text-primary)] p-1 rounded-md hover:bg-white/5 transition-colors"
@@ -109,7 +109,7 @@ export function SearchCommandPalette() {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      <LineChart size={14} className="text-cyan-400" />
+                      <LineChart size={14} style={{ color: "var(--color-accent-primary)" }} />
                       <span>{asset.symbol}</span>
                     </div>
                   ))}
@@ -133,7 +133,7 @@ export function SearchCommandPalette() {
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       <div className="flex items-center gap-2.5">
-                        <BookOpen size={14} className="text-cyan-400" />
+                        <BookOpen size={14} style={{ color: "var(--color-accent-primary)" }} />
                         <span>{trade.instrument} {trade.direction}</span>
                       </div>
                       <span className="font-mono text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
@@ -160,7 +160,7 @@ export function SearchCommandPalette() {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      <FlaskConical size={14} className="text-cyan-400" />
+                      <FlaskConical size={14} style={{ color: "var(--color-accent-primary)" }} />
                       <span>{strat.name}</span>
                     </div>
                   ))}

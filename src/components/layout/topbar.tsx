@@ -5,6 +5,7 @@ import { Search, Bell, LogOut, ChevronDown, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useBinanceStream, useBinanceStreamStatus } from "@/hooks/useBinanceStream";
 
@@ -139,9 +140,9 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
       {/* ── Left: BTC Ticker ── */}
       <div className="flex items-center gap-3 min-w-0">
         {isWsDisconnected && !activeBtcPrice && (
-          <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-[10px] font-medium text-amber-400/80">Live market data is temporarily unavailable. Reconnecting...</span>
+          <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md" style={{ backgroundColor: "var(--color-warning-bg)", border: "1px solid rgba(245,158,11,0.2)" }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--color-warning)" }} />
+            <span className="text-[10px] font-medium" style={{ color: "var(--color-warning)" }}>Live market data is temporarily unavailable. Reconnecting...</span>
           </div>
         )}
         {activeBtcPrice && (
@@ -149,10 +150,12 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
             {/* Honest live-source dot: green + pulse when the Binance WS is
                 connected for BTC/USD; amber when on the REST fallback. Never
                 implies "live" when the feed is unavailable. */}
-            <span
-              className={`w-1.5 h-1.5 rounded-full shrink-0 ${!isWsDisconnected ? "animate-pulse" : ""}`}
+            <motion.span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
               style={{ background: !isWsDisconnected ? "var(--color-profit)" : "var(--color-warning)" }}
               title={!isWsDisconnected ? "Live via WebSocket" : "Polled — WebSocket reconnecting"}
+              animate={!isWsDisconnected ? { scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] } : {}}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             />
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-quaternary)]">BTC</span>
             <span className="text-[12px] font-mono font-medium text-[var(--color-text-primary)] tabular-nums">

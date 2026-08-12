@@ -123,8 +123,8 @@ export function NotificationPanel() {
                 onClick={() => !n.isRead && markReadMutation.mutate(n.id)}
                 className="p-3 rounded-lg border text-xs cursor-pointer transition-all duration-200 select-none hover:border-[var(--color-border-default)]"
                 style={{
-                  backgroundColor: n.isRead ? "rgba(255, 255, 255, 0.01)" : "rgba(20, 241, 178, 0.05)",
-                  borderColor: n.isRead ? "var(--color-border-subtle)" : "rgba(20, 241, 178, 0.2)",
+                  backgroundColor: n.isRead ? "rgba(255, 255, 255, 0.01)" : "var(--color-accent-primary-subtle)",
+                  borderColor: n.isRead ? "var(--color-border-subtle)" : "rgba(6, 182, 212, 0.2)",
                 }}
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -135,7 +135,7 @@ export function NotificationPanel() {
                     <span>{n.title}</span>
                   </div>
                   {!n.isRead && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0 mt-1" />
+                    <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-1" style={{ background: "var(--color-accent-primary)" }} />
                   )}
                 </div>
                 <p className="text-[var(--color-text-tertiary)] leading-relaxed font-medium">

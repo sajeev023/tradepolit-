@@ -30,6 +30,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { toast } from "sonner";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 /* ─── Skeleton Components ─── */
 function KPISkeleton() {
@@ -308,7 +309,11 @@ function DashboardContent() {
                     </p>
                   </div>
                   <p className="text-2xl font-bold tp-mono mt-1" style={{ color: valColor }}>
-                    {stat.value}
+                    {stat.isPnL && typeof stat.rawVal === "number" ? (
+                      <AnimatedNumber value={stat.rawVal} prefix="$" decimals={2} duration={1.2} />
+                    ) : (
+                      stat.value
+                    )}
                   </p>
                 </div>
                 <p className="text-[11px] mt-3 text-[var(--color-text-tertiary)]">

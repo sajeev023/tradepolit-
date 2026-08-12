@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bot, Send, User, Trash2, Plus, MessageSquare, Loader2, Sparkles, Copy, Check, X } from "lucide-react";
+import { Bot, Send, User, Trash2, Plus, MessageSquare, Sparkles, Copy, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { StructuredNarrative } from "@/components/ui/structured-narrative";
 
 const SUGGESTED_PROMPTS = [
   "Analyze my most recent losing trade.",
@@ -69,10 +70,42 @@ export default function AIAssistantPage() {
     [activeChat?.messages],
   );
 
+  const [streamingMessages, setStreamingMessages] = useState<Message[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+
   // Auto-scroll to bottom of message thread
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, streamingMessages]);
+
+  // ─── Word-by-word streaming helper ───────────────────────────────────────────
+  const streamReply = useCallback((fullText: string) => {
+    const words = fullText.split(" ");
+    let i = 0;
+    setIsStreaming(true);
+
+    const reveal = () => {
+      if (i < words.length) {
+        const idx = i;
+        setStreamingMessages([{
+          role: "assistant",
+          content: words.slice(0, idx + 1).join(" "),
+          createdAt: new Date().toISOString(),
+        }]);
+        i += 1;
+        setTimeout(reveal, 25);
+      } else {
+        setStreamingMessages([{
+          role: "assistant",
+          content: fullText,
+          createdAt: new Date().toISOString(),
+        }]);
+        setIsStreaming(false);
+      }
+    };
+
+    setTimeout(reveal, 10);
+  }, []);
 
   // 3. Send message mutation
   const sendMutation = useMutation({
@@ -91,6 +124,7 @@ export default function AIAssistantPage() {
     },
     onSuccess: (data) => {
       setInputText("");
+      streamReply(data.reply);
       // Force activeChatId to the resolved session ID if it was a new chat
       if (!activeChatId) {
         setActiveChatId(data.chat.id);
@@ -127,7 +161,14 @@ export default function AIAssistantPage() {
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim() || sendMutation.isPending) return;
-    sendMutation.mutate(inputText.trim());
+    const userText = inputText.trim();
+    setInputText("");
+    setStreamingMessages([{
+      role: "user",
+      content: userText,
+      createdAt: new Date().toISOString(),
+    }]);
+    sendMutation.mutate(userText);
   };
 
   const handlePrompt = (prompt: string) => {
@@ -143,6 +184,7 @@ export default function AIAssistantPage() {
   const handleStartNewChat = () => {
     setActiveChatId(null);
     setInputText("");
+    setStreamingMessages([]);
   };
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-140px)] gap-6 items-stretch relative">
@@ -183,7 +225,11 @@ export default function AIAssistantPage() {
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {listLoading ? (
             <div className="flex justify-center py-10">
-              <Loader2 className="animate-spin text-cyan-400" size={18} />
+              <div className="flex items-center gap-1">
+                <span className="thinking-dot" />
+                <span className="thinking-dot" />
+                <span className="thinking-dot" />
+              </div>
             </div>
           ) : chatSessions.length === 0 ? (
             <div className="text-[11px] text-center py-10" style={{ color: "var(--color-text-tertiary)" }}>
@@ -196,16 +242,10 @@ export default function AIAssistantPage() {
                 <div
                   key={session.id}
                   onClick={() => { setActiveChatId(session.id); setShowMobileSidebar(false); }}
-                  className="flex items-center justify-between p-2 rounded-lg cursor-pointer group text-xs transition-colors"
+                  className={`flex items-center justify-between p-2 rounded-lg cursor-pointer group text-xs transition-colors ${isActive ? "" : "hover:bg-[var(--color-bg-hover)]"}`}
                   style={{
                     backgroundColor: isActive ? "var(--color-bg-hover)" : "transparent",
                     color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.02)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.backgroundColor = "transparent";
                   }}
                 >
                   <div className="flex items-center gap-2 overflow-hidden w-full">
@@ -240,7 +280,7 @@ export default function AIAssistantPage() {
             >
               <MessageSquare size={14} />
             </button>
-            <Bot size={16} className="text-cyan-400" />
+            <Bot size={16} style={{ color: "var(--color-accent-primary)" }} />
             <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
               AI Trading Discipline Coach
             </span>
@@ -253,14 +293,14 @@ export default function AIAssistantPage() {
         {/* Message Thread */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[var(--color-bg-deepest)]/40">
           {/* Static warning banner */}
-          <div className="p-3 rounded-lg flex items-center gap-3 border border-cyan-500/10 bg-cyan-500/5 max-w-2xl mx-auto">
-            <Sparkles size={16} className="text-cyan-400 shrink-0" />
+          <div className="p-3 rounded-lg flex items-center gap-3 border max-w-2xl mx-auto" style={{ borderColor: "rgba(6,182,212,0.15)", backgroundColor: "var(--color-accent-primary-subtle)" }}>
+            <Sparkles size={16} style={{ color: "var(--color-accent-primary)" }} className="shrink-0" />
             <p className="text-[10px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
               Every response is grounded in your journal logs and performance stats. Responses are purely for educational reviews, not financial advice.
             </p>
           </div>
 
-          {messages.length === 0 && !sendMutation.isPending ? (
+          {messages.length === 0 && streamingMessages.length === 0 && !sendMutation.isPending ? (
             <div className="flex flex-col items-center justify-center py-14 text-center max-w-md mx-auto">
               <div
                 className="w-12 h-12 rounded-full flex items-center justify-center mb-4"
@@ -276,8 +316,8 @@ export default function AIAssistantPage() {
                   <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-tertiary)" }}>
                     The AI Coach needs at least 5 closed trades to analyze your behavioral patterns and provide personalized feedback.
                   </p>
-                  <div className="mt-4 px-4 py-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5">
-                    <p className="text-[11px] text-cyan-400 font-medium">{tradeCount}/5 trades logged</p>
+                  <div className="mt-4 px-4 py-2 rounded-lg border" style={{ borderColor: "rgba(6,182,212,0.2)", backgroundColor: "var(--color-accent-primary-subtle)" }}>
+                    <p className="text-[11px] font-medium" style={{ color: "var(--color-accent-primary)" }}>{tradeCount}/5 trades logged</p>
                   </div>
                 </>
               ) : (
@@ -293,19 +333,11 @@ export default function AIAssistantPage() {
                       <button
                         key={idx}
                         onClick={() => handlePrompt(prompt)}
-                        className="text-left text-xs px-3 py-2.5 rounded-lg border transition-colors"
+                        className="text-left text-xs px-3 py-2.5 rounded-lg border transition-colors hover:border-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary)]"
                         style={{
                           borderColor: "var(--color-border-subtle)",
                           color: "var(--color-text-secondary)",
                           backgroundColor: "var(--color-bg-tertiary)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = "var(--color-accent-primary)";
-                          e.currentTarget.style.color = "var(--color-accent-primary)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = "var(--color-border-subtle)";
-                          e.currentTarget.style.color = "var(--color-text-secondary)";
                         }}
                       >
                         {prompt}
@@ -317,6 +349,47 @@ export default function AIAssistantPage() {
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Streaming messages (word-by-word reveal) */}
+              {streamingMessages.map((msg, index) => {
+                const isAI = msg.role === "assistant";
+                return (
+                  <div key={`stream-${index}`} className={`flex gap-3 max-w-3xl ${isAI ? "" : "ml-auto flex-row-reverse"}`}>
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+                      style={{
+                        backgroundColor: isAI ? "var(--color-accent-primary-muted)" : "var(--color-bg-hover)",
+                        borderColor: isAI ? "var(--color-accent-primary-muted)" : "var(--color-border-subtle)",
+                      }}
+                    >
+                      {isAI ? (
+                        <Bot size={16} style={{ color: "var(--color-accent-primary)" }} />
+                      ) : (
+                        <User size={16} style={{ color: "var(--color-text-secondary)" }} />
+                      )}
+                    </div>
+                    <div
+                      className={`p-3.5 rounded-xl text-sm leading-relaxed flex-1 animate-message-in ${
+                        isAI
+                          ? "bg-[var(--color-bg-secondary)] border border-[var(--color-border-subtle)]"
+                          : "border"
+                      }`}
+                      style={!isAI ? { backgroundColor: "var(--color-accent-primary-subtle)", borderColor: "rgba(6,182,212,0.2)", color: "var(--color-text-primary)" } : undefined}
+                    >
+                      {isAI && isStreaming ? (
+                        <div className="text-[14px] leading-[1.6] text-[var(--color-text-primary)] whitespace-pre-line font-sans">
+                          {msg.content}
+                          <span className="cursor-blink" />
+                        </div>
+                      ) : isAI ? (
+                        <StructuredNarrative text={msg.content} />
+                      ) : (
+                        <div className="whitespace-pre-line">{msg.content}</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
               {messages.map((msg, index) => {
                 const isAI = msg.role === "assistant";
                 return (
@@ -338,13 +411,14 @@ export default function AIAssistantPage() {
 
                     {/* Speech bubble */}
                     <div
-                      className={`p-3.5 rounded-xl text-sm leading-relaxed flex-1 ${
+                      className={`p-3.5 rounded-xl text-sm leading-relaxed flex-1 animate-message-in ${
                         isAI
                           ? "bg-[var(--color-bg-secondary)] border border-[var(--color-border-subtle)]"
-                          : "bg-cyan-950/20 border border-cyan-500/20 text-cyan-100"
+                          : "border"
                       }`}
+                      style={!isAI ? { backgroundColor: "var(--color-accent-primary-subtle)", borderColor: "rgba(6,182,212,0.2)", color: "var(--color-text-primary)" } : undefined}
                     >
-                      <div className="whitespace-pre-line">{msg.content}</div>
+                      <StructuredNarrative text={msg.content} />
                       {isAI && (
                         <button
                           onClick={() => handleCopy(msg.content, index)}
@@ -373,7 +447,11 @@ export default function AIAssistantPage() {
                     <Bot size={16} style={{ color: "var(--color-accent-primary)" }} />
                   </div>
                   <div className="p-3 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border-subtle)] flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin text-cyan-400" />
+                    <span className="flex items-center gap-1">
+                      <span className="thinking-dot" />
+                      <span className="thinking-dot" />
+                      <span className="thinking-dot" />
+                    </span>
                     <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>AI Coach is reviewing your data...</span>
                   </div>
                 </div>
@@ -392,7 +470,7 @@ export default function AIAssistantPage() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Ask the coach: 'Why did I lose on my EUR/USD trade?'"
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] transition-colors focus:border-cyan-500/40"
+              className="flex-1 px-4 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] transition-colors focus:border-[var(--color-border-active)]"
               disabled={sendMutation.isPending}
             />
             <button

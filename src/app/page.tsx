@@ -13,13 +13,13 @@ import {
   Mail,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { StaggerChildren, StaggerChild } from "@/components/ui/animated-section";
 import { StickyHeader } from "@/components/layout/sticky-header";
 import { ElasticCard } from "@/components/ui/elastic-card";
 import { SvgTracedLine } from "@/components/ui/svg-traced-line";
 import { MobileMenu } from "@/components/landing/mobile-menu";
 import { MobileProductPreview } from "@/components/landing/product-preview";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
-import { AnimatedSection } from "@/components/landing/scroll-animator";
 import { DesktopNavCTA, MobileGetStartedCTA } from "@/components/landing/navbar-ctas";
 import { HeroCTA } from "@/components/landing/hero-cta";
 import { TrustBar } from "@/components/landing/trust-bar";
@@ -53,7 +53,7 @@ const marqueeItems = [
   { symbol: "EUR/USD", price: "1.0845", change: "-0.12%" },
   { symbol: "GBP/USD", price: "1.2650", change: "+0.35%" },
   { symbol: "NASDAQ", price: "18,450.20", change: "+0.95%" },
-  { symbol: "S&P 500", price: "5,420.80", change: "+0.65%" },
+  { symbol: "S&P 500", price: "$5,420.80", change: "+0.65%" },
 ];
 
 const assetChips = [
@@ -72,7 +72,7 @@ export default function LandingPage() {
       <StickyHeader className="sticky-header-shell">
         <div className="h-14 flex items-center justify-between px-4 sm:px-6 lg:px-10 select-none max-w-7xl mx-auto w-full">
           <Link href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="TradCopilot Home">
-            <div className="flex items-center justify-center rounded-md w-7 h-7 shadow-lg shadow-emerald-500/20" style={{ background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)" }}>
+            <div className="flex items-center justify-center rounded-md w-7 h-7" style={{ background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)", boxShadow: "0 4px 12px rgba(6,182,212,0.3)" }}>
               <TrendingUp size={14} color="#09090B" strokeWidth={2.5} />
             </div>
             <span className="text-sm font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">TradCopilot</span>
@@ -84,7 +84,7 @@ export default function LandingPage() {
             <a href="#pricing" className="btn-ghost text-[13px]">Pricing</a>
             <DesktopNavCTA />
             <Link href="/login" className="btn-ghost text-[13px] px-3">Sign in</Link>
-            <Link href="/signup" className="btn-primary text-[13px] ml-1 shadow-md shadow-emerald-500/10 h-9 px-4">Get Started</Link>
+            <Link href="/signup" className="btn-primary text-[13px] ml-1 h-9 px-4">Get Started</Link>
           </nav>
 
           {/* Mobile: Sign In + Get Started + three-dot */}
@@ -103,19 +103,19 @@ export default function LandingPage() {
         </div>
 
         <div className="lg:col-span-5 space-y-4 sm:space-y-6 animate-enter relative z-10">
-          <div className="animate-enter inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md text-[11px] text-emerald-400 font-semibold tracking-wide select-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            For active crypto & forex day traders
+          <div className="animate-enter inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[var(--color-border-default)] bg-[var(--color-accent-primary-subtle)] backdrop-blur-md text-[11px] font-semibold tracking-wide select-none" style={{ color: "var(--color-accent-primary)" }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--color-accent-primary)" }} />
+            For active crypto &amp; forex day traders
           </div>
 
-          <h1 className="hero-headline animate-enter-delay-1 leading-[1.12] font-extrabold tracking-[-0.03em] text-white text-3xl sm:text-4xl lg:text-5xl">
+          <h1 className="hero-headline animate-enter-delay-1 tp-display-lg text-[var(--color-text-primary)]">
             The AI copilot for{" "}
-            <span className="bg-gradient-to-r from-emerald-400 via-cyan-300 to-cyan-400 bg-clip-text text-transparent">
+            <span className="gradient-text">
               disciplined traders.
             </span>
           </h1>
 
-          <p className="hero-subtext animate-enter-delay-2 text-[14px] sm:text-[15px] leading-[1.6] text-zinc-300 max-w-[460px]">
+          <p className="hero-subtext animate-enter-delay-2 text-[14px] sm:text-[15px] leading-[1.6] text-[var(--color-text-secondary)] max-w-[460px]">
             TradCopilot brings real-time chart analysis, a persistent trade journal, and behavioral coaching into one workspace — so every entry is prepared, reviewed, and consistent with your own rules.
           </p>
 
@@ -136,7 +136,7 @@ export default function LandingPage() {
         </Suspense>
       </header>
 
-      {/* ━━━ TRUST BAR — replaces vague "product capabilities" strip ━━━ */}
+      {/* ━━━ TRUST BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <TrustBar />
 
       {/* ━━━ MOBILE ASSET CHIPS ━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -158,13 +158,13 @@ export default function LandingPage() {
       </div>
 
       {/* ━━━ DESKTOP TICKER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="hidden lg:block bg-card border-y border-border py-3 text-foreground shadow-sm select-none">
+      <section className="hidden lg:block border-y border-[var(--color-border-default)] py-3 select-none" style={{ background: "var(--color-bg-secondary)" }}>
         <InfiniteMarquee direction="left">
           {marqueeItems.map((pair, idx) => (
-            <div key={idx} className="flex items-center gap-3 border border-border bg-background px-3 py-1 rounded-full text-xs font-semibold text-foreground font-mono">
+            <div key={idx} className="flex items-center gap-3 border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-1 rounded-full text-xs font-semibold font-mono text-[var(--color-text-primary)]">
               <span>{pair.symbol}</span>
-              <span className="text-muted-foreground font-normal">{pair.price}</span>
-              <span className={pair.change.startsWith("+") ? "text-emerald-500 font-medium" : "text-rose-500 font-medium"}>{pair.change}</span>
+              <span className="text-[var(--color-text-tertiary)] font-normal">{pair.price}</span>
+              <span className={pair.change.startsWith("+") ? "text-[var(--color-profit)] font-medium" : "text-[var(--color-loss)] font-medium"}>{pair.change}</span>
             </div>
           ))}
         </InfiniteMarquee>
@@ -174,33 +174,33 @@ export default function LandingPage() {
 
       {/* ━━━ PROBLEM / SOLUTION ━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="max-w-4xl mx-auto px-6 lg:px-10 py-20 lg:py-32">
-        <AnimatedSection className="text-center space-y-3 mb-14 sm:mb-16">
-          <span className="section-eyebrow">The Workflow Gap</span>
-          <h2 className="text-[26px] sm:text-[36px] font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-foreground to-muted-foreground">Discipline is hard to hold alone</h2>
-          <p className="text-[14px] text-zinc-400 max-w-md mx-auto leading-relaxed">Most trading tools stop at the chart. Decisions still depend on memory, context-switching, and self-restraint in the moment.</p>
-        </AnimatedSection>
-        <AnimatedSection className="grid md:grid-cols-2 gap-5 sm:gap-6" delay={200}>
-          <ElasticCard className="space-y-5 bg-card text-card-foreground border border-border shadow-sm rounded-2xl">
-            <h3 className="text-[12px] font-semibold font-mono text-muted-foreground tracking-wider uppercase">The Typical Workflow</h3>
+        <div className="text-center space-y-3 mb-14 sm:mb-16 animate-enter">
+          <span className="tp-eyebrow">The Workflow Gap</span>
+          <h2 className="tp-display text-[var(--color-text-primary)]">Discipline is hard to hold alone</h2>
+          <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-md mx-auto leading-relaxed">Most trading tools stop at the chart. Decisions still depend on memory, context-switching, and self-restraint in the moment.</p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-5 sm:gap-6 animate-enter-delay-1">
+          <ElasticCard className="space-y-5">
+            <h3 className="text-[12px] font-semibold font-mono text-[var(--color-text-tertiary)] tracking-wider uppercase">The Typical Workflow</h3>
             <ul className="space-y-3.5">
               {["Charts in one tab, AI in another, journal in a third", "Indicators re-explained on every new conversation", "Chart context resets when the tab closes", "Overtrading and revenge patterns tracked manually, if at all"].map((text, i) => (
-                <li key={i} className="flex items-start gap-3 text-[13px] text-muted-foreground">
-                  <span className="w-3.5 h-3.5 rounded-full border border-muted-foreground/40 mt-0.5 shrink-0" /><span>{text}</span>
+                <li key={i} className="flex items-start gap-3 text-[13px] text-[var(--color-text-tertiary)]">
+                  <span className="w-3.5 h-3.5 rounded-full border border-[var(--color-border-default)] mt-0.5 shrink-0" /><span>{text}</span>
                 </li>
               ))}
             </ul>
           </ElasticCard>
-          <ElasticCard className="space-y-5 bg-card text-card-foreground border border-border shadow-sm rounded-2xl">
-            <h3 className="text-[12px] font-semibold font-mono text-foreground tracking-wider uppercase">With TradCopilot</h3>
+          <ElasticCard className="space-y-5">
+            <h3 className="text-[12px] font-semibold font-mono text-[var(--color-text-primary)] tracking-wider uppercase">With TradCopilot</h3>
             <ul className="space-y-3.5">
               {["Analysis, journal, and coaching in one workspace", "Persistent memory of your last 20 trades and patterns", "Chat threads logged and saved across all sessions", "Behavioral heuristics flag revenge trading inside the workspace"].map((text, i) => (
-                <li key={i} className="flex items-start gap-3 text-[13px] text-foreground">
-                  <Check size={14} className="text-foreground shrink-0 mt-0.5" /><span>{text}</span>
+                <li key={i} className="flex items-start gap-3 text-[13px] text-[var(--color-text-primary)]">
+                  <Check size={14} className="text-[var(--color-accent-primary)] shrink-0 mt-0.5" /><span>{text}</span>
                 </li>
               ))}
             </ul>
           </ElasticCard>
-        </AnimatedSection>
+        </div>
       </section>
 
       <SvgTracedLine color="rgba(148, 163, 184, 0.25)" />
@@ -212,20 +212,24 @@ export default function LandingPage() {
 
       {/* ━━━ FEATURES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section id="features" className="max-w-6xl mx-auto px-6 lg:px-10 py-20 lg:py-32">
-        <AnimatedSection className="text-center space-y-3 mb-14 sm:mb-16">
-          <span className="section-eyebrow">Features</span>
-          <h2 className="text-[26px] sm:text-[36px] font-bold tracking-tight text-white">A complete workspace for trade preparation</h2>
-          <p className="text-[14px] text-zinc-400 max-w-md mx-auto leading-relaxed">Analysis, journaling, and behavioral coaching — built to support consistent decision-making.</p>
-        </AnimatedSection>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-          {features.map((f, i) => (
-            <ElasticCard key={i} className="space-y-4 bg-card text-card-foreground border border-border shadow-sm rounded-2xl hover:border-accent/40 transition-colors">
-              <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center text-foreground">{f.icon}</div>
-              <h3 className="text-[15px] font-semibold text-foreground">{f.title}</h3>
-              <p className="text-[13px] text-muted-foreground leading-relaxed">{f.desc}</p>
-            </ElasticCard>
-          ))}
+        <div className="text-center space-y-3 mb-14 sm:mb-16 animate-enter">
+          <span className="tp-eyebrow">Features</span>
+          <h2 className="tp-display text-[var(--color-text-primary)]">A complete workspace for trade preparation</h2>
+          <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-md mx-auto leading-relaxed">Analysis, journaling, and behavioral coaching — built to support consistent decision-making.</p>
         </div>
+        <StaggerChildren className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+          {features.map((f, i) => (
+            <StaggerChild key={i}>
+              <ElasticCard className="space-y-4 h-full">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--color-accent-primary-subtle)", color: "var(--color-accent-primary)", border: "1px solid rgba(6,182,212,0.12)" }}>
+                  {f.icon}
+                </div>
+                <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">{f.title}</h3>
+                <p className="text-[13px] text-[var(--color-text-tertiary)] leading-relaxed">{f.desc}</p>
+              </ElasticCard>
+            </StaggerChild>
+          ))}
+        </StaggerChildren>
       </section>
 
       <SvgTracedLine color="rgba(148, 163, 184, 0.25)" />
@@ -239,53 +243,53 @@ export default function LandingPage() {
       <Comparison />
 
       {/* ━━━ PRICING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section id="pricing" className="max-w-5xl mx-auto px-6 lg:px-10 py-20 lg:py-28 border-t border-border scroll-mt-12">
-        <AnimatedSection className="text-center space-y-3 mb-14 sm:mb-16">
-          <span className="section-eyebrow">Pricing</span>
-          <h2 className="text-[26px] sm:text-[36px] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">Start free. Upgrade when you&apos;re ready.</h2>
+      <section id="pricing" className="max-w-5xl mx-auto px-6 lg:px-10 py-20 lg:py-28 border-t border-[var(--color-border-subtle)] scroll-mt-12">
+        <div className="text-center space-y-3 mb-14 sm:mb-16 animate-enter">
+          <span className="tp-eyebrow">Pricing</span>
+          <h2 className="tp-display text-[var(--color-text-primary)]">Start free. Upgrade when you&apos;re ready.</h2>
           <p className="text-[14px] text-[var(--color-text-secondary)] max-w-sm mx-auto leading-relaxed">No credit card to start. Cancel anytime in one click.</p>
-        </AnimatedSection>
+        </div>
         <div className="grid md:grid-cols-2 gap-5 sm:gap-8 max-w-3xl mx-auto items-stretch">
-          <ElasticCard className="pricing-free-card space-y-6 flex flex-col justify-between bg-card text-card-foreground border border-border shadow-sm rounded-2xl order-2 md:order-1">
+          <ElasticCard className="pricing-free-card space-y-6 flex flex-col justify-between order-2 md:order-1">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">Free</h3>
-                <span className="text-xs px-2.5 py-0.5 rounded-full border border-border bg-background text-muted-foreground font-medium">No card</span>
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Free</h3>
+                <span className="badge badge-neutral">No card</span>
               </div>
-              <div className="flex items-baseline gap-1"><span className="text-4xl font-bold font-mono text-foreground">$0</span><span className="text-xs text-muted-foreground">/ forever</span></div>
-              <p className="text-xs text-muted-foreground leading-relaxed">For occasional traders who want a second opinion before entries.</p>
+              <div className="flex items-baseline gap-1"><span className="text-4xl font-bold font-mono text-[var(--color-text-primary)]">$0</span><span className="text-xs text-[var(--color-text-tertiary)]">/ forever</span></div>
+              <p className="text-xs text-[var(--color-text-tertiary)] leading-relaxed">For occasional traders who want a second opinion before entries.</p>
               <ul className="space-y-3 pt-2">
                 {["5 AI chart analyses per day", "Standard response speed", "Last 20 trades in memory", "Behavioral coaching basics"].map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-2.5 text-xs text-foreground"><Check size={14} className="text-accent shrink-0" /><span>{item}</span></li>
+                  <li key={idx} className="flex items-center gap-2.5 text-xs text-[var(--color-text-primary)]"><Check size={14} className="text-[var(--color-accent-primary)] shrink-0" /><span>{item}</span></li>
                 ))}
               </ul>
             </div>
             <Link href="/signup" className="btn-secondary w-full h-11 text-xs font-semibold justify-center">Start Free — No Card</Link>
           </ElasticCard>
-          <ElasticCard className="pricing-pro-card space-y-6 flex flex-col justify-between bg-card text-card-foreground border border-accent/20 shadow-md rounded-2xl order-1 md:order-2">
+          <ElasticCard className="pricing-pro-card space-y-6 flex flex-col justify-between order-1 md:order-2" style={{ borderColor: "rgba(6,182,212,0.2)", boxShadow: "var(--shadow-glow)" }}>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">Pro Terminal</h3>
-                <span className="text-xs px-2.5 py-0.5 rounded-full border border-accent/30 bg-accent/10 text-accent font-mono font-semibold">Most Popular</span>
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Pro Terminal</h3>
+                <span className="badge badge-info">Most Popular</span>
               </div>
-              <div className="flex items-baseline gap-1"><span className="text-4xl font-bold font-mono tracking-tight text-foreground">$7.49</span><span className="text-xs text-muted-foreground">/ month · cancel anytime</span></div>
-              <p className="text-xs text-muted-foreground leading-relaxed">For active day traders who want unlimited scans and full behavioral enforcement.</p>
+              <div className="flex items-baseline gap-1"><span className="text-4xl font-bold font-mono tracking-tight text-[var(--color-text-primary)]">$7.49</span><span className="text-xs text-[var(--color-text-tertiary)]">/ month · cancel anytime</span></div>
+              <p className="text-xs text-[var(--color-text-tertiary)] leading-relaxed">For active day traders who want unlimited scans and full behavioral enforcement.</p>
               <ul className="space-y-3 pt-2">
                 {["Unlimited AI chart analyses", "Multi-model race pipeline (<3s)", "Persistent 20-trade memory & full journal context", "Real-time revenge & overtrading detection", "Weekly AI performance & risk reports"].map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-2.5 text-xs text-foreground"><Check size={14} className="text-accent shrink-0" /><span>{item}</span></li>
+                  <li key={idx} className="flex items-center gap-2.5 text-xs text-[var(--color-text-primary)]"><Check size={14} className="text-[var(--color-accent-primary)] shrink-0" /><span>{item}</span></li>
                 ))}
               </ul>
             </div>
-            <Link href="/signup?plan=pro" className="w-full h-11 rounded-xl bg-foreground text-background hover:bg-foreground/90 font-semibold text-xs flex items-center justify-center transition-colors duration-200 shadow-md">Start 7-Day Pro Trial</Link>
+            <Link href="/signup?plan=pro" className="btn-primary w-full h-11 text-xs font-semibold justify-center">Start 7-Day Pro Trial</Link>
           </ElasticCard>
         </div>
       </section>
 
       {/* ━━━ FAQ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <section className="max-w-3xl mx-auto px-6 lg:px-10 py-20 lg:py-28 border-t border-[var(--color-border-subtle)]">
-        <div className="text-center space-y-3 mb-12">
-          <span className="section-eyebrow">FAQ</span>
-          <h2 className="text-[26px] sm:text-[32px] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">Frequently Asked Questions</h2>
+        <div className="text-center space-y-3 mb-12 animate-enter">
+          <span className="tp-eyebrow">FAQ</span>
+          <h2 className="tp-display text-[var(--color-text-primary)]">Frequently Asked Questions</h2>
         </div>
         <Suspense fallback={<div className="h-64" />}>
           <FaqAccordion />
@@ -293,25 +297,25 @@ export default function LandingPage() {
       </section>
 
       {/* ━━━ FINAL CTA BAND ━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="border-t border-border bg-card/40">
+      <section className="border-t border-[var(--color-border-default)]" style={{ background: "var(--color-bg-secondary)" }}>
         <div className="max-w-3xl mx-auto px-6 lg:px-10 py-16 sm:py-20 text-center space-y-5">
-          <h2 className="text-[24px] sm:text-[30px] font-bold tracking-tight text-white leading-tight">
+          <h2 className="tp-display-sm text-[var(--color-text-primary)]">
             Bring discipline to your next trade.
           </h2>
-          <p className="text-[14px] text-zinc-400 max-w-md mx-auto leading-relaxed">
+          <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-md mx-auto leading-relaxed">
             Two free AI scans. No credit card required. No commitment — keep using your existing charting platform alongside it.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               href="/signup"
-              className="group h-11 px-6 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 text-[13px] font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-zinc-950/30 active:scale-[0.98] transition-all duration-150"
+              className="group h-11 px-6 rounded-xl bg-[var(--color-text-primary)] hover:opacity-90 text-[var(--color-bg-primary)] text-[13px] font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/30 active:scale-[0.98] transition-all duration-150"
             >
               <span>Start Free — No Card Required</span>
-              <ArrowRight size={14} className="text-zinc-950 transition-transform duration-200 group-hover:translate-x-0.5" />
+              <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/login"
-              className="h-11 px-5 rounded-xl border border-zinc-700 hover:border-zinc-600 text-zinc-300 hover:text-white text-[13px] font-semibold inline-flex items-center justify-center transition-all"
+              className="h-11 px-5 rounded-xl border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] text-[13px] font-semibold inline-flex items-center justify-center transition-all"
             >
               Sign in
             </Link>
@@ -320,37 +324,37 @@ export default function LandingPage() {
       </section>
 
       {/* ━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <footer className="border-t border-border py-10 sm:py-12 bg-card/85 backdrop-blur-md">
+      <footer className="border-t border-[var(--color-border-default)] py-10 sm:py-12" style={{ background: "var(--color-bg-secondary)" }}>
         <div className="footer-inner max-w-6xl mx-auto px-5 sm:px-6 lg:px-10 space-y-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-2.5">
-              <div className="flex items-center justify-center rounded-md w-6 h-6 bg-emerald-500">
+              <div className="flex items-center justify-center rounded-md w-6 h-6" style={{ background: "var(--color-accent-primary)" }}>
                 <TrendingUp size={13} color="#09090B" strokeWidth={2.5} />
               </div>
-              <span className="text-sm font-semibold tracking-tight text-foreground">TradCopilot</span>
-              <span className="text-[10px] font-mono text-muted-foreground/60 border border-border rounded px-1.5 py-0.5 ml-1">Read-only · No broker access</span>
+              <span className="text-sm font-semibold tracking-tight text-[var(--color-text-primary)]">TradCopilot</span>
+              <span className="text-[10px] font-mono text-[var(--color-text-tertiary)] border border-[var(--color-border-default)] rounded px-1.5 py-0.5 ml-1">Read-only · No broker access</span>
             </div>
             <a
               href="mailto:hello@tradcopilot.com"
-              className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 text-[12px] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
             >
               <Mail size={13} />
               hello@tradcopilot.com
             </a>
           </div>
-          <p className="text-[11px] text-muted-foreground/80 max-w-2xl leading-relaxed">
+          <p className="text-[11px] text-[var(--color-text-tertiary)] max-w-2xl leading-relaxed">
             TradCopilot is a read-only analysis copilot. It does not execute trades, custody funds, or connect to your brokerage. Nothing on this site is financial advice. Markets carry risk — trade your own plan.
           </p>
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2 border-t border-border/60">
-            <p className="text-xs text-muted-foreground">© 2026 TradCopilot Inc. All rights reserved.</p>
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-              <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-              <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-              <Link href="/refund" className="hover:text-foreground transition-colors">Refund</Link>
-              <Link href="/disclaimer" className="hover:text-foreground transition-colors">Disclaimer</Link>
-              <Link href="/cookies" className="hover:text-foreground transition-colors">Cookies</Link>
-              <Link href="/acceptable-use" className="hover:text-foreground transition-colors">Use Policy</Link>
-              <Link href="/login" className="hover:text-foreground transition-colors">App Login</Link>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2 border-t border-[var(--color-border-subtle)]">
+            <p className="text-xs text-[var(--color-text-tertiary)]">© 2026 TradCopilot Inc. All rights reserved.</p>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--color-text-tertiary)]">
+              <Link href="/terms" className="hover:text-[var(--color-text-primary)] transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-[var(--color-text-primary)] transition-colors">Privacy</Link>
+              <Link href="/refund" className="hover:text-[var(--color-text-primary)] transition-colors">Refund</Link>
+              <Link href="/disclaimer" className="hover:text-[var(--color-text-primary)] transition-colors">Disclaimer</Link>
+              <Link href="/cookies" className="hover:text-[var(--color-text-primary)] transition-colors">Cookies</Link>
+              <Link href="/acceptable-use" className="hover:text-[var(--color-text-primary)] transition-colors">Use Policy</Link>
+              <Link href="/login" className="hover:text-[var(--color-text-primary)] transition-colors">App Login</Link>
             </div>
           </div>
         </div>

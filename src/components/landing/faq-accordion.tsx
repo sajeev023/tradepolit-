@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 const faqs = [
   {
@@ -35,28 +36,42 @@ export function FaqAccordion() {
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      {faqs.map((faq, idx) => (
-        <div
-          key={idx}
-          onClick={() => setExpanded(expanded === idx ? null : idx)}
-          className="p-4 sm:p-5 rounded-xl border border-border bg-card/65 backdrop-blur-md cursor-pointer transition-colors hover:border-accent/40 shadow-sm"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <h4 className="text-sm font-medium text-foreground">{faq.q}</h4>
-            <ChevronDown
-              size={16}
-              className={`text-muted-foreground transition-transform duration-300 shrink-0 ${
-                expanded === idx ? "rotate-180" : ""
-              }`}
-            />
+      {faqs.map((faq, idx) => {
+        const isOpen = expanded === idx;
+        return (
+          <div
+            key={idx}
+            onClick={() => setExpanded(isOpen ? null : idx)}
+            className="card p-4 sm:p-5 cursor-pointer"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <h4 className="text-sm font-medium text-[var(--color-text-primary)]">{faq.q}</h4>
+              <motion.div
+                animate={{ rotate: isOpen ? 180 : 0 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="shrink-0"
+              >
+                <ChevronDown size={16} style={{ color: "var(--color-text-tertiary)" }} />
+              </motion.div>
+            </div>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden"
+                >
+                  <p className="mt-3 text-xs text-[var(--color-text-tertiary)] leading-relaxed pt-2 border-t border-[var(--color-border-subtle)]">
+                    {faq.a}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          {expanded === idx && (
-            <p className="mt-3 text-xs text-muted-foreground leading-relaxed pt-2 border-t border-border">
-              {faq.a}
-            </p>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

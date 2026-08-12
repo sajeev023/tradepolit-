@@ -149,7 +149,7 @@ function TrustBadge() {
         padding: "6px 14px",
         borderRadius: 999,
         border: "1px solid rgba(6, 182, 212,0.25)",
-        background: "rgba(6, 182, 212,0.06)",
+        background: "var(--color-accent-primary-subtle)",
         backdropFilter: "blur(12px)",
         marginBottom: 28,
       }}
@@ -159,13 +159,13 @@ function TrustBadge() {
           width: 6,
           height: 6,
           borderRadius: "50%",
-          background: "#06b6d4",
+          background: "var(--color-accent-primary)",
           boxShadow: "0 0 8px rgba(6, 182, 212,0.8)",
           flexShrink: 0,
           animation: "pulse-dot 2s ease infinite",
         }}
       />
-      <span style={{ fontSize: 12, fontWeight: 500, color: "#06b6d4", letterSpacing: "0.02em" }}>
+      <span style={{ fontSize: 12, fontWeight: 500, color: "var(--color-accent-primary)", letterSpacing: "0.02em" }}>
         Early Access · Free during beta
       </span>
     </div>
@@ -181,7 +181,7 @@ function FeatureRow({ icon, label, sub }: { icon: string; label: string; sub: st
           width: 34,
           height: 34,
           borderRadius: 8,
-          background: "rgba(6, 182, 212,0.08)",
+          background: "var(--color-accent-primary-subtle)",
           border: "1px solid rgba(6, 182, 212,0.12)",
           display: "flex",
           alignItems: "center",
@@ -194,10 +194,10 @@ function FeatureRow({ icon, label, sub }: { icon: string; label: string; sub: st
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: "#FAFAFA", letterSpacing: "-0.01em" }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-text-primary)", letterSpacing: "-0.01em" }}>
           {label}
         </div>
-        <div style={{ fontSize: 12, color: "#71717A", marginTop: 2, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: "var(--color-text-tertiary)", marginTop: 2, lineHeight: 1.5 }}>
           {sub}
         </div>
       </div>
@@ -213,12 +213,12 @@ function Testimonial() {
       style={{
         padding: "18px 20px",
         borderRadius: 12,
-        background: "rgba(255,255,255,0.025)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--color-bg-hover)",
+        border: "1px solid var(--color-border-default)",
         backdropFilter: "blur(12px)",
       }}
     >
-      <p style={{ fontSize: 13, color: "#A1A1AA", lineHeight: 1.65, fontStyle: "italic" }}>
+      <p style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.65, fontStyle: "italic" }}>
         &quot;Finally a trading journal that actually understands my psychology. The AI catches revenge trading before I even realize I&apos;m doing it.&quot;
       </p>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
@@ -227,7 +227,7 @@ function Testimonial() {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            background: "linear-gradient(135deg,#06b6d4,#6366F1)",
+            background: "linear-gradient(135deg, var(--color-accent-primary), #6366F1)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -239,8 +239,8 @@ function Testimonial() {
           MK
         </div>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "#FAFAFA" }}>Mohammed K.</div>
-          <div style={{ fontSize: 11, color: "#52525B" }}>Prop Trader · Dubai</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-primary)" }}>Mohammed K.</div>
+          <div style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>Prop Trader · Dubai</div>
         </div>
       </div>
     </div>
@@ -260,13 +260,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           0%, 100% { opacity: 1; transform: scale(1); }
           50%       { opacity: 0.5; transform: scale(1.3); }
         }
-        @keyframes float-slow {
-          0%, 100% { transform: translateY(0px); }
-          50%       { transform: translateY(-8px); }
-        }
         .auth-enter    { animation: auth-enter 0.7s cubic-bezier(0.16,1,0.3,1) both; }
         .auth-float-in { animation: auth-enter 0.7s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
-        .float-logo    { animation: float-slow 6s ease-in-out infinite; }
       `}</style>
 
       <AmbientCanvas />
@@ -305,12 +300,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             }}
           >
             <div
-              className="float-logo"
               style={{
                 width: 32,
                 height: 32,
                 borderRadius: 9,
-                background: "linear-gradient(135deg,#06b6d4 0%,#06B6D4 100%)",
+                background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -341,19 +335,13 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 fontWeight: 700,
                 lineHeight: 1.1,
                 letterSpacing: "-0.035em",
-                color: "#FAFAFA",
+                color: "var(--color-text-primary)",
                 margin: "0 0 16px",
               }}
             >
               The AI Copilot for
               <br />
-              <span
-                style={{
-                  background: "linear-gradient(100deg,#06b6d4 0%,#06B6D4 50%,#6366F1 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
+              <span className="gradient-text">
                 Serious Traders
               </span>
             </h2>
@@ -361,7 +349,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             <p
               style={{
                 fontSize: 14,
-                color: "#71717A",
+                color: "var(--color-text-tertiary)",
                 lineHeight: 1.7,
                 marginBottom: 36,
               }}
@@ -391,7 +379,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Footer */}
-          <p style={{ fontSize: 11, color: "#3F3F46", lineHeight: 1.6 }}>
+          <p style={{ fontSize: 11, color: "var(--color-text-quaternary)", lineHeight: 1.6 }}>
             TradCopilot does not execute trades, hold funds, or provide financial advice.
             Analytical tool for educational purposes only.
           </p>

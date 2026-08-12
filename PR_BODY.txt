@@ -1,0 +1,29 @@
+## TradCopilot UI/UX Redesign — Institutional Intelligence + Futuristic Market Terminal
+
+Controlled, reuse-first product-level transformation. **No engine, data, auth, security, or CSP changes** — the visual experience is built around the existing product.
+
+### Commits on this branch (each verified: typecheck / lint / build / test)
+1. `3d6a21e` — **Phase A: design-system foundation.** Tailwind v4 token core: deeper 3-tier base (#030712/#0b0f19/#111827), layered radial-gradient atmosphere on body, Space Grotesk display + Inter via next/font (self-hosted), translucent cards with gradient edge-light `::before` (no per-card blur — scroll perf preserved), cyan accent (#06b6d4) with semantic market colors kept distinct, `.btn-primary` cyan gradient, display-typography utilities.
+2. `7228894` — **Phase C/D: honest AI diagnostic.** Replaced the timer-faked loading-text rotation with a real `analysisPhase` state set at actual fetch boundaries (connecting → multi-model race). Structured "AI Market Intelligence" panel with honest data-source label (WS LIVE / REST FALLBACK — never "LIVE" when unavailable). Cyan accent alignment on the charts page.
+3. `1f4e394` — **Phase C: LivePriceCard.** Subtle bull/bear tick illumination (reduced-motion respected), honest live-source dot, token colors, tabular-numeric price.
+4. `1c268c4` — **Accent cohesion.** Completed the cyan migration across 38 files (teal/green → cyan), pure 163/163 color replacement, no logic.
+
+### Verification
+- typecheck: 0 errors
+- lint: 0 errors (8 pre-existing warnings unchanged)
+- build: exit 0 (fonts self-hosted via next/font)
+- vitest: 210/210
+
+### Remaining roadmap (subsequent PRs)
+- Phase B: dashboard overview composition & hierarchy
+- Phase C cont.: chart container + timeframe selector framing
+- Phase E: MARKET → EXCHANGE → INSTRUMENT → DATA STATUS scalability (no hardcoding to BTC)
+- Phase F: micro-interactions (cursor spotlight, border illumination)
+- Phase G: loading / empty / error / unavailable states across surfaces
+- Phase H: mobile pass (intentional, not shrunk)
+- Phase I: command-palette polish (exists — enhance)
+- Phase J: final polish + consistency audit
+
+⚠️ **DRAFT — do not merge.** Browser-level visual verification still required (Vercel preview is SSO-gated from this environment).
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
