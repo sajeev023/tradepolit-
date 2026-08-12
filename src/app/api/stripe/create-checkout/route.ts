@@ -46,16 +46,29 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const priceId = process.env.STRIPE_PRICE_ID || "price_mock_pro_tier";
+    // BUG FIX: the previous default "price_mock_pro_tier" started with "price_",
+    // so `startsWith("price_")` was true and Stripe received a bogus price ID —
+    // checkout creation threw and the user saw a generic 500. Resolve a real
+    // price ID first; only fall back to inline price_data when none is set.
+    const configuredPriceId = (process.env.STRIPE_PRICE_ID || "").trim();
+    const isRealPriceId = /^price_[A-Za-z0-9]{10,}$/.test(configuredPriceId);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+    if (!isRealPriceId) {
+      console.warn(
+        "[create-checkout] STRIPE_PRICE_ID is unset or not a real Stripe price ID — " +
+        "falling back to inline price_data ($7.49/mo). Set STRIPE_PRICE_ID in production " +
+        "to use a pre-configured Stripe Price."
+      );
+    }
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
       line_items: [
         {
-          price: priceId.startsWith("price_") ? priceId : undefined,
-          price_data: !priceId.startsWith("price_") ? {
+          price: isRealPriceId ? configuredPriceId : undefined,
+          price_data: !isRealPriceId ? {
             currency: "usd",
             product_data: {
               name: "TradCopilot Pro Membership",

@@ -12,7 +12,35 @@ interface LimitEntry {
 const DEFAULT_WINDOW_MS = 60 * 1000;
 const DEFAULT_MAX_REQUESTS = 30;
 
+// Cap the number of tracked keys so a flood of distinct IPs/user-IDs (e.g. a
+// volumetric attack rotating source addresses) cannot grow this map without
+// bound and exhaust memory on a long-lived instance. When the cap is hit we
+// still admit the request — the cap protects memory, not security (the
+// per-key window does that).
+const MAX_STORE_KEYS = 10_000;
+
 const store = new Map<string, LimitEntry>();
+
+// Every N calls, sweep expired entries. Amortizes cleanup cost across requests
+// without a background timer (which Vercel's serverless runtime would pause
+// between invocations anyway). 1% of calls is enough to keep the map bounded
+// under steady traffic while adding ~zero overhead per request.
+let opsSinceSweep = 0;
+const SWEEP_INTERVAL_OPS = 100;
+
+function sweepExpired(): void {
+  const now = Date.now();
+  for (const [key, entry] of store) {
+    if (now >= entry.resetAt) store.delete(key);
+  }
+}
+
+function maybeSweep(): void {
+  if (++opsSinceSweep >= SWEEP_INTERVAL_OPS) {
+    opsSinceSweep = 0;
+    sweepExpired();
+  }
+}
 
 function getKey(identifier: string, prefix: string): string {
   return `${prefix}:${identifier}`;
@@ -32,10 +60,26 @@ export function checkRateLimit(
   windowMs = DEFAULT_WINDOW_MS
 ): RateLimitResult {
   const now = Date.now();
+  // Amortized cleanup of expired entries (see maybeSweep). Runs ~1% of calls.
+  maybeSweep();
   const key = getKey(identifier, prefix);
   const entry = store.get(key);
 
   if (!entry || now >= entry.resetAt) {
+    // Enforce the key-count cap. If we're full of *live* entries, evict the
+    // oldest-expiring one so the map can't grow without bound. The new key is
+    // always admitted — this is a memory guard, not a request rejection.
+    if (!store.has(key) && store.size >= MAX_STORE_KEYS) {
+      let oldestKey: string | null = null;
+      let oldestReset = Infinity;
+      for (const [k, e] of store) {
+        if (e.resetAt < oldestReset) {
+          oldestReset = e.resetAt;
+          oldestKey = k;
+        }
+      }
+      if (oldestKey) store.delete(oldestKey);
+    }
     const newEntry: LimitEntry = { count: 1, resetAt: now + windowMs };
     store.set(key, newEntry);
     return { allowed: true, limit: maxRequests, remaining: maxRequests - 1, resetAt: newEntry.resetAt };
