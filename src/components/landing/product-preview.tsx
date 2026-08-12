@@ -1,60 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Lock, Activity } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { Lock, Activity, BookOpen, Bell, BarChart3, Sparkles } from "lucide-react";
+import { useBinanceStream, useBinanceStreamStatus } from "@/hooks/useBinanceStream";
+import { Sparkline } from "@/components/ui/sparkline";
+import { formatPrice } from "./live-price";
 
-const fullAiResponse =
-  "Consolidating above support ($92,000). Bullish biased range continuation.\n\nRSI(14): 62.4 — Moderate strength, room to expand\nMACD: Confirmed crossover, positive expansion\nEMA 9/21: Defending support on 4H structure\n\nSupport: $92,000 · Resistance: $94,800\n\nVolume steady. Wait for 4H close above $93,000 before entries.";
+/* ═══════════════════════════════════════════════════════════════════════
+   HeroTerminal — the product IS the hero.
 
-const candlesticks = [
-  { h: 35, t: "loss", w: 45 },
-  { h: 25, t: "loss", w: 35 },
-  { h: 48, t: "profit", w: 58 },
-  { h: 55, t: "profit", w: 65 },
-  { h: 40, t: "loss", w: 50 },
-  { h: 62, t: "profit", w: 72 },
-  { h: 75, t: "profit", w: 90 },
-  { h: 58, t: "loss", w: 78 },
-  { h: 80, t: "profit", w: 95 },
-  { h: 90, t: "profit", w: 110 },
-];
+   A living, Binance-WS-driven trading terminal rendered in real product
+   chrome. No Math.random, no fabricated candles: the chart is a live tick
+   ring-buffer sparkline (honest "live price"), the telemetry strip shows
+   real 24h high/low/volume, and the AI setup levels are derived from the
+   real 24h range and explicitly labelled illustrative. The typed AI
+   readout is a static demonstration of output format ("demo output").
+   ═══════════════════════════════════════════════════════════════════════ */
 
-function LivePriceDisplay() {
-  const [livePrice, setLivePrice] = useState(92450.5);
+const AI_RESPONSE =
+  "Consolidating above 24h support. Bullish-biased range continuation.\n\nRSI(14): 62.4 — moderate strength, room to expand\nMACD: confirmed crossover, positive expansion\nEMA 9/21: defending structure on the 4H\n\nVolume steady. Wait for a confirmed 4H close above resistance before entries.";
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLivePrice((prev) => parseFloat((prev + (Math.random() - 0.47) * 6).toFixed(2)));
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+const SYMBOL = "BTC/USD";
+const RING_MAX = 60;
 
-  return (
-    <span className="text-[11px] font-semibold font-mono text-[var(--color-text-primary)] tabular-nums">
-      ${livePrice.toLocaleString()}
-    </span>
-  );
-}
-
-function DesktopLivePrice() {
-  const [livePrice, setLivePrice] = useState(92450.5);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLivePrice((prev) => parseFloat((prev + (Math.random() - 0.47) * 6).toFixed(2)));
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <span className="text-[12px] font-semibold font-mono text-[var(--color-text-primary)] tabular-nums">
-      ${livePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-    </span>
-  );
-}
-
+/* ── Typed AI readout (static demo of output format) ── */
 function TypedResponse() {
-  const [typedText, setTypedText] = useState("");
+  const [typed, setTyped] = useState("");
 
   useEffect(() => {
     let index = 0;
@@ -64,16 +36,16 @@ function TypedResponse() {
         timeout = setTimeout(tick, 200);
         return;
       }
-      if (index < fullAiResponse.length) {
-        setTypedText(fullAiResponse.substring(0, index + 1));
+      if (index < AI_RESPONSE.length) {
+        setTyped(AI_RESPONSE.substring(0, index + 1));
         index++;
-        timeout = setTimeout(tick, 45);
+        timeout = setTimeout(tick, 38);
       } else {
         timeout = setTimeout(() => {
           index = 0;
-          setTypedText("");
-          timeout = setTimeout(tick, 5000);
-        }, 5000);
+          setTyped("");
+          timeout = setTimeout(tick, 5200);
+        }, 5200);
       }
     };
     tick();
@@ -81,192 +53,289 @@ function TypedResponse() {
   }, []);
 
   return (
-    <div className="whitespace-pre-wrap text-[var(--color-text-secondary)] leading-[1.5]">
-      {typedText}
+    <div className="whitespace-pre-wrap text-[var(--color-text-secondary)] leading-[1.55] text-[10px] font-mono">
+      {typed}
       <span className="cursor-blink" />
     </div>
   );
 }
 
-export function MobileProductPreview() {
+/* ── Live chart — isolates WS re-renders to this component only ──
+   Subscribes to BTC/USD, buffers the last N ticks, renders a sparkline.
+   The 24h high/low/volume telemetry strip is co-located so the rest of
+   the terminal never re-renders on a price tick. */
+function LiveChart({ compact = false }: { compact?: boolean }) {
+  const data = useBinanceStream(SYMBOL);
+  const prev = useRef<number | null>(null);
+  const [flash, setFlash] = useState("");
+  const [ring, setRing] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (data == null) return;
+    // tick flash
+    if (prev.current != null && data.price !== prev.current) {
+      setFlash(data.price > prev.current ? "tick-flash-up" : "tick-flash-down");
+      const t = setTimeout(() => setFlash(""), 340);
+      prev.current = data.price;
+      setRing((r) => {
+        const next = [...r, data.price];
+        return next.length > RING_MAX ? next.slice(next.length - RING_MAX) : next;
+      });
+      return () => clearTimeout(t);
+    }
+    prev.current = data.price;
+    // first point
+    setRing((r) => (r.length === 0 ? [data.price] : r));
+  }, [data]);
+
+  const change = data?.changePercent24h ?? 0;
+  const up = change >= 0;
+  const height = compact ? 120 : 168;
+
   return (
-    <div className="block lg:hidden pt-4 animate-enter-delay-5">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950/90 backdrop-blur-2xl overflow-hidden shadow-xl shadow-black/60">
-        <div className="flex items-center px-3 border-b border-zinc-800 bg-zinc-950 h-8 select-none">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-500/80" />
-            <span className="w-2 h-2 rounded-full bg-amber-500/80" />
-            <span className="w-2 h-2 rounded-full bg-emerald-500/80" />
-          </div>
-          <div className="flex-1 mx-2 text-center">
-            <span className="text-[8px] font-mono text-zinc-500">tradcopilot.com/charts</span>
-          </div>
+    <div className="flex flex-col h-full">
+      {/* Symbol header */}
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2">
+          <span className="text-[12px] font-semibold font-mono text-[var(--color-text-primary)] tracking-tight">{SYMBOL}</span>
+          <span className="badge badge-info !text-[9px] !px-1.5 !py-0">4H</span>
         </div>
-        <div className="p-3 space-y-2">
-          <div className="flex items-center justify-between pb-1 border-b border-zinc-800/60">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold font-mono text-white">BTC/USD</span>
-              <span className="text-[8px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1 py-0.5 rounded font-mono">4H</span>
-            </div>
-            <div className="text-right">
-              <LivePriceDisplay />
-              <span className="text-[9px] text-emerald-400 font-mono ml-1.5">+1.85%</span>
-            </div>
-          </div>
-
-          {/* AI Completed Analysis Card */}
-          <div className="p-2.5 rounded-lg border border-emerald-500/30 bg-zinc-900/80 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] font-bold text-white uppercase tracking-wide">BULLISH / LONG</span>
-              </div>
-              <span className="text-[9px] font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                88% Confidence
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-1 pt-1 border-t border-zinc-800 text-[9px] font-mono">
-              <div>
-                <span className="text-zinc-500 block text-[8px]">ENTRY</span>
-                <span className="text-white font-semibold">$92,800</span>
-              </div>
-              <div>
-                <span className="text-zinc-500 block text-[8px]">STOP LOSS</span>
-                <span className="text-rose-400 font-semibold">$91,400</span>
-              </div>
-              <div>
-                <span className="text-zinc-500 block text-[8px]">TAKE PROFIT</span>
-                <span className="text-emerald-400 font-semibold">$95,600</span>
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className={`font-mono font-semibold tabular-nums text-[12px] text-[var(--color-text-primary)] rounded px-1 ${flash}`}>
+            {data ? `$${formatPrice(data.price)}` : "—"}
+          </span>
+          <span className={`text-[10px] font-mono font-medium tabular-nums ${data ? (up ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]") : "text-[var(--color-text-quaternary)]"}`}>
+            {data ? `${up ? "+" : ""}${change.toFixed(2)}%` : "···"}
+          </span>
         </div>
+      </div>
+
+      {/* Chart pane */}
+      <div className={`terminal-grid relative flex-1 rounded-lg border border-[var(--color-border-subtle)] bg-[rgba(3,7,18,0.5)] overflow-hidden ${compact ? "min-h-[120px]" : "min-h-[168px]"}`}>
+        {/* horizontal reference lines */}
+        <div className="absolute inset-x-0 top-1/4 h-px bg-[var(--color-border-subtle)] pointer-events-none" />
+        <div className="absolute inset-x-0 top-2/4 h-px bg-[var(--color-border-subtle)] pointer-events-none" />
+        <div className="absolute inset-x-0 top-3/4 h-px bg-[var(--color-border-subtle)] pointer-events-none" />
+
+        {ring.length >= 2 ? (
+          <div className="absolute inset-0 flex items-center px-2">
+            <Sparkline points={ring} width={520} height={height} className="w-full h-full" fillId="hero-spark" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="tp-micro-label flex items-center gap-2">
+              <span className="ping-dot" /> connecting to binance…
+            </span>
+          </div>
+        )}
+
+        {/* 24h range tags */}
+        {data && (
+          <>
+            <span className="absolute top-1.5 right-2 tp-micro-label" style={{ color: "var(--color-text-quaternary)" }}>
+              H ${formatPrice(data.high24h)}
+            </span>
+            <span className="absolute bottom-1.5 right-2 tp-micro-label" style={{ color: "var(--color-text-quaternary)" }}>
+              L ${formatPrice(data.low24h)}
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* Telemetry strip — real 24h stats */}
+      <div className="flex items-center gap-3 mt-2.5 text-[10px] font-mono">
+        <span className="tp-micro-label">24H</span>
+        <span className="text-[var(--color-text-tertiary)]">HIGH <span className="text-[var(--color-text-secondary)] tabular-nums">{data ? `$${formatPrice(data.high24h)}` : "—"}</span></span>
+        <span className="text-[var(--color-text-tertiary)]">LOW <span className="text-[var(--color-text-secondary)] tabular-nums">{data ? `$${formatPrice(data.low24h)}` : "—"}</span></span>
+        <span className="text-[var(--color-text-tertiary)] hidden sm:inline">VOL <span className="text-[var(--color-text-secondary)] tabular-nums">{data ? Math.round(data.volume24h).toLocaleString() : "—"}</span></span>
       </div>
     </div>
   );
 }
 
-export function DesktopProductPreview() {
+/* ── AI setup card — levels derived from the real 24h range, labelled illustrative ── */
+function AiSetupCard() {
+  const data = useBinanceStream(SYMBOL);
+  const levels = useMemo(() => {
+    if (!data) return null;
+    const support = data.low24h;
+    const resistance = data.high24h;
+    const mid = (support + resistance) / 2;
+    const entry = mid;
+    const stop = support - (resistance - support) * 0.15;
+    const tp = resistance;
+    const rr = (tp - entry) / (entry - stop);
+    return { support, resistance, entry, stop, tp, rr };
+    // Granular deps intentional: recompute only when 24h levels change,
+    // not on every tick (data identity changes each WS message).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.high24h, data?.low24h]);
+
   return (
-    <div className="hero-mockup-desktop hidden sm:block lg:col-span-7 animate-enter-delay-2 relative z-10">
-      <div className="relative rounded-2xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-2xl overflow-hidden shadow-2xl shadow-black/80">
-        <div className="absolute -top-20 -right-20 w-80 h-80 bg-emerald-500 opacity-[0.08] rounded-full blur-[90px] pointer-events-none" />
-        <div className="flex items-center px-4 border-b border-zinc-800 bg-zinc-950 h-9 select-none">
-          <div className="flex items-center gap-1.5 w-14">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-          </div>
-          <div className="flex-1 max-w-[240px] mx-auto flex items-center justify-center gap-1.5 h-6 rounded-md bg-zinc-900 border border-zinc-800 px-3">
-            <Lock size={9} className="text-zinc-500" />
-            <span className="text-[10px] font-mono text-zinc-400">tradcopilot.com/charts</span>
-          </div>
-          <div className="w-14" />
+    <div className="terminal-pane p-2.5 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <span className="ping-dot" />
+          <span className="text-[10px] font-semibold text-[var(--color-text-primary)] tracking-tight uppercase">Completed AI Setup</span>
         </div>
-        <div className="flex h-[360px]">
-          <div className="hidden sm:flex flex-col items-center gap-3 py-4 border-r border-zinc-800 bg-zinc-950 w-10">
-            <div className="w-5 h-5 rounded-md bg-emerald-500/20 flex items-center justify-center">
-              <Activity size={10} className="text-emerald-400" />
+        <span className="tp-micro-label" style={{ color: "var(--color-profit)" }}>88% · illustrative</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 font-mono text-[9.5px]">
+        <div>
+          <div className="tp-micro-label !text-[8px]">Entry</div>
+          <div className="text-[var(--color-text-primary)] font-semibold tabular-nums">{levels ? `$${formatPrice(levels.entry)}` : "—"}</div>
+        </div>
+        <div>
+          <div className="tp-micro-label !text-[8px]">Stop</div>
+          <div className="text-[var(--color-loss)] font-semibold tabular-nums">{levels ? `$${formatPrice(levels.stop)}` : "—"}</div>
+        </div>
+        <div>
+          <div className="tp-micro-label !text-[8px]">Target</div>
+          <div className="text-[var(--color-profit)] font-semibold tabular-nums">{levels ? `$${formatPrice(levels.tp)}` : "—"}</div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-1.5 border-t border-[var(--color-border-subtle)] font-mono text-[9px]">
+        <span className="text-[var(--color-text-tertiary)]">Bias</span>
+        <span className="text-[var(--color-profit)] font-bold">BULLISH · {levels ? `${levels.rr.toFixed(1)}R` : "—"}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Terminal titlebar with live WS status pill ── */
+function TerminalTitlebar() {
+  const status = useBinanceStreamStatus(SYMBOL);
+  const live = status === "connected";
+  return (
+    <div className="flex items-center px-3.5 h-9 border-b border-[var(--color-border-default)] bg-[var(--color-bg-deepest)] select-none">
+      <div className="flex items-center gap-1.5 w-16">
+        <span className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--color-loss)", opacity: 0.85 }} />
+        <span className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--color-warning)", opacity: 0.85 }} />
+        <span className="w-2.5 h-2.5 rounded-full" style={{ background: "var(--color-profit)", opacity: 0.85 }} />
+      </div>
+      <div className="flex-1 max-w-[260px] mx-auto flex items-center justify-center gap-1.5 h-6 rounded-md bg-[rgba(255,255,255,0.03)] border border-[var(--color-border-subtle)] px-3">
+        <Lock size={9} style={{ color: "var(--color-text-quaternary)" }} />
+        <span className="text-[10px] font-mono text-[var(--color-text-tertiary)]">tradcopilot.com/charts</span>
+      </div>
+      <div className="w-16 flex justify-end">
+        <span
+          className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold"
+          style={{
+            color: live ? "var(--color-accent-primary)" : "var(--color-warning)",
+            background: live ? "var(--color-accent-primary-subtle)" : "var(--color-warning-bg)",
+            border: `1px solid ${live ? "rgba(6,182,212,0.2)" : "rgba(245,158,11,0.2)"}`,
+          }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: live ? "var(--color-accent-primary)" : "var(--color-warning)" }} />
+          {live ? "LIVE" : "LINK"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const RAIL_ITEMS = [
+  { icon: <Activity size={11} />, label: "Charts" },
+  { icon: <BookOpen size={11} />, label: "Journal" },
+  { icon: <Bell size={11} />, label: "Alerts" },
+  { icon: <BarChart3 size={11} />, label: "Analytics" },
+];
+
+/* ── Desktop hero terminal ── */
+export function DesktopProductPreview() {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [enableParallax, setEnableParallax] = useState(false);
+
+  useEffect(() => {
+    const fine = window.matchMedia("(pointer: fine)").matches;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setEnableParallax(fine && !reduced);
+  }, []);
+
+  const { scrollYProgress } = useScroll({
+    target: wrapRef,
+    offset: ["start start", "end start"],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], [0, 70]);
+  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.5]);
+  const rotateX = useTransform(scrollYProgress, [0, 1], [0, 5]);
+
+  return (
+    <div
+      ref={wrapRef}
+      className="hero-mockup-desktop hidden lg:block lg:col-span-7 animate-enter-delay-2 relative z-10"
+      style={{ perspective: 1600 }}
+    >
+      <motion.div
+        style={enableParallax ? { y, opacity, rotateX } : undefined}
+        className="terminal-chrome"
+      >
+        <TerminalTitlebar />
+        <div className="flex h-[372px]">
+          {/* Icon rail */}
+          <div className="hidden sm:flex flex-col items-center gap-2.5 py-4 border-r border-[var(--color-border-default)] bg-[var(--color-bg-deepest)] w-11">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "var(--color-accent-primary-subtle)", border: "1px solid rgba(6,182,212,0.18)", color: "var(--color-accent-primary)" }}>
+              <Activity size={13} />
             </div>
-            {["W", "J", "A"].map((l) => (
-              <div
-                key={l}
-                className="w-5 h-5 rounded-md bg-zinc-900 flex items-center justify-center text-[8px] font-mono text-zinc-500"
-              >
-                {l}
+            {RAIL_ITEMS.slice(1).map((r) => (
+              <div key={r.label} className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--color-text-quaternary)] border border-transparent hover:border-[var(--color-border-default)] hover:bg-[var(--color-bg-hover)] transition-colors">
+                {r.icon}
               </div>
             ))}
           </div>
-          <div className="flex-1 flex flex-col p-3 bg-zinc-950">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-semibold text-white tracking-tight font-mono">
-                  BTC/USD
-                </span>
-                <span className="text-[9px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono">
-                  4H
-                </span>
-              </div>
-              <div className="text-right flex items-center gap-2">
-                <DesktopLivePrice />
-                <span className="text-[10px] text-emerald-400 font-mono font-medium">+1.85%</span>
-              </div>
+
+          {/* Chart pane */}
+          <div className="flex-1 flex flex-col p-3.5 bg-[rgba(3,7,18,0.4)]">
+            <LiveChart />
+            <div className="mt-3">
+              <AiSetupCard />
             </div>
-            <div className="flex-1 relative flex items-end justify-between px-1 gap-[3px] overflow-hidden border border-zinc-800 bg-zinc-900 rounded-lg p-2">
-              <div className="absolute inset-x-0 top-1/4 h-px bg-zinc-800 pointer-events-none" />
-              <div className="absolute inset-x-0 top-2/4 h-px bg-zinc-800 pointer-events-none" />
-              <div className="absolute inset-x-0 top-3/4 h-px bg-zinc-800 pointer-events-none" />
-              {candlesticks.map((c, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                  <div
-                    className="w-px shrink-0"
-                    style={{
-                      height: `${c.w - c.h}px`,
-                      backgroundColor: `var(--color-${c.t})`,
-                    }}
-                  />
-                  <div
-                    className="w-full max-w-[8px] rounded-sm"
-                    style={{ height: `${c.h}px`, backgroundColor: `var(--color-${c.t})` }}
-                  />
-                  <div
-                    className="w-px shrink-0"
-                    style={{ height: "8px", backgroundColor: `var(--color-${c.t})` }}
-                  />
-                </div>
-              ))}
-              <div className="absolute right-3 bottom-[94px] flex items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping absolute" />
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          </div>
+
+          {/* Copilot pane */}
+          <div className="hidden md:flex w-[236px] flex-col p-3 border-l border-[var(--color-border-default)] bg-[var(--color-bg-deepest)]">
+            <div className="flex items-center justify-between border-b border-[var(--color-border-subtle)] pb-2 mb-2">
+              <div className="flex items-center gap-1.5">
+                <Sparkles size={12} style={{ color: "var(--color-accent-primary)" }} />
+                <span className="text-[10px] font-semibold text-[var(--color-text-primary)] tracking-tight">AI Copilot</span>
+              </div>
+              <span className="tp-micro-label !text-[8px]">demo output</span>
+            </div>
+            <div className="flex-1 overflow-hidden pr-0.5">
+              <TypedResponse />
+            </div>
+            <div className="mt-2 border-t border-[var(--color-border-subtle)] pt-2">
+              <div className="h-7 rounded-md bg-[rgba(255,255,255,0.03)] border border-[var(--color-border-subtle)] px-2.5 flex items-center text-[9.5px] text-[var(--color-text-quaternary)] font-mono">
+                Ask copilot about this trade…
               </div>
             </div>
           </div>
-          <div className="hidden md:flex w-[210px] sm:w-[240px] flex flex-col p-3 border-l border-zinc-800 bg-zinc-950">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span className="text-[10px] font-semibold text-white tracking-tight">
-                  Completed AI Setup
-                </span>
-              </div>
-              <span className="text-[8px] font-mono text-emerald-400 bg-emerald-500/10 px-1 rounded">
-                88% HIGH
-              </span>
-            </div>
-            
-            {/* Live Setup Parameters Box */}
-            <div className="p-2 rounded bg-zinc-900 border border-zinc-800 space-y-1.5 mb-2 font-mono text-[9px]">
-              <div className="flex justify-between items-center">
-                <span className="text-zinc-400">Bias:</span>
-                <span className="text-emerald-400 font-bold">BULLISH / LONG</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-zinc-400">Entry Target:</span>
-                <span className="text-white font-bold">$92,800</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-zinc-400">Stop Loss:</span>
-                <span className="text-rose-400 font-bold">$91,400</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-zinc-400">Take Profit:</span>
-                <span className="text-emerald-400 font-bold">$95,600</span>
-              </div>
-              <div className="flex justify-between items-center pt-1 border-t border-zinc-800/60">
-                <span className="text-zinc-400">Risk Level:</span>
-                <span className="text-cyan-300 font-bold">MODERATE (2.0 R:R)</span>
-              </div>
-            </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
-            <div className="flex-1 overflow-y-auto text-[9px] leading-relaxed pr-1 space-y-3 font-mono text-zinc-400">
-              <TypedResponse />
-            </div>
-            <div className="mt-2 border-t border-zinc-800 pt-2">
-              <div className="h-7 rounded-md bg-zinc-900 border border-zinc-800 px-2 flex items-center text-[9px] text-zinc-500 font-mono">
-                Ask copilot about this trade...
+/* ── Mobile hero terminal — recomposed, not shrunk ── */
+export function MobileProductPreview() {
+  return (
+    <div className="block lg:hidden pt-5 animate-enter-delay-5">
+      <div className="terminal-chrome">
+        <TerminalTitlebar />
+        <div className="p-3 bg-[rgba(3,7,18,0.4)]">
+          <LiveChart compact />
+          <div className="mt-3">
+            <AiSetupCard />
+          </div>
+          <div className="mt-3 terminal-pane p-2.5">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--color-border-subtle)]">
+              <div className="flex items-center gap-1.5">
+                <Sparkles size={12} style={{ color: "var(--color-accent-primary)" }} />
+                <span className="text-[10px] font-semibold text-[var(--color-text-primary)]">AI Copilot</span>
               </div>
+              <span className="tp-micro-label !text-[8px]">demo output</span>
             </div>
+            <TypedResponse />
           </div>
         </div>
       </div>

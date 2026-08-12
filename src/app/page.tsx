@@ -11,21 +11,25 @@ import {
   BarChart3,
   MessageSquare,
   Mail,
+  Lock,
+  Radio,
+  ShieldCheck,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { StaggerChildren, StaggerChild } from "@/components/ui/animated-section";
 import { StickyHeader } from "@/components/layout/sticky-header";
 import { ElasticCard } from "@/components/ui/elastic-card";
-import { SvgTracedLine } from "@/components/ui/svg-traced-line";
 import { MobileMenu } from "@/components/landing/mobile-menu";
-import { MobileProductPreview } from "@/components/landing/product-preview";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { DesktopNavCTA, MobileGetStartedCTA } from "@/components/landing/navbar-ctas";
 import { HeroCTA } from "@/components/landing/hero-cta";
-import { TrustBar } from "@/components/landing/trust-bar";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Comparison } from "@/components/landing/comparison";
 import { FounderStory } from "@/components/landing/founder-story";
+import { ChapterHeader } from "@/components/landing/chapter-header";
+import { NarrativeSpine } from "@/components/landing/narrative-spine";
+import { MobileStickyCta } from "@/components/landing/mobile-sticky-cta";
+import { LivePrice } from "@/components/landing/live-price";
 
 const AntigravityCanvas = dynamic(
   () => import("@/components/ui/antigravity-canvas").then((m) => m.AntigravityCanvas)
@@ -33,8 +37,17 @@ const AntigravityCanvas = dynamic(
 const DesktopProductPreview = dynamic(
   () => import("@/components/landing/product-preview").then((m) => m.DesktopProductPreview)
 );
-const InfiniteMarquee = dynamic(
-  () => import("@/components/ui/infinite-marquee").then((m) => m.InfiniteMarquee)
+const MobileProductPreview = dynamic(
+  () => import("@/components/landing/product-preview").then((m) => m.MobileProductPreview)
+);
+const LiveTicker = dynamic(
+  () => import("@/components/landing/live-ticker").then((m) => m.LiveTicker)
+);
+const MarketPulseBand = dynamic(
+  () => import("@/components/landing/market-pulse-band").then((m) => m.MarketPulseBand)
+);
+const IntelligencePipeline = dynamic(
+  () => import("@/components/landing/intelligence-pipeline").then((m) => m.IntelligencePipeline)
 );
 
 const features = [
@@ -46,40 +59,35 @@ const features = [
   { icon: <MessageSquare size={18} />, title: "Persistent Chat History", desc: "All conversations grouped by session. Context retrieval seamless across devices and restarts." },
 ];
 
-const marqueeItems = [
-  { symbol: "BTC/USD", price: "$92,450.50", change: "+1.85%" },
-  { symbol: "ETH/USD", price: "$3,420.10", change: "+2.40%" },
-  { symbol: "SOL/USD", price: "$194.80", change: "+4.12%" },
-  { symbol: "EUR/USD", price: "1.0845", change: "-0.12%" },
-  { symbol: "GBP/USD", price: "1.2650", change: "+0.35%" },
-  { symbol: "NASDAQ", price: "18,450.20", change: "+0.95%" },
-  { symbol: "S&P 500", price: "$5,420.80", change: "+0.65%" },
-];
-
-const assetChips = [
-  { sym: "BTC", price: 62733, change: 0.4 },
-  { sym: "ETH", price: 1787, change: 0.3 },
-  { sym: "SOL", price: 174, change: -1.2 },
-  { sym: "EUR/USD", price: 1.0845, change: -0.12 },
-  { sym: "GBP/USD", price: 1.265, change: 0.35 },
-  { sym: "NASDAQ", price: 18450, change: 0.95 },
+const telemetry = [
+  { icon: <Lock size={12} />, label: "Read-only", sub: "no broker access" },
+  { icon: <Radio size={12} />, label: "Live Binance WS", sub: "real-time ticks" },
+  { icon: <ShieldCheck size={12} />, label: "20-trade memory", sub: "behavioral context" },
 ];
 
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-sans antialiased overflow-x-hidden">
+      <NarrativeSpine />
+
       {/* ━━━ NAVBAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <StickyHeader className="sticky-header-shell">
         <div className="h-14 flex items-center justify-between px-4 sm:px-6 lg:px-10 select-none max-w-7xl mx-auto w-full">
           <Link href="/" className="flex items-center gap-2 flex-shrink-0" aria-label="TradCopilot Home">
             <div className="flex items-center justify-center rounded-md w-7 h-7" style={{ background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)", boxShadow: "0 4px 12px rgba(6,182,212,0.3)" }}>
-              <TrendingUp size={14} color="#09090B" strokeWidth={2.5} />
+              <TrendingUp size={14} color="#030712" strokeWidth={2.5} />
             </div>
             <span className="text-sm font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">TradCopilot</span>
           </Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
+            {/* Live BTC price chip — SSR-safe ("—" until WS connects) */}
+            <span className="hidden xl:inline-flex items-center gap-1.5 mr-2 px-2.5 h-7 rounded-md border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] font-mono text-[11px] text-[var(--color-text-secondary)]">
+              <span className="ping-dot" />
+              <span className="text-[var(--color-text-quaternary)]">BTC</span>
+              <LivePrice symbol="BTC/USD" sizeClass="text-[11px] text-[var(--color-text-primary)] tabular-nums" />
+            </span>
             <a href="#features" className="btn-ghost text-[13px]">Features</a>
             <a href="#pricing" className="btn-ghost text-[13px]">Pricing</a>
             <DesktopNavCTA />
@@ -96,92 +104,102 @@ export default function LandingPage() {
         </div>
       </StickyHeader>
 
-      {/* ━━━ HERO ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <header className="hero-section relative max-w-6xl mx-auto px-5 sm:px-6 lg:px-10 pt-20 pb-12 sm:pt-28 sm:pb-20 lg:pt-36 lg:pb-28 grid lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
-        <div className="absolute inset-0 -top-12 pointer-events-none overflow-hidden z-0 opacity-40">
-          <AntigravityCanvas particleCount={50} />
+      {/* ━━━ HERO · CH.01 THE PREMISE ━━━━━━━━━━━━━━━━━━━━ */}
+      <header id="top" className="hero-section relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-10 pt-24 pb-12 sm:pt-32 sm:pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
+        {/* Atmospheric background: perspective grid + particles + glow */}
+        <div className="hero-grid" aria-hidden="true" />
+        <div className="absolute inset-0 -top-12 pointer-events-none overflow-hidden z-0 opacity-30">
+          <AntigravityCanvas particleCount={36} />
         </div>
+        <div className="absolute inset-0 pointer-events-none z-0" style={{ background: "radial-gradient(50% 40% at 70% 30%, rgba(6,182,212,0.10), transparent 70%)" }} aria-hidden="true" />
 
-        <div className="lg:col-span-5 space-y-4 sm:space-y-6 animate-enter relative z-10">
-          <div className="animate-enter inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[var(--color-border-default)] bg-[var(--color-accent-primary-subtle)] backdrop-blur-md text-[11px] font-semibold tracking-wide select-none" style={{ color: "var(--color-accent-primary)" }}>
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--color-accent-primary)" }} />
-            For active crypto &amp; forex day traders
+        <div className="relative z-10 grid lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-14 items-center">
+          <div className="lg:col-span-5 space-y-5 sm:space-y-6">
+            <div className="animate-enter chapter-chip">
+              <span className="ping-dot" /> CH.01 · THE PREMISE
+            </div>
+
+            <h1 className="hero-headline animate-enter-delay-1 tp-display-lg text-[var(--color-text-primary)] glow-text">
+              The AI copilot for{" "}
+              <span className="gradient-text">disciplined traders.</span>
+            </h1>
+
+            <p className="hero-subtext animate-enter-delay-2 text-[14px] sm:text-[15px] leading-[1.6] text-[var(--color-text-secondary)] max-w-[460px]">
+              TradCopilot fuses real-time market data, charts, and an AI intelligence layer into one workspace — so every entry is prepared, reviewed, and consistent with your own rules.
+            </p>
+
+            <div className="hero-cta-row animate-enter-delay-3 flex flex-col sm:flex-row items-stretch sm:items-end gap-3 pt-1 w-full">
+              <HeroCTA />
+            </div>
+
+            {/* Telemetry ribbon — replaces the generic trust bar */}
+            <div className="animate-enter-delay-4 telemetry-strip !h-auto !py-2.5 flex-wrap">
+              {telemetry.map((t, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <span style={{ color: "var(--color-accent-primary)" }}>{t.icon}</span>
+                  <span className="text-[var(--color-text-secondary)] font-semibold">{t.label}</span>
+                  <span className="tp-micro-label !text-[9px] hidden sm:inline">{t.sub}</span>
+                  {i < telemetry.length - 1 && <span className="ts-sep ml-1.5 hidden sm:block" />}
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile product preview */}
+            <Suspense fallback={<div className="h-64" />}>
+              <MobileProductPreview />
+            </Suspense>
           </div>
 
-          <h1 className="hero-headline animate-enter-delay-1 tp-display-lg text-[var(--color-text-primary)]">
-            The AI copilot for{" "}
-            <span className="gradient-text">
-              disciplined traders.
-            </span>
-          </h1>
+          {/* Desktop living terminal — the money shot */}
+          <Suspense fallback={<div className="h-[372px] lg:col-span-7 hidden lg:block" />}>
+            <DesktopProductPreview />
+          </Suspense>
+        </div>
+      </header>
 
-          <p className="hero-subtext animate-enter-delay-2 text-[14px] sm:text-[15px] leading-[1.6] text-[var(--color-text-secondary)] max-w-[460px]">
-            TradCopilot brings real-time chart analysis, a persistent trade journal, and behavioral coaching into one workspace — so every entry is prepared, reviewed, and consistent with your own rules.
-          </p>
-
-          {/* CTA row */}
-          <div className="hero-cta-row animate-enter-delay-3 flex flex-col sm:flex-row items-stretch sm:items-end gap-3 pt-1 w-full">
-            <HeroCTA />
-          </div>
-
-          {/* Mobile product preview */}
-          <Suspense fallback={<div className="h-64" />}>
-            <MobileProductPreview />
+      {/* ━━━ CH.02 THE PULSE — live market data ━━━━━━━━━━ */}
+      <section id="pulse" className="relative scroll-mt-24">
+        {/* Live ticker band */}
+        <div className="hidden lg:block border-y border-[var(--color-border-default)] py-3 select-none" style={{ background: "var(--color-bg-secondary)" }}>
+          <Suspense fallback={<div className="h-9" />}>
+            <LiveTicker />
+          </Suspense>
+        </div>
+        {/* Mobile live chips */}
+        <div className="lg:hidden px-5 py-3 border-y border-[var(--color-border-default)]" style={{ background: "var(--color-bg-secondary)" }}>
+          <Suspense fallback={<div className="h-9" />}>
+            <LiveTicker />
           </Suspense>
         </div>
 
-        {/* Desktop product mockup */}
-        <Suspense fallback={<div className="h-[360px]" />}>
-          <DesktopProductPreview />
-        </Suspense>
-      </header>
-
-      {/* ━━━ TRUST BAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <TrustBar />
-
-      {/* ━━━ MOBILE ASSET CHIPS ━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <div className="block lg:hidden px-5 py-4">
-        <div className="flex gap-2 overflow-x-auto scrollbar-none snap-x snap-mandatory -mx-5 px-5"
-          style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none" }}>
-          {assetChips.map((a, i) => (
-            <div key={i} className="flex-none snap-start flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)]/80 min-w-0">
-              <span className="text-[11px] font-semibold font-mono text-[var(--color-text-primary)] whitespace-nowrap">{a.sym}</span>
-              <span className="text-[10px] font-mono text-[var(--color-text-secondary)] tabular-nums whitespace-nowrap">
-                ${a.price >= 1000 ? a.price.toLocaleString() : a.price.toFixed(4)}
-              </span>
-              <span className={`text-[10px] font-mono font-medium whitespace-nowrap ${a.change >= 0 ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
-                {a.change >= 0 ? "+" : ""}{a.change}%
-              </span>
-            </div>
-          ))}
+        <div className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-10 py-14 lg:py-20">
+          <ChapterHeader
+            chapter="CH.02"
+            eyebrow="THE PULSE"
+            title="Markets, felt in real time."
+            subtitle="Live telemetry streamed straight from Binance — prices, the Fear &amp; Greed index, and futures funding. Not cached bars, not screenshots."
+          />
+          <div className="mt-8">
+            <Suspense fallback={<div className="h-32 skeleton rounded-xl" />}>
+              <MarketPulseBand />
+            </Suspense>
+          </div>
         </div>
-      </div>
-
-      {/* ━━━ DESKTOP TICKER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="hidden lg:block border-y border-[var(--color-border-default)] py-3 select-none" style={{ background: "var(--color-bg-secondary)" }}>
-        <InfiniteMarquee direction="left">
-          {marqueeItems.map((pair, idx) => (
-            <div key={idx} className="flex items-center gap-3 border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-1 rounded-full text-xs font-semibold font-mono text-[var(--color-text-primary)]">
-              <span>{pair.symbol}</span>
-              <span className="text-[var(--color-text-tertiary)] font-normal">{pair.price}</span>
-              <span className={pair.change.startsWith("+") ? "text-[var(--color-profit)] font-medium" : "text-[var(--color-loss)] font-medium"}>{pair.change}</span>
-            </div>
-          ))}
-        </InfiniteMarquee>
       </section>
 
-      <SvgTracedLine color="rgba(148, 163, 184, 0.25)" />
-
-      {/* ━━━ PROBLEM / SOLUTION ━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="max-w-4xl mx-auto px-6 lg:px-10 py-20 lg:py-32">
-        <div className="text-center space-y-3 mb-14 sm:mb-16 animate-enter">
-          <span className="tp-eyebrow">The Workflow Gap</span>
-          <h2 className="tp-display text-[var(--color-text-primary)]">Discipline is hard to hold alone</h2>
-          <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-md mx-auto leading-relaxed">Most trading tools stop at the chart. Decisions still depend on memory, context-switching, and self-restraint in the moment.</p>
-        </div>
-        <div className="grid md:grid-cols-2 gap-5 sm:gap-6 animate-enter-delay-1">
-          <ElasticCard className="space-y-5">
-            <h3 className="text-[12px] font-semibold font-mono text-[var(--color-text-tertiary)] tracking-wider uppercase">The Typical Workflow</h3>
+      {/* ━━━ CH.03 THE GAP — problem / solution ━━━━━━━━━━ */}
+      <section id="gap" className="max-w-5xl mx-auto px-6 lg:px-10 py-20 lg:py-28" style={{ scrollMarginTop: "96px" }}>
+        <ChapterHeader
+          chapter="CH.03"
+          eyebrow="THE GAP"
+          align="center"
+          title="Discipline is hard to hold alone."
+          subtitle="Most trading tools stop at the chart. Decisions still depend on memory, context-switching, and self-restraint in the moment."
+          className="mb-12 sm:mb-14"
+        />
+        <div className="grid md:grid-cols-2 gap-5 sm:gap-6">
+          <ElasticCard className="space-y-5 p-6">
+            <h3 className="tp-micro-label">The typical workflow</h3>
             <ul className="space-y-3.5">
               {["Charts in one tab, AI in another, journal in a third", "Indicators re-explained on every new conversation", "Chart context resets when the tab closes", "Overtrading and revenge patterns tracked manually, if at all"].map((text, i) => (
                 <li key={i} className="flex items-start gap-3 text-[13px] text-[var(--color-text-tertiary)]">
@@ -190,8 +208,8 @@ export default function LandingPage() {
               ))}
             </ul>
           </ElasticCard>
-          <ElasticCard className="space-y-5">
-            <h3 className="text-[12px] font-semibold font-mono text-[var(--color-text-primary)] tracking-wider uppercase">With TradCopilot</h3>
+          <ElasticCard className="space-y-5 p-6" style={{ borderColor: "rgba(6,182,212,0.18)", boxShadow: "var(--shadow-glow)" }}>
+            <h3 className="tp-micro-label" style={{ color: "var(--color-accent-primary)" }}>With TradCopilot</h3>
             <ul className="space-y-3.5">
               {["Analysis, journal, and coaching in one workspace", "Persistent memory of your last 20 trades and patterns", "Chat threads logged and saved across all sessions", "Behavioral heuristics flag revenge trading inside the workspace"].map((text, i) => (
                 <li key={i} className="flex items-start gap-3 text-[13px] text-[var(--color-text-primary)]">
@@ -203,25 +221,25 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <SvgTracedLine color="rgba(148, 163, 184, 0.25)" />
-
-      {/* ━━━ WHY WE BUILT TRADCOPILOT ━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━ CH.04 THE ORIGIN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <FounderStory />
 
-      <SvgTracedLine color="rgba(148, 163, 184, 0.25)" />
-
-      {/* ━━━ FEATURES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section id="features" className="max-w-6xl mx-auto px-6 lg:px-10 py-20 lg:py-32">
-        <div className="text-center space-y-3 mb-14 sm:mb-16 animate-enter">
-          <span className="tp-eyebrow">Features</span>
-          <h2 className="tp-display text-[var(--color-text-primary)]">A complete workspace for trade preparation</h2>
-          <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-md mx-auto leading-relaxed">Analysis, journaling, and behavioral coaching — built to support consistent decision-making.</p>
-        </div>
+      {/* ━━━ CH.05 THE WORKSPACE — features + workflow ━━━━ */}
+      <section id="workspace" className="max-w-6xl mx-auto px-6 lg:px-10 py-20 lg:py-28" style={{ scrollMarginTop: "96px" }}>
+        <span id="features" aria-hidden="true" style={{ display: "block", height: 0, overflow: "hidden", scrollMarginTop: "96px" }} />
+        <ChapterHeader
+          chapter="CH.05"
+          eyebrow="THE WORKSPACE"
+          align="center"
+          title="A complete terminal for trade preparation."
+          subtitle="Analysis, journaling, and behavioral coaching — built to support consistent decision-making."
+          className="mb-12 sm:mb-14"
+        />
         <StaggerChildren className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {features.map((f, i) => (
             <StaggerChild key={i}>
-              <ElasticCard className="space-y-4 h-full">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--color-accent-primary-subtle)", color: "var(--color-accent-primary)", border: "1px solid rgba(6,182,212,0.12)" }}>
+              <ElasticCard spotlight className="space-y-4 h-full p-6">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--color-accent-primary-subtle)", color: "var(--color-accent-primary)", border: "1px solid rgba(6,182,212,0.14)" }}>
                   {f.icon}
                 </div>
                 <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">{f.title}</h3>
@@ -230,27 +248,31 @@ export default function LandingPage() {
             </StaggerChild>
           ))}
         </StaggerChildren>
+
+        <div className="mt-20 lg:mt-28">
+          <HowItWorks />
+        </div>
       </section>
 
-      <SvgTracedLine color="rgba(148, 163, 184, 0.25)" />
+      {/* ━━━ CH.06 THE INTELLIGENCE — the wow ━━━━━━━━━━━━ */}
+      <IntelligencePipeline />
 
-      {/* ━━━ HOW IT WORKS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <HowItWorks />
-
-      <SvgTracedLine color="rgba(148, 163, 184, 0.25)" />
-
-      {/* ━━━ COMPARISON ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━ CH.07 THE DIFFERENCE ━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <Comparison />
 
-      {/* ━━━ PRICING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section id="pricing" className="max-w-5xl mx-auto px-6 lg:px-10 py-20 lg:py-28 border-t border-[var(--color-border-subtle)] scroll-mt-12">
-        <div className="text-center space-y-3 mb-14 sm:mb-16 animate-enter">
-          <span className="tp-eyebrow">Pricing</span>
-          <h2 className="tp-display text-[var(--color-text-primary)]">Start free. Upgrade when you&apos;re ready.</h2>
-          <p className="text-[14px] text-[var(--color-text-secondary)] max-w-sm mx-auto leading-relaxed">No credit card to start. Cancel anytime in one click.</p>
-        </div>
+      {/* ━━━ CH.08 THE COMMITMENT — pricing + FAQ + CTA ━━━ */}
+      <section id="commitment" className="max-w-5xl mx-auto px-6 lg:px-10 py-20 lg:py-28 border-t border-[var(--color-border-subtle)] scroll-mt-20">
+        <span id="pricing" aria-hidden="true" style={{ display: "block", height: 0, overflow: "hidden", scrollMarginTop: "96px" }} />
+        <ChapterHeader
+          chapter="CH.08"
+          eyebrow="THE COMMITMENT"
+          align="center"
+          title="Start free. Upgrade when you&apos;re ready."
+          subtitle="No credit card to start. Cancel anytime in one click."
+          className="mb-12 sm:mb-14"
+        />
         <div className="grid md:grid-cols-2 gap-5 sm:gap-8 max-w-3xl mx-auto items-stretch">
-          <ElasticCard className="pricing-free-card space-y-6 flex flex-col justify-between order-2 md:order-1">
+          <ElasticCard className="pricing-free-card space-y-6 flex flex-col justify-between order-2 md:order-1 p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Free</h3>
@@ -266,7 +288,7 @@ export default function LandingPage() {
             </div>
             <Link href="/signup" className="btn-secondary w-full h-11 text-xs font-semibold justify-center">Start Free — No Card</Link>
           </ElasticCard>
-          <ElasticCard className="pricing-pro-card space-y-6 flex flex-col justify-between order-1 md:order-2" style={{ borderColor: "rgba(6,182,212,0.2)", boxShadow: "var(--shadow-glow)" }}>
+          <ElasticCard className="pricing-pro-card space-y-6 flex flex-col justify-between order-1 md:order-2 p-6" style={{ borderColor: "rgba(6,182,212,0.22)", boxShadow: "var(--shadow-glow-strong)" }}>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Pro Terminal</h3>
@@ -280,64 +302,56 @@ export default function LandingPage() {
                 ))}
               </ul>
             </div>
-            <Link href="/signup?plan=pro" className="btn-primary w-full h-11 text-xs font-semibold justify-center">Start 7-Day Pro Trial</Link>
+            <Link href="/signup?plan=pro" className="btn-primary-lg w-full h-11 text-[13px]">Start 7-Day Pro Trial</Link>
           </ElasticCard>
         </div>
       </section>
 
       {/* ━━━ FAQ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="max-w-3xl mx-auto px-6 lg:px-10 py-20 lg:py-28 border-t border-[var(--color-border-subtle)]">
-        <div className="text-center space-y-3 mb-12 animate-enter">
+      <section className="max-w-3xl mx-auto px-6 lg:px-10 py-16 lg:py-20">
+        <div className="text-center space-y-3 mb-10">
           <span className="tp-eyebrow">FAQ</span>
-          <h2 className="tp-display text-[var(--color-text-primary)]">Frequently Asked Questions</h2>
+          <h2 className="tp-display-sm text-[var(--color-text-primary)]">Frequently Asked Questions</h2>
         </div>
         <Suspense fallback={<div className="h-64" />}>
           <FaqAccordion />
         </Suspense>
       </section>
 
-      {/* ━━━ FINAL CTA BAND ━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="border-t border-[var(--color-border-default)]" style={{ background: "var(--color-bg-secondary)" }}>
-        <div className="max-w-3xl mx-auto px-6 lg:px-10 py-16 sm:py-20 text-center space-y-5">
-          <h2 className="tp-display-sm text-[var(--color-text-primary)]">
+      {/* ━━━ FINAL CTA BAND ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <section className="border-t border-[var(--color-border-default)] relative overflow-hidden" style={{ background: "var(--color-bg-secondary)" }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(50% 80% at 50% 0%, rgba(6,182,212,0.12), transparent 70%)" }} aria-hidden="true" />
+        <div className="max-w-3xl mx-auto px-6 lg:px-10 py-20 sm:py-24 text-center space-y-5 relative">
+          <h2 className="tp-display-sm text-[var(--color-text-primary)] glow-text">
             Bring discipline to your next trade.
           </h2>
           <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-md mx-auto leading-relaxed">
             Two free AI scans. No credit card required. No commitment — keep using your existing charting platform alongside it.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Link
-              href="/signup"
-              className="group h-11 px-6 rounded-xl bg-[var(--color-text-primary)] hover:opacity-90 text-[var(--color-bg-primary)] text-[13px] font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-black/30 active:scale-[0.98] transition-all duration-150"
-            >
+            <Link href="/signup" className="group btn-primary-lg">
               <span>Start Free — No Card Required</span>
-              <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+              <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
-            <Link
-              href="/login"
-              className="h-11 px-5 rounded-xl border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] text-[13px] font-semibold inline-flex items-center justify-center transition-all"
-            >
+            <Link href="/login" className="h-12 px-5 rounded-xl border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] text-[13px] font-semibold inline-flex items-center justify-center transition-all">
               Sign in
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {/* ━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <footer className="border-t border-[var(--color-border-default)] py-10 sm:py-12" style={{ background: "var(--color-bg-secondary)" }}>
         <div className="footer-inner max-w-6xl mx-auto px-5 sm:px-6 lg:px-10 space-y-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center rounded-md w-6 h-6" style={{ background: "var(--color-accent-primary)" }}>
-                <TrendingUp size={13} color="#09090B" strokeWidth={2.5} />
+                <TrendingUp size={13} color="#030712" strokeWidth={2.5} />
               </div>
               <span className="text-sm font-semibold tracking-tight text-[var(--color-text-primary)]">TradCopilot</span>
               <span className="text-[10px] font-mono text-[var(--color-text-tertiary)] border border-[var(--color-border-default)] rounded px-1.5 py-0.5 ml-1">Read-only · No broker access</span>
             </div>
-            <a
-              href="mailto:hello@tradcopilot.com"
-              className="inline-flex items-center gap-1.5 text-[12px] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
-            >
+            <a href="mailto:hello@tradcopilot.com" className="inline-flex items-center gap-1.5 text-[12px] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors">
               <Mail size={13} />
               hello@tradcopilot.com
             </a>
@@ -359,6 +373,8 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <MobileStickyCta />
     </div>
   );
 }

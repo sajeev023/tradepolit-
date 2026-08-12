@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatedSection } from "./scroll-animator";
+import { ChapterHeader } from "./chapter-header";
 
 const milestones = [
   {
@@ -27,16 +28,16 @@ const milestones = [
 
 export function FounderStory() {
   return (
-    <section className="max-w-4xl mx-auto px-6 lg:px-10 py-20 lg:py-32">
+    <section id="origin" className="max-w-4xl mx-auto px-6 lg:px-10 py-20 lg:py-32" style={{ scrollMarginTop: "96px" }}>
       {/* Section header */}
-      <AnimatedSection className="text-center space-y-4 mb-16 sm:mb-20">
-        <span className="section-eyebrow">Why We Built TradCopilot</span>
-        <h2 className="tp-display text-[var(--color-text-primary)]">
-          Built from trading frustration, not a trend
-        </h2>
-        <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-lg mx-auto leading-relaxed">
-          TradCopilot didn&apos;t start because AI became popular. It started because one of us spends hours every day doing analysis that an AI copilot could support — without replacing the trader.
-        </p>
+      <AnimatedSection className="mb-16 sm:mb-20">
+        <ChapterHeader
+          chapter="CH.04"
+          eyebrow="ORIGIN"
+          align="center"
+          title="Built from trading frustration, not a trend"
+          subtitle="TradCopilot didn&apos;t start because AI became popular. It started because one of us spends hours every day doing analysis that an AI copilot could support — without replacing the trader."
+        />
       </AnimatedSection>
 
       {/* Founders */}

@@ -76,7 +76,7 @@
      (e.g. before hydration / in isolation tests). */
   --font-sans: var(--font-inter, "Inter"), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: var(--font-display-font, "Space Grotesk"), var(--font-inter, "Inter"), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+  --font-mono: var(--font-mono-font, "JetBrains Mono"), ui-monospace, "Cascadia Code", monospace;
 
   /* ── Layout Spacing ── */
   --spacing-sidebar: 220px;
@@ -1273,4 +1273,432 @@ iframe {
     transform: translateX(-50%) !important;
     max-width: calc(100vw - 32px) !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NEXT-LEVEL — CINEMATIC TERMINAL SYSTEM
+   Tokens + utilities for the living-terminal hero, the AI
+   intelligence pipeline, and the continuous narrative spine.
+   All GPU-friendly (transform/opacity), no new heavy libs.
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  /* Perspective grid — the "trading OS emerging from a grid field" */
+  --color-grid-line: rgba(6, 182, 212, 0.06);
+  --color-grid-line-strong: rgba(6, 182, 212, 0.12);
+  /* Instrument grid inside the terminal chart pane */
+  --color-instrument-grid: rgba(255, 255, 255, 0.035);
+
+  /* Narrative spine — the single continuous thread through 8 chapters */
+  --color-spine: rgba(6, 182, 212, 0.55);
+  --color-spine-idle: rgba(255, 255, 255, 0.06);
+
+  /* Stronger glows for the hero terminal + the resolved INSIGHT stage */
+  --shadow-glow-strong: 0 0 0 1px rgba(6, 182, 212, 0.28), 0 0 48px -8px rgba(6, 182, 212, 0.45);
+  --shadow-terminal: 0 28px 80px -28px rgba(0, 0, 0, 0.92), 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 60px -20px rgba(6, 182, 212, 0.22);
+
+  /* Pipeline travel light gradient */
+  --color-accent-rail: linear-gradient(90deg, transparent, var(--color-accent-primary), transparent);
+
+  /* Cinematic easing */
+  --ease-cinema: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Perspective hero grid ──
+   A 1px cyan grid tilted in 3D, dissolved at the edges by a radial
+   mask and fading to black at the bottom. Pure CSS, one element. */
+.hero-grid {
+  position: absolute;
+  inset: -20% -10% 0 -10%;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--color-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(1600px) rotateX(62deg) translateY(8%);
+  transform-origin: center top;
+  -webkit-mask-image: radial-gradient(62% 52% at 50% 26%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(62% 52% at 50% 26%, #000 0%, transparent 78%);
+  opacity: 0.7;
+  z-index: 0;
+}
+.hero-grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, var(--background) 96%);
+  pointer-events: none;
+}
+
+/* ── Instrument grid (inside terminal chart panes) ── */
+.terminal-grid {
+  background-image:
+    linear-gradient(var(--color-instrument-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-instrument-grid) 1px, transparent 1px);
+  background-size: 40px 32px;
+}
+
+/* ── Terminal chrome — the hero product window ── */
+.terminal-chrome {
+  position: relative;
+  background: rgba(3, 7, 18, 0.9);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-terminal);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  overflow: hidden;
+}
+/* Gradient edge lighting inherited from .card::before pattern, tuned brighter */
+.terminal-chrome::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.02) 30%, rgba(6, 182, 212, 0.22) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Terminal pane — darker inset surface for chart / copilot regions ── */
+.terminal-pane {
+  background: rgba(3, 7, 18, 0.62);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Chapter lockup — the consistent 3-line section header ── */
+.chapter-lockup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.chapter-numeral {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--color-text-quaternary);
+  text-transform: uppercase;
+}
+
+/* ── Micro label — terminal-grade uppercase mono captions ── */
+.tp-micro-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-quaternary);
+}
+
+/* ── Ping dot — the reusable "live" telemetry marker ── */
+.ping-dot {
+  position: relative;
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  flex-shrink: 0;
+}
+.ping-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  animation: ping-ring 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ping-ring {
+  0% { transform: scale(1); opacity: 0.7; }
+  75%, 100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* ── Hero CTA — the page's single strongest action ──
+   Cyan gradient (product identity), NOT white. Larger, glow on hover. */
+.btn-primary-lg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
+  color: #030712;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(6, 182, 212, 0.22), 0 8px 22px -8px rgba(6, 182, 212, 0.5);
+  transition:
+    transform var(--duration-micro) ease,
+    box-shadow var(--duration-fast) ease,
+    background var(--duration-fast) ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary-lg:hover {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.3), 0 14px 30px -8px rgba(6, 182, 212, 0.6), 0 0 0 1px rgba(6, 182, 212, 0.4);
+  transform: translateY(-1px);
+}
+.btn-primary-lg:active { transform: scale(0.98); }
+/* Sheen sweep on hover — a diagonal light translating across once */
+.btn-primary-lg::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.6s var(--ease-cinema);
+  pointer-events: none;
+}
+.btn-primary-lg:hover::after { left: 120%; }
+
+/* ── Telemetry strip — thin live-data band ── */
+.telemetry-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  height: 2.25rem;
+  border-top: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  overflow: hidden;
+}
+.telemetry-strip .ts-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--color-border-default);
+  flex-shrink: 0;
+}
+
+/* ── Cursor spotlight — premium card hover illumination ──
+   Reads --mx/--my set by JS onMouseMove; falls back to center.
+   Desktop + fine-pointer only (gated by media query below). */
+.cursor-spotlight {
+  position: relative;
+  isolation: isolate;
+}
+.cursor-spotlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgba(6, 182, 212, 0.1), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--duration-normal) ease;
+  pointer-events: none;
+}
+.cursor-spotlight:hover::after { opacity: 1; }
+.cursor-spotlight > * { position: relative; z-index: 1; }
+
+/* ── Price tick flash — institutional up/down tick feedback ── */
+.tick-flash-up { animation: tick-flash-up 0.32s ease-out; }
+.tick-flash-down { animation: tick-flash-down 0.32s ease-out; }
+@keyframes tick-flash-up {
+  0% { background-color: var(--color-profit-bg); }
+  100% { background-color: transparent; }
+}
+@keyframes tick-flash-down {
+  0% { background-color: var(--color-loss-bg); }
+  100% { background-color: transparent; }
+}
+
+/* ── Narrative spine — fixed vertical thread with chapter ticks ── */
+.narrative-spine {
+  position: fixed;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  pointer-events: auto;
+}
+.narrative-spine .spine-track {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--color-spine-idle);
+}
+.narrative-spine .spine-fill {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: top center;
+  background: linear-gradient(180deg, var(--color-accent-primary), rgba(6, 182, 212, 0.2));
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+}
+.narrative-spine .spine-tick {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--background);
+  border: 1px solid var(--color-border-strong);
+  cursor: pointer;
+  transition: border-color var(--duration-normal) ease, box-shadow var(--duration-normal) ease;
+}
+.narrative-spine .spine-tick::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-text-quaternary);
+  transition: background var(--duration-normal) ease;
+}
+.narrative-spine .spine-tick.active {
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.55);
+}
+.narrative-spine .spine-tick.active::after {
+  background: var(--color-accent-primary);
+}
+.narrative-spine .spine-tick:hover { border-color: var(--color-accent-primary); }
+
+/* ── Pipeline node activation state ── */
+.pipeline-node {
+  position: relative;
+  transition: border-color var(--duration-normal) ease, box-shadow var(--duration-normal) ease, background var(--duration-normal) ease, opacity var(--duration-slow) ease;
+}
+.pipeline-node[data-active="true"] {
+  border-color: var(--color-border-active);
+  background: var(--color-bg-active);
+  box-shadow: var(--shadow-glow);
+}
+.pipeline-node[data-active="true"] .pipeline-node-index {
+  color: var(--color-accent-primary);
+}
+
+/* ── Market pulse meter (fear & greed) ── */
+.pulse-meter-track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f43f5e 0%, #f59e0b 35%, #facc15 50%, #a3e635 65%, #10b981 100%);
+  overflow: hidden;
+}
+.pulse-meter-mask {
+  position: absolute;
+  inset: 0;
+  background: var(--background);
+  opacity: 0.55;
+}
+.pulse-meter-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12), 0 2px 6px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+  transition: left var(--duration-layout) var(--ease-cinema);
+}
+
+/* ── Bento helper for asymmetric features grid ── */
+@media (min-width: 1024px) {
+  .bento-span-2 { grid-column: span 2; }
+}
+
+/* ── Glow text — subtle cyan bloom for hero emphasis ── */
+.glow-text {
+  text-shadow: 0 0 28px rgba(6, 182, 212, 0.28);
+}
+
+/* ── Mobile chapter chip (replaces fixed spine <lg) ── */
+.chapter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-quaternary);
+}
+
+/* ── Desktop-only cursor spotlight (fine pointer, hover capable) ── */
+@media (hover: hover) and (pointer: fine) {
+  .cursor-spotlight { /* enabled */ }
+}
+@media (pointer: coarse), (not (hover: hover)) {
+  .cursor-spotlight::after { display: none; }
+  .narrative-spine { display: none; }
+}
+
+/* ── Hide narrative spine below xl so it never crowds content ── */
+@media (max-width: 1279px) {
+  .narrative-spine { display: none; }
+}
+
+/* ── Hero lockup — cinematic display tuning (GPU-safe, no layout shift) ── */
+.hero-section { isolation: isolate; }
+.hero-headline {
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  font-feature-settings: "ss01", "cv01";
+}
+.hero-subtext { max-width: 46ch; }
+.hero-cta-row { min-height: 0; }
+@keyframes hero-rise {
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.hero-section .animate-enter,
+.hero-section .animate-enter-delay-1,
+.hero-section .animate-enter-delay-2,
+.hero-section .animate-enter-delay-3,
+.hero-section .animate-enter-delay-4 {
+  animation-name: hero-rise;
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-section .animate-enter,
+  .hero-section .animate-enter-delay-1,
+  .hero-section .animate-enter-delay-2,
+  .hero-section .animate-enter-delay-3,
+  .hero-section .animate-enter-delay-4 {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── Reduced motion: neutralize all decorative motion added above ── */
+@media (prefers-reduced-motion: reduce) {
+  .ping-dot::after { animation: none !important; opacity: 0 !important; }
+  .btn-primary-lg::after { display: none !important; }
+  .tick-flash-up, .tick-flash-down { animation: none !important; }
+  .cursor-spotlight::after { display: none !important; }
+  .hero-grid { transform: none !important; opacity: 0.35 !important; }
+  .pulse-meter-thumb { transition: none !important; }
+  .spine-fill { transform: translateX(-50%) scaleY(1) !important; }
 }

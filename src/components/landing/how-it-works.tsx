@@ -27,11 +27,11 @@ export function HowItWorks() {
   return (
     <section className="max-w-5xl mx-auto px-6 lg:px-10 py-20 lg:py-28">
       <AnimatedSection className="text-center space-y-3 mb-14 sm:mb-16">
-        <span className="section-eyebrow">How it works</span>
-        <h2 className="text-[26px] sm:text-[36px] font-bold tracking-tight text-white">
+        <span className="section-eyebrow">Your workflow</span>
+        <h2 className="tp-display text-[var(--color-text-primary)]">
           From chart to conviction in three steps
         </h2>
-        <p className="text-[14px] text-zinc-400 max-w-md mx-auto leading-relaxed">
+        <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-md mx-auto leading-relaxed">
           No spreads to configure. No 50-tab setup. Just the answer you&apos;d ask a senior trader for.
         </p>
       </AnimatedSection>

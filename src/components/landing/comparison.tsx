@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { AnimatedSection } from "./scroll-animator";
+import { ChapterHeader } from "./chapter-header";
 
 // Factual feature presence matrix — no superiority claims, no checkmark/X
 // "we win" framing. Each row is a verifiable capability of each platform.
@@ -32,15 +33,15 @@ function Cell({ on }: { on: boolean }) {
 
 export function Comparison() {
   return (
-    <section className="max-w-4xl mx-auto px-6 lg:px-10 py-20 lg:py-28">
-      <AnimatedSection className="text-center space-y-3 mb-12 sm:mb-14">
-        <span className="section-eyebrow">How it compares</span>
-        <h2 className="tp-display text-[var(--color-text-primary)]">
-          A factual look at what each tool offers
-        </h2>
-        <p className="text-[14px] text-[var(--color-text-tertiary)] max-w-md mx-auto leading-relaxed">
-          TradCopilot doesn&apos;t replace your charting platform — it adds an analysis, journaling, and coaching layer on top.
-        </p>
+    <section id="difference" className="max-w-4xl mx-auto px-6 lg:px-10 py-20 lg:py-28" style={{ scrollMarginTop: "96px" }}>
+      <AnimatedSection className="text-center mb-12 sm:mb-14">
+        <ChapterHeader
+          chapter="CH.07"
+          eyebrow="DIFFERENCE"
+          align="center"
+          title="A factual look at what each tool offers"
+          subtitle="TradCopilot doesn&apos;t replace your charting platform — it adds an analysis, journaling, and coaching layer on top."
+        />
       </AnimatedSection>
 
       <AnimatedSection delay={150}>
