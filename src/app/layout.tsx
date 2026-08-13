@@ -4,7 +4,6 @@ import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SmoothScrollProvider } from "@/components/ui/smooth-scroll-provider";
-import { LiquidCursor } from "@/components/ui/liquid-cursor";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GlobalLoader } from "@/components/GlobalLoader";
 import { OfflineBanner } from "@/components/OfflineBanner";
@@ -116,7 +115,6 @@ export default function RootLayout({
             <SpeedInsights />
             <MicrosoftClarity />
             <SmoothScrollProvider>
-              <LiquidCursor />
               {children}
             </SmoothScrollProvider>
           </Providers>
