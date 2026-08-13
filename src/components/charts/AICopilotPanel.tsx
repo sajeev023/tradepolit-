@@ -213,7 +213,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
             <div className="relative flex items-center justify-center w-6 h-6 rounded-md bg-[var(--color-accent-primary-muted)] shrink-0" style={{ border: "1px solid rgba(6,182,212,0.12)" }}>
               <BrainCircuit size={13} style={{ color: "var(--color-accent-primary)" }} />
             </div>
-            <span className="text-[13px] font-bold tracking-tight text-[var(--color-text-primary)]">TradCopilot</span>
+            <span className="text-[13px] font-bold tracking-tight text-[var(--color-text-primary)]" style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>TradCopilot</span>
             {/* Live status — honest label, pulses only while analyzing */}
             <span className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide" style={{ color: aiStatus.color }}>
               <span className="relative flex h-1.5 w-1.5 shrink-0">
@@ -274,7 +274,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
           {/* Section label */}
           <div className="flex items-center gap-1.5 mb-2">
             <Target size={10} className="text-[var(--color-accent-primary)]" />
-            <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-tertiary)]">Market Verdict</span>
+            <span className="text-[9px] font-medium font-mono uppercase tracking-[0.14em] text-[var(--color-text-tertiary)]">Market Verdict</span>
             {hasResult && (
               <span className="text-[8px] font-mono text-[var(--color-text-quaternary)] ml-auto">
                 {analysisData.cached ? "cached" : "live"}
@@ -292,7 +292,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
                 className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] relative overflow-hidden"
               >
                 <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r" style={{ backgroundColor: biasColor(bias) }} />
-                <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold">Bias</span>
+                <span className="text-[9px] font-mono uppercase tracking-[0.12em] text-[var(--color-text-tertiary)] font-bold">Bias</span>
                 <span className="font-bold text-sm" style={{ color: biasColor(bias) }}>{bias}</span>
               </motion.div>
               <div className="grid grid-cols-2 gap-2">
@@ -302,7 +302,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
                   className="flex flex-col items-center p-2 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)]"
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold">Setup</span>
+                  <span className="text-[9px] font-mono uppercase tracking-[0.12em] text-[var(--color-text-tertiary)] font-bold">Setup</span>
                   <span className="font-bold text-xs text-[var(--color-text-primary)] mt-0.5">{setup}</span>
                 </motion.div>
                 <motion.div
@@ -311,7 +311,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
                   className="flex flex-col items-center p-2 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)]"
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold mb-0.5">Confidence</span>
+                  <span className="text-[9px] font-mono uppercase tracking-[0.12em] text-[var(--color-text-tertiary)] font-bold mb-0.5">Confidence</span>
                   <ConfidenceGauge value={typeof confidence === "string" ? confidence : "—"} delay={0.15} />
                 </motion.div>
               </div>
@@ -320,7 +320,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
             /* Honest placeholder — same slot, muted. Thinking dots while analyzing. */
             <div className="space-y-2">
               <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] opacity-60">
-                <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold">Bias</span>
+                <span className="text-[9px] font-mono uppercase tracking-[0.12em] text-[var(--color-text-tertiary)] font-bold">Bias</span>
                 <div className="h-3.5 flex items-center">
                   {isPending ? (
                     <span className="flex items-center gap-1"><span className="thinking-dot" /><span className="thinking-dot" /><span className="thinking-dot" /></span>
@@ -332,7 +332,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
               <div className="grid grid-cols-2 gap-2">
                 {["Setup", "Confidence"].map((label) => (
                   <div key={label} className="flex flex-col items-center p-2 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] opacity-60">
-                    <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold">{label}</span>
+                    <span className="text-[9px] font-mono uppercase tracking-[0.12em] text-[var(--color-text-tertiary)] font-bold">{label}</span>
                     <div className="h-3.5 flex items-center mt-0.5">
                       {isPending ? (
                         <span className="flex items-center gap-1"><span className="thinking-dot" /><span className="thinking-dot" /><span className="thinking-dot" /></span>
@@ -370,7 +370,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
               Launch TradCopilot AI to scan indicators, levels, and momentum for this chart.
             </p>
             {!isPro && analysisLimit !== null && atLimit ? (
-              <button onClick={onUpgrade} className="btn-primary bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs w-full max-w-[180px] shadow-md cursor-pointer font-bold flex items-center justify-center gap-1.5">
+              <button onClick={onUpgrade} className="btn-primary text-xs w-full max-w-[180px] cursor-pointer font-bold flex items-center justify-center gap-1.5">
                 <Zap size={13} className="fill-zinc-950 text-zinc-950" /> Upgrade to Pro
               </button>
             ) : (
@@ -476,7 +476,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
             {/* Verified market telemetry fallback */}
             {liveIndicators && (liveIndicators.support || liveIndicators.resistance) && (
               <div className="rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)] p-3 space-y-2">
-                <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-tertiary)] flex items-center gap-1">
+                <span className="text-[9px] font-medium font-mono uppercase tracking-[0.14em] text-[var(--color-text-tertiary)] flex items-center gap-1">
                   <Activity size={9} className="text-[var(--color-accent-primary)]" /> Verified Levels
                 </span>
                 <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
@@ -507,7 +507,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
               >
                 <div className="flex items-center gap-1.5 mb-2">
                   <Gauge size={10} className="text-[var(--color-accent-primary)]" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-tertiary)]">Key Levels</span>
+                  <span className="text-[9px] font-medium font-mono uppercase tracking-[0.14em] text-[var(--color-text-tertiary)]">Key Levels</span>
                 </div>
                 <div className="grid grid-cols-3 gap-1">
                   <LevelTile label="Support" value={formatMetricNumber(supportVal)} color="profit" source={analysisData.sourceMetadata?.supportSource} delay={0.12} />
@@ -526,7 +526,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
                 className="pl-3 border-l-2"
                 style={{ borderColor: "rgba(6,182,212,0.4)" }}
               >
-                <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-text-tertiary)] flex items-center gap-1.5 mb-1">
+                <span className="text-[9px] font-mono uppercase tracking-[0.12em] font-bold text-[var(--color-text-tertiary)] flex items-center gap-1.5 mb-1">
                   <Target size={10} className="text-[var(--color-accent-primary)]" /> Why It Matters
                 </span>
                 <p className="text-[11px] leading-relaxed text-[var(--color-text-secondary)]">{analysisData.whyItMatters}</p>
@@ -542,7 +542,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
                 className="pl-3 border-l-2"
                 style={{ borderColor: "rgba(6,182,212,0.4)" }}
               >
-                <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-text-tertiary)] flex items-center gap-1.5 mb-1">
+                <span className="text-[9px] font-mono uppercase tracking-[0.12em] font-bold text-[var(--color-text-tertiary)] flex items-center gap-1.5 mb-1">
                   <Activity size={10} className="text-[var(--color-accent-primary)]" /> Near-Term Scenario
                 </span>
                 <p className="text-[11px] leading-relaxed text-[var(--color-text-secondary)]">{analysisData.shortTermScenario}</p>
@@ -684,7 +684,7 @@ export function AICopilotPanel(props: AICopilotPanelProps) {
         <div className="px-3.5 pt-2 pb-1.5 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)] shrink-0">
           <div className="flex items-center gap-1.5 mb-1.5">
             <Sparkles size={9} className="text-[var(--color-accent-primary)]" />
-            <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-tertiary)]">Suggested</span>
+            <span className="text-[9px] font-medium font-mono uppercase tracking-[0.14em] text-[var(--color-text-tertiary)]">Suggested</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {FOLLOW_UPS.map((q) => (

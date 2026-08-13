@@ -92,7 +92,8 @@ export default function AdminPage() {
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        <p className="tp-eyebrow mb-2">ADMIN · OPERATIONS</p>
+        <h1 className="tp-display-sm flex items-center gap-2" style={{ color: "var(--color-text-primary)" }}>
           Admin Operations Dashboard
         </h1>
         <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>

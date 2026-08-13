@@ -281,7 +281,8 @@ function JournalPageContent() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>
+          <p className="tp-eyebrow mb-2">JOURNAL · HISTORY</p>
+          <h1 className="tp-display-sm" style={{ color: "var(--color-text-primary)" }}>
             Trade Journal
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>

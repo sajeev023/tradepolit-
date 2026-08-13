@@ -270,7 +270,8 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="animate-fade-in flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+          <p className="tp-eyebrow mb-2">ACCOUNT · SETTINGS</p>
+          <h1 className="tp-display-sm" style={{ color: "var(--color-text-primary)" }}>
             Settings & Profile
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>

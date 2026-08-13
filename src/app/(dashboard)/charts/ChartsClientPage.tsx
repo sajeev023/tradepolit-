@@ -1030,13 +1030,26 @@ Timestamp: ${new Date().toISOString()}
 
       {/* ── Header & Live Price Bar ────────────────────────────────────────────── */}
       <div className="flex flex-row items-center justify-between gap-2 shrink-0">
-        <div className="flex items-center gap-2">
-          <h1 className="tp-eyebrow hidden lg:block">
-            Live Market Center
-          </h1>
-          <p className="text-[10px] hidden lg:block text-[var(--color-text-tertiary)] leading-none">
-            Real-time interactive charting and context-aware AI day-trading copilot.
-          </p>
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Compact editorial header — mono eyebrow + display-font title.
+              Kept tight (2 lines) because this is a height-constrained
+              workspace, not a scrollable content page. */}
+          <div className="hidden lg:flex flex-col gap-1 min-w-0">
+            <p className="tp-eyebrow">MARKETS · LIVE CENTER</p>
+            <h1
+              className="truncate"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 600,
+                fontSize: "1.15rem",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.1,
+                color: "var(--color-text-primary)",
+              }}
+            >
+              Live Market Center
+            </h1>
+          </div>
         </div>
 
         <LivePriceCard
@@ -1080,13 +1093,21 @@ Timestamp: ${new Date().toISOString()}
         }}>
         <div id="watchlist-panel" className={`flex flex-col gap-4 overflow-y-auto pr-1 custom-scrollbar ${mobileTab === "watchlist" ? "flex" : "hidden lg:flex"}`}>
           <div className="card p-2.5 flex-1 flex flex-col min-h-[200px]">
-            <h2 className="text-[9px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: "var(--color-text-tertiary)" }}>
+            <h2
+              className="text-[9px] font-medium uppercase tracking-[0.14em] mb-2 flex items-center gap-1.5"
+              style={{ color: "var(--color-text-tertiary)", fontFamily: "var(--font-mono)" }}
+            >
               <Eye size={10} className="text-[var(--color-accent-primary)]" /> Watchlist
             </h2>
             <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
               {SYMBOLS.map(group => (
                 <div key={group.group} className="space-y-0.5">
-                  <h3 className="text-[8px] font-bold tracking-widest uppercase text-[var(--color-text-quaternary)] select-none">{group.group}</h3>
+                  <h3
+                    className="text-[8px] font-medium tracking-[0.14em] uppercase text-[var(--color-text-quaternary)] select-none"
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    {group.group}
+                  </h3>
                   <div className="flex flex-col gap-0.5">
                     {group.items.map(item => {
                       const active = item === selectedSymbol;

@@ -373,20 +373,35 @@ function LoginPageContent() {
       >
         {success && <SuccessOverlay />}
 
-        {/* Header */}
+        {/* Header — editorial eyebrow + display headline */}
         <div style={{ marginBottom: 28 }}>
+          <p
+            style={{
+              fontSize: 11,
+              fontWeight: 500,
+              fontFamily: "var(--font-mono)",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--color-accent-primary)",
+              margin: "0 0 10px",
+            }}
+          >
+            Sign In
+          </p>
           <h1
             style={{
-              fontSize: 22,
-              fontWeight: 700,
+              fontSize: 30,
+              fontWeight: 600,
               letterSpacing: "-0.03em",
-              color: "#FAFAFA",
-              margin: "0 0 6px",
+              fontFamily: "var(--font-display)",
+              color: "var(--color-text-primary)",
+              margin: "0 0 8px",
+              lineHeight: 1.05,
             }}
           >
             Welcome back
           </h1>
-          <p style={{ fontSize: 13, color: "#71717A", margin: 0 }}>
+          <p style={{ fontSize: 13, color: "var(--color-text-tertiary)", margin: 0 }}>
             Sign in to your TradCopilot account
           </p>
         </div>

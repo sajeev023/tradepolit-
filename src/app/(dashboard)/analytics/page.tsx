@@ -138,7 +138,7 @@ export default function AnalyticsPage() {
     return (
       <div className="flex flex-col gap-6 max-w-5xl mx-auto">
         <div>
-          <h1 className="text-2xl font-bold text-white">Performance Analytics</h1>
+          <h1 className="tp-display-sm" style={{ color: "var(--color-text-primary)" }}>Performance Analytics</h1>
           <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
             We couldn&apos;t load your performance data.
           </p>
@@ -185,7 +185,8 @@ export default function AnalyticsPage() {
     return (
       <div className="flex flex-col gap-6 max-w-5xl mx-auto animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+          <p className="tp-eyebrow mb-2">ANALYTICS · PERFORMANCE</p>
+          <h1 className="tp-display-sm" style={{ color: "var(--color-text-primary)" }}>
             Performance Analytics
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
@@ -222,7 +223,8 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+          <p className="tp-eyebrow mb-2">ANALYTICS · PERFORMANCE</p>
+          <h1 className="tp-display-sm" style={{ color: "var(--color-text-primary)" }}>
             Performance Analytics
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>

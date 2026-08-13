@@ -128,7 +128,8 @@ export default function MarketPulsePage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+          <p className="tp-eyebrow mb-2">MARKETS · PULSE</p>
+          <h1 className="tp-display-sm" style={{ color: "var(--color-text-primary)" }}>
             Market Pulse
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>

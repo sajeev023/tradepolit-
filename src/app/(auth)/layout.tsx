@@ -165,7 +165,7 @@ function TrustBadge() {
           animation: "pulse-dot 2s ease infinite",
         }}
       />
-      <span style={{ fontSize: 12, fontWeight: 500, color: "var(--color-accent-primary)", letterSpacing: "0.02em" }}>
+      <span style={{ fontSize: 11, fontWeight: 500, color: "var(--color-accent-primary)", fontFamily: "var(--font-mono)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
         Early Access · Free during beta
       </span>
     </div>
@@ -318,7 +318,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 fontSize: 15,
                 fontWeight: 600,
                 color: "#FAFAFA",
-                letterSpacing: "-0.015em",
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.02em",
               }}
             >
               TradCopilot
@@ -331,10 +332,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
             <h2
               style={{
-                fontSize: 36,
-                fontWeight: 700,
-                lineHeight: 1.1,
+                fontSize: 42,
+                fontWeight: 600,
+                lineHeight: 1.05,
                 letterSpacing: "-0.035em",
+                fontFamily: "var(--font-display)",
                 color: "var(--color-text-primary)",
                 margin: "0 0 16px",
               }}

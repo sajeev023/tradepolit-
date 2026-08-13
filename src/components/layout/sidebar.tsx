@@ -214,7 +214,7 @@ export function Sidebar() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.12, delay: 0.08 }}
                 className="text-[14px] font-semibold whitespace-nowrap text-[var(--color-text-primary)]"
-                style={{ letterSpacing: "-0.01em" }}
+                style={{ letterSpacing: "-0.02em", fontFamily: "var(--font-display)" }}
               >
                 TradCopilot
               </motion.span>
@@ -231,7 +231,10 @@ export function Sidebar() {
               )}
 
               {!isCollapsed && (
-                <div className="px-3 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-quaternary)] select-none">
+                <div
+                  className="px-3 pb-1.5 pt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-quaternary)] select-none"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
                   {section.title}
                 </div>
               )}

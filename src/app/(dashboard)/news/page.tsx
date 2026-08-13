@@ -180,9 +180,9 @@ export default function NewsPage() {
         <div>
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: "var(--color-profit)" }} />
-            <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "var(--color-profit)" }}>Live Wire Feed</span>
+            <span className="text-[10px] uppercase font-medium font-mono tracking-[0.14em]" style={{ color: "var(--color-profit)" }}>Live Wire Feed</span>
           </div>
-          <h1 className="text-2xl font-black tracking-tight mt-1" style={{ color: "var(--color-text-primary)" }}>
+          <h1 className="tp-display-sm mt-1" style={{ color: "var(--color-text-primary)" }}>
             Market Intelligence Terminal
           </h1>
           <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>

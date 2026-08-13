@@ -252,14 +252,17 @@ body {
   z-index: 1;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03) 28%, rgba(6, 182, 212, 0.12) 100%);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02) 30%, rgba(6, 182, 212, 0.05) 100%);
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
   pointer-events: none;
-  opacity: 0.65;
+  /* Restrained borders: the edge reads as an architectural hairline, not a
+     glow. Base intensity is low; the cyan accent surfaces only on hover via
+     .card-interactive. Keeps depth (lit-from-above sheen) without bloom. */
+  opacity: 0.42;
   transition: opacity var(--duration-normal) ease;
 }
 
@@ -268,7 +271,7 @@ body {
 }
 
 .card:hover::before {
-  opacity: 1;
+  opacity: 0.7;
 }
 
 .card-interactive {
@@ -285,7 +288,7 @@ body {
 }
 
 .card-interactive:hover::before {
-  opacity: 1;
+  opacity: 0.75;
 }
 
 .card-interactive:active {
@@ -327,14 +330,16 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* Section eyebrow — used above section headings */
+/* Section eyebrow — used above section headings. Mono technical label,
+   consistent with .tp-eyebrow so the whole app speaks one label language. */
 .section-eyebrow {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-accent-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -363,20 +368,26 @@ body {
 .tp-display-sm {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.6rem);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  /* Editorial confidence: route page titles read as confident display headlines,
+     not generic H2s. Bigger scale, tighter tracking, tighter leading — the
+     oversized-headline + tiny-mono-eyebrow hierarchy does the visual work. */
+  font-size: clamp(1.5rem, 1.15rem + 1.4vw, 2.25rem);
+  letter-spacing: -0.025em;
+  line-height: 1.06;
   color: var(--color-text-primary);
 }
 
-/* Eyebrow — crisp metadata label above headings */
+/* Eyebrow — technical spec label above headings. Mono so it reads as a
+   machine/financial label (the editorial "tiny technical metadata" layer),
+   not a styled sans tag. Pairs with the oversized display headline below it. */
 .tp-eyebrow {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-accent-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Mono stat — tabular numerics for prices / metrics */
@@ -384,6 +395,39 @@ body {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
+}
+
+/* Metadata — the tiny technical layer that pairs with oversized headlines:
+   timestamps, counts, IDs, status stamps. Mono, 11px, secondary, tabular. */
+.tp-metadata {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+}
+
+/* Page header rhythm — the editorial hierarchy that does the visual work on
+   every route: a mono eyebrow with a leading accent hairline, an oversized
+   display headline, and a tiny mono metadata line. Opt-in wrapper; routes
+   place .tp-eyebrow + .tp-display-sm + .tp-metadata inside it. */
+.tp-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tp-page-header > .tp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.tp-page-header > .tp-eyebrow::before {
+  content: "";
+  width: 20px;
+  height: 1px;
+  background: var(--color-accent-primary);
+  opacity: 0.7;
+  flex-shrink: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -406,7 +450,9 @@ body {
   color: #030712;
   border: none;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(6, 182, 212, 0.20), 0 6px 16px -6px rgba(6, 182, 212, 0.45);
+  /* Restrained glow: a tight, low-opacity cyan lift instead of a bloom. The
+     gradient carries the identity; the shadow just grounds it. */
+  box-shadow: 0 1px 2px rgba(6, 182, 212, 0.16), 0 4px 12px -6px rgba(6, 182, 212, 0.28);
   transition:
     background var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease,
@@ -417,7 +463,7 @@ body {
 
 .btn-primary:hover {
   background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.28), 0 10px 22px -6px rgba(6, 182, 212, 0.5);
+  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.22), 0 6px 16px -6px rgba(6, 182, 212, 0.34);
 }
 
 .btn-primary:active {
@@ -531,6 +577,10 @@ body {
   gap: 4px;
   padding: 2px 8px;
   border-radius: var(--radius-full);
+  /* Mono + tabular so badges read as technical status pills, matching the
+     eyebrow/metadata label language across the app. */
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -1716,34 +1766,39 @@ iframe {
    hairline inner borders. No glow, no bloom, no colored shadows.
    ═══════════════════════════════════════════════════════════════════════ */
 :root {
-  --bg-field: #090B0E;
-  --bg-surface-1: #0F1216;
-  --bg-surface-2: #14181D;
-  --hairline: rgba(255, 255, 255, 0.08);
-  --hairline-hover: rgba(255, 255, 255, 0.16);
-  --text-primary: #EDEDEA;
-  --text-secondary: #8A9199;
-  --amber: #FFB545;
-  --amber-weak: rgba(255, 181, 69, 0.06);
-  --violet: #8B7CF6;
-  --violet-weak: rgba(139, 124, 246, 0.06);
-  --mono-data: #C9CED4;
-  --diff-minus: #C95064;     /* soft red-muted for "- " git-diff lines */
-  --diff-minus-bg: rgba(201, 80, 100, 0.07);
-  --diff-plus: #EDEDEA;       /* neutral bright for "+ " lines — not amber
-                                  (two-actor law: amber ≤1/viewport; the diff
-                                  renders 3 plus-lines at once) and not green
-                                  (teal/green retired). Reads as "added".   */
+  /* RECONCILED INTO THE CYAN PRODUCTION SYSTEM. The homepage's two-actor
+     amber/violet palette has been folded back into TradCopilot's single
+     cyan + deep-space-black identity (one coherent system across homepage
+     and the entire app). The v2 component files still reference these
+     names, so they are now aliases onto the production tokens — no per-file
+     edits needed. Layout/sections are unchanged; only the palette returned
+     to cyan. Depth still comes from layered surfaces + hairline borders. */
+  --bg-field: var(--background);
+  --bg-surface-1: var(--color-bg-secondary);
+  --bg-surface-2: var(--color-bg-tertiary);
+  --hairline: var(--color-border-default);
+  --hairline-hover: var(--color-border-strong);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-tertiary);
+  --amber: var(--color-accent-primary);
+  --amber-weak: var(--color-accent-primary-subtle);
+  --violet: var(--color-accent-primary);
+  --violet-weak: var(--color-accent-primary-subtle);
+  --mono-data: var(--color-text-secondary);
+  --diff-minus: var(--color-loss);
+  --diff-minus-bg: var(--color-loss-bg);
+  --diff-plus: var(--color-text-primary);   /* neutral bright — reads as "added" */
   --diff-plus-bg: rgba(237, 237, 234, 0.04);
   --v2-shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
   --v2-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ── Page wrapper: opaque field so the body's cyan glows never show
-     through the homepage (retires teal visually on this page only). ── */
+/* ── Page wrapper: transparent so the production body atmosphere (the cyan
+     + emerald radial depth that defines TradCopilot) shows through the
+     homepage — one coherent background across the whole app. ── */
 .landing-v2 {
   position: relative;
-  background-color: var(--bg-field);
+  background-color: transparent;
   color: var(--text-secondary);
   font-family: var(--font-sans);
   isolation: isolate;
@@ -1980,10 +2035,10 @@ iframe {
   animation: v2-drift 90s linear infinite alternate;
 }
 .landing-v2 .v2-aurora-market::before {
-  background: radial-gradient(1200px 800px at 85% -10%, rgba(255, 181, 69, 0.03), transparent 70%);
+  background: radial-gradient(1200px 800px at 85% -10%, rgba(6, 182, 212, 0.03), transparent 70%);
 }
 .landing-v2 .v2-aurora-ai::before {
-  background: radial-gradient(1200px 800px at 85% -10%, rgba(139, 124, 246, 0.03), transparent 70%);
+  background: radial-gradient(1200px 800px at 85% -10%, rgba(6, 182, 212, 0.03), transparent 70%);
 }
 .landing-v2 .v2-aurora > * { position: relative; z-index: 1; }
 @keyframes v2-drift {
@@ -2005,8 +2060,8 @@ iframe {
   opacity: 0;
   transition: opacity 600ms ease;
 }
-.landing-v2 .v2-cast-ai::after { background: rgba(139, 124, 246, 0.04); }
-.landing-v2 .v2-cast-market::after { background: rgba(255, 181, 69, 0.04); }
+.landing-v2 .v2-cast-ai::after { background: rgba(6, 182, 212, 0.04); }
+.landing-v2 .v2-cast-market::after { background: rgba(6, 182, 212, 0.04); }
 .landing-v2 .v2-cast.v2-cast-on::after { opacity: 1; }
 .landing-v2 .v2-cast > * { position: relative; z-index: 1; }
 
