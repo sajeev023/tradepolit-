@@ -5,58 +5,71 @@ import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
-    q: "How is TradCopilot different from ChatGPT?",
-    a: "TradCopilot runs context-aware analysis on live candlestick data, indicators, and risk metrics. Unlike general LLMs, it retains persistent memory of your trades, journals, and behavioral patterns across sessions.",
+    q: "Is this just ChatGPT with a chart skin?",
+    a: "No. TradCopilot runs context-aware analysis on live candlestick data, real indicators, and your risk metrics — not a generic LLM prompt. It retains persistent memory of your trades, journal, and behavioral patterns across sessions, so the coaching is calibrated to you, not a stranger.",
   },
   {
-    q: "Do I need to connect my brokerage?",
-    a: "No. TradCopilot operates as a standalone copilot. You import watchlists, review indicators, log entries, and receive real-time psychology coaching — all without connecting any trading account.",
+    q: "Will it actually stop me from revenge trading, or just nag me?",
+    a: "It flags revenge trades, sizing spikes, and overtrading inside the workspace before you deploy capital — using the pattern of your last 20 trades, not a generic rulebook. You stay in control; the copilot surfaces the pattern and blocks the entry pending your review. It won't execute anything for you.",
   },
   {
-    q: "What markets do you support?",
-    a: "All major cryptocurrencies (BTC, ETH, SOL), Forex pairs (EUR/USD, GBP/USD), and indices. Equities and futures support is actively being expanded.",
+    q: "Do I have to connect my brokerage?",
+    a: "Never. TradCopilot is read-only. You import watchlists, review indicators, log entries, and get coaching — without connecting any trading account or custodial balance. We can't touch your capital.",
   },
   {
-    q: "Is there a free trial for Pro?",
-    a: "Yes — a 7-day free trial on the Pro plan gives you unlimited analyses, alerts, weekly reports, and behavioral detection risk-free.",
+    q: "Is the 'AI analysis' real or generated?",
+    a: "Real. Every analysis is assembled from live exchange telemetry (Binance, TwelveData) — RSI, MACD, EMA, support/resistance, volume — then graded for bias, setup quality, and confidence. If a feed is ever unavailable, the UI labels it illustrative rather than pretending otherwise.",
   },
   {
-    q: "Can I cancel anytime?",
-    a: "Absolutely. Cancel, pause, or adjust your plan from Settings with a single click. No lock-in contracts.",
+    q: "What markets can I actually trade with it?",
+    a: "Major crypto (BTC, ETH, SOL), forex (EUR/USD, GBP/USD), and indices. Equities and futures support is actively being expanded. You keep your existing charting platform; TradCopilot adds the analysis, journaling, and coaching layer on top.",
   },
   {
-    q: "How does behavioral detection work?",
-    a: "The system monitors trade velocity, loss ratios, sizing errors, and drawdown patterns. If it detects overtrading or revenge trading, it alerts you inside the copilot panel before you deploy capital.",
+    q: "Can I cancel without a phone call?",
+    a: "Yes. Cancel, pause, or adjust your plan from Settings in one click. No lock-in contracts, no retention call. The 7-day Pro trial is risk-free and requires no card to start the Free tier.",
   },
 ];
 
 export function FaqAccordion() {
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<number | null>(0);
 
   return (
-    <div className="space-y-3 sm:space-y-4">
-      {faqs.map((faq, idx) => (
-        <div
-          key={idx}
-          onClick={() => setExpanded(expanded === idx ? null : idx)}
-          className="p-4 sm:p-5 rounded-xl border border-border bg-card/65 backdrop-blur-md cursor-pointer transition-colors hover:border-accent/40 shadow-sm"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <h4 className="text-sm font-medium text-foreground">{faq.q}</h4>
-            <ChevronDown
-              size={16}
-              className={`text-muted-foreground transition-transform duration-300 shrink-0 ${
-                expanded === idx ? "rotate-180" : ""
-              }`}
-            />
+    <div className="space-y-3">
+      {faqs.map((faq, idx) => {
+        const open = expanded === idx;
+        return (
+          <div
+            key={idx}
+            className="tc-card !p-0 overflow-hidden"
+          >
+            <button
+              onClick={() => setExpanded(open ? null : idx)}
+              className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left cursor-pointer"
+              aria-expanded={open}
+            >
+              <h4 className="text-[17px] sm:text-[18px] font-semibold text-[var(--ink)] leading-snug">
+                {faq.q}
+              </h4>
+              <ChevronDown
+                size={18}
+                className={`shrink-0 text-[var(--muted)] transition-transform duration-300 ${
+                  open ? "rotate-180 text-[var(--accent)]" : ""
+                }`}
+              />
+            </button>
+            <div
+              className="grid transition-[grid-template-rows] duration-300 ease-out"
+              style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+            >
+              <div className="overflow-hidden">
+                <p className="px-5 pb-5 text-[14px] text-[var(--muted)] leading-relaxed">
+                  {faq.a}
+                </p>
+              </div>
+            </div>
           </div>
-          {expanded === idx && (
-            <p className="mt-3 text-xs text-muted-foreground leading-relaxed pt-2 border-t border-border">
-              {faq.a}
-            </p>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

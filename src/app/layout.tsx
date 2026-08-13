@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SmoothScrollProvider } from "@/components/ui/smooth-scroll-provider";
@@ -17,8 +17,9 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://
 const siteName = "TradCopilot";
 
 /* Self-hosted variable fonts (next/font) — no external requests at runtime.
-   Inter = body/UI sans, Space Grotesk = display headlines (technical/terminal).
-   CSS variables are consumed by --font-sans / --font-display in globals.css. */
+   Inter = body/UI sans, Space Grotesk = display headlines (technical/terminal),
+   JetBrains Mono = eyebrows/badges/data values. CSS variables are consumed by
+   --font-sans / --font-display / --font-mono in globals.css. */
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -28,6 +29,12 @@ const inter = Inter({
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-display-font",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
   display: "swap",
 });
 
@@ -85,7 +92,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.clarity.ms" />
@@ -98,7 +105,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased selection:bg-emerald-500/20 selection:text-emerald-300">
+      <body className="antialiased">
         <JsonLd />
         <ErrorBoundary>
           <Providers>

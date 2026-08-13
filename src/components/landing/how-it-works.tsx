@@ -1,59 +1,57 @@
-import { MousePointerClick, Sparkles, ShieldCheck } from "lucide-react";
-import { AnimatedSection } from "./scroll-animator";
+import { ArrowUpRight } from "lucide-react";
+import { Reveal } from "@/components/ui/reveal";
 
 const steps = [
   {
-    n: "01",
-    icon: <MousePointerClick size={16} />,
+    badge: "01 · Select",
     title: "Pick a pair",
-    body: "Select any crypto or forex symbol from your watchlist. Live Binance and OANDA telemetry loads into the workspace — no chart setup, no indicator configuration.",
+    body: "Select any crypto or forex symbol from your watchlist. Live Binance & OANDA telemetry loads into the workspace — no chart setup, no indicator configuration.",
+    punch: "Your effort: two clicks",
+    tone: "green" as const,
   },
   {
-    n: "02",
-    icon: <Sparkles size={16} />,
+    badge: "02 · Compile",
     title: "Get an AI-compiled setup",
-    body: "TradCopilot assembles RSI, MACD, EMA, support/resistance, and volume into a bias, entry, stop, and take-profit with a confidence grade — so you can review the thesis before acting.",
+    body: "RSI, MACD, EMA, support/resistance, and volume are assembled into a bias, entry, stop, and take-profit with a confidence grade — so you review the thesis before acting.",
+    punch: "Your effort: one glance",
+    tone: "green" as const,
   },
   {
-    n: "03",
-    icon: <ShieldCheck size={16} />,
+    badge: "03 · Review",
     title: "Review with behavioral context",
     body: "The copilot surfaces revenge patterns, overtrading, and sizing notes pulled from your last 20 trades — so each decision is consistent with your own rules, not just the chart.",
+    punch: "Your effort: trust the guardrail",
+    tone: "green" as const,
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section className="max-w-5xl mx-auto px-6 lg:px-10 py-20 lg:py-28">
-      <AnimatedSection className="text-center space-y-3 mb-14 sm:mb-16">
-        <span className="section-eyebrow">How it works</span>
-        <h2 className="text-[26px] sm:text-[36px] font-bold tracking-tight text-white">
-          From chart to conviction in three steps
+    <section id="how-it-works" className="tc-section tc-section--wide scroll-mt-20">
+      <Reveal blur className="text-center space-y-3 mb-14 sm:mb-16">
+        <span className="tp-eyebrow-mono">How it works</span>
+        <h2 className="tp-h2">
+          From chart to conviction in <span className="tc-accent-phrase">three steps</span>
         </h2>
-        <p className="text-[14px] text-zinc-400 max-w-md mx-auto leading-relaxed">
+        <p className="tp-body max-w-md mx-auto">
           No spreads to configure. No 50-tab setup. Just the answer you&apos;d ask a senior trader for.
         </p>
-      </AnimatedSection>
+      </Reveal>
 
-      <AnimatedSection className="grid md:grid-cols-3 gap-5 sm:gap-6" delay={150}>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {steps.map((s, i) => (
-          <div
-            key={i}
-            className="relative rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-6 space-y-4"
-          >
+          <Reveal key={i} delay={i * 70} className="tc-card h-full">
+            <span className="tc-card__badge">{s.badge}</span>
+            <h3 className="tc-card__title">{s.title}</h3>
+            <p className="tc-card__body">{s.body}</p>
+            <div className="tc-card__divider mt-auto" />
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
-                {s.icon}
-              </div>
-              <span className="text-[11px] font-mono font-semibold text-muted-foreground/70 tracking-wider">
-                {s.n}
-              </span>
+              <span className={`tc-card__punch tc-card__punch--${s.tone}`}>{s.punch}</span>
+              <ArrowUpRight size={15} className="text-[var(--muted)]" />
             </div>
-            <h3 className="text-[15px] font-semibold text-foreground">{s.title}</h3>
-            <p className="text-[13px] text-muted-foreground leading-relaxed">{s.body}</p>
-          </div>
+          </Reveal>
         ))}
-      </AnimatedSection>
+      </div>
     </section>
   );
 }
