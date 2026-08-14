@@ -611,6 +611,24 @@ body {
    .tc- language (mono labels, dot motif, hairline borders).
    ═══════════════════════════════════════════════════════════ */
 
+/* ── Toast system (sonner) container hardening ──
+   Sonner hardcodes z-index 999999999 on the toaster, which would stack
+   toasts above modals (z-9999) and the fullscreen chart. Cap it at 70:
+   above sheets (z-60) and the mobile nav (z-40), below modals and
+   fullscreen. Offsets, width and the per-toast z-index var are set inline
+   on the Toaster in providers.tsx (safe-area aware, responsive). */
+[data-sonner-toaster] { z-index: 70 !important; }
+[data-sonner-toast][data-styled="true"] { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.34); }
+
+/* App mobile break is lg (1024px) but sonner's own break is 600px, so the
+   601-1023px range (tablet / app mobile layout with the bottom nav + sticky
+   Copilot composer) would otherwise use the 16px desktop offset and sit on
+   top of the nav. Lift the bottom offset here to clear the 56px nav plus the
+   composer; <=600px uses --mobile-offset-bottom (set inline). */
+@media (max-width: 1023px) {
+  [data-sonner-toaster] { --offset-bottom: calc(env(safe-area-inset-bottom, 0px) + 144px) !important; }
+}
+
 /* ── Semantic numeric utilities — replace raw text-emerald-400 / text-rose-400
    so profit/loss/warn always resolve to the semantic tokens. ── */
 .pos  { color: var(--color-profit); }

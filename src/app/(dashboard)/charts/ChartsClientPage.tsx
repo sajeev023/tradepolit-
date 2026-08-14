@@ -162,6 +162,10 @@ export function ChartsClientPage() {
   const [isBackgroundUpdating, setIsBackgroundUpdating] = useState(false);
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [analysisData, setAnalysisData] = useState<any | null>(null);
+  // Inline analysis error — surfaced inside the Copilot panel, not a global
+  // toast. The AI validation rejection is a result state for this surface, so
+  // it lives here with a Retry, persisting until dismissed or re-run.
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analysisPhase, setAnalysisPhase] = useState<AnalysisPhase | null>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
 
@@ -518,6 +522,7 @@ export function ChartsClientPage() {
   const analyzeMutation = useMutation({
     mutationFn: async (variables?: { symbol: string; timeframe: "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W"; bypassCache?: boolean }) => {
       console.log(`[CLIENT] analyzeMutation start`, variables);
+      setAnalysisError(null);
       const sym = variables?.symbol ?? selectedSymbol;
       const tf = variables?.timeframe ?? selectedTimeframe;
       const bypass = variables?.bypassCache ?? false;
@@ -596,6 +601,7 @@ export function ChartsClientPage() {
       const readyData = { ...data, loading: false };
       console.log("[TELEMETRY-6] AI response text:", readyData.coachNarrative);
       setAnalysisData(readyData);
+      setAnalysisError(null);
       setChatId(null);
       setShowFollowUps(false);
 
@@ -674,11 +680,14 @@ Timestamp: ${new Date().toISOString()}
       }
 
       setIsBackgroundUpdating(false);
-      toast.success(readyData.cached ? `Cached analysis loaded for ${selectedSymbol}` : `Analysis completed for ${selectedSymbol}`);
+      toast.success(readyData.cached ? `Cached analysis loaded for ${selectedSymbol}` : `Analysis completed for ${selectedSymbol}`, { id: "analysis-success" });
     },
     onError: (err: any) => {
       setIsBackgroundUpdating(false);
-      toast.error(err?.message || "Analysis request timed out. Please try again.");
+      // Surface inline in the Copilot panel — NOT a global toast. The long
+      // validation-rejection message was rendering as a huge persistent
+      // bottom-right toast that covered the chart and the AI input.
+      setAnalysisError(err?.message || "Analysis request timed out. Please try again.");
     },
   });
 
@@ -1628,8 +1637,84 @@ Timestamp: ${new Date().toISOString()}
               className="flex-1 overflow-y-auto px-4 py-3 space-y-4 bg-[var(--color-bg-primary)] min-h-0 custom-scrollbar pb-[120px] lg:pb-2"
             >
               
+              {/* Analysis error — inline result state, not a global toast */}
+              {!analysisData && !isPending && analysisError && (
+                <div className="animate-fade-in py-10 flex flex-col items-center text-center">
+                  <div
+                    className="w-full max-w-[320px] rounded-xl border p-4 text-left"
+                    style={{
+                      borderColor: "rgba(245, 185, 66, 0.22)",
+                      background: "linear-gradient(180deg, var(--color-warning-bg), var(--color-bg-tertiary) 82%)",
+                    }}
+                  >
+                    <div className="flex items-start gap-2.5 mb-2.5">
+                      <span
+                        className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0"
+                        style={{ background: "var(--color-warning-bg)", border: "1px solid rgba(245,185,66,0.30)" }}
+                      >
+                        <AlertTriangle size={14} className="text-[var(--color-warning)]" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-xs font-bold text-[var(--color-text-primary)] leading-tight">
+                          {analysisError.startsWith("AI trade analysis contained internal logical contradictions")
+                            ? "AI analysis rejected"
+                            : "Analysis couldn't complete"}
+                        </h3>
+                        <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5 leading-relaxed">
+                          {analysisError.startsWith("AI trade analysis contained internal logical contradictions")
+                            ? "The model's response failed internal validation. Re-run to regenerate it."
+                            : "Something went wrong reaching the analysis engine."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* The actual reason — shown verbatim, never suppressed or fabricated */}
+                    <div
+                      className="rounded-lg p-2.5 mb-3 max-h-[120px] overflow-y-auto custom-scrollbar"
+                      style={{ background: "var(--color-bg-primary)", border: "1px solid var(--color-border-subtle)" }}
+                    >
+                      {(() => {
+                        const prefix = "AI trade analysis contained internal logical contradictions:";
+                        const isContradiction = analysisError.startsWith(prefix);
+                        const issues = isContradiction
+                          ? analysisError.slice(prefix.length).split(";").map((s) => s.trim()).filter(Boolean)
+                          : [];
+                        if (issues.length > 0) {
+                          return (
+                            <ul className="space-y-1">
+                              {issues.map((iss, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-[10px] font-mono leading-relaxed text-[var(--color-text-secondary)]">
+                                  <span className="text-[var(--color-warning)] mt-px shrink-0">•</span>
+                                  <span>{iss}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          );
+                        }
+                        return <p className="text-[10px] font-mono leading-relaxed text-[var(--color-text-secondary)]">{analysisError}</p>;
+                      })()}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe })}
+                        className="btn-primary btn-sm flex-1 flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <RefreshCw size={13} /> Retry analysis
+                      </button>
+                      <button
+                        onClick={() => setAnalysisError(null)}
+                        className="btn-ghost btn-sm cursor-pointer"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Inactive state */}
-              {!analysisData && !isPending && (
+              {!analysisData && !isPending && !analysisError && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div
                     className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-dashed border-cyan-500/30"
