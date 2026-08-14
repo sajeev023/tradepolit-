@@ -132,7 +132,7 @@ function PremiumInput({ id, label, icon, rightEl, error, ...rest }: InputProps) 
             style={{
               position: "absolute",
               left: 13,
-              color: focused ? "#06b6d4" : "#52525B",
+              color: focused ? "var(--color-accent-primary)" : "#52525B",
               transition: "color 0.2s ease",
               display: "flex",
               pointerEvents: "none",
@@ -241,7 +241,7 @@ function SuccessOverlay() {
           animation: "auth-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth={2.5} strokeLinecap="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-primary)" strokeWidth={2.5} strokeLinecap="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </div>
@@ -552,7 +552,7 @@ function LoginPageContent() {
               href="/forgot-password"
               style={{
                 fontSize: 12,
-                color: "#06b6d4",
+                color: "var(--color-accent-primary)",
                 textDecoration: "none",
                 fontWeight: 500,
                 transition: "opacity 0.15s",
@@ -578,8 +578,8 @@ function LoginPageContent() {
               gap: 8,
               borderRadius: 10,
               border: "none",
-              background: "linear-gradient(135deg,#06b6d4 0%,#06B6D4 100%)",
-              color: "#09090B",
+              background: "linear-gradient(135deg,var(--color-accent-primary) 0%,var(--color-accent-primary) 100%)",
+              color: "var(--background)",
               fontSize: 14,
               fontWeight: 700,
               letterSpacing: "-0.01em",

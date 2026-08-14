@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { TrendingUp, Mail } from "lucide-react";
-import dynamic from "next/dynamic";
 
 import { SlimNav } from "@/components/landing/slim-nav";
 import { HeroCTA } from "@/components/landing/hero-cta";
+import { MastheadPrice } from "@/components/landing/masthead-price";
 import { HeroWorkbench } from "@/components/landing/hero-workbench";
 import { LiveTicker } from "@/components/landing/live-ticker";
 import { MetricsBand } from "@/components/landing/metrics-band";
+import { MarketPulse } from "@/components/landing/market-pulse";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { BehavioralReplay } from "@/components/landing/behavioral-replay";
 import { FounderStory } from "@/components/landing/founder-story";
@@ -17,10 +18,6 @@ import { FinalCta } from "@/components/landing/final-cta";
 import { StickyMobileCta } from "@/components/landing/sticky-mobile-cta";
 import { Reveal } from "@/components/ui/reveal";
 
-const AntigravityCanvas = dynamic(
-  () => import("@/components/ui/antigravity-canvas").then((m) => m.AntigravityCanvas)
-);
-
 export default function LandingPage() {
   const year = new Date().getFullYear();
 
@@ -29,24 +26,34 @@ export default function LandingPage() {
       {/* ━━━ 1 · SLIM NAV (60px) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <SlimNav />
 
-      {/* ━━━ 2 · HERO + LIVE-DATA WORKBENCH ━━━━━━━━━━━━━━━━━ */}
-      <header className="relative max-w-[1200px] mx-auto px-5 sm:px-6 lg:px-10 pt-[120px] sm:pt-[140px] lg:pt-[160px] pb-16 lg:pb-24 grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-        <div className="absolute inset-0 -top-12 pointer-events-none overflow-hidden z-0 opacity-30">
-          <AntigravityCanvas particleCount={48} />
+      {/* ━━━ 2 · HERO — editorial masthead + full-width live desk ━━━ */}
+      <header className="relative max-w-[1200px] mx-auto px-5 sm:px-6 lg:px-10 pt-[120px] sm:pt-[140px] lg:pt-[160px] pb-14 lg:pb-20">
+        {/* Editorial masthead — a publication-style dateline carrying one live
+            datum (BTC, public Binance WS). Replaces the generic "who's it for"
+            status chip with something that reads as a real desk. */}
+        <div className="tp-masthead mb-10 sm:mb-12 lg:mb-14">
+          <span>Vol. 01</span>
+          <span className="tp-masthead__sep" />
+          <span>The Trader&apos;s Copilot</span>
+          <span className="tp-masthead__sep" />
+          <Suspense fallback={<span className="tp-masthead__live">BTC&nbsp;—</span>}>
+            <MastheadPrice />
+          </Suspense>
+          <span className="tp-masthead__sep" />
+          <span>For active crypto &amp; forex day traders</span>
         </div>
 
-        <div className="lg:col-span-5 space-y-5 sm:space-y-6 relative z-10">
-          <span className="tc-status-chip tc-status-chip--accent">
-            <span className="tc-status-chip__dot tc-status-chip__dot--pulse" />
-            For active crypto &amp; forex day traders
-          </span>
-
+        {/* Headline block — serif voice, left-aligned, room to breathe.
+            The italic accent word replaces the old cyan gradient phrase:
+            emphasis comes from the serif italic, not from color. The blur
+            reveal is the page's one signature motion moment. */}
+        <Reveal blur className="max-w-[920px] space-y-5 sm:space-y-6">
           <h1 className="tp-display-xl">
-            Trade your plan — <br className="hidden sm:block" />
-            <span className="tc-accent-phrase">not your impulses.</span>
+            Trade your plan —<br className="hidden sm:block" />{" "}
+            <span className="tp-serif-italic">not your impulses.</span>
           </h1>
 
-          <p className="tp-body max-w-[460px]">
+          <p className="tp-body max-w-[560px]">
             TradCopilot brings real-time chart analysis, a persistent trade journal, and behavioral
             coaching into one workspace — so every entry is prepared, reviewed, and consistent with
             your own rules.
@@ -55,10 +62,11 @@ export default function LandingPage() {
           <div className="pt-1">
             <HeroCTA />
           </div>
-        </div>
+        </Reveal>
 
-        {/* Live-data workbench — REAL candles, indicators, WS price */}
-        <div className="lg:col-span-7 relative z-10">
+        {/* Live-data workbench — full-width "live desk" below the masthead.
+            REAL candles, indicators, WS price; no fabricated AI. */}
+        <div className="mt-12 lg:mt-16">
           <Suspense fallback={<div className="h-[420px] tc-skeleton rounded-2xl" />}>
             <HeroWorkbench />
           </Suspense>
@@ -76,6 +84,9 @@ export default function LandingPage() {
       {/* ━━━ 5 · HOW IT WORKS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <HowItWorks />
 
+      {/* ━━━ 6 · MARKET PULSE (real Fear & Greed + live prices) ━ */}
+      <MarketPulse />
+
       <hr className="tc-rule max-w-[1120px] mx-auto" />
 
       {/* ━━━ 6 · BEHAVIORAL SHOWCASE ━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -92,7 +103,7 @@ export default function LandingPage() {
       {/* ━━━ 9 · FAQ (skeptic first-person) ━━━━━━━━━━━━━━━━ */}
       <section id="faq" className="tc-section tc-section--narrow scroll-mt-20">
         <Reveal blur className="text-center space-y-3 mb-12">
-          <span className="tp-eyebrow-mono">FAQ</span>
+          <span className="tp-eyebrow-mono">05 — FAQ</span>
           <h2 className="tp-h2">
             The questions you&apos;d ask <span className="tc-accent-phrase">before signing up.</span>
           </h2>

@@ -7,10 +7,10 @@ import { Reveal } from "@/components/ui/reveal";
    not user-performance claims. Disclosed below to satisfy the no-fabricated-data
    rule. Count-up animates 0 → value on scroll (1.1s eased). */
 const metrics = [
-  { value: 20, suffix: "", label: "Trades in copilot memory", sub: "Free tier context window" },
-  { value: 5, suffix: "", label: "AI chart scans / day", sub: "Free, no card required" },
-  { value: 20, suffix: "s", label: "Alert check cadence", sub: "Technical conditions polled live" },
-  { value: 7, suffix: "-day", label: "Pro trial", sub: "Unlimited scans, cancel anytime" },
+  { cat: "Memory", value: 20, suffix: "", label: "Trades in copilot memory", sub: "Free tier context window" },
+  { cat: "Throughput", value: 5, suffix: "", label: "AI chart scans / day", sub: "Free, no card required" },
+  { cat: "Latency", value: 20, suffix: "s", label: "Alert check cadence", sub: "Technical conditions polled live" },
+  { cat: "Trial", value: 7, suffix: "-day", label: "Pro trial", sub: "Unlimited scans, cancel anytime" },
 ];
 
 export function MetricsBand() {
@@ -24,6 +24,7 @@ export function MetricsBand() {
               delay={i * 70}
               className="bg-[var(--bg-band)] p-5 sm:p-6 flex flex-col gap-1"
             >
+              <div className="tc-metric-cat">{m.cat}</div>
               <div className="tp-mono text-3xl sm:text-4xl font-semibold text-[var(--ink)] tabular-nums tracking-tight">
                 <CountUp value={m.value} suffix={m.suffix} />
               </div>

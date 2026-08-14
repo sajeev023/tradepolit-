@@ -139,9 +139,12 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
       {/* ── Left: BTC Ticker ── */}
       <div className="flex items-center gap-3 min-w-0">
         {isWsDisconnected && !activeBtcPrice && (
-          <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <span className="text-[10px] font-medium text-amber-400/80">Live market data is temporarily unavailable. Reconnecting...</span>
+          <div
+            className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-md"
+            style={{ backgroundColor: "var(--color-warning-bg)", border: "1px solid rgba(245, 185, 66, 0.22)" }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--color-warning)" }} />
+            <span className="text-[10px] font-medium" style={{ color: "var(--color-warning)" }}>Live market data is temporarily unavailable. Reconnecting...</span>
           </div>
         )}
         {activeBtcPrice && (
@@ -212,7 +215,7 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
               style={{
                 backgroundColor: "var(--color-accent-primary-muted)",
                 color: "var(--color-accent-primary)",
-                border: "1px solid rgba(6, 182, 212, 0.1)",
+                border: "1px solid var(--color-accent-primary-muted)",
               }}
             >
               {avatarUrl ? (

@@ -100,7 +100,7 @@ export function ExpectancyCalculator() {
         </div>
         <div>
           <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Weekly $</div>
-          <div className={`tp-mono text-xl font-semibold tabular-nums ${positive ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+          <div className={`tp-mono text-2xl sm:text-3xl font-bold tabular-nums ${positive ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
             {weeklyUsd >= 0 ? "+" : "−"}${Math.abs(weeklyUsd).toLocaleString("en-US", { maximumFractionDigits: 0 })}
           </div>
         </div>

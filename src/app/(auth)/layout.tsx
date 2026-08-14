@@ -159,13 +159,13 @@ function TrustBadge() {
           width: 6,
           height: 6,
           borderRadius: "50%",
-          background: "#06b6d4",
+          background: "var(--color-accent-primary)",
           boxShadow: "0 0 8px rgba(6, 182, 212,0.8)",
           flexShrink: 0,
           animation: "pulse-dot 2s ease infinite",
         }}
       />
-      <span style={{ fontSize: 12, fontWeight: 500, color: "#06b6d4", letterSpacing: "0.02em" }}>
+      <span style={{ fontSize: 12, fontWeight: 500, color: "var(--color-accent-primary)", letterSpacing: "0.02em" }}>
         Early Access · Free during beta
       </span>
     </div>
@@ -227,13 +227,13 @@ function Testimonial() {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            background: "linear-gradient(135deg,#06b6d4,#6366F1)",
+            background: "linear-gradient(135deg,var(--color-accent-primary),#6366F1)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 11,
             fontWeight: 700,
-            color: "#09090B",
+            color: "var(--background)",
           }}
         >
           MK
@@ -310,14 +310,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 width: 32,
                 height: 32,
                 borderRadius: 9,
-                background: "linear-gradient(135deg,#06b6d4 0%,#06B6D4 100%)",
+                background: "linear-gradient(135deg,var(--color-accent-primary) 0%,var(--color-accent-primary) 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 boxShadow: "0 0 20px rgba(6, 182, 212,0.35)",
               }}
             >
-              <TrendingUp size={16} color="#09090B" strokeWidth={2.5} />
+              <TrendingUp size={16} color="var(--background)" strokeWidth={2.5} />
             </div>
             <span
               style={{
@@ -349,7 +349,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <br />
               <span
                 style={{
-                  background: "linear-gradient(100deg,#06b6d4 0%,#06B6D4 50%,#6366F1 100%)",
+                  background: "linear-gradient(100deg,var(--color-accent-primary) 0%,var(--color-accent-primary) 50%,#6366F1 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}

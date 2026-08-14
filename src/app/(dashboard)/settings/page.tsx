@@ -301,7 +301,7 @@ export default function SettingsPage() {
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-40">
-          <RefreshCw className="animate-spin text-cyan-400 mb-2" size={24} />
+          <RefreshCw className="animate-spin text-[var(--color-accent-primary)] mb-2" size={24} />
           <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading settings...</span>
         </div>
       ) : (
@@ -311,14 +311,14 @@ export default function SettingsPage() {
             <div className="animate-fade-in space-y-6">
               <form onSubmit={handleUpdateProfile} className="card p-5 space-y-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <User size={16} className="text-cyan-400" />
+                  <User size={16} className="text-[var(--color-accent-primary)]" />
                   <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                     Personal Profile Details
                   </h2>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-6 pb-2 border-b border-zinc-800">
-                  <div className="w-16 h-16 rounded-full bg-zinc-800 border-2 border-cyan-400 flex items-center justify-center text-xl font-bold font-mono text-cyan-400 tracking-wider">
+                  <div className="w-16 h-16 rounded-full bg-zinc-800 border-2 border-cyan-400 flex items-center justify-center text-xl font-bold font-mono text-[var(--color-accent-primary)] tracking-wider">
                     {getInitials()}
                   </div>
                   <div className="text-center sm:text-left space-y-0.5">
@@ -375,7 +375,7 @@ export default function SettingsPage() {
                 {/* Notifications Panel */}
                 <div className="card p-5 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Bell size={16} className="text-cyan-400" />
+                    <Bell size={16} className="text-[var(--color-accent-primary)]" />
                     <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                       Notification Preferences
                     </h2>
@@ -387,7 +387,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={notifyEmail}
                         onChange={(e) => setNotifyEmail(e.target.checked)}
-                        className="rounded border-zinc-700 bg-zinc-900 text-cyan-400 focus:ring-0 w-4 h-4"
+                        className="rounded border-zinc-700 bg-zinc-900 text-[var(--color-accent-primary)] focus:ring-0 w-4 h-4"
                       />
                       <div className="space-y-0.5">
                         <span className="font-semibold block text-white">Email Alerts</span>
@@ -400,7 +400,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={notifyInApp}
                         onChange={(e) => setNotifyInApp(e.target.checked)}
-                        className="rounded border-zinc-700 bg-zinc-900 text-cyan-400 focus:ring-0 w-4 h-4"
+                        className="rounded border-zinc-700 bg-zinc-900 text-[var(--color-accent-primary)] focus:ring-0 w-4 h-4"
                       />
                       <div className="space-y-0.5">
                         <span className="font-semibold block text-white">In-App Notifications</span>
@@ -413,7 +413,7 @@ export default function SettingsPage() {
                 {/* Credentials Panel */}
                 <div className="card p-5 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Key size={16} className="text-cyan-400" />
+                    <Key size={16} className="text-[var(--color-accent-primary)]" />
                     <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                       API Keys (Encrypted at Rest)
                     </h2>
@@ -465,7 +465,7 @@ export default function SettingsPage() {
               {/* Change Password Panel */}
               <form onSubmit={handleUpdatePassword} className="card p-5 space-y-4 border border-zinc-800">
                 <div className="flex items-center gap-2 mb-2">
-                  <Lock size={16} className="text-cyan-400" />
+                  <Lock size={16} className="text-[var(--color-accent-primary)]" />
                   <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                     Change Password
                   </h2>
@@ -512,8 +512,8 @@ export default function SettingsPage() {
               {/* Danger Zone */}
               <div className="card p-5 space-y-4 border border-rose-900/30 bg-rose-950/5">
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle size={16} className="text-rose-400" />
-                  <h2 className="text-sm font-semibold text-rose-400">
+                  <AlertTriangle size={16} className="text-[var(--color-loss)]" />
+                  <h2 className="text-sm font-semibold text-[var(--color-loss)]">
                     Danger Zone (GDPR Compliance)
                   </h2>
                 </div>
@@ -528,7 +528,7 @@ export default function SettingsPage() {
                       type="checkbox"
                       checked={deleteConfirmed}
                       onChange={(e) => setDeleteConfirmed(e.target.checked)}
-                      className="rounded border-rose-900/60 bg-zinc-900 text-rose-500 focus:ring-0 w-4 h-4 mt-0.5"
+                      className="rounded border-rose-900/60 bg-zinc-900 text-[var(--color-loss)] focus:ring-0 w-4 h-4 mt-0.5"
                     />
                     <span className="text-xs font-semibold text-zinc-400 select-none">
                       I understand that this will permanently destroy all TradCopilot data.
@@ -540,7 +540,7 @@ export default function SettingsPage() {
                       type="button"
                       onClick={handleDeleteAccount}
                       disabled={!deleteConfirmed || deletingAccount}
-                      className="px-6 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-rose-950/20 text-rose-400 border border-rose-950/40 hover:bg-rose-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-rose-950/40 hover:bg-rose-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deletingAccount && <Loader2 className="animate-spin" size={14} />}
                       Permanently Delete My Account
@@ -556,7 +556,7 @@ export default function SettingsPage() {
             <div className="animate-fade-in space-y-6">
               <form onSubmit={handleSavePreferences} className="card p-5 space-y-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <Palette size={16} className="text-cyan-400" />
+                  <Palette size={16} className="text-[var(--color-accent-primary)]" />
                   <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                     Trading & Terminal Preferences
                   </h2>
@@ -651,7 +651,7 @@ export default function SettingsPage() {
               <div className="card p-6 border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]/40 space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border-subtle)]">
                   <div className="flex items-center gap-2.5">
-                    <CreditCard size={18} className="text-cyan-400" />
+                    <CreditCard size={18} className="text-[var(--color-accent-primary)]" />
                     <div>
                       <h2 className="text-sm font-bold text-white">Subscription & Billing</h2>
                       <p className="text-[11px] text-zinc-500">Manage plan memberships, usage limits, and invoices.</p>
@@ -659,8 +659,8 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
-                      <span className="text-[10px] uppercase font-bold tracking-widest bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <Zap size={10} className="fill-emerald-400 text-emerald-400" /> PRO Tier
+                      <span className="text-[10px] uppercase font-bold tracking-widest bg-[var(--color-profit-bg)] border border-emerald-500/20 text-[var(--color-profit)] px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <Zap size={10} className="fill-[var(--color-profit)] text-[var(--color-profit)]" /> PRO Tier
                       </span>
                     ) : (
                       <span className="text-[10px] uppercase font-bold tracking-widest bg-zinc-800 border border-zinc-700 text-zinc-400 px-2.5 py-1 rounded-full">
@@ -678,7 +678,7 @@ export default function SettingsPage() {
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-zinc-400">AI Chart Analyses</span>
                         {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
-                          <span className="font-bold text-emerald-400">Unlimited</span>
+                          <span className="font-bold text-[var(--color-profit)]">Unlimited</span>
                         ) : (
                           <span className="font-mono text-zinc-300 font-semibold">
                             {profileData?.dailyAnalysisCount ?? 0} / 5 used today
@@ -697,7 +697,7 @@ export default function SettingsPage() {
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-zinc-400">Proactive Tech Alerts</span>
                         {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
-                          <span className="font-bold text-emerald-400">Unlimited</span>
+                          <span className="font-bold text-[var(--color-profit)]">Unlimited</span>
                         ) : (
                           <span className="font-mono text-zinc-300 font-semibold">
                             {profileData?.dailyAlertCount ?? 0} / 3 used today
@@ -724,7 +724,7 @@ export default function SettingsPage() {
                   <div className="flex flex-col justify-between p-5 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-tertiary)] relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-2xl rounded-full" />
                     <div>
-                      <span className="text-[10px] uppercase font-bold tracking-widest text-cyan-400 font-mono">Premium Access</span>
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--color-accent-primary)] font-mono">Premium Access</span>
                       <h4 className="text-lg font-black text-white mt-1">TradCopilot Pro</h4>
                       <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
                         Become an institutional-grade day trader with complete contextual AI scanning, full journal persistence, and alerts.
@@ -743,7 +743,7 @@ export default function SettingsPage() {
                           className="w-full btn-secondary text-xs font-semibold py-2.5 flex items-center justify-center gap-1.5 cursor-pointer"
                         >
                           {stripeLoading ? (
-                            <RefreshCw className="animate-spin text-cyan-400" size={14} />
+                            <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={14} />
                           ) : (
                             "Manage Billing & Invoices"
                           )}

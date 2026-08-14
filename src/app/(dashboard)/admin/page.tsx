@@ -103,7 +103,7 @@ export default function AdminPage() {
       {/* KPI Stats Panel */}
       {statsLoading ? (
         <div className="flex justify-center py-6">
-          <RefreshCw className="animate-spin text-cyan-400" size={24} />
+          <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={24} />
         </div>
       ) : stats ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -119,7 +119,7 @@ export default function AdminPage() {
               <span className="text-[10px] uppercase font-bold tracking-wider mb-1 block" style={{ color: "var(--color-text-tertiary)" }}>
                 {stat.label}
               </span>
-              <p className="text-2xl font-bold font-mono text-cyan-400">{stat.value}</p>
+              <p className="text-2xl font-bold font-mono text-[var(--color-accent-primary)]">{stat.value}</p>
               <p className="text-[10px] mt-2" style={{ color: "var(--color-text-tertiary)" }}>
                 {stat.sub}
               </p>
@@ -147,7 +147,7 @@ export default function AdminPage() {
 
             {usersLoading ? (
               <div className="flex justify-center py-6">
-                <RefreshCw className="animate-spin text-cyan-400" size={18} />
+                <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={18} />
               </div>
             ) : !users || users.length === 0 ? (
               <div className="text-xs text-center py-10" style={{ color: "var(--color-text-tertiary)" }}>
@@ -173,7 +173,7 @@ export default function AdminPage() {
                         </td>
                         <td className="py-3 font-mono font-semibold">{u.role}</td>
                         <td className="py-3 text-center">
-                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${u.isActive ? "bg-emerald-950/30 text-emerald-400 border border-emerald-500/20" : "bg-rose-950/30 text-rose-400 border border-rose-500/20"}`}>
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${u.isActive ? "bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-emerald-500/20" : "bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-rose-500/20"}`}>
                             {u.isActive ? "Active" : "Suspended"}
                           </span>
                         </td>
@@ -181,7 +181,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => toggleUserMutation.mutate({ id: u.id, isActive: !u.isActive })}
                             disabled={toggleUserMutation.isPending}
-                            className={`px-2 py-1 rounded text-[10px] font-semibold transition-all inline-flex items-center gap-1 ${u.isActive ? "text-rose-400 border border-rose-500/20 bg-rose-950/10" : "text-emerald-400 border border-emerald-500/20 bg-emerald-950/10"}`}
+                            className={`px-2 py-1 rounded text-[10px] font-semibold transition-all inline-flex items-center gap-1 ${u.isActive ? "text-[var(--color-loss)] border border-rose-500/20 bg-rose-950/10" : "text-[var(--color-profit)] border border-emerald-500/20 bg-emerald-950/10"}`}
                           >
                             {u.isActive ? <UserMinus size={10} /> : <UserCheck size={10} />}
                             {u.isActive ? "Suspend" : "Activate"}
@@ -231,7 +231,7 @@ export default function AdminPage() {
             </h3>
             {flagsLoading ? (
               <div className="flex justify-center py-4">
-                <RefreshCw className="animate-spin text-cyan-400" size={16} />
+                <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={16} />
               </div>
             ) : featureFlags && featureFlags.length > 0 ? (
               featureFlags.map((flag) => (
@@ -245,7 +245,7 @@ export default function AdminPage() {
                     disabled={toggleFlagMutation.isPending}
                     className={`text-[10px] font-bold px-2.5 py-1 rounded transition-all cursor-pointer ${
                       flag.isActive
-                        ? "bg-emerald-950/30 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-900/20"
+                        ? "bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-emerald-500/20 hover:bg-emerald-900/20"
                         : "bg-zinc-800 text-zinc-500 hover:bg-zinc-700"
                     }`}
                   >
@@ -254,7 +254,7 @@ export default function AdminPage() {
                 </div>
               ))
             ) : (
-              <p className="text-xs text-rose-400">No feature flags registered.</p>
+              <p className="text-xs text-[var(--color-loss)]">No feature flags registered.</p>
             )}
           </div>
         </div>

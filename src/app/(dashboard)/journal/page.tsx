@@ -350,7 +350,7 @@ function JournalPageContent() {
       {/* Trades List Table */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="animate-spin text-cyan-400 mb-2" size={24} />
+          <Loader2 className="animate-spin text-[var(--color-accent-primary)] mb-2" size={24} />
           <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading trades...</span>
         </div>
       ) : trades.length === 0 ? (
@@ -413,7 +413,7 @@ function JournalPageContent() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-xs font-bold">
-                        <span className={`px-2 py-0.5 rounded ${isLong ? "text-emerald-400 bg-emerald-950/20" : "text-rose-400 bg-rose-950/20"}`}>
+                        <span className={`px-2 py-0.5 rounded ${isLong ? "text-[var(--color-profit)] bg-[var(--color-profit-bg)]" : "text-[var(--color-loss)] bg-[var(--color-loss-bg)]"}`}>
                           {trade.direction}
                         </span>
                       </td>
@@ -435,13 +435,13 @@ function JournalPageContent() {
                       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                         {deleteConfirmId === trade.id ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-rose-400 font-semibold">Sure?</span>
+                            <span className="text-xs text-[var(--color-loss)] font-semibold">Sure?</span>
                             <button
                               onClick={() => {
                                 deleteMutation.mutate(trade.id);
                                 setDeleteConfirmId(null);
                               }}
-                              className="px-2 py-1 rounded bg-rose-950/40 text-rose-400 border border-rose-900/50 text-xs font-semibold hover:bg-rose-900/50"
+                              className="px-2 py-1 rounded bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-rose-900/50 text-xs font-semibold hover:bg-rose-900/50"
                             >
                               Yes
                             </button>
@@ -766,7 +766,7 @@ function JournalPageContent() {
                 <span className="font-mono text-2xl font-bold uppercase" style={{ color: "var(--color-text-primary)" }}>
                   {viewingTrade.instrument}
                 </span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded ml-3 ${viewingTrade.direction === "LONG" ? "text-emerald-400 bg-emerald-950/20" : "text-rose-400 bg-rose-950/20"}`}>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded ml-3 ${viewingTrade.direction === "LONG" ? "text-[var(--color-profit)] bg-[var(--color-profit-bg)]" : "text-[var(--color-loss)] bg-[var(--color-loss-bg)]"}`}>
                   {viewingTrade.direction}
                 </span>
               </div>
@@ -797,7 +797,7 @@ function JournalPageContent() {
               </div>
               <div className="bg-[var(--color-bg-tertiary)] p-3 rounded-lg">
                 <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>R-Multiple</p>
-                <p className="font-mono font-semibold text-sm text-cyan-400">
+                <p className="font-mono font-semibold text-sm text-[var(--color-accent-primary)]">
                   {viewingTrade.rMultiple ? `${Number(viewingTrade.rMultiple).toFixed(2)}R` : "—"}
                 </p>
               </div>
@@ -819,7 +819,7 @@ function JournalPageContent() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span style={{ color: "var(--color-text-tertiary)" }}>Emotion</span>
-                    <span className="flex items-center gap-1 font-semibold text-cyan-400">
+                    <span className="flex items-center gap-1 font-semibold text-[var(--color-accent-primary)]">
                       <Smile size={14} /> {viewingTrade.emotionTag || "NEUTRAL"}
                     </span>
                   </div>
@@ -828,7 +828,7 @@ function JournalPageContent() {
                     <div className="flex flex-wrap gap-1">
                       {viewingTrade.mistakeTags && viewingTrade.mistakeTags.length > 0 ? (
                         viewingTrade.mistakeTags.map((tag: string) => (
-                          <span key={tag} className="text-xs px-2 py-0.5 rounded border border-rose-500/20 text-rose-400 bg-rose-950/10">
+                          <span key={tag} className="text-xs px-2 py-0.5 rounded border border-rose-500/20 text-[var(--color-loss)] bg-rose-950/10">
                             {tag}
                           </span>
                         ))
@@ -890,7 +890,7 @@ function JournalPageContent() {
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--color-border-subtle)")}
               >
                 {isUploading ? (
-                  <Loader2 size={24} className="animate-spin text-cyan-400" />
+                  <Loader2 size={24} className="animate-spin text-[var(--color-accent-primary)]" />
                 ) : (
                   <>
                     <Upload size={20} style={{ color: "var(--color-text-tertiary)" }} className="mb-2" />
@@ -910,13 +910,13 @@ function JournalPageContent() {
 
               {deleteConfirmId === viewingTrade.id ? (
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-rose-400 font-semibold">Confirm delete?</span>
+                  <span className="text-xs text-[var(--color-loss)] font-semibold">Confirm delete?</span>
                   <button
                     onClick={() => {
                       deleteMutation.mutate(viewingTrade.id);
                       setDeleteConfirmId(null);
                     }}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold transition-colors bg-rose-950/40 text-rose-400 border border-rose-900/50 hover:bg-rose-900/50"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold transition-colors bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-rose-900/50 hover:bg-rose-900/50"
                   >
                     Confirm
                   </button>
@@ -941,7 +941,7 @@ function JournalPageContent() {
                   </button>
                   <button
                     onClick={() => setDeleteConfirmId(viewingTrade.id)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors text-rose-400 hover:bg-rose-950/20 border border-rose-950/40"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors text-[var(--color-loss)] hover:bg-[var(--color-loss-bg)] border border-rose-950/40"
                   >
                     <Trash2 size={12} /> Delete Trade
                   </button>

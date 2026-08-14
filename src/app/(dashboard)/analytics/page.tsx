@@ -144,7 +144,7 @@ export default function AnalyticsPage() {
           </p>
         </div>
         <div className="card p-6 flex flex-col items-start gap-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-rose-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-loss)]">
             Loading failed
           </span>
           <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
@@ -152,7 +152,7 @@ export default function AnalyticsPage() {
           </p>
           <button
             onClick={() => refetch()}
-            className="px-3 py-1.5 rounded text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition"
+            className="px-3 py-1.5 rounded text-xs font-semibold bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-cyan-500/20 hover:bg-cyan-500/20 transition"
           >
             Retry
           </button>
@@ -242,8 +242,8 @@ export default function AnalyticsPage() {
 
       {/* Warning if under 5 trades */}
       {metrics.totalTrades < 5 && (
-        <div className="p-3.5 rounded-lg flex items-center gap-3 border border-yellow-500/20 bg-yellow-500/5 animate-fade-in-delay-1">
-          <AlertTriangle size={18} className="text-yellow-400 shrink-0" />
+        <div className="p-3.5 rounded-lg flex items-center gap-3 border border-yellow-500/20 bg-[var(--color-warning-bg)] animate-fade-in-delay-1">
+          <AlertTriangle size={18} className="text-[var(--color-warning)] shrink-0" />
           <p className="text-xs leading-relaxed text-yellow-300">
             <strong>Sample Size Alert:</strong> You only have {metrics.totalTrades} closed trades. A minimum of 15-20 trades is recommended for statistically meaningful Sharpe ratio and expectancy metrics.
           </p>

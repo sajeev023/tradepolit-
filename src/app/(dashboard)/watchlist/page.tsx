@@ -168,7 +168,7 @@ return (
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-40">
-          <RefreshCw className="animate-spin text-cyan-400 mb-2" size={24} />
+          <RefreshCw className="animate-spin text-[var(--color-accent-primary)] mb-2" size={24} />
           <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading watchlists...</span>
         </div>
       ) : (
@@ -230,7 +230,7 @@ return (
                         }}
                       >
                         <div className="flex items-center gap-2 text-xs font-medium flex-1 min-w-0">
-                          <Eye size={14} className={isActive ? "text-cyan-400 shrink-0" : "text-[var(--color-text-quaternary)] shrink-0"} />
+                          <Eye size={14} className={isActive ? "text-[var(--color-accent-primary)] shrink-0" : "text-[var(--color-text-quaternary)] shrink-0"} />
                           {isEditing ? (
                             <input
                               autoFocus
@@ -253,7 +253,7 @@ return (
                             <button
                               onClick={e => { e.stopPropagation(); commitRename(w.id); }}
                               disabled={renameMutation.isPending}
-                              className="text-cyan-400 hover:text-cyan-300 p-1 disabled:opacity-40"
+                              className="text-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary-hover)] p-1 disabled:opacity-40"
                             >
                               {renameMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
                             </button>
@@ -271,7 +271,7 @@ return (
                               if (confirm(`Delete "${w.name}"?`)) deleteMutation.mutate(w.id);
                             }}
                             disabled={deleteMutation.isPending}
-                            className="text-rose-400 hover:text-rose-300 p-1 disabled:opacity-40"
+                            className="text-[var(--color-loss)] hover:text-[var(--color-loss)] p-1 disabled:opacity-40"
                           >
                             {deleteMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Trash2 size={12} />}
                           </button>
@@ -412,7 +412,7 @@ return (
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center my-auto">
-                  <AlertTriangle size={24} className="text-yellow-500 mb-2 animate-bounce" />
+                  <AlertTriangle size={24} className="text-[var(--color-warning)] mb-2 animate-bounce" />
                   <h3 className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
                     No active watchlist
                   </h3>

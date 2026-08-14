@@ -12,6 +12,7 @@ export default function AlertsPage() {
   const [selectedAsset, setSelectedAsset] = useState("BTC/USD");
   const [operator, setOperator] = useState("gt");
   const [triggerPrice, setTriggerPrice] = useState("");
+  const [evaluating, setEvaluating] = useState(false);
 
   // 1. Fetch user's alerts
   const { data: alerts, isLoading: alertsLoading } = useQuery<any[]>({
@@ -204,7 +205,7 @@ export default function AlertsPage() {
           {/* Trigger Alert Test Engine */}
           <div className="card p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <Volume2 size={16} className="text-cyan-400 shrink-0" />
+              <Volume2 size={16} className="text-[var(--color-accent-primary)] shrink-0" />
               <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
                 Alert Evaluation Engine
               </span>
@@ -213,10 +214,8 @@ export default function AlertsPage() {
               The cron scheduler runs in the background. You can trigger an instant evaluation to trigger any crosses:
             </p>
             <button
-              onClick={async (e) => {
-                const btn = e.currentTarget;
-                btn.disabled = true;
-                btn.innerHTML = '<span class="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full mr-1.5"></span>Evaluating...';
+              onClick={async () => {
+                setEvaluating(true);
                 try {
                   const res = await fetch("/api/cron/evaluate-alerts");
                   const body = await res.json();
@@ -225,14 +224,21 @@ export default function AlertsPage() {
                   toast.success(`Evaluated active alerts. Triggered ${body.data?.triggered || 0} setups.`);
                 } catch {
                   toast.error("Evaluation failed. Please try again.");
+                } finally {
+                  setEvaluating(false);
                 }
-                btn.disabled = false;
-                btn.innerHTML = 'Force Evaluate Trigger Crosses';
               }}
-              className="w-full py-1.5 rounded text-[10px] font-semibold border transition-all disabled:opacity-60"
-              style={{ borderColor: "var(--color-border-subtle)" }}
+              disabled={evaluating}
+              className="btn-secondary btn-sm w-full"
             >
-              Force Evaluate Trigger Crosses
+              {evaluating ? (
+                <>
+                  <RefreshCw size={12} className="animate-spin" />
+                  Evaluating...
+                </>
+              ) : (
+                "Force Evaluate Trigger Crosses"
+              )}
             </button>
           </div>
         </div>
@@ -250,7 +256,7 @@ export default function AlertsPage() {
 
             {alertsLoading ? (
               <div className="flex justify-center py-6">
-                <RefreshCw className="animate-spin text-cyan-400" size={18} />
+                <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={18} />
               </div>
             ) : activeAlertsList.length === 0 ? (
               <div className="text-xs text-center py-8" style={{ color: "var(--color-text-tertiary)" }}>
@@ -271,13 +277,13 @@ export default function AlertsPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => toggleAlertMutation.mutate({ id: alert.id, isActive: false })}
-                          className="text-cyan-400 hover:text-cyan-300"
+                          className="text-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary-hover)]"
                         >
                           <ToggleRight size={20} />
                         </button>
                         <button
                           onClick={() => deleteAlertMutation.mutate(alert.id)}
-                          className="text-rose-400 hover:text-rose-300 p-1"
+                          className="text-[var(--color-loss)] hover:text-[var(--color-loss)] p-1"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -302,7 +308,7 @@ export default function AlertsPage() {
 
             {notificationsLoading ? (
               <div className="flex justify-center py-6">
-                <RefreshCw className="animate-spin text-cyan-400" size={18} />
+                <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={18} />
               </div>
             ) : !notifications || notifications.length === 0 ? (
               <div className="text-xs text-center py-8" style={{ color: "var(--color-text-tertiary)" }}>
@@ -322,7 +328,7 @@ export default function AlertsPage() {
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5">
-                        <Bell size={12} className={n.isRead ? "text-[var(--color-text-quaternary)]" : "text-cyan-400 animate-bounce"} />
+                        <Bell size={12} className={n.isRead ? "text-[var(--color-text-quaternary)]" : "text-[var(--color-accent-primary)] animate-bounce"} />
                         <span className="font-bold text-white">{n.title}</span>
                       </div>
                       <p style={{ color: "var(--color-text-secondary)" }}>{n.body}</p>

@@ -72,10 +72,10 @@ export function SearchCommandPalette() {
             placeholder="Search trades, assets, strategies..."
             className="flex-1 text-sm bg-transparent outline-none border-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)]"
           />
-          {isLoading && <Loader2 size={16} className="animate-spin text-cyan-400" />}
+          {isLoading && <Loader2 size={16} className="animate-spin text-[var(--color-accent-primary)]" />}
           <button
             onClick={() => setCommandPaletteOpen(false)}
-            className="text-[var(--color-text-quaternary)] hover:text-[var(--color-text-primary)] p-1 rounded-md hover:bg-white/5 transition-colors"
+            className="text-[var(--color-text-quaternary)] hover:text-[var(--color-text-primary)] p-1 rounded-md hover:bg-[var(--color-bg-hover)] transition-colors"
           >
             <X size={16} />
           </button>
@@ -109,7 +109,7 @@ export function SearchCommandPalette() {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      <LineChart size={14} className="text-cyan-400" />
+                      <LineChart size={14} className="text-[var(--color-accent-primary)]" />
                       <span>{asset.symbol}</span>
                     </div>
                   ))}
@@ -133,7 +133,7 @@ export function SearchCommandPalette() {
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       <div className="flex items-center gap-2.5">
-                        <BookOpen size={14} className="text-cyan-400" />
+                        <BookOpen size={14} className="text-[var(--color-accent-primary)]" />
                         <span>{trade.instrument} {trade.direction}</span>
                       </div>
                       <span className="font-mono text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
@@ -160,7 +160,7 @@ export function SearchCommandPalette() {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      <FlaskConical size={14} className="text-cyan-400" />
+                      <FlaskConical size={14} className="text-[var(--color-accent-primary)]" />
                       <span>{strat.name}</span>
                     </div>
                   ))}
@@ -183,7 +183,7 @@ export function SearchCommandPalette() {
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-[var(--color-bg-hover)] text-xs font-semibold block truncate"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      <Newspaper size={14} className="text-cyan-400 shrink-0" />
+                      <Newspaper size={14} className="text-[var(--color-accent-primary)] shrink-0" />
                       <span className="truncate">{n.headline}</span>
                     </a>
                   ))}

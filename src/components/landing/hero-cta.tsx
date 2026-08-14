@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Eye } from "lucide-react";
 import { useDemoLogin } from "./demo-button";
 
 import { trackClarityEvent } from "@/lib/clarity";
 
 // Single primary CTA (Start Free) with a clear, low-friction secondary
-// (Try Instant Demo). Risk reversal sits directly under the primary so
-// hesitant Meta-Ads visitors see "no credit card" before they bounce.
+// (Try 2 Free Scans). Risk reversal sits directly under the primary so
+// hesitant visitors see "no credit card" before they bounce. Both buttons
+// use the token system; the primary is the cyan accent (the one place cyan
+// is "loud"), matching the nav, pricing, and final-CTA primaries.
 export function HeroCTA() {
   const { isLoading, handleDemo } = useDemoLogin();
   return (
@@ -18,11 +20,12 @@ export function HeroCTA() {
         <Link
           href="/signup"
           onClick={() => trackClarityEvent("hero_start_free_click")}
-          className="group w-full sm:w-auto h-12 px-6 rounded-xl bg-white hover:bg-zinc-100 text-zinc-950 text-[14px] font-bold inline-flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-zinc-950/30 active:scale-[0.98] transition-all duration-150"
+          className="group w-full sm:w-auto h-12 px-6 rounded-full text-[14px] font-bold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150 text-[var(--bg-primary)]"
+          style={{ background: "var(--accent)" }}
           aria-label="Start free account"
         >
           <span>Start Free — No Card Required</span>
-          <ArrowRight size={15} className="text-zinc-950 transition-transform duration-200 group-hover:translate-x-0.5" />
+          <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
 
         {/* Secondary: instant demo. Lower visual weight so it doesn't compete. */}
@@ -32,24 +35,24 @@ export function HeroCTA() {
             handleDemo();
           }}
           disabled={isLoading}
-          className="group w-full sm:w-auto h-12 px-5 rounded-xl bg-transparent hover:bg-zinc-900/60 border border-zinc-700 hover:border-zinc-600 text-zinc-200 text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150"
-          aria-label="Try Instant Demo"
+          className="group w-full sm:w-auto h-12 px-5 rounded-full bg-transparent hover:bg-[var(--color-bg-hover)] border border-[var(--color-border-strong)] hover:border-[var(--accent)] text-[var(--ink)] text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150"
+          aria-label="Try 2 free scans"
         >
           {isLoading ? (
-            <div className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-[var(--muted)] border-t-transparent rounded-full animate-spin" />
           ) : (
-            <Sparkles size={14} className="text-accent" />
+            <Eye size={14} className="text-[var(--accent)]" />
           )}
           <span>{isLoading ? "Launching…" : "Try 2 Free Scans"}</span>
         </button>
       </div>
 
       {/* Risk reversal — directly under the CTAs, not buried 600px down. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-zinc-500 font-medium select-none">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--muted)] font-medium select-none">
         <span>2 free AI scans · no card</span>
-        <span className="w-1 h-1 rounded-full bg-zinc-700" />
+        <span className="w-1 h-1 rounded-full bg-[var(--color-border-strong)]" />
         <span>read-only</span>
-        <span className="w-1 h-1 rounded-full bg-zinc-700" />
+        <span className="w-1 h-1 rounded-full bg-[var(--color-border-strong)]" />
         <span>cancel anytime</span>
       </div>
     </div>

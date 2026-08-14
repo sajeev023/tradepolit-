@@ -22,7 +22,7 @@ export function PricingSection() {
   return (
     <section id="pricing" className="tc-section tc-section--wide scroll-mt-20">
       <Reveal blur className="text-center space-y-3 mb-12">
-        <span className="tp-eyebrow-mono">Pricing</span>
+        <span className="tp-eyebrow-mono">04 — Pricing</span>
         <h2 className="tp-h2">
           Start free. Upgrade when <span className="tc-accent-phrase">you&apos;re ready.</span>
         </h2>
@@ -60,7 +60,7 @@ export function PricingSection() {
           </ul>
           <Link
             href="/signup"
-            className="tc-hover mt-2 h-11 rounded-lg border border-[var(--color-border-strong)] text-[13px] font-semibold text-[var(--ink)] flex items-center justify-center hover:border-[var(--accent)] transition-colors"
+            className="tc-hover mt-2 h-11 rounded-full border border-[var(--color-border-strong)] text-[13px] font-semibold text-[var(--ink)] flex items-center justify-center hover:border-[var(--accent)] transition-colors"
           >
             Start Free — No Card
           </Link>
@@ -89,7 +89,7 @@ export function PricingSection() {
           </ul>
           <Link
             href="/signup?plan=pro"
-            className="group mt-2 h-11 rounded-lg text-[13px] font-bold text-[var(--bg-primary)] flex items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
+            className="group mt-2 h-11 rounded-full text-[13px] font-bold text-[var(--bg-primary)] flex items-center justify-center gap-1.5 transition-transform active:scale-[0.98]"
             style={{ background: "var(--accent)" }}
           >
             Start 7-Day Pro Trial

@@ -113,20 +113,20 @@ export default function NewsPage() {
     const pct = (confidence * 100).toFixed(0);
     if (label === "Bullish") {
       return (
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 bg-emerald-950/40 text-emerald-400 border border-emerald-500/20">
+        <span className="badge badge-success">
           <TrendingUp size={10} /> Bullish ({pct}%)
         </span>
       );
     }
     if (label === "Bearish") {
       return (
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 bg-rose-950/40 text-rose-400 border border-rose-500/20">
+        <span className="badge badge-danger">
           <TrendingDown size={10} /> Bearish ({pct}%)
         </span>
       );
     }
     return (
-      <span className="text-[10px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] border border-[var(--color-border-subtle)]">
+      <span className="badge badge-neutral">
         <Minus size={10} /> Neutral
       </span>
     );
@@ -135,20 +135,20 @@ export default function NewsPage() {
   const getImpactBadge = (impact: string = "Low") => {
     if (impact === "High") {
       return (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 bg-amber-950/40 text-amber-400 border border-amber-500/30 animate-pulse">
+        <span className="badge badge-warning animate-pulse">
           <Flame size={10} /> High Impact
         </span>
       );
     }
     if (impact === "Medium") {
       return (
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-950/40 text-blue-400 border border-blue-500/20">
+        <span className="badge badge-info">
           Medium Impact
         </span>
       );
     }
     return (
-      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-[var(--color-bg-tertiary)] text-[var(--color-text-quaternary)] border border-[var(--color-border-subtle)]">
+      <span className="badge badge-neutral">
         Low Impact
       </span>
     );
@@ -174,19 +174,19 @@ export default function NewsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl mx-auto p-4 md:p-6" style={{ minHeight: "100vh" }}>
+    <div className="flex flex-col gap-6 max-w-6xl mx-auto p-4 md:p-6">
       {/* Bloomberg Terminal Style Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5 border-[var(--color-border-subtle)]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400">Live Wire Feed</span>
+            <span className="live-dot live-dot--green" />
+            <span className="text-[10px] uppercase font-bold tracking-widest pos">Live Wire Feed</span>
           </div>
           <h1 className="text-2xl font-black tracking-tight mt-1" style={{ color: "var(--color-text-primary)" }}>
             Market Intelligence Terminal
           </h1>
           <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-            Aggregated institutional wire feed matching exact charts telemetry. Auto-updates in <span className="font-mono text-emerald-400 font-semibold">{countdown}s</span>.
+            Aggregated institutional wire feed matching exact charts telemetry. Auto-updates in <span className="font-mono pos font-semibold">{countdown}s</span>.
           </p>
         </div>
 
@@ -206,7 +206,7 @@ export default function NewsPage() {
               color: "var(--color-text-secondary)"
             }}
           >
-            <RefreshCw size={12} className={isFetching ? "animate-spin text-emerald-400" : ""} />
+            <RefreshCw size={12} className={isFetching ? "animate-spin text-[var(--color-profit)]" : ""} />
             Sync Wire
           </button>
         </div>
@@ -238,12 +238,12 @@ export default function NewsPage() {
 
       {/* Error State */}
       {error && (
-        <div className="card p-6 border-rose-500/20 bg-rose-950/10 text-center flex flex-col items-center justify-center rounded-xl border">
-          <p className="text-sm font-bold text-rose-400">Unable to load market news</p>
+        <div className="card p-6 text-center flex flex-col items-center justify-center rounded-xl" style={{ borderColor: "rgba(255, 107, 107, 0.22)", backgroundColor: "var(--color-loss-bg)" }}>
+          <p className="text-sm font-bold" style={{ color: "var(--color-loss)" }}>Unable to load market news</p>
           <p className="text-xs mt-1 text-[var(--color-text-tertiary)]">Please try again shortly.</p>
           <button
             onClick={() => refetch()}
-            className="mt-4 px-4 py-1.5 bg-rose-950/40 text-rose-400 border border-rose-500/30 text-xs font-bold rounded-lg hover:bg-rose-900/40 transition-colors"
+            className="btn-secondary btn-sm mt-4"
           >
             Retry
           </button>
@@ -405,7 +405,7 @@ export default function NewsPage() {
             >
               {isFetching ? (
                 <>
-                  <RefreshCw size={12} className="animate-spin text-emerald-400" />
+                  <RefreshCw size={12} className="animate-spin text-[var(--color-profit)]" />
                   Loading wire segment...
                 </>
               ) : (

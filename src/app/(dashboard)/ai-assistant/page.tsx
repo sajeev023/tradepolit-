@@ -183,7 +183,7 @@ export default function AIAssistantPage() {
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {listLoading ? (
             <div className="flex justify-center py-10">
-              <Loader2 className="animate-spin text-cyan-400" size={18} />
+              <Loader2 className="animate-spin text-[var(--color-accent-primary)]" size={18} />
             </div>
           ) : chatSessions.length === 0 ? (
             <div className="text-[11px] text-center py-10" style={{ color: "var(--color-text-tertiary)" }}>
@@ -217,7 +217,7 @@ export default function AIAssistantPage() {
                       e.stopPropagation();
                       if (confirm("Delete this conversation?")) deleteChatMutation.mutate(session.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-950/20 text-rose-400 transition-opacity"
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-950/20 text-[var(--color-loss)] transition-opacity"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -240,7 +240,7 @@ export default function AIAssistantPage() {
             >
               <MessageSquare size={14} />
             </button>
-            <Bot size={16} className="text-cyan-400" />
+            <Bot size={16} className="text-[var(--color-accent-primary)]" />
             <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
               AI Trading Discipline Coach
             </span>
@@ -253,8 +253,8 @@ export default function AIAssistantPage() {
         {/* Message Thread */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[var(--color-bg-deepest)]/40">
           {/* Static warning banner */}
-          <div className="p-3 rounded-lg flex items-center gap-3 border border-cyan-500/10 bg-cyan-500/5 max-w-2xl mx-auto">
-            <Sparkles size={16} className="text-cyan-400 shrink-0" />
+          <div className="p-3 rounded-lg flex items-center gap-3 border border-cyan-500/10 bg-[var(--color-accent-primary-subtle)] max-w-2xl mx-auto">
+            <Sparkles size={16} className="text-[var(--color-accent-primary)] shrink-0" />
             <p className="text-[10px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
               Every response is grounded in your journal logs and performance stats. Responses are purely for educational reviews, not financial advice.
             </p>
@@ -276,8 +276,8 @@ export default function AIAssistantPage() {
                   <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-tertiary)" }}>
                     The AI Coach needs at least 5 closed trades to analyze your behavioral patterns and provide personalized feedback.
                   </p>
-                  <div className="mt-4 px-4 py-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5">
-                    <p className="text-[11px] text-cyan-400 font-medium">{tradeCount}/5 trades logged</p>
+                  <div className="mt-4 px-4 py-2 rounded-lg border border-cyan-500/20 bg-[var(--color-accent-primary-subtle)]">
+                    <p className="text-[11px] text-[var(--color-accent-primary)] font-medium">{tradeCount}/5 trades logged</p>
                   </div>
                 </>
               ) : (
@@ -341,7 +341,7 @@ export default function AIAssistantPage() {
                       className={`p-3.5 rounded-xl text-sm leading-relaxed flex-1 ${
                         isAI
                           ? "bg-[var(--color-bg-secondary)] border border-[var(--color-border-subtle)]"
-                          : "bg-cyan-950/20 border border-cyan-500/20 text-cyan-100"
+                          : "bg-[var(--color-accent-primary-muted)] border border-cyan-500/20 text-cyan-100"
                       }`}
                     >
                       <div className="whitespace-pre-line">{msg.content}</div>
@@ -373,7 +373,7 @@ export default function AIAssistantPage() {
                     <Bot size={16} style={{ color: "var(--color-accent-primary)" }} />
                   </div>
                   <div className="p-3 bg-[var(--color-bg-secondary)] rounded-xl border border-[var(--color-border-subtle)] flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin text-cyan-400" />
+                    <Loader2 size={14} className="animate-spin text-[var(--color-accent-primary)]" />
                     <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>AI Coach is reviewing your data...</span>
                   </div>
                 </div>

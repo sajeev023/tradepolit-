@@ -967,7 +967,7 @@ Timestamp: ${new Date().toISOString()}
       if (!cardEl) throw new Error("Export card element not found");
 
       const canvas = await html2canvas(cardEl, {
-        backgroundColor: "#0A0A0B",
+        backgroundColor: "var(--background)",
         scale: 2,
         logging: false,
         useCORS: true,
@@ -1007,7 +1007,7 @@ Timestamp: ${new Date().toISOString()}
       }}>
       {/* WebSocket Disconnection Banner */}
       {isWebSocketSymbol && isWsDisconnected && (
-        <div className="flex items-center justify-between p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-xs text-[#EDEEF0] animate-message-in shrink-0">
+        <div className="flex items-center justify-between p-3.5 rounded-xl border border-amber-500/20 bg-[var(--color-warning-bg)] text-xs text-[var(--color-text-primary)] animate-message-in shrink-0">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -1020,7 +1020,7 @@ Timestamp: ${new Date().toISOString()}
 
       {/* Welcome Back Banner */}
       {welcomeBack && (
-        <div className="flex items-center justify-between p-3.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 text-xs text-[#EDEEF0] animate-message-in shrink-0">
+        <div className="flex items-center justify-between p-3.5 rounded-xl border border-cyan-500/20 bg-[var(--color-accent-primary-subtle)] text-xs text-[var(--color-text-primary)] animate-message-in shrink-0">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
@@ -1110,7 +1110,7 @@ Timestamp: ${new Date().toISOString()}
                           disabled={false}
                           className={`flex flex-col px-2 py-1.5 rounded-lg text-xs transition-all text-left font-mono border border-transparent w-full hover:bg-[var(--color-bg-hover)] cursor-pointer`}
                           style={{
-                            backgroundColor: active ? "#161920" : "transparent",
+                            backgroundColor: active ? "var(--color-bg-hover)" : "transparent",
                             color: active ? "var(--color-accent-primary)" : "var(--color-text-secondary)",
                           }}
                         >
@@ -1120,8 +1120,8 @@ Timestamp: ${new Date().toISOString()}
                                 <span
                                   className="w-1.5 h-1.5 rounded-full shrink-0"
                                   style={{
-                                    backgroundColor: isBull ? "#34d399" : isBear ? "#f43f5e" : "#eab308",
-                                    boxShadow: isBull ? "0 0 4px #34d39966" : isBear ? "0 0 4px #f43f5e66" : "none",
+                                    backgroundColor: isBull ? "var(--color-profit)" : isBear ? "var(--color-loss)" : "var(--color-warning)",
+                                    boxShadow: isBull ? "0 0 4px rgba(45, 212, 168, 0.4)" : isBear ? "0 0 4px rgba(255, 107, 107, 0.4)" : "none",
                                   }}
                                 />
                               )}
@@ -1162,7 +1162,7 @@ Timestamp: ${new Date().toISOString()}
           id="tradingview-chart" 
           className={`flex flex-col overflow-hidden transition-all duration-300 ${
             isChartMaximized 
-              ? "fixed z-[9999] bg-[#0A0A0B] p-0 m-0 border-0 rounded-none shadow-none" 
+              ? "fixed z-[9999] bg-[var(--background)] p-0 m-0 border-0 rounded-none shadow-none" 
               : `card border border-[var(--color-border-default)] h-full min-w-0 ${mobileTab === "chart" ? "flex" : "hidden lg:flex"}`
           }`}
           style={isChartMaximized ? { top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", margin: 0, borderRadius: 0 } : undefined}
@@ -1171,8 +1171,8 @@ Timestamp: ${new Date().toISOString()}
           <div className="flex flex-wrap items-center justify-between px-3 py-1.5 border-b shrink-0 bg-[var(--color-bg-secondary)] border-[var(--color-border-subtle)] gap-2" style={{ minHeight: "40px" }}>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
-                  <TrendingUp size={14} style={{ color: "#22d3ee" }} />
+                <div className="w-7 h-7 rounded bg-[var(--color-accent-primary-muted)] flex items-center justify-center border border-cyan-500/20">
+                  <TrendingUp size={14} style={{ color: "var(--color-accent-primary)" }} />
                 </div>
                 <span className="text-xs font-semibold text-[var(--color-text-primary)]">{selectedSymbol}</span>
                 {/* MARKET → EXCHANGE → INSTRUMENT hierarchy (registry-driven, no hardcoding) */}
@@ -1235,7 +1235,7 @@ Timestamp: ${new Date().toISOString()}
                   style={{ padding: 0 }}
                   title="Export Setup PNG"
                 >
-                  <Camera size={15} style={{ color: "#22d3ee" }} />
+                  <Camera size={15} style={{ color: "var(--color-accent-primary)" }} />
                 </button>
                 <button
                   onClick={() => setIsChartMaximized(v => !v)}
@@ -1243,13 +1243,13 @@ Timestamp: ${new Date().toISOString()}
                   style={{ padding: 0 }}
                   title={isChartMaximized ? "Exit Fullscreen" : "Maximize Chart"}
                 >
-                  {isChartMaximized ? <Minimize2 size={15} style={{ color: "#22d3ee" }} /> : <Maximize2 size={15} style={{ color: "#22d3ee" }} />}
+                  {isChartMaximized ? <Minimize2 size={15} style={{ color: "var(--color-accent-primary)" }} /> : <Maximize2 size={15} style={{ color: "var(--color-accent-primary)" }} />}
                 </button>
                 <button
                   onClick={() => setAiPanelOpen(v => !v)}
                   className="btn-secondary h-8 text-[10px] px-3 flex items-center gap-1.5 rounded-md border-[var(--color-border-default)] hover:border-cyan-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
                 >
-                  <Bot size={12} style={{ color: "#22d3ee" }} />
+                  <Bot size={12} style={{ color: "var(--color-accent-primary)" }} />
                   <span>{aiPanelOpen ? "Close AI" : "Open AI"}</span>
                 </button>
               </div>
@@ -1368,7 +1368,7 @@ Timestamp: ${new Date().toISOString()}
             <div className="px-3 border-b flex items-center justify-between shrink-0" style={{ height: "38px", borderColor: "var(--color-border-subtle)" }}>
               <div className="flex items-center gap-2.5">
                 <div className="relative flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent-primary-muted)] border border-cyan-500/10 shrink-0">
-                  <BrainCircuit size={15} className="text-cyan-400" />
+                  <BrainCircuit size={15} className="text-[var(--color-accent-primary)]" />
                   <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse border border-[var(--color-bg-deepest)]" />
                 </div>
                 <span className="text-sm font-bold tracking-tight text-[var(--color-text-primary)]">TradCopilot</span>
@@ -1383,7 +1383,7 @@ Timestamp: ${new Date().toISOString()}
                       toast.error("Upgrade to PRO to access Bookmarked analyses!");
                     }
                   }}
-                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-amber-400 transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
+                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-warning)] transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
                   title="Saved Analyses"
                 >
                   <Bookmark size={13} />
@@ -1397,7 +1397,7 @@ Timestamp: ${new Date().toISOString()}
                       toast.error("Upgrade to PRO to access Chat History!");
                     }
                   }}
-                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-cyan-400 transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
+                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-accent-primary)] transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
                   title="Chat History"
                 >
                   <Clock size={13} />
@@ -1409,7 +1409,7 @@ Timestamp: ${new Date().toISOString()}
                   className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-white transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
                   title="Recalculate Chart Analysis"
                 >
-                  <RefreshCw size={12} className={isPending ? "animate-spin text-cyan-400" : ""} />
+                  <RefreshCw size={12} className={isPending ? "animate-spin text-[var(--color-accent-primary)]" : ""} />
                 </button>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-profit)] animate-ping" />
@@ -1476,10 +1476,10 @@ Timestamp: ${new Date().toISOString()}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
                     className="text-center"
                   >
-                    <span className="text-[9px] uppercase tracking-wider font-bold text-emerald-500 flex items-center justify-center gap-1 mb-0.5">
+                    <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-profit)] flex items-center justify-center gap-1 mb-0.5">
                       <span>🟢</span> Support
                     </span>
-                    <span className="text-emerald-400 font-bold block">
+                    <span className="text-[var(--color-profit)] font-bold block">
                       {formatMetricNumber(analysisData.support || analysisData.levels?.support)}
                     </span>
                     <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.supportSource}>
@@ -1492,10 +1492,10 @@ Timestamp: ${new Date().toISOString()}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
                     className="text-center"
                   >
-                    <span className="text-[9px] uppercase tracking-wider font-bold text-rose-500 flex items-center justify-center gap-1 mb-0.5">
+                    <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-loss)] flex items-center justify-center gap-1 mb-0.5">
                       <span>🔴</span> Resistance
                     </span>
-                    <span className="text-rose-400 font-bold block">
+                    <span className="text-[var(--color-loss)] font-bold block">
                       {formatMetricNumber(analysisData.resistance || analysisData.levels?.resistance)}
                     </span>
                     <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.resistanceSource}>
@@ -1508,10 +1508,10 @@ Timestamp: ${new Date().toISOString()}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
                     className="text-center border-l border-[var(--color-border-subtle)]"
                   >
-                    <span className="text-[9px] uppercase tracking-wider font-bold text-amber-500 flex items-center justify-center gap-1 mb-0.5">
+                    <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-warning)] flex items-center justify-center gap-1 mb-0.5">
                       <span>🎯</span> Invalidation
                     </span>
-                    <span className="text-amber-400 font-bold block">
+                    <span className="text-[var(--color-warning)] font-bold block">
                       {formatMetricNumber(analysisData.invalidationLevel || analysisData.levels?.invalidation)}
                     </span>
                     <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.stopLossSource}>
@@ -1635,7 +1635,7 @@ Timestamp: ${new Date().toISOString()}
                     className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-dashed border-cyan-500/30"
                     style={{ background: "linear-gradient(135deg, var(--color-accent-primary-subtle), var(--color-bg-tertiary))" }}
                   >
-                    <Bot size={20} className="text-cyan-400 animate-pulse" />
+                    <Bot size={20} className="text-[var(--color-accent-primary)] animate-pulse" />
                   </div>
                   <h3 className="text-xs font-bold text-[var(--color-text-primary)] mb-1.5">Chart Analysis Inactive</h3>
                   <p className="text-[10px] leading-relaxed text-[var(--color-text-tertiary)] max-w-[200px] mb-4">
@@ -1856,23 +1856,23 @@ Timestamp: ${new Date().toISOString()}
                                           toast.error("Failed to bookmark analysis");
                                         }
                                       }}
-                                      className={`flex items-center gap-1 text-[10px] transition-colors px-1.5 py-0.5 rounded hover:bg-amber-500/10 ${
-                                        bookmarkedIds.has(msgId) ? "text-amber-400 font-semibold" : "text-[var(--color-text-tertiary)] hover:text-amber-400"
+                                      className={`flex items-center gap-1 text-[10px] transition-colors px-1.5 py-0.5 rounded hover:bg-[var(--color-warning-bg)] ${
+                                        bookmarkedIds.has(msgId) ? "text-[var(--color-warning)] font-semibold" : "text-[var(--color-text-tertiary)] hover:text-[var(--color-warning)]"
                                       }`}
                                       title="Bookmark this analysis"
                                     >
-                                      {bookmarkedIds.has(msgId) ? <Check size={11} className="text-emerald-400" /> : <Bookmark size={11} />}
+                                      {bookmarkedIds.has(msgId) ? <Check size={11} className="text-[var(--color-profit)]" /> : <Bookmark size={11} />}
                                       <span>{bookmarkedIds.has(msgId) ? "Saved" : "Save"}</span>
                                     </button>
                                   )}
                                   {/* Copy */}
                                   <button
                                     onClick={() => handleCopy(msg.content, msgId)}
-                                    className="flex items-center gap-1 text-[10px] text-[var(--color-text-tertiary)] hover:text-[var(--color-accent-primary)] transition-colors px-1.5 py-0.5 rounded hover:bg-cyan-500/5"
+                                    className="flex items-center gap-1 text-[10px] text-[var(--color-text-tertiary)] hover:text-[var(--color-accent-primary)] transition-colors px-1.5 py-0.5 rounded hover:bg-[var(--color-accent-primary-subtle)]"
                                     aria-label="Copy message"
                                   >
                                     {copiedId === msgId
-                                      ? <><Check size={11} className="text-emerald-400" /><span className="text-emerald-400">Copied</span></>
+                                      ? <><Check size={11} className="text-[var(--color-profit)]" /><span className="text-[var(--color-profit)]">Copied</span></>
                                       : <><Copy size={11} /><span>Copy</span></>}
                                   </button>
                                 </div>
@@ -1886,7 +1886,7 @@ Timestamp: ${new Date().toISOString()}
                                   <button
                                     key={action}
                                     onClick={() => handleQuickAction(action)}
-                                    className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-cyan-500/30 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all duration-150 press-scale"
+                                    className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-cyan-500/30 hover:text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-subtle)] transition-all duration-150 press-scale"
                                   >
                                     {action}
                                   </button>
@@ -1953,7 +1953,7 @@ Timestamp: ${new Date().toISOString()}
                     <button
                       key={q}
                       onClick={() => { setInputText(q); setShowFollowUps(false); }}
-                      className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-cyan-500/30 hover:text-cyan-400 hover:bg-cyan-500/5 transition-all duration-150 active:scale-95 max-w-full truncate"
+                      className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-cyan-500/30 hover:text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-subtle)] transition-all duration-150 active:scale-95 max-w-full truncate"
                     >
                       {q}
                     </button>
@@ -1964,11 +1964,11 @@ Timestamp: ${new Date().toISOString()}
               <div className="p-3 pt-2.5">
                 {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && (
                   <div className="hidden lg:flex items-center gap-2 mb-1 px-0.5 select-none">
-                    <span className={`text-[9px] font-mono font-bold ${analysesCountToday >= analysisLimit ? "text-rose-400" : "text-amber-400/80"}`}>
+                    <span className={`text-[9px] font-mono font-bold ${analysesCountToday >= analysisLimit ? "text-[var(--color-loss)]" : "text-amber-400/80"}`}>
                       {Math.max(0, analysisLimit - analysesCountToday)}/{analysisLimit}
                     </span>
                     {analysesCountToday >= analysisLimit && (
-                      <Link href="/pricing" className="text-[9px] font-semibold text-amber-400 hover:text-amber-300 underline underline-offset-2">Upgrade</Link>
+                      <Link href="/pricing" className="text-[9px] font-semibold text-[var(--color-warning)] hover:text-amber-300 underline underline-offset-2">Upgrade</Link>
                     )}
                   </div>
                 )}
@@ -2001,7 +2001,7 @@ Timestamp: ${new Date().toISOString()}
                     disabled={isPending}
                     className="btn-secondary w-full text-xs flex justify-center items-center gap-2 py-3 rounded-lg cursor-pointer border-[var(--color-border-default)]"
                   >
-                    <RefreshCw size={14} className={analyzeMutation.isPending ? "animate-spin text-cyan-400" : "text-cyan-400"} />
+                    <RefreshCw size={14} className={analyzeMutation.isPending ? "animate-spin text-[var(--color-accent-primary)]" : "text-[var(--color-accent-primary)]"} />
                     Run Chart Technical Scan
                   </button>
                 )}
@@ -2018,7 +2018,7 @@ Timestamp: ${new Date().toISOString()}
             {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && (
               <div className="flex items-center justify-between px-1 pb-1.5 text-[9px] uppercase font-bold tracking-widest text-[var(--color-text-tertiary)] font-mono select-none">
                 <span>{isDemoMode ? "Demo" : "Daily"} limit</span>
-                <span className={analysesCountToday >= analysisLimit ? "text-rose-400" : "text-amber-400"}>
+                <span className={analysesCountToday >= analysisLimit ? "text-[var(--color-loss)]" : "text-[var(--color-warning)]"}>
                   {Math.max(0, analysisLimit - analysesCountToday)} / {analysisLimit} left
                 </span>
               </div>
@@ -2118,9 +2118,9 @@ Timestamp: ${new Date().toISOString()}
             onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe })}
             className="flex items-center gap-2 px-4 py-3 rounded-full shadow-lg cursor-pointer press-scale"
             style={{
-              background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)",
-              color: "#09090B",
-              boxShadow: "0 4px 20px rgba(6, 182, 212,0.4)",
+              background: "linear-gradient(135deg, var(--color-accent-primary), var(--accent-bright))",
+              color: "var(--background)",
+              boxShadow: "0 4px 20px rgba(47, 198, 232, 0.4)",
             }}
           >
             <Sparkles size={16} strokeWidth={2.5} />

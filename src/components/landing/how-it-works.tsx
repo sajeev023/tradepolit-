@@ -29,7 +29,7 @@ export function HowItWorks() {
   return (
     <section id="how-it-works" className="tc-section tc-section--wide scroll-mt-20">
       <Reveal blur className="text-center space-y-3 mb-14 sm:mb-16">
-        <span className="tp-eyebrow-mono">How it works</span>
+        <span className="tp-eyebrow-mono">01 — How it works</span>
         <h2 className="tp-h2">
           From chart to conviction in <span className="tc-accent-phrase">three steps</span>
         </h2>

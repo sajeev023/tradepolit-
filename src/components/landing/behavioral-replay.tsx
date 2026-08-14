@@ -91,7 +91,7 @@ export function BehavioralReplay() {
     <section className="tc-section tc-section--wide">
       <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
         <div className="lg:col-span-5 space-y-4">
-          <span className="tp-eyebrow-mono">Behavioral detection</span>
+          <span className="tp-eyebrow-mono">03 — Behavioral detection</span>
           <h2 className="tp-h2">
             The copilot catches the trade{" "}
             <span className="tc-accent-phrase">you weren&apos;t going to take back.</span>
@@ -121,7 +121,7 @@ export function BehavioralReplay() {
         </div>
 
         <div ref={ref} className="lg:col-span-7">
-          <div className="tc-card !p-0 overflow-hidden">
+          <div className="tc-terminal !p-0 overflow-hidden">
             {/* status header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border-subtle)]">
               <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--muted)]">

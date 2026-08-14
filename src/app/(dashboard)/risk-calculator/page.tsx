@@ -176,7 +176,7 @@ export default function RiskCalculatorPage() {
   const inputCls = (field: string) =>
     `w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors ${
       getError(field)
-        ? "bg-rose-950/30 border border-rose-500/50"
+        ? "bg-[var(--color-loss-bg)] border border-rose-500/50"
         : "bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)]"
     }`;
 
@@ -276,7 +276,7 @@ export default function RiskCalculatorPage() {
                 onChange={e => update("balance", e.target.value)}
               />
               {getError("balance") && (
-                <p className="text-[11px] mt-1 text-rose-400 flex items-center gap-1">
+                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
                   <AlertTriangle size={10} /> {getError("balance")}
                 </p>
               )}
@@ -325,12 +325,12 @@ export default function RiskCalculatorPage() {
                 onChange={e => update("riskValue", e.target.value)}
               />
               {getError("riskPercent") && (
-                <p className="text-[11px] mt-1 text-rose-400 flex items-center gap-1">
+                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
                   <AlertTriangle size={10} /> {getError("riskPercent")}
                 </p>
               )}
               {getError("riskAmount") && (
-                <p className="text-[11px] mt-1 text-rose-400 flex items-center gap-1">
+                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
                   <AlertTriangle size={10} /> {getError("riskAmount")}
                 </p>
               )}
@@ -378,7 +378,7 @@ export default function RiskCalculatorPage() {
                 onChange={e => update("entryPrice", e.target.value)}
               />
               {getError("entryPrice") && (
-                <p className="text-[11px] mt-1 text-rose-400 flex items-center gap-1">
+                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
                   <AlertTriangle size={10} /> {getError("entryPrice")}
                 </p>
               )}
@@ -403,7 +403,7 @@ export default function RiskCalculatorPage() {
                 onChange={e => update("stopLoss", e.target.value)}
               />
               {getError("stopLoss") && (
-                <p className="text-[11px] mt-1 text-rose-400 flex items-center gap-1">
+                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
                   <AlertTriangle size={10} /> {getError("stopLoss")}
                 </p>
               )}
@@ -421,7 +421,7 @@ export default function RiskCalculatorPage() {
                 onChange={e => update("takeProfit", e.target.value)}
               />
               {getError("takeProfit") && (
-                <p className="text-[11px] mt-1 text-rose-400 flex items-center gap-1">
+                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
                   <AlertTriangle size={10} /> {getError("takeProfit")}
                 </p>
               )}
@@ -443,8 +443,8 @@ export default function RiskCalculatorPage() {
           </button>
 
           {fieldErrors.length > 0 && (
-            <div className="rounded-lg border border-rose-500/30 bg-rose-950/20 p-3">
-              <p className="text-xs font-semibold text-rose-400 mb-1 flex items-center gap-1.5">
+            <div className="rounded-lg border border-rose-500/30 bg-[var(--color-loss-bg)] p-3">
+              <p className="text-xs font-semibold text-[var(--color-loss)] mb-1 flex items-center gap-1.5">
                 <AlertTriangle size={12} /> Fix the following errors:
               </p>
               <ul className="space-y-0.5">
@@ -480,7 +480,7 @@ export default function RiskCalculatorPage() {
                   {results.warnings.length > 0 && (
                     <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 space-y-1">
                       {results.warnings.map((w, i) => (
-                        <p key={i} className="text-[11px] text-amber-400 flex items-start gap-1.5">
+                        <p key={i} className="text-[11px] text-[var(--color-warning)] flex items-start gap-1.5">
                           <AlertTriangle size={10} className="mt-0.5 shrink-0" /> {w}
                         </p>
                       ))}
@@ -492,7 +492,7 @@ export default function RiskCalculatorPage() {
                     <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--color-text-tertiary)" }}>
                       Position Size ({results.mode})
                     </p>
-                    <p className="text-3xl font-extrabold font-mono text-cyan-400 tabular-nums">
+                    <p className="text-3xl font-extrabold font-mono text-[var(--color-accent-primary)] tabular-nums">
                       {results.standardLots !== null
                         ? fmt(results.standardLots, 4)
                         : fmt(results.positionSize, 5)}
@@ -505,9 +505,9 @@ export default function RiskCalculatorPage() {
                   {/* Metrics grid */}
                   <div className="space-y-2.5 text-sm font-medium border-t border-[var(--color-border-subtle)] pt-3">
                     {[
-                      { label: "Dollar Risk",       val: fmtUSD(results.dollarRisk),    cls: "text-rose-400" },
+                      { label: "Dollar Risk",       val: fmtUSD(results.dollarRisk),    cls: "text-[var(--color-loss)]" },
                       { label: "Stop Distance",      val: fmt(results.stopDistance, 5),  cls: "" },
-                      { label: "Pip Value / Tick",   val: fmtUSD(results.pipValue, 4),   cls: "text-cyan-400" },
+                      { label: "Pip Value / Tick",   val: fmtUSD(results.pipValue, 4),   cls: "text-[var(--color-accent-primary)]" },
                       { label: "Margin Required",    val: fmtUSD(results.marginRequired), cls: "" },
                     ].map(({ label, val, cls }) => (
                       <div key={label} className="flex justify-between">
@@ -538,14 +538,14 @@ export default function RiskCalculatorPage() {
                     {/* R:R */}
                     <div className="flex justify-between">
                       <span style={{ color: "var(--color-text-tertiary)" }}>R:R Ratio</span>
-                      <span className="font-mono text-cyan-400">
+                      <span className="font-mono text-[var(--color-accent-primary)]">
                         {results.rMultiple ? `${fmt(results.rMultiple, 2)}:1` : "�"}
                       </span>
                     </div>
                     {results.rewardAmount !== null && (
                       <div className="flex justify-between">
                         <span style={{ color: "var(--color-text-tertiary)" }}>Potential Profit</span>
-                        <span className="font-mono text-emerald-400">{fmtUSD(results.rewardAmount)}</span>
+                        <span className="font-mono text-[var(--color-profit)]">{fmtUSD(results.rewardAmount)}</span>
                       </div>
                     )}
                   </div>
@@ -567,7 +567,7 @@ export default function RiskCalculatorPage() {
           </div>
 
           <div className="card p-4 flex items-center gap-3">
-            <ShieldCheck size={20} className="text-cyan-400 shrink-0" />
+            <ShieldCheck size={20} className="text-[var(--color-accent-primary)] shrink-0" />
             <p className="text-[11px] leading-relaxed" style={{ color: "var(--color-text-tertiary)" }}>
               Calculations use decimal.js precision arithmetic. Always verify contract specifications on your broker terminal before executing.
             </p>

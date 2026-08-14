@@ -49,7 +49,7 @@ export function SlimNav() {
             <a
               key={l.href}
               href={l.href}
-              className="px-3 h-9 inline-flex items-center rounded-lg text-[13px] font-medium text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--color-bg-hover)] transition-colors"
+              className="px-3 h-9 inline-flex items-center rounded-full text-[13px] font-medium text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--color-bg-hover)] transition-colors"
             >
               {l.label}
             </a>
@@ -60,13 +60,13 @@ export function SlimNav() {
         <div className="hidden md:flex items-center gap-2">
           <Link
             href="/login"
-            className="h-9 px-3.5 inline-flex items-center rounded-lg text-[13px] font-semibold text-[var(--muted)] hover:text-[var(--ink)] transition-colors"
+            className="h-9 px-3.5 inline-flex items-center rounded-full text-[13px] font-semibold text-[var(--muted)] hover:text-[var(--ink)] transition-colors"
           >
             Sign in
           </Link>
           <Link
             href="/signup"
-            className="group h-9 px-4 inline-flex items-center gap-1.5 rounded-lg text-[13px] font-bold text-[var(--bg-primary)] transition-transform active:scale-[0.98]"
+            className="group h-9 px-4 inline-flex items-center gap-1.5 rounded-full text-[13px] font-bold text-[var(--bg-primary)] transition-transform active:scale-[0.98]"
             style={{ background: "var(--accent)" }}
           >
             Start Free
@@ -78,7 +78,7 @@ export function SlimNav() {
         <div className="flex md:hidden items-center gap-2">
           <Link
             href="/signup"
-            className="h-9 px-3.5 inline-flex items-center rounded-lg text-[12px] font-bold text-[var(--bg-primary)]"
+            className="h-9 px-3.5 inline-flex items-center rounded-full text-[12px] font-bold text-[var(--bg-primary)]"
             style={{ background: "var(--accent)" }}
           >
             Start Free

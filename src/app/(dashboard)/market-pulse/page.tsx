@@ -48,12 +48,13 @@ function PulsePageSkeleton() {
 
 /* ─── Fear & Greed Ring ─── */
 function FearGreedRing({ value }: { value: number }) {
+  // 3-stop semantic palette — kept in lockstep with the landing MarketPulse
+  // component (src/components/landing/market-pulse.tsx) so the same index reads
+  // the same color everywhere: greed=green, neutral=amber, fear=red.
   const getColor = (v: number) => {
-    if (v >= 75) return "#22C55E";
-    if (v >= 55) return "#14F1B2";
-    if (v >= 45) return "#F59E0B";
-    if (v >= 25) return "#F97316";
-    return "#EF4444";
+    if (v >= 55) return "var(--color-profit)";
+    if (v >= 45) return "var(--color-warning)";
+    return "var(--color-loss)";
   };
 
   const color = getColor(value);
@@ -80,7 +81,6 @@ function FearGreedRing({ value }: { value: number }) {
           strokeDashoffset={dashOffset}
           strokeLinecap="round"
           className="transition-all duration-1000 ease-out"
-          style={{ filter: `drop-shadow(0 0 6px ${color}40)` }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -106,19 +106,15 @@ export default function MarketPulsePage() {
   });
 
   const getFearGreedColor = (value: number) => {
-    if (value >= 75) return "text-emerald-400";
-    if (value >= 55) return "text-cyan-400";
-    if (value >= 45) return "text-yellow-400";
-    if (value >= 25) return "text-orange-400";
-    return "text-rose-500";
+    if (value >= 55) return "text-[var(--color-profit)]";
+    if (value >= 45) return "text-[var(--color-warning)]";
+    return "text-[var(--color-loss)]";
   };
 
   const getFearGreedBg = (value: number) => {
-    if (value >= 75) return "bg-emerald-950/20 border-emerald-500/15";
-    if (value >= 55) return "bg-cyan-950/20 border-cyan-500/15";
-    if (value >= 45) return "bg-yellow-950/20 border-yellow-500/15";
-    if (value >= 25) return "bg-orange-950/20 border-orange-500/15";
-    return "bg-rose-950/20 border-rose-500/15";
+    if (value >= 55) return "bg-[var(--color-profit-bg)]";
+    if (value >= 45) return "bg-[var(--color-warning-bg)]";
+    return "bg-[var(--color-loss-bg)]";
   };
 
   if (isLoading) return <PulsePageSkeleton />;
@@ -195,17 +191,17 @@ export default function MarketPulsePage() {
                             {asset.symbol}/USD
                           </span>
                         </div>
-                        <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isUp ? "bg-emerald-950/30" : "bg-rose-950/30"}`}>
+                        <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isUp ? "bg-[var(--color-profit-bg)]" : "bg-[var(--color-loss-bg)]"}`}>
                           {isUp ? (
-                            <ArrowUpRight size={12} className="text-emerald-400" />
+                            <ArrowUpRight size={12} className="text-[var(--color-profit)]" />
                           ) : (
-                            <ArrowDownRight size={12} className="text-rose-400" />
+                            <ArrowDownRight size={12} className="text-[var(--color-loss)]" />
                           )}
                         </div>
                       </div>
                       <div className="mt-3 flex items-baseline justify-between">
                         <span className="text-sm font-bold font-mono tabular-nums">${asset.price.toLocaleString()}</span>
-                        <span className={`text-[10px] font-bold font-mono tabular-nums ${isUp ? "text-emerald-400" : "text-rose-500"}`}>
+                        <span className={`text-[10px] font-bold font-mono tabular-nums ${isUp ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
                           {isUp ? "+" : ""}{asset.change24h.toFixed(2)}%
                         </span>
                       </div>
@@ -243,7 +239,7 @@ export default function MarketPulsePage() {
                             {rate.symbol}
                           </div>
                         </td>
-                        <td className={`py-3.5 font-mono text-xs font-bold ${rate.rate >= 0 ? "text-cyan-400" : "text-rose-400"}`}>
+                        <td className={`py-3.5 font-mono text-xs font-bold ${rate.rate >= 0 ? "text-[var(--color-accent-primary)]" : "text-[var(--color-loss)]"}`}>
                           <div className="flex items-center gap-1.5">
                             {rate.rate >= 0 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
                             {rate.rate >= 0 ? "+" : ""}{(rate.rate * 100).toFixed(4)}%
@@ -265,7 +261,7 @@ export default function MarketPulsePage() {
             <div className="card p-5 h-full flex flex-col">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--color-bg-hover)" }}>
-                  <Activity size={14} className="text-zinc-500" />
+                  <Activity size={14} className="text-[var(--color-text-tertiary)]" />
                 </div>
                 <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                   Institutional Order Flow
@@ -281,20 +277,20 @@ export default function MarketPulsePage() {
                     border: "1px dashed var(--color-border-default)",
                   }}
                 >
-                  <TrendingUp size={24} className="text-zinc-600" />
+                  <TrendingUp size={24} className="text-[var(--color-text-quaternary)]" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-zinc-400">Whale & Block Trade Data</p>
-                  <p className="text-[11px] mt-2 leading-relaxed text-zinc-600 max-w-[200px] mx-auto">
+                  <p className="text-sm font-semibold text-[var(--color-text-secondary)]">Whale & Block Trade Data</p>
+                  <p className="text-[11px] mt-2 leading-relaxed text-[var(--color-text-tertiary)] max-w-[200px] mx-auto">
                     Real-time institutional order flow requires a premium data provider (e.g., Laevitas, CoinGlass).
                   </p>
                 </div>
-                <div className="w-full p-3 rounded-lg border border-yellow-500/15 bg-yellow-500/5">
+                <div className="w-full p-3 rounded-lg" style={{ border: "1px solid rgba(245, 185, 66, 0.18)", backgroundColor: "var(--color-warning-bg)" }}>
                   <div className="flex items-center gap-1.5 justify-center mb-1">
-                    <Clock size={11} className="text-yellow-600" />
-                    <span className="text-[10px] font-semibold text-yellow-600">Planned Feature</span>
+                    <Clock size={11} className="text-[var(--color-warning)]" />
+                    <span className="text-[10px] font-semibold text-[var(--color-warning)]">Planned Feature</span>
                   </div>
-                  <p className="text-[10px] text-yellow-700 leading-relaxed">
+                  <p className="text-[10px] text-[var(--color-text-tertiary)] leading-relaxed">
                     Institutional-grade on-chain analytics will be integrated in a future release.
                   </p>
                 </div>
@@ -303,12 +299,17 @@ export default function MarketPulsePage() {
           </div>
         </div>
       ) : (
-        <div className="card p-12 text-center animate-fade-in">
-          <Activity size={32} className="text-zinc-600 mx-auto mb-3" />
-          <p className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
-            Failed to fetch market pulse data.
+        <div className="card empty-state animate-fade-in">
+          <span className="empty-state__icon">
+            <Activity size={22} />
+          </span>
+          <p className="empty-state__title">
+            Market pulse unavailable
           </p>
-          <button onClick={() => refetch()} className="btn-primary mt-4 text-xs mx-auto">
+          <p className="empty-state__body">
+            We couldn&apos;t fetch sentiment, funding, or trending data right now.
+          </p>
+          <button onClick={() => refetch()} className="btn-primary btn-sm empty-state__action">
             <RefreshCw size={14} /> Retry
           </button>
         </div>

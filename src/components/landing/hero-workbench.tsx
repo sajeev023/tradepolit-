@@ -108,7 +108,7 @@ export function HeroWorkbench() {
   const changePct = live?.changePercent24h;
 
   return (
-    <div className="tc-card !p-0 overflow-hidden w-full">
+    <div className="tc-terminal !p-0 overflow-hidden w-full">
       {/* ── Top row: symbol tabs + live price + status ── */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--color-border-subtle)]">
         <div className="flex items-center gap-1.5">

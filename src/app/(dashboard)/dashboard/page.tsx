@@ -76,7 +76,7 @@ function CustomTooltip({ active, payload, label }: any) {
       }}
     >
       <p className="text-[10px] mb-1 text-[var(--color-text-quaternary)]">{label}</p>
-      <p className="font-mono font-bold text-sm text-cyan-400">
+      <p className="font-mono font-bold text-sm text-[var(--color-accent-primary)]">
         ${Number(payload[0].value).toFixed(2)}
       </p>
     </div>
@@ -194,7 +194,7 @@ function DashboardContent() {
   if (profileLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-40">
-        <RefreshCw className="animate-spin text-cyan-400 mb-2" size={24} />
+        <RefreshCw className="animate-spin text-[var(--color-accent-primary)] mb-2" size={24} />
         <span className="text-sm text-[var(--color-text-secondary)]">Loading profile details...</span>
       </div>
     );
@@ -205,8 +205,8 @@ function DashboardContent() {
       <div className="flex flex-col gap-6 max-w-4xl mx-auto py-12 animate-fade-in">
         <div className="card p-8 border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]/40 flex flex-col items-center justify-center text-center space-y-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 blur-3xl rounded-full" />
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-400">
-            <Zap size={28} className="fill-amber-400 text-amber-400" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-[var(--color-warning)]">
+            <Zap size={28} className="fill-[var(--color-warning)] text-[var(--color-warning)]" />
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-black text-[var(--color-text-primary)] font-mono uppercase tracking-wide">PRO feature</h2>
@@ -261,7 +261,7 @@ function DashboardContent() {
       {/* KPI stats section */}
       {summaryIsError ? (
         <div className="card p-5 flex flex-col items-start gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-rose-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-loss)]">
             Couldn&apos;t load metrics
           </span>
           <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
@@ -269,7 +269,7 @@ function DashboardContent() {
           </p>
           <button
             onClick={() => refetchSummary()}
-            className="px-3 py-1.5 rounded text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition"
+            className="px-3 py-1.5 rounded text-xs font-semibold bg-cyan-500/10 text-[var(--color-accent-primary)] border border-cyan-500/20 hover:bg-cyan-500/20 transition"
           >
             Retry
           </button>
@@ -339,7 +339,7 @@ function DashboardContent() {
                   </p>
                 </div>
                 {equityCurveData.length > 0 && (
-                  <span className="text-[10px] bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] bg-cyan-500/10 border border-cyan-500/20 text-[var(--color-accent-primary)] font-mono px-2 py-0.5 rounded-full font-bold">
                     Peak ${Math.max(...equityCurveData.map((d: any) => d.pnl), 0).toFixed(0)}
                   </span>
                 )}
@@ -350,7 +350,7 @@ function DashboardContent() {
                   <div
                     className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-[var(--color-bg-tertiary)] border border-dashed border-[var(--color-border-default)]"
                   >
-                    <BookOpen size={22} className="text-cyan-400" />
+                    <BookOpen size={22} className="text-[var(--color-accent-primary)]" />
                   </div>
                   <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                     No performance data logged yet
@@ -407,7 +407,7 @@ function DashboardContent() {
           <div className="card p-5 border-[var(--color-border-subtle)] flex-1 flex flex-col justify-between">
             <div>
               <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 flex items-center gap-1.5">
-                <Flame size={15} className="text-amber-400" /> Behavioral Pathology
+                <Flame size={15} className="text-[var(--color-warning)]" /> Behavioral Pathology
               </h2>
               <div className="p-3.5 bg-[var(--color-bg-deepest)]/40 rounded-xl border border-[var(--color-border-subtle)] text-xs leading-relaxed text-[var(--color-text-secondary)]">
                 {behavioralInsight}
@@ -417,11 +417,11 @@ function DashboardContent() {
             <div className="mt-4 pt-3 border-t border-[var(--color-border-subtle)] grid grid-cols-2 gap-2 text-center text-xs">
               <div className="bg-[var(--color-bg-tertiary)] p-2.5 rounded-lg border border-[var(--color-border-subtle)]">
                 <span className="text-[10px] text-[var(--color-text-quaternary)] block">Best Session</span>
-                <span className="font-bold text-cyan-400 mt-1 block font-mono">{metrics.bestSession}</span>
+                <span className="font-bold text-[var(--color-accent-primary)] mt-1 block font-mono">{metrics.bestSession}</span>
               </div>
               <div className="bg-[var(--color-bg-tertiary)] p-2.5 rounded-lg border border-[var(--color-border-subtle)]">
                 <span className="text-[10px] text-[var(--color-text-quaternary)] block">Best Asset</span>
-                <span className="font-bold text-cyan-400 mt-1 block font-mono">{metrics.bestSymbol}</span>
+                <span className="font-bold text-[var(--color-accent-primary)] mt-1 block font-mono">{metrics.bestSymbol}</span>
               </div>
             </div>
           </div>
@@ -430,7 +430,7 @@ function DashboardContent() {
           <div className="card p-5 border-[var(--color-border-subtle)] flex flex-col justify-between">
             <div>
               <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-1.5">
-                <Sparkles size={15} className="text-cyan-400" /> Weekly AI Report
+                <Sparkles size={15} className="text-[var(--color-accent-primary)]" /> Weekly AI Report
               </h2>
               <p className="text-xs text-[var(--color-text-quaternary)] leading-relaxed mb-3">
                 Aggregate trading performance, mistakes, and behavioral metrics for a comprehensive review.
@@ -443,12 +443,12 @@ function DashboardContent() {
             >
               {reportMutation.isPending ? (
                 <>
-                  <RefreshCw size={13} className="animate-spin text-cyan-400" />
+                  <RefreshCw size={13} className="animate-spin text-[var(--color-accent-primary)]" />
                   Generating...
                 </>
               ) : (
                 <>
-                  <Zap size={13} className="text-amber-400" />
+                  <Zap size={13} className="text-[var(--color-warning)]" />
                   Generate Report
                 </>
               )}
@@ -462,7 +462,7 @@ function DashboardContent() {
         {/* Recent Trades list */}
         <div className="card p-5 lg:col-span-2 border-[var(--color-border-subtle)]">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-1.5">
-            <Calendar size={15} className="text-cyan-400" /> Recent Closed Trades
+            <Calendar size={15} className="text-[var(--color-accent-primary)]" /> Recent Closed Trades
           </h2>
           {recentTrades.length === 0 ? (
             <p className="text-xs text-[var(--color-text-quaternary)] py-4 text-center">No trades logged yet.</p>
@@ -474,7 +474,7 @@ function DashboardContent() {
                   <div key={t.id} className="flex items-center justify-between border-b border-[var(--color-border-subtle)] pb-3 last:border-b-0 last:pb-0">
                     <div className="flex items-center gap-3">
                       <div className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono ${
-                        t.direction === "LONG" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
+                        t.direction === "LONG" ? "bg-emerald-500/10 text-[var(--color-profit)]" : "bg-rose-500/10 text-[var(--color-loss)]"
                       }`}>
                         {t.direction}
                       </div>
@@ -485,7 +485,7 @@ function DashboardContent() {
                         </span>
                       </div>
                     </div>
-                    <span className={`text-xs font-bold font-mono ${isWin ? "text-emerald-400" : "text-rose-500"}`}>
+                    <span className={`text-xs font-bold font-mono ${isWin ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
                       {isWin ? "+" : ""}${t.pnl.toFixed(2)}
                     </span>
                   </div>
@@ -501,7 +501,7 @@ function DashboardContent() {
             <div className="card p-5 border-cyan-500/20 bg-cyan-500/5 flex flex-col justify-between flex-1">
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
+                  <h3 className="text-sm font-bold text-[var(--color-accent-primary)] flex items-center gap-1.5">
                     <Sparkles size={14} /> Weekly Performance Report
                   </h3>
                   <div className="flex items-center gap-1">
@@ -510,7 +510,7 @@ function DashboardContent() {
                       className="p-1 rounded hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
                       title="Copy report to clipboard"
                     >
-                      {copied ? <Check size={14} className="text-emerald-400" /> : <Clipboard size={14} />}
+                      {copied ? <Check size={14} className="text-[var(--color-profit)]" /> : <Clipboard size={14} />}
                     </button>
                     <button
                       onClick={() => setWeeklyReport(null)}
@@ -539,7 +539,7 @@ export default function DashboardPage() {
   return (
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center py-40">
-        <RefreshCw className="animate-spin text-cyan-400 mb-2" size={24} />
+        <RefreshCw className="animate-spin text-[var(--color-accent-primary)] mb-2" size={24} />
         <span className="text-sm text-[var(--color-text-secondary)] font-mono">LOADING WORKSTATION...</span>
       </div>
     }>

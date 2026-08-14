@@ -201,10 +201,10 @@ export function Sidebar() {
             style={{
               width: 24,
               height: 24,
-              background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)",
+              background: "linear-gradient(135deg, var(--color-accent-primary), var(--accent-bright))",
             }}
           >
-            <TrendingUp size={13} color="#09090B" strokeWidth={2.5} />
+            <TrendingUp size={13} color="var(--background)" strokeWidth={2.5} />
           </div>
           <AnimatePresence>
             {!isCollapsed && (

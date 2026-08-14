@@ -159,13 +159,13 @@ function MobileBottomNav() {
           style={{
             width: 44,
             height: 44,
-            background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)",
-            boxShadow: "0 4px 16px rgba(6, 182, 212,0.35)",
+            background: "linear-gradient(135deg, var(--color-accent-primary), var(--accent-bright))",
+            boxShadow: "0 4px 16px rgba(47, 198, 232, 0.35)",
             marginTop: -12,
           }}
           aria-label="Analyze"
         >
-          <Sparkles size={20} color="#09090B" strokeWidth={2.5} />
+          <Sparkles size={20} color="var(--background)" strokeWidth={2.5} />
         </motion.button>
       </div>
 
@@ -264,7 +264,7 @@ function MobileBottomNav() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: "100%", opacity: 0 }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="fixed bottom-0 left-0 right-0 z-60 rounded-t-2xl border-t overflow-hidden"
+                className="fixed bottom-0 left-0 right-0 z-[60] rounded-t-2xl border-t overflow-hidden"
                 style={{
                   maxHeight: "70vh",
                   backgroundColor: "var(--color-bg-secondary)",
