@@ -29,15 +29,11 @@ export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoC
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none">
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-emerald-500/30 bg-zinc-950 p-6 shadow-2xl shadow-emerald-950/40">
-        
-        {/* Top Glow Accent */}
-        <div className="absolute -top-16 -right-16 h-36 w-36 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
-        
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-[rgba(var(--green-rgb),0.3)] bg-[var(--color-bg-deepest)] p-6 shadow-2xl shadow-[rgba(var(--green-rgb),0.25)]">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-100 transition-colors"
+          className="absolute top-4 right-4 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
           aria-label="Close modal"
         >
           <X size={18} />
@@ -45,20 +41,20 @@ export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoC
 
         {/* Header */}
         <div className="space-y-2 text-left mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[rgba(var(--green-rgb),0.3)] bg-[var(--color-profit-bg)] text-[var(--color-profit)] text-xs font-semibold">
             <Sparkles size={12} />
             YC Instant Demo
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-white">
+          <h2 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">
             You&apos;ve used your {analysesUsed} free AI analyses
           </h2>
-          <p className="text-xs text-zinc-400 leading-relaxed">
+          <p className="text-xs text-[var(--color-text-tertiary)] leading-relaxed">
             Create your free account to unlock daily scans, persistent trade memory, and automatic risk guardrails.
           </p>
         </div>
 
         {/* Value Checklist */}
-        <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4 mb-6 space-y-3">
+        <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)]/60 p-4 mb-6 space-y-3">
           {[
             "5 free AI chart analyses every day",
             "Save analyses & chat history across devices",
@@ -66,8 +62,8 @@ export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoC
             "Behavioral Risk Shield (flags revenge & overtrading)",
             "Custom watchlists & real-time alerts",
           ].map((item, idx) => (
-            <div key={idx} className="flex items-center gap-2.5 text-xs text-zinc-200">
-              <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+            <div key={idx} className="flex items-center gap-2.5 text-xs text-[var(--color-text-secondary)]">
+              <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--color-profit-bg)] text-[var(--color-profit)]">
                 <Check size={11} strokeWidth={3} />
               </div>
               <span>{item}</span>
@@ -94,7 +90,7 @@ export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoC
           {/* Secondary: Standard Free Account */}
           <Link
             href="/signup"
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold bg-emerald-500 text-zinc-950 hover:bg-emerald-400 transition-all duration-200 shadow-lg shadow-emerald-500/20 h-[44px]"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-bold bg-[var(--color-profit)] text-[var(--color-bg-deepest)] hover:bg-[var(--color-profit)]/90 transition-all duration-200 shadow-lg shadow-[rgba(var(--green-rgb),0.25)] h-[44px]"
           >
             <span>Create Free Account</span>
             <ArrowRight size={14} />
@@ -102,8 +98,8 @@ export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoC
         </div>
 
         {/* Footer Guarantee */}
-        <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500">
-          <ShieldCheck size={13} className="text-emerald-500" />
+        <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-[var(--color-text-tertiary)]">
+          <ShieldCheck size={13} className="text-[var(--color-profit)]" />
           <span>100% Free · No credit card required · Read-only access</span>
         </div>
 

@@ -32,7 +32,7 @@ export function Providers({ children }: { children: ReactNode }) {
     "--mobile-offset-left": "16px",
     "--mobile-offset-right": "16px",
     "--width": "380px",
-    "--z-index": "70",
+    "--z-index": "65",
   } as CSSProperties;
 
   return (

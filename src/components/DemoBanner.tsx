@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { X, AlertCircle, Crown } from "lucide-react";
@@ -15,6 +15,8 @@ export function DemoBanner() {
   const [analysisLimit, setAnalysisLimit] = useState<number | null>(null);
   const [alertLimit, setAlertLimit] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState(false);
+
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   const fetchUsage = useCallback(async (_userId: string) => {
     try {
@@ -43,6 +45,30 @@ export function DemoBanner() {
     });
   }, [fetchUsage]);
 
+  // Drive the chrome offset through the --spacing-demo-banner CSS var so the
+  // fixed Topbar (top) and main (paddingTop) shift down in lockstep with the
+  // banner's real measured height — keeping search, notifications, avatar and
+  // the sidebar logo reachable for demo users. Resolved (dismissed/absent) → 0px.
+  useEffect(() => {
+    const el = bannerRef.current;
+    if (!el) {
+      document.documentElement.style.setProperty("--spacing-demo-banner", "0px");
+      return;
+    }
+    const apply = () =>
+      document.documentElement.style.setProperty(
+        "--spacing-demo-banner",
+        `${el.offsetHeight}px`
+      );
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.setProperty("--spacing-demo-banner", "0px");
+    };
+  }, [isDemo, dismissed]);
+
   if (!isDemo || dismissed) return null;
 
   const analysesRemaining = analysisLimit !== null ? Math.max(0, analysisLimit - analysesUsed) : null;
@@ -51,15 +77,17 @@ export function DemoBanner() {
 
   return (
     <div
+      ref={bannerRef}
       className="demo-banner"
       style={{
         position: "fixed",
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 9999,
-        background: "linear-gradient(90deg, rgba(6, 182, 212,0.15) 0%, rgba(6,182,212,0.15) 100%)",
-        borderBottom: "1px solid rgba(6, 182, 212,0.3)",
+        zIndex: "var(--z-toast)",
+        background:
+          "linear-gradient(90deg, rgba(var(--accent-rgb), 0.14) 0%, rgba(var(--accent-rgb), 0.14) 100%)",
+        borderBottom: "1px solid rgba(var(--accent-rgb), 0.3)",
         padding: "8px 16px",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
@@ -80,14 +108,14 @@ export function DemoBanner() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 280 }}>
           <AlertCircle
             size={16}
-            style={{ color: "#06b6d4", flexShrink: 0 }}
+            style={{ color: "var(--color-accent-primary)", flexShrink: 0 }}
             aria-hidden="true"
           />
           <span
             style={{
               fontSize: 13,
               fontWeight: 500,
-              color: "#FAFAFA",
+              color: "var(--color-text-primary)",
               letterSpacing: "0.01em",
             }}
           >
@@ -103,8 +131,8 @@ export function DemoBanner() {
               style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: "#F87171",
-                background: "rgba(248,113,113,0.1)",
+                color: "var(--color-loss)",
+                background: "var(--color-loss-bg)",
                 padding: "2px 6px",
                 borderRadius: 4,
               }}
@@ -118,29 +146,8 @@ export function DemoBanner() {
           <Link
             href="/signup"
             onClick={() => trackClarityEvent("demo_banner_create_account_click")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-              padding: "8px 16px",
-              background: "linear-gradient(135deg, #06b6d4 0%, #06B6D4 100%)",
-              color: "#09090B",
-              fontSize: 12,
-              fontWeight: 700,
-              borderRadius: 8,
-              textDecoration: "none",
-              boxShadow: "0 2px 8px rgba(6, 182, 212,0.3)",
-              transition: "transform 0.15s ease, box-shadow 0.15s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 4px 16px rgba(6, 182, 212,0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(6, 182, 212,0.3)";
-            }}
+            className="btn-primary btn-sm"
+            style={{ textDecoration: "none" }}
           >
             Create Free Account
           </Link>
@@ -148,27 +155,7 @@ export function DemoBanner() {
           <button
             onClick={() => setDismissed(true)}
             aria-label="Dismiss preview banner"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 28,
-              height: 28,
-              borderRadius: 6,
-              border: "none",
-              background: "rgba(255,255,255,0.05)",
-              color: "#71717A",
-              cursor: "pointer",
-              transition: "background 0.15s, color 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-              e.currentTarget.style.color = "#FAFAFA";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-              e.currentTarget.style.color = "#71717A";
-            }}
+            className="icon-button"
           >
             <X size={14} />
           </button>
@@ -198,12 +185,12 @@ export function LockedFeatureBadge({ feature }: { feature: string }) {
         alignItems: "center",
         gap: 6,
         padding: "6px 10px",
-        background: isPro ? "rgba(139,92,246,0.1)" : "rgba(6, 182, 212,0.1)",
-        border: isPro ? "1px solid rgba(139,92,246,0.3)" : "1px solid rgba(6, 182, 212,0.3)",
+        background: "var(--color-accent-primary-subtle)",
+        border: "1px solid rgba(var(--accent-rgb), 0.3)",
         borderRadius: 8,
         fontSize: 11,
         fontWeight: 500,
-        color: isPro ? "#A78BFA" : "#06b6d4",
+        color: "var(--color-accent-primary)",
       }}
     >
       <Crown size={10} style={{ flexShrink: 0 }} aria-hidden="true" />

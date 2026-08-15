@@ -280,7 +280,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Navigation tabs */}
-      <div className="flex border-b border-zinc-800 gap-4 mb-2 animate-fade-in">
+      <div className="flex border-b border-[var(--color-border-default)] gap-4 mb-2 animate-fade-in">
         {(["profile", "settings", "preferences", "billing"] as const).map((tab) => (
           <button
             key={tab}
@@ -288,7 +288,7 @@ export default function SettingsPage() {
             className={`pb-3 text-xs font-semibold uppercase tracking-wider transition-all relative cursor-pointer ${
               activeTab === tab
                 ? "text-[var(--color-accent-primary)] font-bold"
-                : "text-[var(--color-text-secondary)] hover:text-white"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             }`}
           >
             {tab}
@@ -317,12 +317,12 @@ export default function SettingsPage() {
                   </h2>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-6 pb-2 border-b border-zinc-800">
-                  <div className="w-16 h-16 rounded-full bg-zinc-800 border-2 border-cyan-400 flex items-center justify-center text-xl font-bold font-mono text-[var(--color-accent-primary)] tracking-wider">
+                <div className="flex flex-col sm:flex-row items-center gap-6 pb-2 border-b border-[var(--color-border-default)]">
+                  <div className="w-16 h-16 rounded-full bg-[var(--color-bg-tertiary)] border-2 border-[var(--accent)] flex items-center justify-center text-xl font-bold font-mono text-[var(--color-accent-primary)] tracking-wider">
                     {getInitials()}
                   </div>
                   <div className="text-center sm:text-left space-y-0.5">
-                    <span className="text-sm font-semibold block text-white">{fullName}</span>
+                    <span className="text-sm font-semibold block text-[var(--color-text-primary)]">{fullName}</span>
                     <span className="text-xs font-mono" style={{ color: "var(--color-text-tertiary)" }}>{email}</span>
                   </div>
                 </div>
@@ -387,10 +387,10 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={notifyEmail}
                         onChange={(e) => setNotifyEmail(e.target.checked)}
-                        className="rounded border-zinc-700 bg-zinc-900 text-[var(--color-accent-primary)] focus:ring-0 w-4 h-4"
+                        className="rounded border-[var(--color-border-strong)] bg-[var(--color-bg-tertiary)] text-[var(--color-accent-primary)] focus:ring-0 w-4 h-4"
                       />
                       <div className="space-y-0.5">
-                        <span className="font-semibold block text-white">Email Alerts</span>
+                        <span className="font-semibold block text-[var(--color-text-primary)]">Email Alerts</span>
                         <span style={{ color: "var(--color-text-tertiary)" }}>Receive triggered alerts in your email inbox</span>
                       </div>
                     </label>
@@ -400,10 +400,10 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={notifyInApp}
                         onChange={(e) => setNotifyInApp(e.target.checked)}
-                        className="rounded border-zinc-700 bg-zinc-900 text-[var(--color-accent-primary)] focus:ring-0 w-4 h-4"
+                        className="rounded border-[var(--color-border-strong)] bg-[var(--color-bg-tertiary)] text-[var(--color-accent-primary)] focus:ring-0 w-4 h-4"
                       />
                       <div className="space-y-0.5">
-                        <span className="font-semibold block text-white">In-App Notifications</span>
+                        <span className="font-semibold block text-[var(--color-text-primary)]">In-App Notifications</span>
                         <span style={{ color: "var(--color-text-tertiary)" }}>Show real-time triggers in the dashboard navbar</span>
                       </div>
                     </label>
@@ -463,7 +463,7 @@ export default function SettingsPage() {
               </form>
 
               {/* Change Password Panel */}
-              <form onSubmit={handleUpdatePassword} className="card p-5 space-y-4 border border-zinc-800">
+              <form onSubmit={handleUpdatePassword} className="card p-5 space-y-4 border border-[var(--color-border-default)]">
                 <div className="flex items-center gap-2 mb-2">
                   <Lock size={16} className="text-[var(--color-accent-primary)]" />
                   <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
@@ -501,7 +501,7 @@ export default function SettingsPage() {
                   <button
                     type="submit"
                     disabled={passwordUpdating}
-                    className="px-6 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border border-zinc-800 bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-white"
+                    className="px-6 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border border-[var(--color-border-default)] bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-primary)]"
                   >
                     {passwordUpdating && <RefreshCw className="animate-spin" size={14} />}
                     Update Password
@@ -510,7 +510,7 @@ export default function SettingsPage() {
               </form>
 
               {/* Danger Zone */}
-              <div className="card p-5 space-y-4 border border-rose-900/30 bg-rose-950/5">
+              <div className="card p-5 space-y-4 border border-[rgba(var(--red-rgb),0.3)] bg-[rgba(var(--red-rgb),0.04)]">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle size={16} className="text-[var(--color-loss)]" />
                   <h2 className="text-sm font-semibold text-[var(--color-loss)]">
@@ -518,7 +518,7 @@ export default function SettingsPage() {
                   </h2>
                 </div>
 
-                <p className="text-xs leading-relaxed text-zinc-400">
+                <p className="text-xs leading-relaxed text-[var(--color-text-secondary)]">
                   Deleting your account is permanent. It will instantly erase your profile, settings, alert thresholds, strategy setups, backtest records, RAG-grounded AI history, and all logged trade performance charts. **This action cannot be undone.**
                 </p>
 
@@ -528,9 +528,9 @@ export default function SettingsPage() {
                       type="checkbox"
                       checked={deleteConfirmed}
                       onChange={(e) => setDeleteConfirmed(e.target.checked)}
-                      className="rounded border-rose-900/60 bg-zinc-900 text-[var(--color-loss)] focus:ring-0 w-4 h-4 mt-0.5"
+                      className="rounded border-[rgba(var(--red-rgb),0.6)] bg-[var(--color-bg-tertiary)] text-[var(--color-loss)] focus:ring-0 w-4 h-4 mt-0.5"
                     />
-                    <span className="text-xs font-semibold text-zinc-400 select-none">
+                    <span className="text-xs font-semibold text-[var(--color-text-secondary)] select-none">
                       I understand that this will permanently destroy all TradCopilot data.
                     </span>
                   </label>
@@ -540,7 +540,7 @@ export default function SettingsPage() {
                       type="button"
                       onClick={handleDeleteAccount}
                       disabled={!deleteConfirmed || deletingAccount}
-                      className="px-6 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-rose-950/40 hover:bg-rose-900/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-[rgba(var(--red-rgb),0.4)] hover:bg-[var(--color-loss-bg)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deletingAccount && <Loader2 className="animate-spin" size={14} />}
                       Permanently Delete My Account
@@ -653,17 +653,17 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-2.5">
                     <CreditCard size={18} className="text-[var(--color-accent-primary)]" />
                     <div>
-                      <h2 className="text-sm font-bold text-white">Subscription & Billing</h2>
-                      <p className="text-[11px] text-zinc-500">Manage plan memberships, usage limits, and invoices.</p>
+                      <h2 className="text-sm font-bold text-[var(--color-text-primary)]">Subscription & Billing</h2>
+                      <p className="text-[11px] text-[var(--color-text-tertiary)]">Manage plan memberships, usage limits, and invoices.</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
-                      <span className="text-[10px] uppercase font-bold tracking-widest bg-[var(--color-profit-bg)] border border-emerald-500/20 text-[var(--color-profit)] px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <span className="text-[10px] uppercase font-bold tracking-widest bg-[var(--color-profit-bg)] border border-[rgba(var(--green-rgb),0.2)] text-[var(--color-profit)] px-2.5 py-1 rounded-full flex items-center gap-1">
                         <Zap size={10} className="fill-[var(--color-profit)] text-[var(--color-profit)]" /> PRO Tier
                       </span>
                     ) : (
-                      <span className="text-[10px] uppercase font-bold tracking-widest bg-zinc-800 border border-zinc-700 text-zinc-400 px-2.5 py-1 rounded-full">
+                      <span className="text-[10px] uppercase font-bold tracking-widest bg-[var(--color-bg-tertiary)] border border-[var(--color-border-strong)] text-[var(--color-text-secondary)] px-2.5 py-1 rounded-full">
                         FREE Tier
                       </span>
                     )}
@@ -673,14 +673,14 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Plan Details & Limits */}
                   <div className="space-y-4">
-                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Plan Usage Metrics</h3>
+                    <h3 className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">Plan Usage Metrics</h3>
                     <div className="space-y-3 font-sans">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-400">AI Chart Analyses</span>
+                        <span className="text-[var(--color-text-secondary)]">AI Chart Analyses</span>
                         {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
                           <span className="font-bold text-[var(--color-profit)]">Unlimited</span>
                         ) : (
-                          <span className="font-mono text-zinc-300 font-semibold">
+                          <span className="font-mono text-[var(--color-text-secondary)] font-semibold">
                             {profileData?.dailyAnalysisCount ?? 0} / 5 used today
                           </span>
                         )}
@@ -688,18 +688,18 @@ export default function SettingsPage() {
                       {profileData?.subscriptionStatus !== "PRO_ACTIVE" && (
                         <div className="w-full bg-[var(--color-bg-tertiary)] rounded-full h-1.5 overflow-hidden border border-[var(--color-border-subtle)]">
                           <div
-                            className="bg-cyan-400 h-1.5 rounded-full"
+                            className="bg-[var(--accent)] h-1.5 rounded-full"
                             style={{ width: `${Math.min(100, ((profileData?.dailyAnalysisCount ?? 0) / 5) * 100)}%` }}
                           />
                         </div>
                       )}
 
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-400">Proactive Tech Alerts</span>
+                        <span className="text-[var(--color-text-secondary)]">Proactive Tech Alerts</span>
                         {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
                           <span className="font-bold text-[var(--color-profit)]">Unlimited</span>
                         ) : (
-                          <span className="font-mono text-zinc-300 font-semibold">
+                          <span className="font-mono text-[var(--color-text-secondary)] font-semibold">
                             {profileData?.dailyAlertCount ?? 0} / 3 used today
                           </span>
                         )}
@@ -707,7 +707,7 @@ export default function SettingsPage() {
                       {profileData?.subscriptionStatus !== "PRO_ACTIVE" && (
                         <div className="w-full bg-[var(--color-bg-tertiary)] rounded-full h-1.5 overflow-hidden border border-[var(--color-border-subtle)]">
                           <div
-                            className="bg-cyan-400 h-1.5 rounded-full"
+                            className="bg-[var(--accent)] h-1.5 rounded-full"
                             style={{ width: `${Math.min(100, ((profileData?.dailyAlertCount ?? 0) / 3) * 100)}%` }}
                           />
                         </div>
@@ -722,20 +722,19 @@ export default function SettingsPage() {
 
                   {/* Pricing Tiers & Action Cards */}
                   <div className="flex flex-col justify-between p-5 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-tertiary)] relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-400/5 blur-2xl rounded-full" />
                     <div>
                       <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--color-accent-primary)] font-mono">Premium Access</span>
-                      <h4 className="text-lg font-black text-white mt-1">TradCopilot Pro</h4>
-                      <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
+                      <h4 className="text-lg font-black text-[var(--color-text-primary)] mt-1">TradCopilot Pro</h4>
+                      <p className="text-xs text-[var(--color-text-tertiary)] mt-2 leading-relaxed">
                         Become an institutional-grade day trader with complete contextual AI scanning, full journal persistence, and alerts.
                       </p>
                       <div className="mt-4 flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-white font-mono">$7.49</span>
-                        <span className="text-xs text-zinc-500">/ month</span>
+                        <span className="text-2xl font-black text-[var(--color-text-primary)] font-mono">$7.49</span>
+                        <span className="text-xs text-[var(--color-text-tertiary)]">/ month</span>
                       </div>
                     </div>
 
-                    <div className="mt-6 pt-4 border-t border-zinc-800">
+                    <div className="mt-6 pt-4 border-t border-[var(--color-border-default)]">
                       {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
                         <button
                           onClick={handlePortal}
@@ -755,10 +754,10 @@ export default function SettingsPage() {
                           className="w-full btn-primary text-xs font-semibold py-2.5 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
                         >
                           {stripeLoading ? (
-                            <RefreshCw className="animate-spin text-zinc-950" size={14} />
+                            <RefreshCw className="animate-spin text-[var(--color-bg-deepest)]" size={14} />
                           ) : (
                             <>
-                              <Zap size={12} className="fill-zinc-950 text-zinc-950" />
+                              <Zap size={12} className="fill-[var(--color-bg-deepest)] text-[var(--color-bg-deepest)]" />
                               Upgrade to Pro ($7.49)
                             </>
                           )}

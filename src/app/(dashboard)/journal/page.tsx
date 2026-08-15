@@ -441,7 +441,7 @@ function JournalPageContent() {
                                 deleteMutation.mutate(trade.id);
                                 setDeleteConfirmId(null);
                               }}
-                              className="px-2 py-1 rounded bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-rose-900/50 text-xs font-semibold hover:bg-rose-900/50"
+                              className="px-2 py-1 rounded bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-[rgba(var(--red-rgb),0.5)] text-xs font-semibold hover:bg-[var(--color-loss-bg)]"
                             >
                               Yes
                             </button>
@@ -455,6 +455,8 @@ function JournalPageContent() {
                         ) : (
                           <div className="flex gap-2">
                             <button
+                              type="button"
+                              aria-label="Edit Trade"
                               onClick={() => handleEditClick(trade)}
                               className="p-1.5 rounded transition-colors"
                               style={{ color: "var(--color-text-secondary)" }}
@@ -464,6 +466,8 @@ function JournalPageContent() {
                               <Edit2 size={14} />
                             </button>
                             <button
+                              type="button"
+                              aria-label="Delete Trade"
                               onClick={() => setDeleteConfirmId(trade.id)}
                               className="p-1.5 rounded transition-colors"
                               style={{ color: "var(--color-text-tertiary)" }}
@@ -519,6 +523,8 @@ function JournalPageContent() {
                 {editingTrade ? "Edit Trade Log" : "Log New Trade"}
               </h2>
               <button
+                type="button"
+                aria-label="Close"
                 onClick={() => {
                   setIsCreateOpen(false);
                   setEditingTrade(null);
@@ -547,6 +553,8 @@ function JournalPageContent() {
                   >
                     <option value="CRYPTO">Crypto</option>
                     <option value="FOREX">Forex</option>
+                    <option value="COMMODITY">Commodity</option>
+                    <option value="INDEX">Index</option>
                   </select>
                 </div>
                 <div>
@@ -689,7 +697,7 @@ function JournalPageContent() {
                         onClick={() => toggleMistakeTag(tag, current)}
                         className="px-2.5 py-1 rounded text-xs transition-colors font-medium border"
                         style={{
-                          backgroundColor: selected ? "rgba(239, 68, 68, 0.12)" : "transparent",
+                          backgroundColor: selected ? "rgba(var(--red-rgb), 0.12)" : "transparent",
                           borderColor: selected ? "var(--color-loss)" : "var(--color-border-subtle)",
                           color: selected ? "var(--color-loss)" : "var(--color-text-secondary)",
                         }}
@@ -771,6 +779,8 @@ function JournalPageContent() {
                 </span>
               </div>
               <button
+                type="button"
+                aria-label="Close"
                 onClick={() => setViewingTrade(null)}
                 className="p-1 rounded-md transition-colors"
                 style={{ color: "var(--color-text-tertiary)" }}
@@ -828,7 +838,7 @@ function JournalPageContent() {
                     <div className="flex flex-wrap gap-1">
                       {viewingTrade.mistakeTags && viewingTrade.mistakeTags.length > 0 ? (
                         viewingTrade.mistakeTags.map((tag: string) => (
-                          <span key={tag} className="text-xs px-2 py-0.5 rounded border border-rose-500/20 text-[var(--color-loss)] bg-rose-950/10">
+                          <span key={tag} className="text-xs px-2 py-0.5 rounded border border-[rgba(var(--red-rgb),0.2)] text-[var(--color-loss)] bg-[var(--color-loss-bg)]">
                             {tag}
                           </span>
                         ))
@@ -875,7 +885,7 @@ function JournalPageContent() {
                       href={url}
                       target="_blank"
                       rel="noreferrer"
-                      className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-white gap-1"
+                      className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-[var(--color-text-primary)] gap-1"
                     >
                       <ExternalLink size={12} /> View Full
                     </a>
@@ -916,7 +926,7 @@ function JournalPageContent() {
                       deleteMutation.mutate(viewingTrade.id);
                       setDeleteConfirmId(null);
                     }}
-                    className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold transition-colors bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-rose-900/50 hover:bg-rose-900/50"
+                    className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold transition-colors bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-[rgba(var(--red-rgb),0.5)] hover:bg-[var(--color-loss-bg)]"
                   >
                     Confirm
                   </button>
@@ -941,7 +951,7 @@ function JournalPageContent() {
                   </button>
                   <button
                     onClick={() => setDeleteConfirmId(viewingTrade.id)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors text-[var(--color-loss)] hover:bg-[var(--color-loss-bg)] border border-rose-950/40"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-colors text-[var(--color-loss)] hover:bg-[var(--color-loss-bg)] border border-[rgba(var(--red-rgb),0.4)]"
                   >
                     <Trash2 size={12} /> Delete Trade
                   </button>

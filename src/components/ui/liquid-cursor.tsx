@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export function LiquidCursor() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [enabled, setEnabled] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
+    // Only on the marketing homepage — a custom cursor is a cinematic flourish
+    // there, but distracting and wrong over a dense app/dashboard surface.
+    if (pathname !== "/") return;
     // Only enable on desktop pointer devices with fine pointer and no reduced motion preference
     const isTouch = window.matchMedia("(pointer: coarse)").matches;
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -18,6 +23,15 @@ export function LiquidCursor() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    // Resolve the accent token once (e.g. "--accent-rgb: 47 198 232") so the
+    // cursor tint tracks the design system instead of a hardcoded hex.
+    const accentRgbStr =
+      getComputedStyle(document.documentElement).getPropertyValue("--accent-rgb").trim() || "47 198 232";
+    const [ar, ag, ab] = accentRgbStr.split(/\s+/).map((n) => parseInt(n, 10));
+    const accent = (a: number) =>
+      `rgba(${ar || 47}, ${ag || 198}, ${ab || 232}, ${a})`;
+    const accentSolid = `rgb(${ar || 47}, ${ag || 198}, ${ab || 232})`;
 
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
@@ -97,10 +111,8 @@ export function LiquidCursor() {
       // Draw Liquid Blob Outer Glow & Body
       ctx.beginPath();
       ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, Math.PI * 2);
-      ctx.fillStyle = isHoveringInteractive
-        ? "rgba(6, 182, 212, 0.25)"
-        : "rgba(6, 182, 212, 0.4)";
-      ctx.strokeStyle = "rgba(6, 182, 212, 0.8)";
+      ctx.fillStyle = isHoveringInteractive ? accent(0.25) : accent(0.4);
+      ctx.strokeStyle = accent(0.8);
       ctx.lineWidth = 1.5;
       ctx.fill();
       ctx.stroke();
@@ -108,7 +120,7 @@ export function LiquidCursor() {
       // Core center dot
       ctx.beginPath();
       ctx.arc(0, 0, 3, 0, Math.PI * 2);
-      ctx.fillStyle = "#06b6d4";
+      ctx.fillStyle = accentSolid;
       ctx.fill();
 
       ctx.restore();
@@ -123,7 +135,7 @@ export function LiquidCursor() {
       window.removeEventListener("mousemove", handleMouseMove);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [pathname]);
 
   if (!enabled) return null;
 

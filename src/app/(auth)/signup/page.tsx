@@ -77,14 +77,14 @@ export default function SignupPage() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Joined by 1,400+ Active Traders
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[rgba(var(--accent-rgb),0.2)] bg-[var(--color-accent-primary-subtle)] text-[var(--color-accent-primary)] text-xs font-semibold">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent-primary)] animate-pulse" />
+          5 free AI scans/day · No card required
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-white">
+        <h1 className="text-3xl font-extrabold tracking-tight text-[var(--color-text-primary)]">
           Start Trading Smarter
         </h1>
-        <p className="text-xs text-zinc-400 leading-relaxed">
+        <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
           Create your free TradCopilot account to get 5 daily AI chart scans, trade journal memory, and risk guardrails.
         </p>
       </div>
@@ -101,9 +101,9 @@ export default function SignupPage() {
       </button>
 
       <div className="flex items-center gap-4">
-        <div className="flex-1 h-px bg-zinc-800/80" />
-        <span className="text-[10px] font-bold tracking-wider text-zinc-500">OR</span>
-        <div className="flex-1 h-px bg-zinc-800/80" />
+        <div className="flex-1 h-px bg-[var(--color-border-default)]" />
+        <span className="text-[10px] font-bold tracking-wider text-[var(--color-text-tertiary)]">OR</span>
+        <div className="flex-1 h-px bg-[var(--color-border-default)]" />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -145,7 +145,13 @@ export default function SignupPage() {
             error={!!errors.password}
             className="h-[44px]"
             rightElement={
-              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ color: "var(--color-text-tertiary)" }} tabIndex={-1}>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                style={{ color: "var(--color-text-tertiary)" }}
+              >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             }
@@ -174,7 +180,7 @@ export default function SignupPage() {
         
         <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-cyan-400 hover:underline">
+          <Link href="/login" className="font-semibold text-[var(--color-accent-primary)] hover:underline">
             Sign in
           </Link>
         </p>

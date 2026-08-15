@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FlaskConical, Play, XCircle, RefreshCw, Info } from "lucide-react";
 import { CRYPTO_SYMBOLS, FOREX_SYMBOLS, COMMODITY_SYMBOLS } from "@/lib/market-registry";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { EquityCurveChart } from "@/components/ui/equity-curve-chart";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
 
@@ -44,9 +44,9 @@ function BacktestDemoResult() {
             <h3 className="text-xs font-semibold" style={{ color: "var(--color-text-tertiary)" }}>Historical Backtest Results</h3>
             <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-[var(--color-warning-bg)] text-[var(--color-warning)] border border-amber-500/20">Demo</span>
           </div>
-          <p className="text-sm font-bold text-white">EMA Crossover Trend on BTC/USD</p>
+          <p className="text-sm font-bold text-[var(--color-text-primary)]">EMA Crossover Trend on BTC/USD</p>
         </div>
-        <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-emerald-500/20">Complete</span>
+        <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-[rgba(var(--green-rgb),0.2)]">Complete</span>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
@@ -74,23 +74,9 @@ function BacktestDemoResult() {
           <span className="text-lg font-bold font-mono text-[var(--color-loss)]">{(Math.abs(demoMetrics.maxDrawdown) * 100).toFixed(2)}%</span>
         </div>
       </div>
-      <div className="w-full h-[180px]">
+      <div>
         <h4 className="text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: "var(--color-text-tertiary)" }}>Backtested Equity Path</h4>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={demoEquityCurve} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorDemoEq" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-accent-primary)" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="var(--color-accent-primary)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" vertical={false} />
-            <XAxis dataKey="date" stroke="var(--color-text-tertiary)" fontSize={8} tickLine={false} />
-            <YAxis stroke="var(--color-text-tertiary)" fontSize={8} tickLine={false} />
-            <Tooltip contentStyle={{ backgroundColor: "var(--color-bg-secondary)", borderColor: "var(--color-border-default)", color: "var(--color-text-primary)" }} />
-            <Area type="monotone" dataKey="equity" stroke="var(--color-accent-primary)" strokeWidth={2} fillOpacity={1} fill="url(#colorDemoEq)" />
-          </AreaChart>
-        </ResponsiveContainer>
+        <EquityCurveChart data={demoEquityCurve} dataKey="equity" height={150} />
       </div>
       <div className="space-y-2">
         <h4 className="text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: "var(--color-text-tertiary)" }}>Demo Trades ({demoTrades.length})</h4>
@@ -115,6 +101,11 @@ export default function BacktesterPage() {
   const [selectedStrategyId, setSelectedStrategyId] = useState<string>("");
   const [selectedAsset, setSelectedAsset] = useState("BTC/USD");
   const [activeBacktestId, setActiveBacktestId] = useState<string | null>(null);
+  // Demo result is gated by an explicit boolean rather than overloading
+  // activeBacktestId="demo" — that overload made the demo branch unreachable,
+  // because the backtest query resolves activeBacktest=undefined for "demo",
+  // re-triggering the empty-state guard below.
+  const [demoMode, setDemoMode] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState("1d");
   const [startBalance, setStartBalance] = useState<number>(10000);
 
@@ -231,6 +222,7 @@ export default function BacktesterPage() {
       return body.data;
     },
     onSuccess: (data) => {
+      setDemoMode(false);
       setActiveBacktestId(data.id);
       toast.info("Backtest job submitted. Simulating trades...");
     },
@@ -305,18 +297,18 @@ export default function BacktesterPage() {
                 <div className="space-y-2">
                   <span className="block text-[10px] uppercase font-bold text-[var(--color-accent-primary)]">Entry Buy Signal</span>
                   <div className="grid grid-cols-3 gap-1 text-[11px]">
-                    <select value={entryIndA} onChange={(e) => setEntryIndA(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-white">
+                    <select value={entryIndA} onChange={(e) => setEntryIndA(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
                       <option value="EMA20">EMA 20</option>
                       <option value="EMA50">EMA 50</option>
                       <option value="PRICE">Price</option>
                     </select>
-                    <select value={entryOp} onChange={(e) => setEntryOp(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-white">
+                    <select value={entryOp} onChange={(e) => setEntryOp(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
                       <option value="CROSSES_ABOVE">Crosses Above</option>
                       <option value="CROSSES_BELOW">Crosses Below</option>
                       <option value="GREATER_THAN">Greater Than</option>
                       <option value="LESS_THAN">Less Than</option>
                     </select>
-                    <select value={entryIndB} onChange={(e) => setEntryIndB(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-white">
+                    <select value={entryIndB} onChange={(e) => setEntryIndB(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
                       <option value="EMA50">EMA 50</option>
                       <option value="EMA20">EMA 20</option>
                       <option value="PRICE">Price</option>
@@ -328,18 +320,18 @@ export default function BacktesterPage() {
                 <div className="space-y-2">
                   <span className="block text-[10px] uppercase font-bold text-[var(--color-loss)]">Exit Sell Signal</span>
                   <div className="grid grid-cols-3 gap-1 text-[11px]">
-                    <select value={exitIndA} onChange={(e) => setExitIndA(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-white">
+                    <select value={exitIndA} onChange={(e) => setExitIndA(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
                       <option value="EMA20">EMA 20</option>
                       <option value="EMA50">EMA 50</option>
                       <option value="PRICE">Price</option>
                     </select>
-                    <select value={exitOp} onChange={(e) => setExitOp(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-white">
+                    <select value={exitOp} onChange={(e) => setExitOp(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
                       <option value="CROSSES_BELOW">Crosses Below</option>
                       <option value="CROSSES_ABOVE">Crosses Above</option>
                       <option value="GREATER_THAN">Greater Than</option>
                       <option value="LESS_THAN">Less Than</option>
                     </select>
-                    <select value={exitIndB} onChange={(e) => setExitIndB(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-white">
+                    <select value={exitIndB} onChange={(e) => setExitIndB(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
                       <option value="EMA50">EMA 50</option>
                       <option value="EMA20">EMA 20</option>
                       <option value="PRICE">Price</option>
@@ -350,7 +342,7 @@ export default function BacktesterPage() {
                 <div className="flex gap-2 pt-2">
                   <button
                     type="submit"
-                    className="flex-1 py-2 rounded text-xs font-semibold bg-cyan-400 text-zinc-950 hover:bg-cyan-300 transition-colors"
+                    className="flex-1 py-2 rounded text-xs font-semibold bg-[var(--accent)] text-[var(--color-bg-deepest)] hover:bg-[var(--accent-bright)] transition-colors"
                   >
                     Save Ruleset
                   </button>
@@ -473,9 +465,9 @@ export default function BacktesterPage() {
                   onClick={handleRunBacktest}
                   disabled={runBacktestMutation.isPending || isPollingBacktest}
                   className="w-full flex items-center justify-center gap-1.5 py-3 rounded-lg text-xs font-semibold transition-all"
-                  style={{ backgroundColor: "var(--color-accent-primary)", color: "#0A0A0B" }}
+                  style={{ backgroundColor: "var(--color-accent-primary)", color: "var(--background)" }}
                 >
-                  <Play size={14} fill="#0A0A0B" /> Run Historical Backtest
+                  <Play size={14} fill="var(--background)" /> Run Historical Backtest
                 </button>
               </div>
             )}
@@ -492,7 +484,7 @@ export default function BacktesterPage() {
         {/* Right column: Results dashboard */}
         <div className="lg:col-span-3">
           <div className="card p-5 min-h-[400px] flex flex-col justify-between">
-            {!activeBacktestId || !activeBacktest ? (
+            {!demoMode && (!activeBacktestId || !activeBacktest) ? (
               <div className="flex flex-col items-center justify-center py-20 text-center my-auto">
                 <FlaskConical size={36} style={{ color: "var(--color-text-tertiary)" }} className="mb-2" />
                 <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-secondary)" }}>
@@ -502,14 +494,14 @@ export default function BacktesterPage() {
                   Configure your crossover rules on the left to simulate past performance.
                 </p>
                 <button
-                  onClick={() => setActiveBacktestId("demo")}
+                  onClick={() => setDemoMode(true)}
                   className="mt-4 px-4 py-2 rounded-lg text-xs font-semibold border transition-all hover:bg-[var(--color-bg-hover)]"
                   style={{ borderColor: "var(--color-border-subtle)", color: "var(--color-text-secondary)" }}
                 >
                   Show Demo Result
                 </button>
               </div>
-            ) : activeBacktestId === "demo" ? (
+            ) : demoMode ? (
               <BacktestDemoResult />
             ) : activeBacktest?.status === "PENDING" || activeBacktest?.status === "RUNNING" ? (
               <div className="flex flex-col items-center justify-center py-28 text-center my-auto">
@@ -539,11 +531,18 @@ export default function BacktesterPage() {
                     <h3 className="text-xs font-semibold" style={{ color: "var(--color-text-tertiary)" }}>
                       Historical Backtest Results
                     </h3>
-                    <p className="text-sm font-bold text-white">
+                    <p className="text-sm font-bold text-[var(--color-text-primary)]">
                       {activeBacktest.strategy?.name || "Deleted Strategy"} on {activeBacktest.instrument}
                     </p>
                   </div>
-                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-emerald-500/20">
+                  <span
+                    className="text-[10px] uppercase font-mono px-2 py-0.5 rounded"
+                    style={{
+                      backgroundColor: "var(--color-profit-bg)",
+                      color: "var(--color-profit)",
+                      border: "1px solid color-mix(in srgb, var(--color-profit) 20%, transparent)",
+                    }}
+                  >
                     Complete
                   </span>
                 </div>
@@ -602,31 +601,11 @@ export default function BacktesterPage() {
 
                 {/* Backtester Chart */}
                 {equityCurve.length > 0 && (
-                  <div className="w-full h-[180px]">
+                  <div>
                     <h4 className="text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: "var(--color-text-tertiary)" }}>
                       Backtested Equity Path
                     </h4>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={equityCurve} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorBtEquity" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--color-accent-primary)" stopOpacity={0.15} />
-                            <stop offset="95%" stopColor="var(--color-accent-primary)" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" vertical={false} />
-                        <XAxis dataKey="date" stroke="var(--color-text-tertiary)" fontSize={8} tickLine={false} />
-                        <YAxis stroke="var(--color-text-tertiary)" fontSize={8} tickLine={false} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "var(--color-bg-secondary)",
-                            borderColor: "var(--color-border-default)",
-                            color: "var(--color-text-primary)",
-                          }}
-                        />
-                        <Area type="monotone" dataKey="equity" stroke="var(--color-accent-primary)" strokeWidth={2} fillOpacity={1} fill="url(#colorBtEquity)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    <EquityCurveChart data={equityCurve} dataKey="equity" height={150} />
                   </div>
                 )}
 

@@ -269,13 +269,13 @@ export const TradingViewChart = memo(function TradingViewChart({
       )}
 
       {loadError ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0B] p-6 text-center z-40">
-          <AlertTriangle className="text-rose-500 mb-3" size={32} />
-          <h3 className="text-sm font-bold text-white mb-1">Chart Load Failed</h3>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--color-bg-deepest)] p-6 text-center z-40">
+          <AlertTriangle className="text-[var(--color-loss)] mb-3" size={32} />
+          <h3 className="text-sm font-bold text-[var(--color-text-primary)] mb-1">Chart Load Failed</h3>
           <p className="text-xs text-[var(--color-text-secondary)] mb-4 max-w-[280px]">{loadError}</p>
           <button
             onClick={handleManualRetry}
-            className="px-4 py-2 bg-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-hover)] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
+            className="px-4 py-2 bg-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-hover)] text-[var(--color-bg-deepest)] text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors"
           >
             <RefreshCw size={12} />
             Retry Connection
@@ -283,28 +283,28 @@ export const TradingViewChart = memo(function TradingViewChart({
         </div>
       ) : (
         !scriptLoaded && (
-          <div className="absolute inset-0 flex flex-col justify-between p-4 bg-[#0A0A0B] z-30 animate-pulse">
-            <div className="flex justify-between items-center pb-2 border-b border-[#1A1A1C]">
+          <div className="absolute inset-0 flex flex-col justify-between p-4 bg-[var(--color-bg-deepest)] z-30 animate-pulse">
+            <div className="flex justify-between items-center pb-2 border-b border-[var(--color-border-subtle)]">
               <div className="flex items-center gap-3">
-                <div className="h-6 w-24 bg-zinc-800 rounded" />
-                <div className="h-4 w-12 bg-zinc-800 rounded" />
+                <div className="h-6 w-24 bg-[var(--color-bg-tertiary)] rounded" />
+                <div className="h-4 w-12 bg-[var(--color-bg-tertiary)] rounded" />
               </div>
               <div className="flex gap-2">
-                <div className="h-5 w-10 bg-zinc-800 rounded" />
-                <div className="h-5 w-10 bg-zinc-800 rounded" />
-                <div className="h-5 w-10 bg-zinc-800 rounded" />
+                <div className="h-5 w-10 bg-[var(--color-bg-tertiary)] rounded" />
+                <div className="h-5 w-10 bg-[var(--color-bg-tertiary)] rounded" />
+                <div className="h-5 w-10 bg-[var(--color-bg-tertiary)] rounded" />
               </div>
             </div>
             <div className="flex-1 flex items-center justify-center relative">
               <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:32px_32px]" />
-              <div className="text-zinc-600 text-xs font-semibold uppercase tracking-widest z-10 flex items-center gap-2">
+              <div className="text-[var(--color-text-quaternary)] text-xs font-semibold uppercase tracking-widest z-10 flex items-center gap-2">
                 <RefreshCw size={12} className="animate-spin" />
                 Initializing Chart...
               </div>
             </div>
-            <div className="h-20 border-t border-[#1A1A1C] pt-2 flex items-center justify-between">
-              <div className="h-4 w-16 bg-zinc-800 rounded" />
-              <div className="h-4 w-32 bg-zinc-800 rounded" />
+            <div className="h-20 border-t border-[var(--color-border-subtle)] pt-2 flex items-center justify-between">
+              <div className="h-4 w-16 bg-[var(--color-bg-tertiary)] rounded" />
+              <div className="h-4 w-32 bg-[var(--color-bg-tertiary)] rounded" />
             </div>
           </div>
         )

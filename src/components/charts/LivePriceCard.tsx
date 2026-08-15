@@ -105,7 +105,7 @@ export const LivePriceCard = memo(function LivePriceCard({
         <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "var(--color-text-tertiary)" }}>
           24h
         </p>
-        <div className={`flex items-center gap-1 text-sm font-semibold tp-mono mt-1 ${isProfit ? "text-emerald-400" : "text-rose-500"}`}>
+        <div className={`flex items-center gap-1 text-sm font-semibold tp-mono mt-1 ${isProfit ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
           {isProfit ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
           <span>{isProfit ? "+" : ""}{activePriceData.changePercent24h.toFixed(2)}%</span>
         </div>

@@ -1,9 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useUIStore } from "@/lib/stores/ui-store";
 import { Search, X, BookOpen, FlaskConical, Newspaper, LineChart, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+type SelectableItem = {
+  id: string;
+  group: string;
+  label: string;
+  hint?: string;
+  icon: "asset" | "trade" | "strategy" | "news";
+  href?: string;
+  external?: boolean;
+  onSelect: () => void;
+};
 
 export function SearchCommandPalette() {
   const router = useRouter();
@@ -11,6 +22,12 @@ export function SearchCommandPalette() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any>({ trades: [], strategies: [], news: [], assets: [] });
   const [isLoading, setIsLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const rowRefs = useRef<Array<HTMLButtonElement | HTMLAnchorElement | null>>([]);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   // Debounced search
   useEffect(() => {
@@ -37,44 +54,186 @@ export function SearchCommandPalette() {
     return () => clearTimeout(delay);
   }, [query]);
 
-  // Handle ESC close
+  const close = useCallback(() => {
+    setCommandPaletteOpen(false);
+    // Restore focus to the element that opened the palette (e.g. ⌘K trigger).
+    setTimeout(() => previouslyFocused.current?.focus(), 0);
+  }, [setCommandPaletteOpen]);
+
+  // Build a flat, ordered list of selectable result rows.
+  const flatItems: SelectableItem[] = useMemo(() => {
+    const items: SelectableItem[] = [];
+    (results.assets || []).forEach((asset: any, idx: number) =>
+      items.push({
+        id: `asset-${idx}`,
+        group: "Matching Assets",
+        label: asset.symbol,
+        icon: "asset",
+        onSelect: () => {
+          setCommandPaletteOpen(false);
+          router.push(`/charts?symbol=${encodeURIComponent(asset.symbol)}`);
+        },
+      }),
+    );
+    (results.trades || []).forEach((trade: any) =>
+      items.push({
+        id: `trade-${trade.id}`,
+        group: "Trade Logs",
+        label: `${trade.instrument} ${trade.direction}`,
+        hint: new Date(trade.openedAt).toLocaleDateString(),
+        icon: "trade",
+        onSelect: () => {
+          setCommandPaletteOpen(false);
+          router.push("/journal");
+        },
+      }),
+    );
+    (results.strategies || []).forEach((strat: any) =>
+      items.push({
+        id: `strategy-${strat.id}`,
+        group: "Strategies",
+        label: strat.name,
+        icon: "strategy",
+        onSelect: () => {
+          setCommandPaletteOpen(false);
+          router.push("/backtester");
+        },
+      }),
+    );
+    (results.news || []).forEach((n: any) =>
+      items.push({
+        id: `news-${n.id}`,
+        group: "Market Intelligence Headlines",
+        label: n.headline,
+        href: n.url,
+        external: true,
+        icon: "news",
+        onSelect: () => {
+          setCommandPaletteOpen(false);
+        },
+      }),
+    );
+    return items;
+  }, [results, router, setCommandPaletteOpen]);
+
+  // Reset the active row whenever the result set changes.
   useEffect(() => {
+    setActiveIndex(0);
+  }, [flatItems.length]);
+
+  const hasResults = flatItems.length > 0;
+
+  // ESC close + focus trap + arrow/enter/home/end navigation.
+  useEffect(() => {
+    if (!commandPaletteOpen) return;
+
+    previouslyFocused.current = document.activeElement as HTMLElement;
+    // Move focus into the dialog on open.
+    const t = setTimeout(() => inputRef.current?.focus(), 0);
+
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        setCommandPaletteOpen(false);
+        e.preventDefault();
+        close();
+        return;
+      }
+      // Focus trap — keep Tab cycling within the dialog.
+      if (e.key === "Tab") {
+        const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button, [href], input, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusables && focusables.length > 0) {
+          const list = Array.from(focusables);
+          const first = list[0];
+          const last = list[list.length - 1];
+          const active = document.activeElement;
+          if (e.shiftKey && active === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && active === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+        return;
+      }
+      // Result navigation (only meaningful when there are rows).
+      if (!hasResults) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveIndex((i) => (i + 1) % flatItems.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveIndex((i) => (i - 1 + flatItems.length) % flatItems.length);
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        setActiveIndex(0);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        setActiveIndex(flatItems.length - 1);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const item = flatItems[activeIndex];
+        if (item) item.onSelect();
       }
     }
-    if (commandPaletteOpen) {
-      document.addEventListener("keydown", handleKeyDown);
-    }
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [commandPaletteOpen, setCommandPaletteOpen]);
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      clearTimeout(t);
+    };
+  }, [commandPaletteOpen, close, flatItems, hasResults, activeIndex]);
+
+  // Keep the active row scrolled into view as the user arrows through results.
+  useEffect(() => {
+    const el = rowRefs.current[activeIndex];
+    el?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
 
   if (!commandPaletteOpen) return null;
 
-  const hasResults =
-    results.trades.length > 0 ||
-    results.strategies.length > 0 ||
-    results.news.length > 0 ||
-    results.assets.length > 0;
+  const iconFor = (icon: SelectableItem["icon"]) => {
+    const cls = "shrink-0 text-[var(--color-accent-primary)]";
+    if (icon === "asset") return <LineChart size={14} className={cls} />;
+    if (icon === "trade") return <BookOpen size={14} className={cls} />;
+    if (icon === "strategy") return <FlaskConical size={14} className={cls} />;
+    return <Newspaper size={14} className={cls} />;
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-xl rounded-xl border glass-elevated overflow-hidden shadow-2xl" style={{ borderColor: "var(--color-border-subtle)" }}>
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/60 backdrop-blur-sm"
+      onClick={close}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette — search trades, assets, strategies and news"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xl rounded-xl border glass-elevated overflow-hidden shadow-2xl"
+        style={{ borderColor: "var(--color-border-subtle)" }}
+      >
         {/* Input area */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor: "var(--color-border-subtle)", backgroundColor: "var(--color-bg-secondary)" }}>
           <Search size={18} style={{ color: "var(--color-text-tertiary)" }} />
           <input
+            ref={inputRef}
             type="text"
-            autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search trades, assets, strategies..."
+            aria-label="Search query"
+            aria-controls="command-palette-results"
+            aria-expanded={hasResults}
+            aria-activedescendant={hasResults ? flatItems[activeIndex]?.id : undefined}
             className="flex-1 text-sm bg-transparent outline-none border-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)]"
           />
           {isLoading && <Loader2 size={16} className="animate-spin text-[var(--color-accent-primary)]" />}
           <button
-            onClick={() => setCommandPaletteOpen(false)}
+            onClick={close}
+            aria-label="Close command palette"
             className="text-[var(--color-text-quaternary)] hover:text-[var(--color-text-primary)] p-1 rounded-md hover:bg-[var(--color-bg-hover)] transition-colors"
           >
             <X size={16} />
@@ -82,7 +241,13 @@ export function SearchCommandPalette() {
         </div>
 
         {/* Results area */}
-        <div className="max-h-96 overflow-y-auto p-2 space-y-4" style={{ backgroundColor: "var(--color-bg-primary)" }}>
+        <div
+          id="command-palette-results"
+          role="listbox"
+          aria-label="Search results"
+          className="max-h-96 overflow-y-auto p-2 space-y-4"
+          style={{ backgroundColor: "var(--color-bg-primary)" }}
+        >
           {!query.trim() ? (
             <div className="text-center py-8 text-xs" style={{ color: "var(--color-text-tertiary)" }}>
               Type your search query to seek matching system assets and logs.
@@ -93,102 +258,72 @@ export function SearchCommandPalette() {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Assets results */}
-              {results.assets.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-                    Matching Assets
-                  </div>
-                  {results.assets.map((asset: any, idx: number) => (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        setCommandPaletteOpen(false);
-                        router.push(`/charts?symbol=${encodeURIComponent(asset.symbol)}`);
-                      }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      <LineChart size={14} className="text-[var(--color-accent-primary)]" />
-                      <span>{asset.symbol}</span>
+              {(() => {
+                // Group flat rows by their section so each group keeps tight
+                // inter-row spacing while sections stay visually separated.
+                const groups: { group: string; items: { item: SelectableItem; index: number }[] }[] = [];
+                flatItems.forEach((item, index) => {
+                  const last = groups[groups.length - 1];
+                  if (!last || last.group !== item.group) {
+                    groups.push({ group: item.group, items: [{ item, index }] });
+                  } else {
+                    last.items.push({ item, index });
+                  }
+                });
+                return groups.map((g) => (
+                  <div key={g.group}>
+                    <div className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
+                      {g.group}
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Trades results */}
-              {results.trades.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-                    Trade Logs
+                    {g.items.map(({ item, index }) => {
+                      const isActive = index === activeIndex;
+                      const sharedProps = {
+                        "data-active": isActive ? "true" : undefined,
+                        ref: (el: HTMLButtonElement | HTMLAnchorElement | null) => {
+                          rowRefs.current[index] = el;
+                        },
+                        onMouseEnter: () => setActiveIndex(index),
+                        className: `flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer text-xs font-semibold w-full text-left transition-colors ${
+                          isActive ? "bg-[var(--color-bg-hover)]" : "hover:bg-[var(--color-bg-hover)]"
+                        }`,
+                        style: { color: "var(--color-text-secondary)" },
+                      };
+                      return item.external && item.href ? (
+                        <a
+                          key={item.id}
+                          {...(sharedProps as any)}
+                          href={item.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={() => setCommandPaletteOpen(false)}
+                          role="option"
+                          aria-selected={isActive}
+                        >
+                          {iconFor(item.icon)}
+                          <span className="truncate">{item.label}</span>
+                        </a>
+                      ) : (
+                        <button
+                          key={item.id}
+                          {...(sharedProps as any)}
+                          type="button"
+                          role="option"
+                          aria-selected={isActive}
+                          onClick={item.onSelect}
+                        >
+                          {iconFor(item.icon)}
+                          <span className="truncate">{item.label}</span>
+                          {item.hint && (
+                            <span className="ml-auto font-mono text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
+                              {item.hint}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                  {results.trades.map((trade: any) => (
-                    <div
-                      key={trade.id}
-                      onClick={() => {
-                        setCommandPaletteOpen(false);
-                        router.push("/journal");
-                      }}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <BookOpen size={14} className="text-[var(--color-accent-primary)]" />
-                        <span>{trade.instrument} {trade.direction}</span>
-                      </div>
-                      <span className="font-mono text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
-                        {new Date(trade.openedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Strategies results */}
-              {results.strategies.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-                    Strategies
-                  </div>
-                  {results.strategies.map((strat: any) => (
-                    <div
-                      key={strat.id}
-                      onClick={() => {
-                        setCommandPaletteOpen(false);
-                        router.push("/backtester");
-                      }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer hover:bg-[var(--color-bg-hover)] text-xs font-semibold"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      <FlaskConical size={14} className="text-[var(--color-accent-primary)]" />
-                      <span>{strat.name}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* News results */}
-              {results.news.length > 0 && (
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-                    Market Intelligence Headlines
-                  </div>
-                  {results.news.map((n: any) => (
-                    <a
-                      key={n.id}
-                      href={n.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={() => setCommandPaletteOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-[var(--color-bg-hover)] text-xs font-semibold block truncate"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      <Newspaper size={14} className="text-[var(--color-accent-primary)] shrink-0" />
-                      <span className="truncate">{n.headline}</span>
-                    </a>
-                  ))}
-                </div>
-              )}
+                ));
+              })()}
             </div>
           )}
         </div>

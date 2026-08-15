@@ -64,6 +64,18 @@ export function HeroWorkbench() {
   const [simulated, setSimulated] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // “The desk powers on” — a one-time entrance choreography. Real data only:
+  // candles rise in left→right, the tape rolls from the first candle's open to
+  // the live price, indicators populate in a stagger. Fires exactly once; a
+  // symbol switch crossfades instead of re-booting so the entrance stays a
+  // first-impression moment rather than a repeated gimmick.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const priceRef = useRef<HTMLSpanElement>(null);
+  const displayPriceRef = useRef<number | undefined>(undefined);
+  const hasBootedRef = useRef(false);
+  const [booting, setBooting] = useState(false);
+  const [bootStart, setBootStart] = useState<number | null>(null);
+
   const live = useBinanceStream(symbol);
 
   // Fetch candles + indicators whenever the symbol changes.
@@ -106,9 +118,98 @@ export function HeroWorkbench() {
 
   const displayPrice = live?.price ?? tech?.currentPrice ?? candles?.[candles.length - 1]?.close;
   const changePct = live?.changePercent24h;
+  // Mirror displayPrice into a ref so the boot effect can read the live value at
+  // fire time without joining it to the effect deps (which would re-run on every
+  // WebSocket tick and thrash the choreography).
+  displayPriceRef.current = displayPrice;
+
+  useEffect(() => {
+    if (loading || !candles || candles.length < 2) return;
+    const root = rootRef.current;
+    if (!root) return;
+
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const firstTime = !hasBootedRef.current;
+    hasBootedRef.current = true;
+
+    if (firstTime) {
+      if (prefersReduced) return; // instant settle — React renders the real values.
+      const slice = candles.slice(-CANDLE_LIMIT);
+      const startPrice = slice[0].open;
+      const endPrice = displayPriceRef.current ?? slice[slice.length - 1].close;
+      setBootStart(startPrice);
+      setBooting(true);
+
+      let cancelled = false;
+      let ctx: { revert: () => void } | null = null;
+      (async () => {
+        try {
+          const { gsap } = await import("gsap");
+          if (cancelled || !rootRef.current) {
+            setBooting(false);
+            return;
+          }
+          ctx = gsap.context(() => {
+            // The tape rolls from the session's first open to the live price.
+            const proxy = { v: startPrice };
+            if (priceRef.current) {
+              gsap.to(proxy, {
+                v: endPrice,
+                duration: 1.1,
+                ease: "power2.out",
+                onUpdate: () => {
+                  if (priceRef.current) priceRef.current.textContent = `$${fmtPrice(proxy.v)}`;
+                },
+                onComplete: () => setBooting(false),
+              });
+            } else {
+              setBooting(false);
+            }
+            // Candles rise from their lows, left → right, as the chart fills in.
+            gsap.from(".tc-boot-candle", {
+              opacity: 0,
+              scaleY: 0.55,
+              transformOrigin: "50% 100%",
+              duration: 0.5,
+              ease: "power2.out",
+              stagger: { each: 0.012, from: "start" },
+            });
+            // Support/resistance levels fade in once the tape is rolling.
+            gsap.from(".tc-boot-level", { opacity: 0, duration: 0.45, delay: 0.25, stagger: 0.08 });
+            // Indicators populate in a tight stagger, trailing the candles.
+            gsap.from(".tc-boot-readout > div", { opacity: 0, y: 6, duration: 0.35, delay: 0.3, stagger: 0.05 });
+          }, root);
+        } catch {
+          setBooting(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+        ctx?.revert();
+        setBooting(false);
+      };
+    }
+
+    // Subsequent ready transitions (symbol switch) — a quick data-refresh
+    // crossfade. Never re-boots; the entrance is a one-time first impression.
+    if (prefersReduced) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { gsap } = await import("gsap");
+        if (cancelled || !rootRef.current) return;
+        gsap.fromTo(rootRef.current, { opacity: 0.5 }, { opacity: 1, duration: 0.3, ease: "power2.out" });
+      } catch {
+        /* enhancement-only */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, candles]);
 
   return (
-    <div className="tc-terminal !p-0 overflow-hidden w-full">
+    <div ref={rootRef} className="tc-terminal !p-0 overflow-hidden w-full">
       {/* ── Top row: symbol tabs + live price + status ── */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--color-border-subtle)]">
         <div className="flex items-center gap-1.5">
@@ -128,8 +229,8 @@ export function HeroWorkbench() {
           ))}
         </div>
         <div className="flex items-center gap-2.5">
-          <span className="text-[15px] font-mono font-semibold tabular-nums text-[var(--ink)]">
-            ${fmtPrice(displayPrice)}
+          <span ref={priceRef} className="text-[15px] font-mono font-semibold tabular-nums text-[var(--ink)]">
+            {booting ? `$${fmtPrice(bootStart ?? 0)}` : `$${fmtPrice(displayPrice)}`}
           </span>
           <span
             className={`text-[11px] font-mono tabular-nums ${
@@ -167,7 +268,7 @@ export function HeroWorkbench() {
         </div>
 
         {/* Indicator + data readout */}
-        <div className="border-t md:border-t-0 md:border-l border-[var(--color-border-subtle)] p-3 grid grid-cols-2 md:grid-cols-1 gap-2.5">
+        <div className="border-t md:border-t-0 md:border-l border-[var(--color-border-subtle)] p-3 grid grid-cols-2 md:grid-cols-1 gap-2.5 tc-boot-readout">
           <Readout label="RSI(14)" value={tech?.rsi?.toFixed(1)} accent={tech?.rsi != null && tech.rsi > 70 ? "red" : tech?.rsi != null && tech.rsi < 30 ? "green" : undefined} />
           <Readout label="MACD" value={tech?.macdHistogram != null ? (tech.macdHistogram >= 0 ? "+" : "") + tech.macdHistogram.toFixed(3) : undefined} accent={tech?.macdHistogram != null ? (tech.macdHistogram >= 0 ? "green" : "red") : undefined} />
           <Readout label="EMA 9/21" value={tech?.emaCrossover ? tech.emaCrossover : "—"} accent={tech?.emaCrossover === "BULLISH" ? "green" : tech?.emaCrossover === "BEARISH" ? "red" : undefined} />
@@ -259,6 +360,7 @@ function CandleChart({
       {[0.25, 0.5, 0.75].map((f) => (
         <line
           key={f}
+          className="tc-boot-axis"
           x1={0}
           x2={W}
           y1={padY + f * (H - padY * 2)}
@@ -270,13 +372,13 @@ function CandleChart({
 
       {/* support / resistance */}
       {resistance != null && Number.isFinite(resistance) && (
-        <g>
+        <g className="tc-boot-level">
           <line x1={0} x2={W} y1={y(resistance)} y2={y(resistance)} stroke="var(--red)" strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />
           <text x={6} y={y(resistance) - 4} fontSize={9} fontFamily="var(--font-mono)" fill="var(--red)" opacity={0.8}>R {fmtPrice(resistance)}</text>
         </g>
       )}
       {support != null && Number.isFinite(support) && (
-        <g>
+        <g className="tc-boot-level">
           <line x1={0} x2={W} y1={y(support)} y2={y(support)} stroke="var(--green)" strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />
           <text x={6} y={y(support) + 11} fontSize={9} fontFamily="var(--font-mono)" fill="var(--green)" opacity={0.8}>S {fmtPrice(support)}</text>
         </g>
@@ -291,7 +393,7 @@ function CandleChart({
         const bodyBot = y(Math.min(c.open, c.close));
         const bodyH = Math.max(1, bodyBot - bodyTop);
         return (
-          <g key={c.timestamp}>
+          <g key={c.timestamp} className="tc-boot-candle">
             <line x1={cx} x2={cx} y1={y(c.high)} y2={y(c.low)} stroke={color} strokeWidth={1} opacity={0.85} />
             <rect x={cx - bodyW / 2} y={bodyTop} width={bodyW} height={bodyH} fill={color} rx={1} />
           </g>

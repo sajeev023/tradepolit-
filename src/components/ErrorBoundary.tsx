@@ -50,18 +50,18 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       const { inline } = this.props;
       const containerClass = inline
-        ? "flex flex-col items-center justify-center text-[#EDEEF0] px-4 py-12 font-sans select-none relative overflow-hidden min-h-[60vh]"
-        : "min-h-screen flex flex-col items-center justify-center bg-[#090A0C] text-[#EDEEF0] px-4 font-sans select-none relative overflow-hidden";
+        ? "flex flex-col items-center justify-center text-[var(--color-text-primary)] px-4 py-12 font-sans select-none relative overflow-hidden min-h-[60vh]"
+        : "min-h-screen flex flex-col items-center justify-center bg-[var(--color-bg-deepest)] text-[var(--color-text-primary)] px-4 font-sans select-none relative overflow-hidden";
 
       return (
         <div className={containerClass}>
-          {/* Ambient Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-rose-500 opacity-[0.03] rounded-full blur-[90px] pointer-events-none" />
-
           <div className="text-center space-y-6 max-w-md relative z-10 animate-fade-in">
             {/* Warning Icon */}
-            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center border border-rose-500/20 bg-rose-500/5 shadow-lg shadow-rose-500/5">
-              <AlertTriangle size={28} className="text-rose-400 animate-pulse" />
+            <div
+              className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center shadow-lg"
+              style={{ border: "1px solid rgba(var(--red-rgb), 0.2)", background: "rgba(var(--red-rgb), 0.06)" }}
+            >
+              <AlertTriangle size={28} className="text-[var(--color-loss)] animate-pulse" />
             </div>
 
             <div className="space-y-2">
@@ -72,8 +72,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 An unexpected runtime crash occurred. Our diagnostics engine has captured the trace.
               </p>
               {this.state.error && (
-                <div className="mt-3 p-3 bg-zinc-950/40 border border-zinc-900 rounded-lg text-left overflow-x-auto max-h-36">
-                  <pre className="text-[10px] font-mono text-zinc-500 leading-normal whitespace-pre-wrap select-text">
+                <div className="mt-3 p-3 bg-[var(--color-bg-deepest)]/40 border border-[var(--color-border-subtle)] rounded-lg text-left overflow-x-auto max-h-36">
+                  <pre className="text-[10px] font-mono text-[var(--color-text-tertiary)] leading-normal whitespace-pre-wrap select-text">
                     {this.state.error.stack || this.state.error.message}
                   </pre>
                 </div>
@@ -83,21 +83,21 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex items-center justify-center gap-3 pt-2">
               <button
                 onClick={this.handleTryAgain}
-                className="btn-primary h-10 px-5 text-xs font-semibold gap-2 cursor-pointer shadow-lg shadow-emerald-500/10 flex items-center"
+                className="btn-primary h-10 px-5 text-xs font-semibold gap-2 cursor-pointer shadow-lg shadow-[rgba(var(--accent-rgb),0.1)] flex items-center"
               >
                 <RotateCcw size={13} />
                 <span>Try Again</span>
               </button>
               <button
                 onClick={this.handleReload}
-                className="btn-secondary h-10 px-5 text-xs font-semibold gap-2 cursor-pointer flex items-center border-[var(--color-border-default)] hover:border-zinc-800"
+                className="btn-secondary h-10 px-5 text-xs font-semibold gap-2 cursor-pointer flex items-center border-[var(--color-border-default)] hover:border-[var(--color-border-strong)]"
               >
                 <RefreshCw size={13} />
                 <span>Reload Page</span>
               </button>
               <a
                 href="/charts"
-                className="btn-secondary h-10 px-5 text-xs font-semibold gap-2 cursor-pointer flex items-center border-[var(--color-border-default)] hover:border-zinc-800"
+                className="btn-secondary h-10 px-5 text-xs font-semibold gap-2 cursor-pointer flex items-center border-[var(--color-border-default)] hover:border-[var(--color-border-strong)]"
               >
                 <Home size={13} />
                 <span>Reset to Safety</span>

@@ -104,7 +104,7 @@ export function BehavioralReplay() {
           <div className="flex items-center gap-3 pt-2">
             <button
               onClick={() => play(0)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-[var(--color-border-default)] text-[13px] font-semibold text-[var(--ink)] hover:border-[var(--color-border-strong)] transition-colors"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-[var(--color-border-default)] text-[13px] font-semibold text-[var(--ink)] hover:border-[var(--color-border-strong)] transition-all duration-150 active:scale-95 cursor-pointer"
             >
               <Play size={13} /> Replay
             </button>
@@ -113,7 +113,7 @@ export function BehavioralReplay() {
                 stop();
                 setPhase(PHASES.length - 1);
               }}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-[var(--color-border-default)] text-[13px] font-medium text-[var(--muted)] hover:text-[var(--ink)] transition-colors"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-[var(--color-border-default)] text-[13px] font-medium text-[var(--muted)] hover:text-[var(--ink)] transition-all duration-150 active:scale-95 cursor-pointer"
             >
               <RotateCcw size={13} /> Resolve
             </button>

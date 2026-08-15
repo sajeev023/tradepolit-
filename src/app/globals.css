@@ -16,8 +16,9 @@
   --card-foreground: #E8ECF2;
   --muted-foreground: #8A93A3;    /* Muted — cool grey */
   --border: rgba(255, 255, 255, 0.08); /* Subtle translucent border */
-  --border-active: rgba(47, 198, 232, 0.5); /* Cyan active border */
+  --border-active: rgba(var(--accent-rgb), 0.5); /* Cyan active border */
   --accent: #2FC6E8;              /* Accent — the ONE cyan interaction accent */
+  --accent-rgb: 47 198 232;       /* RGB triple → rgba(var(--accent-rgb), a) */
 
   /* Canonical named tokens (spec single-source-of-truth aliases).
      These mirror the semantic tokens above so both naming systems stay
@@ -27,9 +28,13 @@
   --ink: var(--foreground);
   --muted: var(--muted-foreground);
   --green: #2DD4A8;               /* Effort / positive only */
+  --green-rgb: 45 212 168;
   --red: #FF6B6B;                 /* Risk / negative only */
+  --red-rgb: 255 107 107;
   --amber: #F5B942;               /* Warnings only */
+  --amber-rgb: 245 185 66;
   --accent-bright: #5ED7F0;       /* Lighter accent for gradient highlights */
+  --accent-bright-rgb: 94 215 240;
 }
 
 @theme {
@@ -53,7 +58,7 @@
   --color-bg-deepest: var(--background);         /* #05070B — sidebar/topbar chrome */
   --color-bg-band: var(--background-secondary);  /* #0A0F18 — alternating section band */
   --color-bg-hover: rgba(255, 255, 255, 0.05);
-  --color-bg-active: rgba(47, 198, 232, 0.10);
+  --color-bg-active: rgba(var(--accent-rgb), 0.10);
 
   --color-border-default: var(--border);
   --color-border-subtle: rgba(255, 255, 255, 0.05);
@@ -69,19 +74,19 @@
   /* Cyan interaction accent — the ONE accent (futuristic terminal identity) */
   --color-accent-primary: var(--accent);
   --color-accent-primary-hover: #2BB4D1;             /* deeper cyan for hover */
-  --color-accent-primary-muted: rgba(47, 198, 232, 0.12);
-  --color-accent-primary-subtle: rgba(47, 198, 232, 0.06);
+  --color-accent-primary-muted: rgba(var(--accent-rgb), 0.12);
+  --color-accent-primary-subtle: rgba(var(--accent-rgb), 0.06);
 
   /* Semantic market colors — effort/risk/warn, distinct from the interaction accent */
   --color-profit: var(--green);                       /* effort / positive — mint */
-  --color-profit-bg: rgba(45, 212, 168, 0.10);
+  --color-profit-bg: rgba(var(--green-rgb), 0.10);
   --color-loss: var(--red);                           /* risk / negative — coral */
-  --color-loss-bg: rgba(255, 107, 107, 0.10);
+  --color-loss-bg: rgba(var(--red-rgb), 0.10);
 
   --color-warning: var(--amber);                      /* behavioral warning — amber */
-  --color-warning-bg: rgba(245, 185, 66, 0.10);
+  --color-warning-bg: rgba(var(--amber-rgb), 0.10);
   --color-info: var(--accent);                        /* info aligned to accent */
-  --color-info-bg: rgba(47, 198, 232, 0.10);
+  --color-info-bg: rgba(var(--accent-rgb), 0.10);
 
   /* Named color tokens (spec aliases) exposed to Tailwind utilities */
   --color-ink: var(--ink);
@@ -103,6 +108,9 @@
   --spacing-sidebar: 220px;
   --spacing-sidebar-collapsed: 64px;
   --spacing-topbar: 48px;
+  --spacing-demo-banner: 0px; /* height of the DemoBanner; 0 when absent. DemoBanner
+                                sets this on :root so Topbar `top` and main `paddingTop`
+                                shift down in lockstep, keeping the chrome reachable. */
 
   /* ── Radii (4px increments) ── */
   --radius-sm: 4px;
@@ -120,7 +128,7 @@
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-card-hover: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 0 1px rgba(47, 198, 232, 0.15), 0 8px 24px -8px rgba(47, 198, 232, 0.3);
+  --shadow-glow: 0 0 0 1px rgba(var(--accent-rgb), 0.15), 0 8px 24px -8px rgba(var(--accent-rgb), 0.3);
 
   /* ── Motion ── */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -140,7 +148,8 @@
   --z-dropdown: 50;     /* dropdown menus, context menus, overlay backdrops */
   --z-sheet: 60;        /* bottom sheets, side panels */
   --z-modal: 70;        /* modal dialogs */
-  --z-toast: 90;        /* toast notifications */
+  --z-toast: 65;        /* toast notifications — above sheets (z-60), below modals (z-70) */
+  --z-nav-top: 40;      /* top navigation bar (marketing slim-nav) */
   --z-fullscreen: 9999; /* fullscreen overlays (chart, offline banner) */
 }
 
@@ -185,9 +194,9 @@ body {
      the bottom. All very low opacity: readable under trading data. */
   background-color: var(--background);
   background-image:
-    radial-gradient(64rem 64rem at 12% -8%, rgba(47, 198, 232, 0.05), transparent 55%),
-    radial-gradient(56rem 56rem at 105% -6%, rgba(45, 212, 168, 0.03), transparent 50%),
-    radial-gradient(90rem 90rem at 50% 118%, rgba(47, 198, 232, 0.03), transparent 60%);
+    radial-gradient(64rem 64rem at 12% -8%, rgba(var(--accent-rgb), 0.05), transparent 55%),
+    radial-gradient(56rem 56rem at 105% -6%, rgba(var(--green-rgb), 0.03), transparent 50%),
+    radial-gradient(90rem 90rem at 50% 118%, rgba(var(--accent-rgb), 0.03), transparent 60%);
   background-attachment: fixed;
   background-repeat: no-repeat;
   color: var(--foreground);
@@ -198,7 +207,7 @@ body {
 }
 
 ::selection {
-  background-color: rgba(47, 198, 232, 0.22);
+  background-color: rgba(var(--accent-rgb), 0.22);
   color: var(--color-text-primary);
 }
 
@@ -327,7 +336,15 @@ body {
    TYPOGRAPHY UTILITIES
    ═══════════════════════════════════════════════════════════ */
 
-.tabular-nums {
+/* NOTE: a custom `.tabular-nums` class used to live here, but its selector
+   collides with Tailwind v4's `tabular-nums` utility and silently injected
+   `font-family: var(--font-mono)` + letter-spacing on EVERY element that used
+   the utility (e.g. the /404 page number rendering in mono unintentionally).
+   Tailwind's own `tabular-nums` utility already sets `font-variant-numeric:
+   tabular-nums`; mono styling comes from `font-mono` where it is wanted. Use
+   `.mono-tabular` below when you want the explicit mono + tabular + tracking
+   combo in one class. */
+.mono-tabular {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -426,7 +443,7 @@ body {
   color: #05070B;
   border: none;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(47, 198, 232, 0.20), 0 6px 16px -6px rgba(47, 198, 232, 0.45);
+  box-shadow: 0 1px 2px rgba(var(--accent-rgb), 0.20), 0 6px 16px -6px rgba(var(--accent-rgb), 0.45);
   transition:
     background var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease,
@@ -437,7 +454,7 @@ body {
 
 .btn-primary:hover {
   background: linear-gradient(135deg, var(--accent) 0%, var(--color-accent-primary-hover) 100%);
-  box-shadow: 0 2px 4px rgba(47, 198, 232, 0.28), 0 10px 22px -6px rgba(47, 198, 232, 0.5);
+  box-shadow: 0 2px 4px rgba(var(--accent-rgb), 0.28), 0 10px 22px -6px rgba(var(--accent-rgb), 0.5);
 }
 
 .btn-primary:active {
@@ -566,19 +583,19 @@ body {
 .badge-success {
   background-color: var(--color-profit-bg);
   color: var(--color-profit);
-  border: 1px solid rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(var(--green-rgb), 0.16);
 }
 
 .badge-danger {
   background-color: var(--color-loss-bg);
   color: var(--color-loss);
-  border: 1px solid rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(var(--red-rgb), 0.16);
 }
 
 .badge-info {
   background-color: var(--color-accent-primary-subtle);
   color: var(--color-accent-primary);
-  border: 1px solid rgba(47, 198, 232, 0.16);
+  border: 1px solid rgba(var(--accent-rgb), 0.16);
 }
 
 .badge-neutral {
@@ -590,7 +607,7 @@ body {
 .badge-warning {
   background-color: var(--color-warning-bg);
   color: var(--color-warning);
-  border: 1px solid rgba(245, 185, 66, 0.16);
+  border: 1px solid rgba(var(--amber-rgb), 0.16);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -612,12 +629,12 @@ body {
    ═══════════════════════════════════════════════════════════ */
 
 /* ── Toast system (sonner) container hardening ──
-   Sonner hardcodes z-index 999999999 on the toaster, which would stack
-   toasts above modals (z-9999) and the fullscreen chart. Cap it at 70:
-   above sheets (z-60) and the mobile nav (z-40), below modals and
-   fullscreen. Offsets, width and the per-toast z-index var are set inline
-   on the Toaster in providers.tsx (safe-area aware, responsive). */
-[data-sonner-toaster] { z-index: 70 !important; }
+   Sonner hardcodes z-index 999999999 on the toaster. We cap it via the
+   --z-toast token (65): above sheets (z-60) and the mobile nav (z-40),
+   below modals (z-70) and the fullscreen chart (z-9999). The single
+   authoritative rule lives near the bottom of this file and consumes
+   var(--z-toast); per-toast --z-index + offsets/width are set inline on the
+   Toaster in providers.tsx (safe-area aware, responsive). */
 [data-sonner-toast][data-styled="true"] { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.34); }
 
 /* App mobile break is lg (1024px) but sonner's own break is 600px, so the
@@ -645,12 +662,12 @@ body {
   border-radius: 50%;
   background: var(--color-accent-primary);
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px rgba(47, 198, 232, 0.16);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16);
   animation: pulse-glow 2s ease-in-out infinite;
 }
-.live-dot--green { background: var(--color-profit);  box-shadow: 0 0 0 3px rgba(45, 212, 168, 0.16); }
-.live-dot--red   { background: var(--color-loss);    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.16); }
-.live-dot--amber { background: var(--color-warning); box-shadow: 0 0 0 3px rgba(245, 185, 66, 0.16); }
+.live-dot--green { background: var(--color-profit);  box-shadow: 0 0 0 3px rgba(var(--green-rgb), 0.16); }
+.live-dot--red   { background: var(--color-loss);    box-shadow: 0 0 0 3px rgba(var(--red-rgb), 0.16); }
+.live-dot--amber { background: var(--color-warning); box-shadow: 0 0 0 3px rgba(var(--amber-rgb), 0.16); }
 
 /* ── StatusChip — colored dot + mono label (app-namespace mirror of .tc-status-chip) ── */
 .status-chip {
@@ -671,13 +688,13 @@ body {
   background: var(--color-text-tertiary);
 }
 .status-chip--green  { color: var(--color-profit); }
-.status-chip--green  .status-chip__dot { background: var(--color-profit);  box-shadow: 0 0 0 3px rgba(45, 212, 168, 0.16); }
+.status-chip--green  .status-chip__dot { background: var(--color-profit);  box-shadow: 0 0 0 3px rgba(var(--green-rgb), 0.16); }
 .status-chip--red    { color: var(--color-loss); }
-.status-chip--red    .status-chip__dot { background: var(--color-loss);    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.16); }
+.status-chip--red    .status-chip__dot { background: var(--color-loss);    box-shadow: 0 0 0 3px rgba(var(--red-rgb), 0.16); }
 .status-chip--amber  { color: var(--color-warning); }
-.status-chip--amber  .status-chip__dot { background: var(--color-warning); box-shadow: 0 0 0 3px rgba(245, 185, 66, 0.16); }
+.status-chip--amber  .status-chip__dot { background: var(--color-warning); box-shadow: 0 0 0 3px rgba(var(--amber-rgb), 0.16); }
 .status-chip--accent { color: var(--color-accent-primary); }
-.status-chip--accent .status-chip__dot { background: var(--color-accent-primary); box-shadow: 0 0 0 3px rgba(47, 198, 232, 0.16); }
+.status-chip--accent .status-chip__dot { background: var(--color-accent-primary); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16); }
 .status-chip__dot--pulse { animation: pulse-glow 2s ease-in-out infinite; }
 
 /* ── Empty / error state — one disciplined shape for "no data", "feed offline",
@@ -847,6 +864,9 @@ body {
     animation: none !important;
     opacity: 1 !important;
   }
+  .animate-bounce {
+    animation: none !important;
+  }
   .animate-spin {
     animation: none !important;
   }
@@ -913,8 +933,8 @@ body {
 
 /* Pulse glow — used for live indicators */
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(47, 198, 232, 0.3); }
-  50% { box-shadow: 0 0 0 6px rgba(47, 198, 232, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(var(--accent-rgb), 0); }
 }
 
 .pulse-glow {
@@ -1551,7 +1571,7 @@ iframe {
   height: 6px;
   border-radius: 9999px;
   background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(47, 198, 232, 0.16);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16);
   animation: pulse-glow 2s ease-in-out infinite;
 }
 .tp-h3 {
@@ -1690,18 +1710,18 @@ iframe {
 }
 .tc-badge--accent {
   color: var(--accent);
-  border-color: rgba(47, 198, 232, 0.22);
-  background: rgba(47, 198, 232, 0.08);
+  border-color: rgba(var(--accent-rgb), 0.22);
+  background: rgba(var(--accent-rgb), 0.08);
 }
 .tc-badge--green {
   color: var(--green);
-  border-color: rgba(45, 212, 168, 0.22);
-  background: rgba(45, 212, 168, 0.08);
+  border-color: rgba(var(--green-rgb), 0.22);
+  background: rgba(var(--green-rgb), 0.08);
 }
 .tc-badge--amber {
   color: var(--amber);
-  border-color: rgba(245, 185, 66, 0.22);
-  background: rgba(245, 185, 66, 0.08);
+  border-color: rgba(var(--amber-rgb), 0.22);
+  background: rgba(var(--amber-rgb), 0.08);
 }
 
 /* ── StatusChip — colored dot + mono label (signature motif) ── */
@@ -1723,13 +1743,13 @@ iframe {
   background: var(--muted);
 }
 .tc-status-chip--green  { color: var(--green); }
-.tc-status-chip--green .tc-status-chip__dot  { background: var(--green); box-shadow: 0 0 0 3px rgba(45, 212, 168, 0.16); }
+.tc-status-chip--green .tc-status-chip__dot  { background: var(--green); box-shadow: 0 0 0 3px rgba(var(--green-rgb), 0.16); }
 .tc-status-chip--red    { color: var(--red); }
-.tc-status-chip--red .tc-status-chip__dot    { background: var(--red); box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.16); }
+.tc-status-chip--red .tc-status-chip__dot    { background: var(--red); box-shadow: 0 0 0 3px rgba(var(--red-rgb), 0.16); }
 .tc-status-chip--amber  { color: var(--amber); }
-.tc-status-chip--amber .tc-status-chip__dot  { background: var(--amber); box-shadow: 0 0 0 3px rgba(245, 185, 66, 0.16); }
+.tc-status-chip--amber .tc-status-chip__dot  { background: var(--amber); box-shadow: 0 0 0 3px rgba(var(--amber-rgb), 0.16); }
 .tc-status-chip--accent { color: var(--accent); }
-.tc-status-chip--accent .tc-status-chip__dot { background: var(--accent); box-shadow: 0 0 0 3px rgba(47, 198, 232, 0.16); }
+.tc-status-chip--accent .tc-status-chip__dot { background: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16); }
 .tc-status-chip__dot--pulse { animation: pulse-glow 2s ease-in-out infinite; }
 
 /* ── ArrowLink CTA ── */
@@ -1795,7 +1815,7 @@ iframe {
   align-items: center;
   gap: 0.625rem;
   padding: 0.625rem 1rem calc(0.625rem + env(safe-area-inset-bottom, 0px));
-  background: rgba(10, 15, 24, 0.86);
+  background: color-mix(in srgb, var(--bg-band) 86%, transparent);
   backdrop-filter: blur(16px) saturate(150%);
   -webkit-backdrop-filter: blur(16px) saturate(150%);
   border-top: 1px solid var(--color-border-default);
@@ -1838,7 +1858,7 @@ iframe {
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--bg-band);
-  box-shadow: 0 0 0 1px rgba(47, 198, 232, 0.4), 0 2px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.4), 0 2px 6px rgba(0, 0, 0, 0.4);
   transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .tc-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
@@ -1848,7 +1868,7 @@ iframe {
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--bg-band);
-  box-shadow: 0 0 0 1px rgba(47, 198, 232, 0.4);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.4);
 }
 
 /* ── Gradient-clipped hero number — the ONE place the accent "glows".
@@ -1874,9 +1894,9 @@ iframe {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(38rem 28rem at 28% 28%, rgba(47, 198, 232, 0.16), transparent 70%),
-    radial-gradient(32rem 24rem at 74% 20%, rgba(47, 198, 232, 0.09), transparent 70%),
-    radial-gradient(44rem 30rem at 50% 72%, rgba(45, 212, 168, 0.06), transparent 70%);
+    radial-gradient(38rem 28rem at 28% 28%, rgba(var(--accent-rgb), 0.16), transparent 70%),
+    radial-gradient(32rem 24rem at 74% 20%, rgba(var(--accent-rgb), 0.09), transparent 70%),
+    radial-gradient(44rem 30rem at 50% 72%, rgba(var(--green-rgb), 0.06), transparent 70%);
   filter: blur(6px);
   animation: tc-aurora-drift 18s ease-in-out infinite alternate;
   will-change: transform;

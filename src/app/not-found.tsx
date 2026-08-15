@@ -5,7 +5,7 @@ import { TrendingUp, HelpCircle } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#090A0C] text-[#EDEEF0] px-4 font-sans select-none">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-bg-deepest)] text-[var(--color-text-primary)] px-4 font-sans select-none">
       {/* Glow Effect Background */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[var(--color-accent-primary)] opacity-[0.03] rounded-full blur-[80px] pointer-events-none" />
 
@@ -30,7 +30,7 @@ export default function NotFound() {
             className="inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer text-black"
             style={{
               backgroundColor: "var(--color-accent-primary)",
-              boxShadow: "0 0 16px rgba(6, 182, 212, 0.15)",
+              boxShadow: "0 0 16px color-mix(in srgb, var(--color-accent-primary) 15%, transparent)",
             }}
           >
             <TrendingUp size={14} />

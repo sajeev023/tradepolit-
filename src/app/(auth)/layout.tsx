@@ -15,6 +15,9 @@ function AmbientCanvas() {
     const container = containerRef.current;
     if (!container) return;
 
+    // Respect reduced-motion preference: render the orbs statically, no loop.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
     const handleMove = (e: MouseEvent) => {
       mouse.current.x = e.clientX;
       mouse.current.y = e.clientY;
@@ -69,7 +72,7 @@ function AmbientCanvas() {
           width: 520,
           height: 520,
           borderRadius: "50%",
-          background: "radial-gradient(circle at center, rgba(6, 182, 212,0.13) 0%, transparent 70%)",
+          background: "radial-gradient(circle at center, rgba(var(--accent-rgb),0.13) 0%, transparent 70%)",
           filter: "blur(40px)",
           transition: "transform 0.1s linear",
           willChange: "transform",
@@ -148,8 +151,8 @@ function TrustBadge() {
         gap: 8,
         padding: "6px 14px",
         borderRadius: 999,
-        border: "1px solid rgba(6, 182, 212,0.25)",
-        background: "rgba(6, 182, 212,0.06)",
+        border: "1px solid rgba(var(--accent-rgb),0.25)",
+        background: "rgba(var(--accent-rgb),0.06)",
         backdropFilter: "blur(12px)",
         marginBottom: 28,
       }}
@@ -160,7 +163,7 @@ function TrustBadge() {
           height: 6,
           borderRadius: "50%",
           background: "var(--color-accent-primary)",
-          boxShadow: "0 0 8px rgba(6, 182, 212,0.8)",
+          boxShadow: "0 0 8px rgba(var(--accent-rgb),0.8)",
           flexShrink: 0,
           animation: "pulse-dot 2s ease infinite",
         }}
@@ -181,8 +184,8 @@ function FeatureRow({ icon, label, sub }: { icon: string; label: string; sub: st
           width: 34,
           height: 34,
           borderRadius: 8,
-          background: "rgba(6, 182, 212,0.08)",
-          border: "1px solid rgba(6, 182, 212,0.12)",
+          background: "rgba(var(--accent-rgb),0.08)",
+          border: "1px solid rgba(var(--accent-rgb),0.12)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -205,8 +208,8 @@ function FeatureRow({ icon, label, sub }: { icon: string; label: string; sub: st
   );
 }
 
-/* ─── Testimonial ─── */
-function Testimonial() {
+/* ─── Design principle (honest, no fabricated social proof) ─── */
+function DesignPrinciple() {
   return (
     <div
       className="auth-float-in"
@@ -218,31 +221,22 @@ function Testimonial() {
         backdropFilter: "blur(12px)",
       }}
     >
-      <p style={{ fontSize: 13, color: "#A1A1AA", lineHeight: 1.65, fontStyle: "italic" }}>
-        &quot;Finally a trading journal that actually understands my psychology. The AI catches revenge trading before I even realize I&apos;m doing it.&quot;
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: "var(--color-accent-primary)",
+          display: "block",
+          marginBottom: 10,
+        }}
+      >
+        Read-only by design
+      </span>
+      <p style={{ fontSize: 13, color: "#A1A1AA", lineHeight: 1.65 }}>
+        No broker connection. No fund custody. No trade execution. TradCopilot analyzes your charts and coaches your discipline — your capital stays entirely yours.
       </p>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg,var(--color-accent-primary),#6366F1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 11,
-            fontWeight: 700,
-            color: "var(--background)",
-          }}
-        >
-          MK
-        </div>
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "#FAFAFA" }}>Mohammed K.</div>
-          <div style={{ fontSize: 11, color: "#52525B" }}>Prop Trader · Dubai</div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -314,7 +308,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 0 20px rgba(6, 182, 212,0.35)",
+                boxShadow: "0 0 20px rgba(var(--accent-rgb),0.35)",
               }}
             >
               <TrendingUp size={16} color="var(--background)" strokeWidth={2.5} />
@@ -349,7 +343,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <br />
               <span
                 style={{
-                  background: "linear-gradient(100deg,var(--color-accent-primary) 0%,var(--color-accent-primary) 50%,#6366F1 100%)",
+                  background: "linear-gradient(100deg,var(--color-accent-bright) 0%,var(--color-accent-primary) 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}
@@ -387,7 +381,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               />
             </div>
 
-            <Testimonial />
+            <DesignPrinciple />
           </div>
 
           {/* Footer */}

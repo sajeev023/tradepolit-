@@ -18,15 +18,15 @@ export function PerformanceOverlay() {
   if (!stats) return null;
 
   const renderColor = (val: number, good: number, bad: number) => {
-    if (val <= good) return "text-emerald-400";
-    if (val <= bad) return "text-amber-400";
-    return "text-rose-500";
+    if (val <= good) return "text-[var(--color-profit)]";
+    if (val <= bad) return "text-[var(--color-warning)]";
+    return "text-[var(--color-loss)]";
   };
 
   const getFpsColor = (fps: number) => {
-    if (fps >= 55) return "text-emerald-400";
-    if (fps >= 40) return "text-amber-400";
-    return "text-rose-500 font-bold animate-pulse";
+    if (fps >= 55) return "text-[var(--color-profit)]";
+    if (fps >= 40) return "text-[var(--color-warning)]";
+    return "text-[var(--color-loss)] font-bold animate-pulse";
   };
 
   return (
@@ -63,15 +63,15 @@ export function PerformanceOverlay() {
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b pb-2 border-zinc-800">
-            <div className="flex items-center gap-1.5 text-white font-bold text-xs">
-              <Cpu size={14} className="text-cyan-400" />
+            <div className="flex items-center gap-1.5 text-[var(--color-text-primary)] font-bold text-xs">
+              <Cpu size={14} className="text-[var(--color-accent-primary)]" />
               <span>Performance Telemetry</span>
             </div>
             <div className="flex items-center gap-2">
               <span className={`font-bold text-xs ${getFpsColor(stats.fps)}`}>{stats.fps} FPS</span>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
               >
                 <X size={12} />
               </button>
@@ -80,7 +80,7 @@ export function PerformanceOverlay() {
 
           {/* Section 1: Interaction Latencies */}
           <div className="flex flex-col gap-1">
-            <p className="text-white font-semibold border-b border-zinc-900 pb-0.5 text-[9px] uppercase tracking-wider">Interaction Latencies</p>
+            <p className="text-[var(--color-text-primary)] font-semibold border-b border-zinc-900 pb-0.5 text-[9px] uppercase tracking-wider">Interaction Latencies</p>
             <div className="flex justify-between items-center py-0.5">
               <span>Nav transition:</span>
               <span className={renderColor(stats.navigationTime, 300, 600)}>
@@ -109,18 +109,18 @@ export function PerformanceOverlay() {
 
           {/* Section 2: React Renders & Component State */}
           <div className="flex flex-col gap-1">
-            <p className="text-white font-semibold border-b border-zinc-900 pb-0.5 text-[9px] uppercase tracking-wider">React Component Cycles</p>
+            <p className="text-[var(--color-text-primary)] font-semibold border-b border-zinc-900 pb-0.5 text-[9px] uppercase tracking-wider">React Component Cycles</p>
             <div className="flex justify-between items-center py-0.5">
               <span>ChartsPage renders:</span>
-              <span className="text-white font-bold">{stats.renderCounts["ChartsPage"] || 0}</span>
+              <span className="text-[var(--color-text-primary)] font-bold">{stats.renderCounts["ChartsPage"] || 0}</span>
             </div>
             <div className="flex justify-between items-center py-0.5">
               <span>TradingViewChart renders:</span>
-              <span className="text-white font-bold">{stats.renderCounts["TradingViewChart"] || 0}</span>
+              <span className="text-[var(--color-text-primary)] font-bold">{stats.renderCounts["TradingViewChart"] || 0}</span>
             </div>
             <div className="flex justify-between items-center py-0.5">
               <span>TV Widget Inits / Destroys:</span>
-              <span className="text-cyan-400 font-bold">
+              <span className="text-[var(--color-accent-primary)] font-bold">
                 {stats.widgetInitCount} / {stats.widgetDestroyCount}
               </span>
             </div>
@@ -136,21 +136,21 @@ export function PerformanceOverlay() {
 
           {/* Section 3: API Waterfall & Prisma DB timings */}
           <div className="flex flex-col gap-1 max-h-[140px] overflow-y-auto">
-            <p className="text-white font-semibold border-b border-zinc-900 pb-0.5 text-[9px] uppercase tracking-wider">API & DB Timings (Waterfall)</p>
+            <p className="text-[var(--color-text-primary)] font-semibold border-b border-zinc-900 pb-0.5 text-[9px] uppercase tracking-wider">API & DB Timings (Waterfall)</p>
             {stats.apiTimings.length === 0 ? (
               <span className="text-zinc-500 italic py-1">No API calls intercepted yet</span>
             ) : (
               <div className="flex flex-col gap-1.5 mt-1">
                 {stats.apiTimings.slice(0, 4).map((api, idx) => (
                   <div key={idx} className="bg-zinc-900/60 rounded p-1.5 border border-zinc-800/40">
-                    <div className="flex justify-between items-center text-white text-[9px] mb-1 font-semibold">
+                    <div className="flex justify-between items-center text-[var(--color-text-primary)] text-[9px] mb-1 font-semibold">
                       <span className="truncate max-w-[170px]">{api.url}</span>
                       <span>{api.duration.toFixed(0)}ms</span>
                     </div>
                     <div className="grid grid-cols-2 gap-1 text-[8px] text-zinc-400">
                       {api.dbDuration !== undefined && (
                         <span className="flex items-center gap-1">
-                          <Database size={8} className="text-indigo-400" />
+                          <Database size={8} className="text-[var(--color-accent-primary)]" />
                           DB: {api.dbDuration.toFixed(0)}ms
                         </span>
                       )}

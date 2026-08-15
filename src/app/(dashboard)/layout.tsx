@@ -358,7 +358,7 @@ export default function DashboardLayout({
       <main
         className="transition-all"
         style={{
-          paddingTop: isMobile ? "calc(var(--spacing-topbar) + 0px)" : "var(--spacing-topbar)",
+          paddingTop: "calc(var(--spacing-topbar) + var(--spacing-demo-banner))",
           marginLeft: isMobile
             ? "0px"
             : sidebarCollapsed

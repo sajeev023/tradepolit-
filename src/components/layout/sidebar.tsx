@@ -180,9 +180,11 @@ export function Sidebar() {
       <aside
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className="hidden lg:flex fixed left-0 top-0 z-40 h-screen flex-col border-r select-none"
+        className="hidden lg:flex fixed left-0 top-0 z-40 flex-col border-r select-none"
         style={{
           width: isCollapsed ? "64px" : "220px",
+          top: "var(--spacing-demo-banner)",
+          height: "calc(100dvh - var(--spacing-demo-banner))",
           backgroundColor: "var(--color-bg-deepest)",
           borderColor: "var(--color-border-subtle)",
           transition: `width 200ms var(--ease-out-expo)`,

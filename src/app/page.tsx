@@ -17,6 +17,7 @@ import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { FinalCta } from "@/components/landing/final-cta";
 import { StickyMobileCta } from "@/components/landing/sticky-mobile-cta";
 import { Reveal } from "@/components/ui/reveal";
+import { ScrollParallax } from "@/components/ui/scroll-parallax";
 
 export default function LandingPage() {
   const year = new Date().getFullYear();
@@ -65,10 +66,14 @@ export default function LandingPage() {
         </Reveal>
 
         {/* Live-data workbench — full-width "live desk" below the masthead.
-            REAL candles, indicators, WS price; no fabricated AI. */}
-        <div className="mt-12 lg:mt-16">
+            REAL candles, indicators, WS price; no fabricated AI. A subtle,
+            scroll-scrubbed parallax (GSAP ScrollTrigger, reduced-motion off)
+            gives the live desk a sense of depth as it passes the viewport. */}
+        <div className="mt-10 lg:mt-12">
           <Suspense fallback={<div className="h-[420px] tc-skeleton rounded-2xl" />}>
-            <HeroWorkbench />
+            <ScrollParallax distance={14}>
+              <HeroWorkbench />
+            </ScrollParallax>
           </Suspense>
         </div>
       </header>

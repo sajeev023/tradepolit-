@@ -56,7 +56,7 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
   });
 
   const activeBtcPrice = webSocketPrice || btcPriceRest;
-  const isBtcProfit = activeBtcPrice ? activeBtcPrice.change24h >= 0 : true;
+  const isBtcProfit = activeBtcPrice ? activeBtcPrice.changePercent24h >= 0 : true;
 
   // Resize handler
   useEffect(() => {
@@ -128,6 +128,7 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
       className="fixed top-0 right-0 z-30 flex items-center justify-between gap-3 px-4 sm:px-5 border-b transition-all select-none"
       style={{
         left: isMobile ? "0px" : sidebarCollapsed ? "var(--spacing-sidebar-collapsed)" : "var(--spacing-sidebar)",
+        top: "var(--spacing-demo-banner)",
         height: "var(--spacing-topbar)",
         backgroundColor: "var(--color-bg-deepest)",
         borderColor: "var(--color-border-subtle)",
@@ -187,10 +188,11 @@ export function Topbar({ userEmail, userName, avatarUrl }: TopbarProps) {
           onClick={() => setNotificationPanelOpen(!notificationPanelOpen)}
           className="icon-button relative"
           aria-label="Notifications"
+          data-notification-scope
         >
           <Bell size={16} />
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--color-loss)]" />
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--color-accent-primary)]" />
           )}
         </button>
 

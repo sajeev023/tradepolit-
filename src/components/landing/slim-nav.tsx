@@ -23,10 +23,14 @@ export function SlimNav() {
 
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-40 transition-colors duration-300 ${
+      style={{
+        zIndex: "var(--z-nav-top)",
+        backgroundColor: scrolled ? "color-mix(in srgb, var(--background) 82%, transparent)" : "transparent",
+      }}
+      className={`fixed top-0 inset-x-0 transition-colors duration-300 ${
         scrolled
-          ? "bg-[rgba(5,7,11,0.82)] border-b border-[var(--color-border-subtle)] backdrop-blur-xl"
-          : "bg-transparent border-b border-transparent"
+          ? "border-b border-[var(--color-border-subtle)] backdrop-blur-xl"
+          : "border-b border-transparent"
       }`}
     >
       <div className="h-[60px] flex items-center justify-between px-4 sm:px-6 lg:px-10 max-w-[1200px] mx-auto w-full select-none">

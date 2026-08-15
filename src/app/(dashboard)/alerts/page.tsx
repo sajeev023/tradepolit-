@@ -269,19 +269,24 @@ export default function AlertsPage() {
                   return (
                     <div key={alert.id} className="flex items-center justify-between py-2 text-xs">
                       <div>
-                        <span className="font-bold text-white mr-2">{alert.instrument}</span>
+                        <span className="font-bold text-[var(--color-text-primary)] mr-2">{alert.instrument}</span>
                         <span style={{ color: "var(--color-text-tertiary)" }}>
                           Price is {cond.operator === "gt" ? "above" : "below"} ${cond.value.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
+                          type="button"
+                          aria-label="Pause Alert"
+                          aria-pressed={true}
                           onClick={() => toggleAlertMutation.mutate({ id: alert.id, isActive: false })}
                           className="text-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary-hover)]"
                         >
                           <ToggleRight size={20} />
                         </button>
                         <button
+                          type="button"
+                          aria-label="Delete Alert"
                           onClick={() => deleteAlertMutation.mutate(alert.id)}
                           className="text-[var(--color-loss)] hover:text-[var(--color-loss)] p-1"
                         >
@@ -329,7 +334,7 @@ export default function AlertsPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-1.5">
                         <Bell size={12} className={n.isRead ? "text-[var(--color-text-quaternary)]" : "text-[var(--color-accent-primary)] animate-bounce"} />
-                        <span className="font-bold text-white">{n.title}</span>
+                        <span className="font-bold text-[var(--color-text-primary)]">{n.title}</span>
                       </div>
                       <p style={{ color: "var(--color-text-secondary)" }}>{n.body}</p>
                     </div>

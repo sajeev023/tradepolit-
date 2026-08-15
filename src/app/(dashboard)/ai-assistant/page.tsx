@@ -167,7 +167,7 @@ export default function AIAssistantPage() {
         <div className="p-4 border-b flex flex-col gap-3" style={{ borderColor: "var(--color-border-subtle)" }}>
           <div className="flex items-center justify-between md:hidden">
             <span className="text-xs font-bold text-[var(--color-text-primary)]">Conversations</span>
-            <button onClick={() => setShowMobileSidebar(false)} className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white">
+            <button onClick={() => setShowMobileSidebar(false)} className="p-1 hover:bg-[var(--color-bg-hover)] rounded text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
               <X size={16} />
             </button>
           </div>
@@ -235,7 +235,7 @@ export default function AIAssistantPage() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setShowMobileSidebar(true)}
-              className="md:hidden p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white mr-1 min-h-[36px] min-w-[36px] flex items-center justify-center border border-zinc-800"
+              className="md:hidden p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mr-1 min-h-[36px] min-w-[36px] flex items-center justify-center border border-[var(--color-border-default)]"
               aria-label="Toggle Conversations"
             >
               <MessageSquare size={14} />
@@ -253,7 +253,7 @@ export default function AIAssistantPage() {
         {/* Message Thread */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[var(--color-bg-deepest)]/40">
           {/* Static warning banner */}
-          <div className="p-3 rounded-lg flex items-center gap-3 border border-cyan-500/10 bg-[var(--color-accent-primary-subtle)] max-w-2xl mx-auto">
+          <div className="p-3 rounded-lg flex items-center gap-3 border border-[rgba(var(--accent-rgb),0.1)] bg-[var(--color-accent-primary-subtle)] max-w-2xl mx-auto">
             <Sparkles size={16} className="text-[var(--color-accent-primary)] shrink-0" />
             <p className="text-[10px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
               Every response is grounded in your journal logs and performance stats. Responses are purely for educational reviews, not financial advice.
@@ -276,7 +276,7 @@ export default function AIAssistantPage() {
                   <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-tertiary)" }}>
                     The AI Coach needs at least 5 closed trades to analyze your behavioral patterns and provide personalized feedback.
                   </p>
-                  <div className="mt-4 px-4 py-2 rounded-lg border border-cyan-500/20 bg-[var(--color-accent-primary-subtle)]">
+                  <div className="mt-4 px-4 py-2 rounded-lg border border-[rgba(var(--accent-rgb),0.2)] bg-[var(--color-accent-primary-subtle)]">
                     <p className="text-[11px] text-[var(--color-accent-primary)] font-medium">{tradeCount}/5 trades logged</p>
                   </div>
                 </>
@@ -341,7 +341,7 @@ export default function AIAssistantPage() {
                       className={`p-3.5 rounded-xl text-sm leading-relaxed flex-1 ${
                         isAI
                           ? "bg-[var(--color-bg-secondary)] border border-[var(--color-border-subtle)]"
-                          : "bg-[var(--color-accent-primary-muted)] border border-cyan-500/20 text-cyan-100"
+                          : "bg-[var(--color-accent-primary-muted)] border border-[rgba(var(--accent-rgb),0.2)] text-[var(--accent-bright)]"
                       }`}
                     >
                       <div className="whitespace-pre-line">{msg.content}</div>
@@ -392,7 +392,7 @@ export default function AIAssistantPage() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Ask the coach: 'Why did I lose on my EUR/USD trade?'"
-              className="flex-1 px-4 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] transition-colors focus:border-cyan-500/40"
+              className="flex-1 px-4 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] transition-colors focus:border-[rgba(var(--accent-rgb),0.4)]"
               disabled={sendMutation.isPending}
             />
             <button

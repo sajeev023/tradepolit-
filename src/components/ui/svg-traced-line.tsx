@@ -1,22 +1,30 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 
 interface SvgTracedLineProps {
   className?: string;
   color?: string;
 }
 
-export function SvgTracedLine({ className = "", color = "rgba(6, 182, 212, 0.4)" }: SvgTracedLineProps) {
+export function SvgTracedLine({ className = "", color = "rgba(47, 198, 232, 0.4)" }: SvgTracedLineProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
 
-  const pathLength = useTransform(scrollYProgress, [0.1, 0.8], [0, 1]);
-  const opacity = useTransform(scrollYProgress, [0.05, 0.2, 0.8, 0.95], [0, 1, 1, 0]);
+  // When the user prefers reduced motion, render the line statically (fully
+  // drawn, steady opacity) instead of choreographing it to the scroll position.
+  const pathLength = useTransform(scrollYProgress, prefersReducedMotion ? [0, 1] : [0.1, 0.8], [1, 1]);
+  const opacity = useTransform(
+    scrollYProgress,
+    prefersReducedMotion ? [0, 1] : [0.05, 0.2, 0.8, 0.95],
+    prefersReducedMotion ? [1, 1] : [0, 1, 1, 0],
+  );
 
   return (
     <div ref={ref} className={`relative w-full h-8 overflow-hidden pointer-events-none ${className}`}>

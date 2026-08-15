@@ -92,7 +92,8 @@ function PricingCardsContent() {
 
           <button
             onClick={handleFreeClick}
-            className="btn-secondary w-full justify-center h-12 text-[13px] cursor-pointer"
+            className="btn-secondary w-full justify-center text-[13px] cursor-pointer"
+            style={{ height: 48 }}
           >
             {profile ? "Back to Terminal" : "Start Free"}
           </button>
@@ -117,8 +118,7 @@ function PricingCardsContent() {
       </div>
 
       {/* Pro */}
-      <div className="pricing-pro-card card p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden border-[var(--color-accent-primary)]/25 order-1 md:order-2">
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-[var(--color-accent-primary)] opacity-[0.06] rounded-full blur-[60px] pointer-events-none" />
+      <div className="pricing-pro-card card p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden order-1 md:order-2" style={{ borderColor: "color-mix(in srgb, var(--color-accent-primary) 25%, transparent)" }}>
         <div className="absolute top-0 right-0 px-3 py-1 bg-[var(--color-accent-primary)] text-[var(--color-bg-primary)] text-[10px] font-bold tracking-[0.04em] rounded-bl-lg">
           POPULAR
         </div>
@@ -139,7 +139,8 @@ function PricingCardsContent() {
           <button
             onClick={handleProClick}
             disabled={loadingCheckout}
-            className="btn-primary w-full justify-center h-12 text-[13px] bg-[var(--color-accent-primary)] text-[var(--color-bg-primary)] hover:bg-[var(--color-accent-primary-hover)] disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            className="btn-primary w-full justify-center text-[13px] disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            style={{ height: 48 }}
           >
             {loadingCheckout ? (
               <div className="w-3.5 h-3.5 border-2 border-[var(--color-bg-primary)] border-t-transparent rounded-full animate-spin" />

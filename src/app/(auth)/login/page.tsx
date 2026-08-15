@@ -121,9 +121,9 @@ function PremiumInput({ id, label, icon, rightEl, error, ...rest }: InputProps) 
           display: "flex",
           alignItems: "center",
           borderRadius: 10,
-          border: `1px solid ${hasError ? "rgba(239,68,68,0.6)" : focused ? "rgba(6, 182, 212,0.5)" : "rgba(255,255,255,0.08)"}`,
-          background: focused ? "rgba(6, 182, 212,0.04)" : "rgba(255,255,255,0.03)",
-          boxShadow: focused && !hasError ? "0 0 0 3px rgba(6, 182, 212,0.08)" : "none",
+          border: `1px solid ${hasError ? "rgba(var(--red-rgb),0.6)" : focused ? "rgba(var(--accent-rgb),0.5)" : "rgba(255,255,255,0.08)"}`,
+          background: focused ? "rgba(var(--accent-rgb),0.04)" : "rgba(255,255,255,0.03)",
+          boxShadow: focused && !hasError ? "0 0 0 3px rgba(var(--accent-rgb),0.08)" : "none",
           transition: "all 0.2s cubic-bezier(0.16,1,0.3,1)",
         }}
       >
@@ -233,8 +233,8 @@ function SuccessOverlay() {
           width: 52,
           height: 52,
           borderRadius: "50%",
-          background: "rgba(6, 182, 212,0.12)",
-          border: "2px solid rgba(6, 182, 212,0.4)",
+          background: "rgba(var(--accent-rgb),0.12)",
+          border: "2px solid rgba(var(--accent-rgb),0.4)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -268,6 +268,8 @@ function LoginPageContent() {
   useEffect(() => {
     const card = cardRef.current;
     if (!card) return;
+    // Respect reduced-motion preference: skip the tilt parallax entirely.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const handleMouse = (e: MouseEvent) => {
       const rect = card.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
@@ -344,9 +346,9 @@ function LoginPageContent() {
           75%      { transform: translateX(4px); }
         }
         @keyframes pulse-ring {
-          0%   { box-shadow: 0 0 0 0 rgba(6, 182, 212,0.25); }
-          70%  { box-shadow: 0 0 0 10px rgba(6, 182, 212,0); }
-          100% { box-shadow: 0 0 0 0 rgba(6, 182, 212,0); }
+          0%   { box-shadow: 0 0 0 0 rgba(var(--accent-rgb),0.25); }
+          70%  { box-shadow: 0 0 0 10px rgba(var(--accent-rgb),0); }
+          100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb),0); }
         }
         .login-card {
           animation: auth-enter 0.6s cubic-bezier(0.16,1,0.3,1) both;
@@ -378,14 +380,44 @@ function LoginPageContent() {
           transition: opacity 0.2s;
         }
         .primary-btn:hover:not(:disabled)::after { opacity: 1; }
-        .primary-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(6, 182, 212,0.3); }
+        .primary-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(var(--accent-rgb),0.3); }
         .primary-btn:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
         .demo-btn {
           transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
           cursor: pointer;
         }
         .eye-btn:hover { color: #A1A1AA !important; }
-        .remember-check:hover { border-color: rgba(6, 182, 212,0.5) !important; }
+        .remember-check:hover { border-color: rgba(var(--accent-rgb),0.5) !important; }
+        /* Visually-hidden but accessible checkbox — stays in tab/a11y tree */
+        .remember-check-input {
+          position: absolute;
+          opacity: 0;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: 0;
+          border: 0;
+          overflow: hidden;
+          clip: rect(0 0 0 0);
+          clip-path: inset(50%);
+          white-space: nowrap;
+        }
+        #remember:checked + .remember-check {
+          background: var(--color-accent-primary);
+          border-color: var(--color-accent-primary);
+        }
+        #remember:checked + .remember-check::after {
+          content: "";
+          width: 4px;
+          height: 8px;
+          border: solid var(--background);
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+        }
+        #remember:focus-visible + .remember-check {
+          outline: 2px solid var(--color-accent-primary);
+          outline-offset: 2px;
+        }
       `}</style>
 
       <div
@@ -465,8 +497,8 @@ function LoginPageContent() {
               style={{
                 padding: "10px 14px",
                 borderRadius: 8,
-                background: "rgba(239,68,68,0.07)",
-                border: "1px solid rgba(239,68,68,0.2)",
+                background: "rgba(var(--red-rgb),0.07)",
+                border: "1px solid rgba(var(--red-rgb),0.2)",
                 fontSize: 13,
                 color: "#FCA5A5",
                 animation: "shake 0.3s ease",
@@ -531,7 +563,7 @@ function LoginPageContent() {
                 id="remember"
                 type="checkbox"
                 {...register("remember")}
-                style={{ display: "none" }}
+                className="remember-check-input"
               />
               <div
                 className="remember-check"
@@ -542,7 +574,10 @@ function LoginPageContent() {
                   border: "1px solid rgba(255,255,255,0.12)",
                   background: "rgba(255,255,255,0.03)",
                   flexShrink: 0,
-                  transition: "border-color 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "border-color 0.2s, background 0.2s",
                 }}
               />
               <span style={{ fontSize: 12, color: "#71717A" }}>Remember me</span>

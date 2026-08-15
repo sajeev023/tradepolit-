@@ -52,23 +52,29 @@ export function NotificationPanel() {
     },
   });
 
-  // 4. Click outside to close
+  // 4. Click outside + Escape to close.
+  // Use a data-attribute sentinel shared with the trigger (in the topbar) so
+  // the guard works whether the panel is portaled, re-parented, or the trigger
+  // is clicked again. A click inside any element tagged `data-notification-scope`
+  // (the panel itself or the bell trigger) is treated as in-scope and does not
+  // close the panel; everything else closes it. This avoids the toggle-fl where
+  // mousedown closes the panel and the subsequent click re-opens it.
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        notificationPanelOpen &&
-        panelRef.current &&
-        !panelRef.current.contains(event.target as Node)
-      ) {
-        // Prevent immediate close if click was on the toggle bell icon
-        const target = event.target as HTMLElement;
-        if (target.closest("[aria-label='View notifications']")) return;
-        
-        setNotificationPanelOpen(false);
-      }
+      if (!notificationPanelOpen) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.("[data-notification-scope]")) return;
+      setNotificationPanelOpen(false);
+    }
+    function handleKeydown(event: KeyboardEvent) {
+      if (event.key === "Escape") setNotificationPanelOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeydown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeydown);
+    };
   }, [notificationPanelOpen, setNotificationPanelOpen]);
 
   if (!notificationPanelOpen) return null;
@@ -78,6 +84,9 @@ export function NotificationPanel() {
   return (
     <div
       ref={panelRef}
+      role="dialog"
+      aria-label="Notifications"
+      data-notification-scope
       className="fixed right-0 top-0 h-screen w-80 z-50 flex flex-col justify-between border-l glass shadow-2xl animate-fade-in"
       style={{
         backgroundColor: "rgba(10, 15, 24, 0.9)",
@@ -95,6 +104,7 @@ export function NotificationPanel() {
         </div>
         <button
           onClick={() => setNotificationPanelOpen(false)}
+          aria-label="Close notifications"
           className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] p-1"
         >
           <X size={16} />

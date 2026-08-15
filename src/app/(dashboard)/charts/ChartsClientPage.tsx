@@ -93,12 +93,22 @@ const ANALYSIS_STEPS: { key: AnalysisPhase; label: string }[] = [
 const COLLAPSE_THRESHOLD = 400;
 const COLLAPSE_PREVIEW = 300;
 
-function formatMetricNumber(val: any, decimals = 2): string {
+function formatMetricNumber(val: any, symbol?: string, decimals = 2): string {
   if (val === null || val === undefined) return "—";
   const cleaned = typeof val === "string" ? val.replace(/[^0-9.-]/g, "") : val;
   const num = Number(cleaned);
   if (isNaN(num) || num === 0) return "—";
-  return `$${num.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+  // Forex pairs (EUR/USD, USD/JPY, …) are quoted in fractional pips — never a
+  // "$ amount" and never comma-grouped at 2 decimals (which invents "$1,085.00"
+  // for a 1.0850 quote). Gold/metals keep the $ treatment below.
+  const quote = symbol?.includes("/") ? symbol.split("/")[1] : "USD";
+  const isForex = !!symbol && symbol.includes("/") && !symbol.startsWith("XAU") && !symbol.startsWith("XAG");
+  if (isForex) {
+    const fxDecimals = quote === "JPY" ? 3 : 5;
+    return num.toLocaleString("en-US", { minimumFractionDigits: fxDecimals, maximumFractionDigits: fxDecimals });
+  }
+  const prefix = quote === "USD" ? "$" : "";
+  return `${prefix}${num.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
 }
 
 // Generate proactive technical alerts based on compiled indicators
@@ -1029,11 +1039,11 @@ Timestamp: ${new Date().toISOString()}
 
       {/* Welcome Back Banner */}
       {welcomeBack && (
-        <div className="flex items-center justify-between p-3.5 rounded-xl border border-cyan-500/20 bg-[var(--color-accent-primary-subtle)] text-xs text-[var(--color-text-primary)] animate-message-in shrink-0">
+        <div className="flex items-center justify-between p-3.5 rounded-xl border border-[rgba(var(--accent-rgb),0.2)] bg-[var(--color-accent-primary-subtle)] text-xs text-[var(--color-text-primary)] animate-message-in shrink-0">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent)] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--accent)]"></span>
             </span>
             <span>{welcomeBack}</span>
           </div>
@@ -1078,7 +1088,7 @@ Timestamp: ${new Date().toISOString()}
             }}
             className={`flex-1 py-2 text-center text-xs font-semibold rounded-md transition-all capitalize ${
               mobileTab === tab
-                ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-cyan-500/20"
+                ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-[rgba(var(--accent-rgb),0.2)]"
                 : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
             }`}
           >
@@ -1134,7 +1144,7 @@ Timestamp: ${new Date().toISOString()}
                                   }}
                                 />
                               )}
-                              <span className="font-semibold truncate text-white min-w-0">{item}</span>
+                              <span className="font-semibold truncate text-[var(--color-text-primary)] min-w-0">{item}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               {info && (
@@ -1180,7 +1190,7 @@ Timestamp: ${new Date().toISOString()}
           <div className="flex flex-wrap items-center justify-between px-3 py-1.5 border-b shrink-0 bg-[var(--color-bg-secondary)] border-[var(--color-border-subtle)] gap-2" style={{ minHeight: "40px" }}>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded bg-[var(--color-accent-primary-muted)] flex items-center justify-center border border-cyan-500/20">
+                <div className="w-7 h-7 rounded bg-[var(--color-accent-primary-muted)] flex items-center justify-center border border-[rgba(var(--accent-rgb),0.2)]">
                   <TrendingUp size={14} style={{ color: "var(--color-accent-primary)" }} />
                 </div>
                 <span className="text-xs font-semibold text-[var(--color-text-primary)]">{selectedSymbol}</span>
@@ -1210,7 +1220,7 @@ Timestamp: ${new Date().toISOString()}
                     onClick={() => setSelectedTimeframe(tf)}
                     className={`h-7 px-2 rounded-md text-[10px] font-semibold font-mono transition-all cursor-pointer flex items-center justify-center press-scale ${
                       selectedTimeframe === tf
-                        ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] shadow-sm font-bold border border-cyan-500/20"
+                        ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] shadow-sm font-bold border border-[rgba(var(--accent-rgb),0.2)]"
                         : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
                     }`}
                   >
@@ -1227,7 +1237,7 @@ Timestamp: ${new Date().toISOString()}
                     style={{ minWidth: "44px", minHeight: "44px" }}
                     className={`rounded-md text-[13px] font-semibold font-mono transition-all cursor-pointer flex items-center justify-center timeframe-pill ${
                       selectedTimeframe === tf
-                        ? "bg-[var(--color-bg-hover)] text-[var(--color-accent-primary)] shadow-sm font-bold border border-cyan-500/20"
+                        ? "bg-[var(--color-bg-hover)] text-[var(--color-accent-primary)] shadow-sm font-bold border border-[rgba(var(--accent-rgb),0.2)]"
                         : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
                     }`}
                   >
@@ -1240,7 +1250,7 @@ Timestamp: ${new Date().toISOString()}
                 <button
                   onClick={handleCaptureSnapshot}
                   disabled={isExportingSnapshot}
-                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-cyan-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
+                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-[rgba(var(--accent-rgb),0.3)] shrink-0 select-none cursor-pointer active:scale-95 transition-all"
                   style={{ padding: 0 }}
                   title="Export Setup PNG"
                 >
@@ -1248,7 +1258,7 @@ Timestamp: ${new Date().toISOString()}
                 </button>
                 <button
                   onClick={() => setIsChartMaximized(v => !v)}
-                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-cyan-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
+                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-[rgba(var(--accent-rgb),0.3)] shrink-0 select-none cursor-pointer active:scale-95 transition-all"
                   style={{ padding: 0 }}
                   title={isChartMaximized ? "Exit Fullscreen" : "Maximize Chart"}
                 >
@@ -1256,7 +1266,7 @@ Timestamp: ${new Date().toISOString()}
                 </button>
                 <button
                   onClick={() => setAiPanelOpen(v => !v)}
-                  className="btn-secondary h-8 text-[10px] px-3 flex items-center gap-1.5 rounded-md border-[var(--color-border-default)] hover:border-cyan-500/30 shrink-0 select-none cursor-pointer active:scale-95 transition-all"
+                  className="btn-secondary h-8 text-[10px] px-3 flex items-center gap-1.5 rounded-md border-[var(--color-border-default)] hover:border-[rgba(var(--accent-rgb),0.3)] shrink-0 select-none cursor-pointer active:scale-95 transition-all"
                 >
                   <Bot size={12} style={{ color: "var(--color-accent-primary)" }} />
                   <span>{aiPanelOpen ? "Close AI" : "Open AI"}</span>
@@ -1362,7 +1372,7 @@ Timestamp: ${new Date().toISOString()}
                 </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0 ml-auto pl-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-profit)] animate-pulse" />
                 <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-sans">Live</span>
               </div>
             </div>
@@ -1376,9 +1386,9 @@ Timestamp: ${new Date().toISOString()}
             {/* Panel header */}
             <div className="px-3 border-b flex items-center justify-between shrink-0" style={{ height: "38px", borderColor: "var(--color-border-subtle)" }}>
               <div className="flex items-center gap-2.5">
-                <div className="relative flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent-primary-muted)] border border-cyan-500/10 shrink-0">
+                <div className="relative flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent-primary-muted)] border border-[rgba(var(--accent-rgb),0.1)] shrink-0">
                   <BrainCircuit size={15} className="text-[var(--color-accent-primary)]" />
-                  <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse border border-[var(--color-bg-deepest)]" />
+                  <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[var(--color-profit)] animate-pulse border border-[var(--color-bg-deepest)]" />
                 </div>
                 <span className="text-sm font-bold tracking-tight text-[var(--color-text-primary)]">TradCopilot</span>
               </div>
@@ -1415,7 +1425,7 @@ Timestamp: ${new Date().toISOString()}
                 <button
                   onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe, bypassCache: true })}
                   disabled={isPending}
-                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-white transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
+                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
                   title="Recalculate Chart Analysis"
                 >
                   <RefreshCw size={12} className={isPending ? "animate-spin text-[var(--color-accent-primary)]" : ""} />
@@ -1489,7 +1499,7 @@ Timestamp: ${new Date().toISOString()}
                       <span>🟢</span> Support
                     </span>
                     <span className="text-[var(--color-profit)] font-bold block">
-                      {formatMetricNumber(analysisData.support || analysisData.levels?.support)}
+                      {formatMetricNumber(analysisData.support || analysisData.levels?.support, selectedSymbol)}
                     </span>
                     <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.supportSource}>
                       {analysisData.sourceMetadata?.supportSource || "Swing-low detector"}
@@ -1505,7 +1515,7 @@ Timestamp: ${new Date().toISOString()}
                       <span>🔴</span> Resistance
                     </span>
                     <span className="text-[var(--color-loss)] font-bold block">
-                      {formatMetricNumber(analysisData.resistance || analysisData.levels?.resistance)}
+                      {formatMetricNumber(analysisData.resistance || analysisData.levels?.resistance, selectedSymbol)}
                     </span>
                     <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.resistanceSource}>
                       {analysisData.sourceMetadata?.resistanceSource || "Swing-high detector"}
@@ -1521,7 +1531,7 @@ Timestamp: ${new Date().toISOString()}
                       <span>🎯</span> Invalidation
                     </span>
                     <span className="text-[var(--color-warning)] font-bold block">
-                      {formatMetricNumber(analysisData.invalidationLevel || analysisData.levels?.invalidation)}
+                      {formatMetricNumber(analysisData.invalidationLevel || analysisData.levels?.invalidation, selectedSymbol)}
                     </span>
                     <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.stopLossSource}>
                       {analysisData.sourceMetadata?.stopLossSource || "Below support"}
@@ -1717,7 +1727,7 @@ Timestamp: ${new Date().toISOString()}
               {!analysisData && !isPending && !analysisError && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-dashed border-cyan-500/30"
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-dashed border-[rgba(var(--accent-rgb),0.3)]"
                     style={{ background: "linear-gradient(135deg, var(--color-accent-primary-subtle), var(--color-bg-tertiary))" }}
                   >
                     <Bot size={20} className="text-[var(--color-accent-primary)] animate-pulse" />
@@ -1729,9 +1739,9 @@ Timestamp: ${new Date().toISOString()}
                   {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && analysesCountToday >= analysisLimit ? (
                     <button
                       onClick={() => router.push("/pricing")}
-                      className="btn-primary bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs w-full max-w-[180px] shadow-md cursor-pointer font-bold flex items-center justify-center gap-1.5"
+                      className="btn-primary bg-amber-500 hover:bg-amber-600 text-[var(--color-bg-deepest)] text-xs w-full max-w-[180px] shadow-md cursor-pointer font-bold flex items-center justify-center gap-1.5"
                     >
-                      <Zap size={13} className="fill-zinc-950 text-zinc-950" /> Upgrade to Pro
+                      <Zap size={13} className="fill-[var(--color-bg-deepest)] text-[var(--color-bg-deepest)]" /> Upgrade to Pro
                     </button>
                   ) : (
                     <button onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe })} className="btn-primary text-xs w-full max-w-[180px] shadow-md cursor-pointer press-scale">
@@ -1748,9 +1758,9 @@ Timestamp: ${new Date().toISOString()}
                   <div
                     className="relative overflow-hidden rounded-xl border p-3.5"
                     style={{
-                      borderColor: "rgba(6, 182, 212, 0.22)",
+                      borderColor: "rgba(var(--accent-rgb), 0.22)",
                       background:
-                        "linear-gradient(180deg, rgba(6,182,212,0.08), rgba(6,182,212,0.02) 70%)",
+                        "linear-gradient(180deg, rgba(var(--accent-rgb),0.08), rgba(var(--accent-rgb),0.02) 70%)",
                     }}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -1856,7 +1866,7 @@ Timestamp: ${new Date().toISOString()}
                         <div
                           key={msg.id || index}
                           className="p-3.5 rounded-lg border flex items-start gap-3 animate-message-in"
-                          style={{ backgroundColor: "rgba(6, 182, 212, 0.06)", borderColor: "rgba(6, 182, 212, 0.15)" }}
+                          style={{ backgroundColor: "rgba(var(--accent-rgb), 0.06)", borderColor: "rgba(var(--accent-rgb), 0.15)" }}
                         >
                           <AlertTriangle className="text-[var(--color-accent-primary)] shrink-0 mt-0.5" size={15} />
                           <div className="text-[12px] leading-relaxed text-[var(--color-text-primary)] font-sans">
@@ -1880,7 +1890,7 @@ Timestamp: ${new Date().toISOString()}
                       return (
                         <div key={msgId} className="flex items-start gap-3 animate-message-in">
                           <div
-                            className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-cyan-500/10 mt-0.5"
+                            className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-[rgba(var(--accent-rgb),0.1)] mt-0.5"
                             style={{ backgroundColor: "var(--color-accent-primary-subtle)" }}
                           >
                             <Bot size={13} style={{ color: "var(--color-accent-primary)" }} />
@@ -1971,7 +1981,7 @@ Timestamp: ${new Date().toISOString()}
                                   <button
                                     key={action}
                                     onClick={() => handleQuickAction(action)}
-                                    className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-cyan-500/30 hover:text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-subtle)] transition-all duration-150 press-scale"
+                                    className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-[rgba(var(--accent-rgb),0.3)] hover:text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-subtle)] transition-all duration-150 press-scale"
                                   >
                                     {action}
                                   </button>
@@ -2008,7 +2018,7 @@ Timestamp: ${new Date().toISOString()}
                   {chatMutation.isPending && (
                     <div className="flex items-start gap-3">
                       <div
-                        className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-cyan-500/10 mt-0.5"
+                        className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-[rgba(var(--accent-rgb),0.1)] mt-0.5"
                         style={{ backgroundColor: "var(--color-accent-primary-subtle)" }}
                       >
                         <Bot size={13} style={{ color: "var(--color-accent-primary)" }} />
@@ -2038,7 +2048,7 @@ Timestamp: ${new Date().toISOString()}
                     <button
                       key={q}
                       onClick={() => { setInputText(q); setShowFollowUps(false); }}
-                      className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-cyan-500/30 hover:text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-subtle)] transition-all duration-150 active:scale-95 max-w-full truncate"
+                      className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-[rgba(var(--accent-rgb),0.3)] hover:text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-subtle)] transition-all duration-150 active:scale-95 max-w-full truncate"
                     >
                       {q}
                     </button>
@@ -2115,18 +2125,18 @@ Timestamp: ${new Date().toISOString()}
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
                 placeholder="Ask TradCopilot about this chart..."
-                className="flex-grow bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] rounded-lg px-4 py-2.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-cyan-500/40 transition-colors"
+                className="flex-grow bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] rounded-lg px-4 py-2.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-[rgba(var(--accent-rgb),0.4)] transition-colors"
                 disabled={chatMutation.isPending}
               />
               <button
                 type="submit"
                 disabled={!inputText.trim() || chatMutation.isPending}
-                className="btn-no-full-width flex items-center justify-center w-11 h-11 rounded-lg text-zinc-950 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer active:scale-95 shrink-0"
+                className="btn-no-full-width flex items-center justify-center w-11 h-11 rounded-lg text-[var(--color-bg-deepest)] disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer active:scale-95 shrink-0"
                 style={{ backgroundColor: "var(--color-accent-primary)" }}
                 aria-label="Send message"
               >
                 {chatMutation.isPending ? (
-                  <div className="w-4 h-4 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[var(--color-bg-deepest)] border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Send size={16} fill="currentColor" />
                 )}

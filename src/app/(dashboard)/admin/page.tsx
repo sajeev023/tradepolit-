@@ -92,7 +92,7 @@ export default function AdminPage() {
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-[var(--color-text-primary)] flex items-center gap-2">
           Admin Operations Dashboard
         </h1>
         <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
@@ -141,7 +141,7 @@ export default function AdminPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search email, name..."
-                className="px-3 py-1.5 rounded bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-xs text-white max-w-[200px]"
+                className="px-3 py-1.5 rounded bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-xs text-[var(--color-text-primary)] max-w-[200px]"
               />
             </div>
 
@@ -166,14 +166,14 @@ export default function AdminPage() {
                   </thead>
                   <tbody className="divide-y" style={{ borderColor: "var(--color-border-subtle)" }}>
                     {users.map((u) => (
-                      <tr key={u.id} className="hover:bg-zinc-800/10">
+                      <tr key={u.id} className="hover:bg-[var(--color-bg-hover)]">
                         <td className="py-3">
-                          <div className="font-bold text-white">{u.displayName || "No Name"}</div>
+                          <div className="font-bold text-[var(--color-text-primary)]">{u.displayName || "No Name"}</div>
                           <div style={{ color: "var(--color-text-tertiary)" }}>{u.email}</div>
                         </td>
                         <td className="py-3 font-mono font-semibold">{u.role}</td>
                         <td className="py-3 text-center">
-                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${u.isActive ? "bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-emerald-500/20" : "bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-rose-500/20"}`}>
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${u.isActive ? "bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-[rgba(var(--green-rgb),0.2)]" : "bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-[rgba(var(--red-rgb),0.2)]"}`}>
                             {u.isActive ? "Active" : "Suspended"}
                           </span>
                         </td>
@@ -181,7 +181,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => toggleUserMutation.mutate({ id: u.id, isActive: !u.isActive })}
                             disabled={toggleUserMutation.isPending}
-                            className={`px-2 py-1 rounded text-[10px] font-semibold transition-all inline-flex items-center gap-1 ${u.isActive ? "text-[var(--color-loss)] border border-rose-500/20 bg-rose-950/10" : "text-[var(--color-profit)] border border-emerald-500/20 bg-emerald-950/10"}`}
+                            className={`px-2 py-1 rounded text-[10px] font-semibold transition-all inline-flex items-center gap-1 ${u.isActive ? "text-[var(--color-loss)] border border-[rgba(var(--red-rgb),0.2)] bg-[var(--color-loss-bg)]" : "text-[var(--color-profit)] border border-[rgba(var(--green-rgb),0.2)] bg-[var(--color-profit-bg)]"}`}
                           >
                             {u.isActive ? <UserMinus size={10} /> : <UserCheck size={10} />}
                             {u.isActive ? "Suspend" : "Activate"}
@@ -237,7 +237,7 @@ export default function AdminPage() {
               featureFlags.map((flag) => (
                 <div key={flag.id} className="flex items-center justify-between border-b pb-2 last:border-b-0" style={{ borderColor: "var(--color-border-subtle)" }}>
                   <div>
-                    <span className="text-xs font-bold text-white block">{flag.name}</span>
+                    <span className="text-xs font-bold text-[var(--color-text-primary)] block">{flag.name}</span>
                     <span className="text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>{flag.description}</span>
                   </div>
                   <button
@@ -245,8 +245,8 @@ export default function AdminPage() {
                     disabled={toggleFlagMutation.isPending}
                     className={`text-[10px] font-bold px-2.5 py-1 rounded transition-all cursor-pointer ${
                       flag.isActive
-                        ? "bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-emerald-500/20 hover:bg-emerald-900/20"
-                        : "bg-zinc-800 text-zinc-500 hover:bg-zinc-700"
+                        ? "bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-[rgba(var(--green-rgb),0.2)] hover:bg-[var(--color-profit-bg)]"
+                        : "bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)]"
                     }`}
                   >
                     {flag.isActive ? "Enabled" : "Disabled"}

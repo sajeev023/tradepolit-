@@ -12,15 +12,7 @@ import {
   Clock,
   ArrowUpRight,
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+import { EquityCurveChart } from "@/components/ui/equity-curve-chart";
 import type { PerformanceMetrics } from "@/lib/types";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -39,27 +31,6 @@ function StatSkeleton() {
 }
 
 /* ─── Custom Tooltip ─── */
-function CustomTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div
-      className="px-3 py-2.5 rounded-lg text-xs"
-      style={{
-        backgroundColor: "var(--color-bg-elevated)",
-        border: "1px solid var(--color-border-default)",
-        boxShadow: "var(--shadow-lg)",
-      }}
-    >
-      <p className="text-[10px] mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-        {label}
-      </p>
-      <p className="font-mono font-bold text-sm" style={{ color: "var(--color-accent-primary)" }}>
-        ${Number(payload[0].value).toFixed(2)}
-      </p>
-    </div>
-  );
-}
-
 /* ─── Metric Row ─── */
 function MetricRow({
   label,
@@ -138,7 +109,7 @@ export default function AnalyticsPage() {
     return (
       <div className="flex flex-col gap-6 max-w-5xl mx-auto">
         <div>
-          <h1 className="text-2xl font-bold text-white">Performance Analytics</h1>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>Performance Analytics</h1>
           <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
             We couldn&apos;t load your performance data.
           </p>
@@ -152,7 +123,7 @@ export default function AnalyticsPage() {
           </p>
           <button
             onClick={() => refetch()}
-            className="px-3 py-1.5 rounded text-xs font-semibold bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-cyan-500/20 hover:bg-cyan-500/20 transition"
+            className="px-3 py-1.5 rounded text-xs font-semibold bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-[rgba(var(--accent-rgb),0.2)] hover:bg-[rgba(var(--accent-rgb),0.2)] transition"
           >
             Retry
           </button>
@@ -326,32 +297,7 @@ export default function AnalyticsPage() {
             </span>
           </div>
 
-          <div className="w-full h-[260px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={equityCurveData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorAnalyticsPnl" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-accent-primary)" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="var(--color-accent-primary)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" vertical={false} />
-                <XAxis dataKey="date" stroke="var(--color-text-tertiary)" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--color-text-tertiary)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `$${v}`} />
-                <Tooltip content={<CustomTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="pnl"
-                  stroke="var(--color-accent-primary)"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#colorAnalyticsPnl)"
-                  animationDuration={1200}
-                  animationEasing="ease-out"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <EquityCurveChart data={equityCurveData} height={260} strokeWidth={2.5} />
         </div>
       </div>
 

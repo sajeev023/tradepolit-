@@ -31,8 +31,8 @@ function BiasBadge({ bias }: { bias: string }) {
       className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border"
       style={{
         color: isBull ? "var(--color-profit)" : isBear ? "var(--color-loss)" : "var(--color-text-secondary)",
-        borderColor: isBull ? "rgba(34,197,94,0.25)" : isBear ? "rgba(239,68,68,0.25)" : "var(--color-border-default)",
-        backgroundColor: isBull ? "rgba(34,197,94,0.08)" : isBear ? "rgba(239,68,68,0.08)" : "var(--color-bg-tertiary)",
+        borderColor: isBull ? "rgba(var(--green-rgb),0.25)" : isBear ? "rgba(var(--red-rgb),0.25)" : "var(--color-border-default)",
+        backgroundColor: isBull ? "rgba(var(--green-rgb),0.08)" : isBear ? "rgba(var(--red-rgb),0.08)" : "var(--color-bg-tertiary)",
       }}
     >
       {bias}
@@ -104,7 +104,7 @@ ${analysis.aiSummary}`;
     <Profiler id="SavedAnalysesPanel" onRender={(id, phase, actualDuration) => profiler.recordComponentRender(id, actualDuration)}>
     <>
       {isOpen && (
-        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+        <div className="fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--color-bg-deepest)_40%,transparent)] backdrop-blur-sm" onClick={onClose} />
       )}
 
       <div
@@ -123,8 +123,8 @@ ${analysis.aiSummary}`;
           style={{ height: "56px" }}
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-              <Bookmark size={14} className="text-amber-400" />
+            <div className="w-7 h-7 rounded-md bg-[var(--color-warning-bg)] border border-[color-mix(in_srgb,var(--color-warning)_20%,transparent)] flex items-center justify-center">
+              <Bookmark size={14} className="text-[var(--color-warning)]" />
             </div>
             <span className="text-sm font-bold text-[var(--color-text-primary)]">
               Saved Analyses
@@ -142,8 +142,8 @@ ${analysis.aiSummary}`;
 
         {/* Compare Mode Banner */}
         {compareId && compareAnalysis && currentAnalysis && (
-          <div className="mx-3 mt-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 shrink-0">
-            <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider mb-2">
+          <div className="mx-3 mt-3 p-3 rounded-xl border border-[color-mix(in_srgb,var(--color-warning)_20%,transparent)] bg-[var(--color-warning-bg)] shrink-0">
+            <p className="text-[10px] text-[var(--color-warning)] font-bold uppercase tracking-wider mb-2">
               Comparing: {compareAnalysis.symbol} {compareAnalysis.timeframe} vs Current
             </p>
             <div className="grid grid-cols-2 gap-2 text-[11px]">
@@ -153,16 +153,16 @@ ${analysis.aiSummary}`;
                 </p>
                 <div className="space-y-1 font-mono text-[10px]">
                   <p>Bias: <span className="font-bold text-[var(--color-text-primary)]">{compareAnalysis.bias}</span></p>
-                  <p>Support: <span className="text-emerald-400 font-bold">${compareAnalysis.support}</span></p>
-                  <p>Resistance: <span className="text-rose-400 font-bold">${compareAnalysis.resistance}</span></p>
+                  <p>Support: <span className="text-[var(--color-profit)] font-bold">${compareAnalysis.support}</span></p>
+                  <p>Resistance: <span className="text-[var(--color-loss)] font-bold">${compareAnalysis.resistance}</span></p>
                 </div>
               </div>
               <div className="border-l border-[var(--color-border-default)] pl-2">
-                <p className="text-cyan-400 mb-1 font-semibold">Current Setup</p>
+                <p className="text-[var(--color-accent-primary)] mb-1 font-semibold">Current Setup</p>
                 <div className="space-y-1 font-mono text-[10px]">
                   <p>Bias: <span className="font-bold text-[var(--color-text-primary)]">{currentAnalysis.bias}</span></p>
-                  <p>Support: <span className="text-emerald-400 font-bold">${currentAnalysis.support}</span></p>
-                  <p>Resistance: <span className="text-rose-400 font-bold">${currentAnalysis.resistance}</span></p>
+                  <p>Support: <span className="text-[var(--color-profit)] font-bold">${currentAnalysis.support}</span></p>
+                  <p>Resistance: <span className="text-[var(--color-loss)] font-bold">${currentAnalysis.resistance}</span></p>
                 </div>
               </div>
             </div>
@@ -207,7 +207,7 @@ ${analysis.aiSummary}`;
                   key={item.id}
                   className={`group relative rounded-xl border p-4 transition-all space-y-3 ${
                     isComparing
-                      ? "border-amber-500/30 bg-amber-500/5"
+                      ? "border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[var(--color-warning-bg)]"
                       : "border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] bg-[var(--color-bg-tertiary)]"
                   }`}
                 >
@@ -230,12 +230,12 @@ ${analysis.aiSummary}`;
                         className="p-1 rounded text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
                         title="Copy analysis text"
                       >
-                        {copiedId === item.id ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                        {copiedId === item.id ? <Check size={12} className="text-[var(--color-profit)]" /> : <Copy size={12} />}
                       </button>
                       {/* Delete */}
                       <button
                         onClick={() => setConfirmDeleteId(item.id)}
-                        className="p-1 rounded text-[var(--color-text-tertiary)] hover:text-rose-400 transition-colors cursor-pointer"
+                        className="p-1 rounded text-[var(--color-text-tertiary)] hover:text-[var(--color-loss)] transition-colors cursor-pointer"
                         title="Delete bookmark"
                       >
                         <Trash2 size={12} />
@@ -246,12 +246,12 @@ ${analysis.aiSummary}`;
                   {/* Key Levels */}
                   <div className="grid grid-cols-2 gap-2 text-[11px] font-mono bg-[var(--color-bg-secondary)] p-2 rounded-lg border border-[var(--color-border-subtle)]">
                     <div>
-                      <span className="text-[9px] text-emerald-500 font-bold block">SUPPORT</span>
-                      <span className="text-emerald-400 font-bold">${item.support}</span>
+                      <span className="text-[9px] text-[var(--color-profit)] font-bold block">SUPPORT</span>
+                      <span className="text-[var(--color-profit)] font-bold">${item.support}</span>
                     </div>
                     <div>
-                      <span className="text-[9px] text-rose-500 font-bold block">RESISTANCE</span>
-                      <span className="text-rose-400 font-bold">${item.resistance}</span>
+                      <span className="text-[9px] text-[var(--color-loss)] font-bold block">RESISTANCE</span>
+                      <span className="text-[var(--color-loss)] font-bold">${item.resistance}</span>
                     </div>
                   </div>
 
@@ -271,7 +271,7 @@ ${analysis.aiSummary}`;
                         onClick={() => setCompareId(isComparing ? null : item.id)}
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded transition-all cursor-pointer ${
                           isComparing
-                            ? "bg-amber-500/20 text-amber-400"
+                            ? "bg-[color-mix(in_srgb,var(--color-warning)_20%,transparent)] text-[var(--color-warning)]"
                             : "bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                         }`}
                       >
@@ -287,7 +287,7 @@ ${analysis.aiSummary}`;
                       <button
                         onClick={() => handleDelete(item.id)}
                         disabled={isDeleting}
-                        className="px-2.5 py-1 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[11px] font-semibold hover:bg-rose-500/25 transition-all disabled:opacity-50 cursor-pointer"
+                        className="px-2.5 py-1 rounded-md bg-[var(--color-loss-bg)] border border-[color-mix(in_srgb,var(--color-loss)_30%,transparent)] text-[var(--color-loss)] text-[11px] font-semibold hover:bg-[color-mix(in_srgb,var(--color-loss)_25%,transparent)] transition-all disabled:opacity-50 cursor-pointer"
                       >
                         {isDeleting ? "..." : "Delete"}
                       </button>

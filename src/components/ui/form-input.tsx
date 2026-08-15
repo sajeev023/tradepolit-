@@ -19,7 +19,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
         : "var(--color-border-default)";
 
     const boxShadow = isFocused
-      ? "0 0 0 2px rgba(6, 182, 212, 0.16)"
+      ? "0 0 0 2px rgba(var(--accent-rgb), 0.16)"
       : "none";
 
     return (

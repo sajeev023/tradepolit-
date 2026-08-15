@@ -17,7 +17,7 @@ export default function PricingPage() {
         <Link href="/" className="flex items-center gap-2 flex-shrink-0">
           <div
             className="flex items-center justify-center rounded-md w-6 h-6"
-            style={{ background: "linear-gradient(135deg, var(--color-accent-primary), #06B6D4)" }}
+            style={{ background: "linear-gradient(135deg, var(--accent-bright), var(--accent))" }}
           >
             <TrendingUp size={13} color="#09090B" strokeWidth={2.5} />
           </div>

@@ -20,15 +20,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+import { EquityCurveChart } from "@/components/ui/equity-curve-chart";
 import { toast } from "sonner";
 
 /* ─── Skeleton Components ─── */
@@ -60,25 +52,6 @@ function ChartSkeleton() {
           />
         ))}
       </div>
-    </div>
-  );
-}
-
-function CustomTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div
-      className="px-3 py-2.5 rounded-lg text-xs"
-      style={{
-        backgroundColor: "var(--color-bg-deepest)",
-        border: "1px solid var(--color-border-default)",
-        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.5)",
-      }}
-    >
-      <p className="text-[10px] mb-1 text-[var(--color-text-quaternary)]">{label}</p>
-      <p className="font-mono font-bold text-sm text-[var(--color-accent-primary)]">
-        ${Number(payload[0].value).toFixed(2)}
-      </p>
     </div>
   );
 }
@@ -203,24 +176,24 @@ function DashboardContent() {
   if (profileData?.subscriptionStatus !== "PRO_ACTIVE") {
     return (
       <div className="flex flex-col gap-6 max-w-4xl mx-auto py-12 animate-fade-in">
-        <div className="card p-8 border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]/40 flex flex-col items-center justify-center text-center space-y-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 blur-3xl rounded-full" />
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-[var(--color-warning)]">
-            <Zap size={28} className="fill-[var(--color-warning)] text-[var(--color-warning)]" />
+        <div className="card p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-6 max-w-xl mx-auto">
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[var(--color-warning-bg)] text-[var(--color-warning)]"
+            style={{ border: "1px solid rgba(var(--amber-rgb), 0.16)" }}
+          >
+            <Zap size={26} className="fill-[var(--color-warning)]" />
           </div>
-          <div className="space-y-2">
-            <h2 className="text-xl font-black text-[var(--color-text-primary)] font-mono uppercase tracking-wide">PRO feature</h2>
-            <h3 className="text-md font-bold text-[var(--color-text-secondary)]">Performance Dashboard Locked</h3>
-            <p className="text-xs text-[var(--color-text-quaternary)] max-w-md mx-auto leading-relaxed">
-              Visual analytics, win/loss ratio distributions, cumulative equity curves, and automated AI weekly insights are available exclusively for PRO members.
+          <div className="space-y-2.5">
+            <span className="tp-eyebrow text-[var(--color-warning)] mb-1 block">Workstation · Locked</span>
+            <h2 className="tp-display-sm tracking-tight text-[var(--color-text-primary)]">Pro Terminal</h2>
+            <p className="text-sm text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
+              Visual analytics, win/loss distributions, cumulative equity curves, and automated weekly insights are Pro Terminal features. Your trades and journal stay free.
             </p>
           </div>
-          <div className="pt-2">
-            <Link href="/settings" className="btn-primary text-xs font-semibold py-2.5 px-6 flex items-center gap-1.5 cursor-pointer">
-              <Zap size={13} className="fill-zinc-950 text-zinc-950" />
-              Upgrade to Pro Terminal ($7.49)
-            </Link>
-          </div>
+          <Link href="/settings" className="btn-primary text-xs font-semibold py-2.5 px-6 flex items-center gap-1.5">
+            <Zap size={13} className="fill-[var(--background)] text-[var(--background)]" />
+            Upgrade to Pro Terminal — $7.49/mo
+          </Link>
         </div>
       </div>
     );
@@ -269,7 +242,8 @@ function DashboardContent() {
           </p>
           <button
             onClick={() => refetchSummary()}
-            className="px-3 py-1.5 rounded text-xs font-semibold bg-cyan-500/10 text-[var(--color-accent-primary)] border border-cyan-500/20 hover:bg-cyan-500/20 transition"
+            style={{ borderColor: "rgba(var(--accent-rgb), 0.16)" }}
+            className="px-3 py-1.5 rounded text-xs font-semibold border bg-[var(--color-accent-primary-subtle)] text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-muted)] transition-colors"
           >
             Retry
           </button>
@@ -339,7 +313,7 @@ function DashboardContent() {
                   </p>
                 </div>
                 {equityCurveData.length > 0 && (
-                  <span className="text-[10px] bg-cyan-500/10 border border-cyan-500/20 text-[var(--color-accent-primary)] font-mono px-2 py-0.5 rounded-full font-bold">
+                  <span className="badge badge-info font-mono font-bold">
                     Peak ${Math.max(...equityCurveData.map((d: any) => d.pnl), 0).toFixed(0)}
                   </span>
                 )}
@@ -360,42 +334,7 @@ function DashboardContent() {
                   </p>
                 </div>
               ) : (
-                <div className="w-full h-[240px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={equityCurveData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorPnl" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--color-accent-primary)" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="var(--color-accent-primary)" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
-                      <XAxis
-                        dataKey="date"
-                        stroke="rgba(255,255,255,0.2)"
-                        fontSize={10}
-                        tickLine={false}
-                        axisLine={false}
-                      />
-                      <YAxis
-                        stroke="rgba(255,255,255,0.2)"
-                        fontSize={10}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(v: number) => `$${v}`}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Area
-                        type="monotone"
-                        dataKey="pnl"
-                        stroke="var(--color-accent-primary)"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorPnl)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+                <EquityCurveChart data={equityCurveData} height={240} />
               )}
             </div>
           </div>
@@ -474,7 +413,7 @@ function DashboardContent() {
                   <div key={t.id} className="flex items-center justify-between border-b border-[var(--color-border-subtle)] pb-3 last:border-b-0 last:pb-0">
                     <div className="flex items-center gap-3">
                       <div className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono ${
-                        t.direction === "LONG" ? "bg-emerald-500/10 text-[var(--color-profit)]" : "bg-rose-500/10 text-[var(--color-loss)]"
+                        t.direction === "LONG" ? "bg-[var(--color-profit-bg)] text-[var(--color-profit)]" : "bg-[var(--color-loss-bg)] text-[var(--color-loss)]"
                       }`}>
                         {t.direction}
                       </div>
@@ -498,7 +437,10 @@ function DashboardContent() {
         {/* Weekly Report container (renders here once generated) */}
         <div className="flex flex-col">
           {weeklyReport && (
-            <div className="card p-5 border-cyan-500/20 bg-cyan-500/5 flex flex-col justify-between flex-1">
+            <div
+              className="card p-5 flex flex-col justify-between flex-1"
+              style={{ borderColor: "rgba(var(--accent-rgb), 0.2)", background: "var(--color-accent-primary-subtle)" }}
+            >
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-bold text-[var(--color-accent-primary)] flex items-center gap-1.5">
@@ -524,7 +466,7 @@ function DashboardContent() {
                   {weeklyReport}
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-cyan-500/10 text-center">
+              <div className="mt-4 pt-3 border-t text-center" style={{ borderColor: "rgba(var(--accent-rgb), 0.1)" }}>
                 <p className="text-[10px] text-[var(--color-text-quaternary)]">Auto-saved to session logs</p>
               </div>
             </div>

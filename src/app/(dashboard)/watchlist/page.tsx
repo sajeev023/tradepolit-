@@ -9,15 +9,15 @@ import { useRouter } from "next/navigation";
 const MAX_NAME_LENGTH = 40;
 
 const AVAILABLE_ASSETS = [
-  { symbol: "BTC/USD",  group: "Crypto",    color: "#f59e0b" },
-  { symbol: "ETH/USD",  group: "Crypto",    color: "#6366f1" },
-  { symbol: "SOL/USD",  group: "Crypto",    color: "#8b5cf6" },
-  { symbol: "EUR/USD",  group: "Forex",     color: "#22d3ee" },
-  { symbol: "GBP/USD",  group: "Forex",     color: "#38bdf8" },
-  { symbol: "USD/JPY",  group: "Forex",     color: "#34d399" },
-  { symbol: "XAU/USD",  group: "Commodity", color: "#fbbf24" },
-  { symbol: "NASDAQ",   group: "Indices",   color: "#f87171" },
-  { symbol: "S&P500",   group: "Indices",   color: "#fb923c" },
+  { symbol: "BTC/USD",  group: "Crypto" },
+  { symbol: "ETH/USD",  group: "Crypto" },
+  { symbol: "SOL/USD",  group: "Crypto" },
+  { symbol: "EUR/USD",  group: "Forex" },
+  { symbol: "GBP/USD",  group: "Forex" },
+  { symbol: "USD/JPY",  group: "Forex" },
+  { symbol: "XAU/USD",  group: "Commodity" },
+  { symbol: "NASDAQ",   group: "Indices" },
+  { symbol: "S&P500",   group: "Indices" },
 ];
 
 const GROUPS = ["Crypto", "Forex", "Commodity", "Indices"];
@@ -234,7 +234,7 @@ return (
                           {isEditing ? (
                             <input
                               autoFocus
-                              className="flex-1 bg-transparent border-b border-cyan-400 outline-none text-xs py-0.5"
+                              className="flex-1 bg-transparent border-b border-[var(--accent)] outline-none text-xs py-0.5"
                               value={editingName}
                               onClick={e => e.stopPropagation()}
                               onChange={e => setEditingName(e.target.value)}
@@ -251,6 +251,8 @@ return (
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           {isEditing ? (
                             <button
+                              type="button"
+                              aria-label="Save Rename"
                               onClick={e => { e.stopPropagation(); commitRename(w.id); }}
                               disabled={renameMutation.isPending}
                               className="text-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary-hover)] p-1 disabled:opacity-40"
@@ -259,6 +261,8 @@ return (
                             </button>
                           ) : (
                             <button
+                              type="button"
+                              aria-label="Rename Watchlist"
                               onClick={e => { e.stopPropagation(); startRename(w); }}
                               className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] p-1"
                             >
@@ -266,6 +270,8 @@ return (
                             </button>
                           )}
                           <button
+                            type="button"
+                            aria-label="Delete Watchlist"
                             onClick={e => {
                               e.stopPropagation();
                               if (confirm(`Delete "${w.name}"?`)) deleteMutation.mutate(w.id);
@@ -294,7 +300,7 @@ return (
               {activeWatchlist ? (
                 <div>
                   <div className="flex items-center justify-between border-b pb-3 mb-5" style={{ borderColor: "var(--color-border-subtle)" }}>
-                    <h3 className="text-sm font-bold text-white">{activeWatchlist.name}</h3>
+                    <h3 className="text-sm font-bold text-[var(--color-text-primary)]">{activeWatchlist.name}</h3>
                     <span className="text-[10px] text-[var(--color-text-quaternary)]">{activeWatchlist.instruments?.length || 0} assets</span>
                   </div>
 
@@ -307,7 +313,7 @@ return (
                         className="px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
                         style={{
                           backgroundColor: filterGroup === g ? "var(--color-accent-primary)" : "var(--color-bg-tertiary)",
-                          color: filterGroup === g ? "#fff" : "var(--color-text-secondary)",
+                          color: filterGroup === g ? "var(--color-bg-primary)" : "var(--color-text-secondary)",
                           border: `1px solid ${filterGroup === g ? "var(--color-accent-primary)" : "var(--color-border-subtle)"}`,
                         }}
                       >
@@ -318,7 +324,7 @@ return (
 
 {/* Asset grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {filtered.map(({ symbol, group, color }) => {
+                    {filtered.map(({ symbol, group }) => {
                       const isAdded = activeWatchlist.instruments?.includes(symbol);
                       return (
                         <div
@@ -337,9 +343,9 @@ return (
                           }}
                           className="p-3 rounded-lg border text-xs font-mono font-bold transition-all flex items-center justify-between select-none hover:scale-[1.02] active:scale-[0.98]"
                           style={{
-                            backgroundColor: isAdded ? `${color}18` : "transparent",
-                            borderColor:     isAdded ? color : "var(--color-border-subtle)",
-                            color:           isAdded ? color : "var(--color-text-secondary)",
+                            backgroundColor: isAdded ? "var(--color-accent-primary-subtle)" : "transparent",
+                            borderColor:     isAdded ? "rgba(var(--accent-rgb), 0.28)" : "var(--color-border-subtle)",
+                            color:           isAdded ? "var(--color-accent-primary)" : "var(--color-text-secondary)",
                             cursor: isAdded ? "pointer" : "default",
                           }}
                         >
@@ -349,12 +355,14 @@ return (
                           </div>
                           {!isAdded && (
                             <button
+                              type="button"
+                              aria-label={`Add ${symbol} To Watchlist`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleToggleAsset(symbol);
                               }}
                               disabled={updateMutation.isPending}
-                              className="p-1 hover:bg-white/10 rounded transition-colors inline-flex items-center justify-center cursor-pointer disabled:opacity-30"
+                              className="p-1 hover:bg-[var(--color-bg-hover)] rounded transition-colors inline-flex items-center justify-center cursor-pointer disabled:opacity-30"
                             >
                               {updateMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
                             </button>
@@ -376,11 +384,11 @@ return (
                           return (
                             <span
                               key={s}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-semibold cursor-pointer hover:bg-white/10 transition-colors"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-semibold cursor-pointer transition-colors"
                               style={{
-                                backgroundColor: `${spec?.color || "#6b7280"}18`,
-                                color: spec?.color || "#9ca3af",
-                                border: `1px solid ${spec?.color || "#6b7280"}40`,
+                                backgroundColor: "var(--color-accent-primary-subtle)",
+                                color: "var(--color-accent-primary)",
+                                border: "1px solid rgba(var(--accent-rgb), 0.18)",
                               }}
                               onClick={async () => {
                                 try {
@@ -395,7 +403,9 @@ return (
                             >
                               <span>{s}</span>
                               <span
-                                className="p-0.5 hover:bg-white/20 rounded-full transition-colors inline-flex items-center justify-center ml-0.5 cursor-pointer"
+                                role="button"
+                                aria-label={`Remove ${s} From Watchlist`}
+                                className="p-0.5 hover:bg-[var(--color-bg-hover)] rounded-full transition-colors inline-flex items-center justify-center ml-0.5 cursor-pointer"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleToggleAsset(s);

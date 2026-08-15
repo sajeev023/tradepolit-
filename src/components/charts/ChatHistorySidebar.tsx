@@ -140,7 +140,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--color-bg-deepest)_40%,transparent)] backdrop-blur-sm"
           onClick={onClose}
         />
       )}
@@ -162,8 +162,8 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
           style={{ height: "56px" }}
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-              <Clock size={14} className="text-cyan-400" />
+            <div className="w-7 h-7 rounded-md bg-[color-mix(in_srgb,var(--color-accent-primary)_10%,transparent)] border border-[color-mix(in_srgb,var(--color-accent-primary)_20%,transparent)] flex items-center justify-center">
+              <Clock size={14} className="text-[var(--color-accent-primary)]" />
             </div>
             <span className="text-sm font-bold text-[var(--color-text-primary)]">
               Chat History
@@ -186,7 +186,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
         <div className="px-4 py-3 shrink-0 border-b border-[var(--color-border-subtle)]">
           <button
             onClick={() => { onNewChat(); onClose(); }}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/10 text-cyan-400 text-xs font-semibold transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[color-mix(in_srgb,var(--color-accent-primary)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-accent-primary)_5%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-accent-primary)_10%,transparent)] text-[var(--color-accent-primary)] text-xs font-semibold transition-all cursor-pointer"
           >
             <PlusCircle size={14} />
             New Chat Session
@@ -201,7 +201,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Filter by symbol or topic..."
-              className="w-full h-8 pl-8 pr-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-cyan-500/40 transition-colors"
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-[color-mix(in_srgb,var(--color-accent-primary)_40%,transparent)] transition-colors"
             />
           </div>
         </div>
@@ -235,7 +235,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
                   key={session.id}
                   className={`group relative rounded-xl border transition-all duration-150 overflow-hidden ${
                     isActive
-                      ? "border-cyan-500/25 bg-cyan-500/5"
+                      ? "border-[color-mix(in_srgb,var(--color-accent-primary)_25%,transparent)] bg-[color-mix(in_srgb,var(--color-accent-primary)_5%,transparent)]"
                       : "border-[var(--color-border-subtle)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-hover)]"
                   }`}
                 >
@@ -275,7 +275,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
                         {session.messageCount} messages
                       </span>
                       {isActive && (
-                        <span className="ml-auto text-[9px] text-cyan-400 font-semibold">ACTIVE</span>
+                        <span className="ml-auto text-[9px] text-[var(--color-accent-primary)] font-semibold">ACTIVE</span>
                       )}
                     </div>
                   </button>
@@ -284,7 +284,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
                   {!isConfirmDelete ? (
                     <button
                       onClick={e => { e.stopPropagation(); setConfirmDeleteId(session.id); }}
-                      className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 p-1 rounded text-[var(--color-text-quaternary)] hover:text-rose-400 hover:bg-rose-500/10 transition-all cursor-pointer"
+                      className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 p-1 rounded text-[var(--color-text-quaternary)] hover:text-[var(--color-loss)] hover:bg-[var(--color-loss-bg)] transition-all cursor-pointer"
                       title="Delete conversation"
                     >
                       <Trash2 size={11} />
@@ -295,7 +295,7 @@ export const ChatHistorySidebar = memo(function ChatHistorySidebar({ isOpen, onC
                       <button
                         onClick={() => handleDelete(session.id)}
                         disabled={isDeleting}
-                        className="px-2.5 py-1 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-400 text-[11px] font-semibold hover:bg-rose-500/25 transition-all disabled:opacity-50 cursor-pointer"
+                        className="px-2.5 py-1 rounded-md bg-[var(--color-loss-bg)] border border-[color-mix(in_srgb,var(--color-loss)_30%,transparent)] text-[var(--color-loss)] text-[11px] font-semibold hover:bg-[color-mix(in_srgb,var(--color-loss)_25%,transparent)] transition-all disabled:opacity-50 cursor-pointer"
                       >
                         {isDeleting ? "..." : "Delete"}
                       </button>

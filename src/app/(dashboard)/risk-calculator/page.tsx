@@ -55,12 +55,12 @@ const DEFAULT_SYMBOL: Record<AssetClass, string> = {
 
 // --- Helpers -------------------------------------------------------------------
 function fmt(n: number | null, decimals = 2): string {
-  if (n === null || n === undefined || isNaN(n)) return "�";
+  if (n === null || n === undefined || isNaN(n)) return "—";
   return n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
 function fmtUSD(n: number | null, decimals = 2): string {
-  if (n === null || n === undefined || isNaN(n)) return "�";
+  if (n === null || n === undefined || isNaN(n)) return "—";
   return "$" + fmt(n, decimals);
 }
 
@@ -176,7 +176,7 @@ export default function RiskCalculatorPage() {
   const inputCls = (field: string) =>
     `w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors ${
       getError(field)
-        ? "bg-[var(--color-loss-bg)] border border-rose-500/50"
+        ? "bg-[var(--color-loss-bg)] border border-[rgba(var(--red-rgb),0.5)]"
         : "bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)]"
     }`;
 
@@ -189,13 +189,19 @@ export default function RiskCalculatorPage() {
           Risk &amp; Position Sizing Calculator
         </h1>
         <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-          Institutional-grade math � powered by decimal.js precision arithmetic. Zero floating-point errors.
+          Institutional-grade math — powered by decimal.js precision arithmetic. Zero floating-point errors.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* -- LEFT: Inputs --------------------------------------------------- */}
-        <div className="lg:col-span-3 card p-5 space-y-5 animate-fade-in-delay-1">
+        <form
+          className="lg:col-span-3 card p-5 space-y-5 animate-fade-in-delay-1"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (isFormReady()) handleCalculate();
+          }}
+        >
 
           {/* -- Mode Selector ---------------------------------------------- */}
           <div>
@@ -206,11 +212,12 @@ export default function RiskCalculatorPage() {
               {(["STANDARD", "MAX", "MIN"] as CalculationMode[]).map(m => (
                 <button
                   key={m}
+                  type="button"
                   onClick={() => update("mode", m)}
                   className="py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
                   style={{
                     backgroundColor: form.mode === m ? "var(--color-accent-primary)" : "var(--color-bg-tertiary)",
-                    color: form.mode === m ? "#fff" : "var(--color-text-secondary)",
+                    color: form.mode === m ? "var(--background)" : "var(--color-text-secondary)",
                     border: `1px solid ${form.mode === m ? "var(--color-accent-primary)" : "var(--color-border-subtle)"}`,
                   }}
                 >
@@ -222,9 +229,9 @@ export default function RiskCalculatorPage() {
               ))}
             </div>
             <p className="text-[10px] mt-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-              {form.mode === "STANDARD" && "Risk-defined position � uses stop distance and risk % to size the trade."}
-              {form.mode === "MAX"      && "Maximum position � uses full buying power (balance � leverage) at entry price."}
-              {form.mode === "MIN"      && "Minimum position � returns the smallest tradable unit for this instrument."}
+              {form.mode === "STANDARD" && "Risk-defined position — uses stop distance and risk % to size the trade."}
+              {form.mode === "MAX"      && "Maximum position — uses full buying power (balance — leverage) at entry price."}
+              {form.mode === "MIN"      && "Minimum position — returns the smallest tradable unit for this instrument."}
             </p>
           </div>
 
@@ -243,6 +250,7 @@ export default function RiskCalculatorPage() {
                 <option value="CRYPTO">Crypto</option>
                 <option value="FOREX">Forex</option>
                 <option value="COMMODITY">Commodity (Gold)</option>
+                <option value="INDEX">Index (S&P 500)</option>
               </select>
             </div>
             <div>
@@ -292,7 +300,7 @@ export default function RiskCalculatorPage() {
                 value={form.leverage}
                 onChange={e => update("leverage", e.target.value)}
               />
-              <p className="text-[10px] mt-1" style={{ color: "var(--color-text-tertiary)" }}>0 = spot (1�)</p>
+              <p className="text-[10px] mt-1" style={{ color: "var(--color-text-tertiary)" }}>0 = spot (1×)</p>
             </div>
           </div>
 
@@ -347,21 +355,24 @@ export default function RiskCalculatorPage() {
                 {(["LONG", "SHORT"] as Direction[]).map(d => (
                   <button
                     key={d}
+                    type="button"
                     onClick={() => update("direction", d)}
                     className="py-2 rounded-lg text-xs font-bold transition-all"
                     style={{
                       backgroundColor: form.direction === d
-                        ? d === "LONG" ? "rgb(6 78 59 / 0.8)" : "rgb(76 5 25 / 0.8)"
+                        ? d === "LONG"
+                          ? "color-mix(in srgb, var(--color-profit) 18%, transparent)"
+                          : "color-mix(in srgb, var(--color-loss) 18%, transparent)"
                         : "var(--color-bg-tertiary)",
                       color: form.direction === d
-                        ? d === "LONG" ? "#34d399" : "#fb7185"
+                        ? d === "LONG" ? "var(--color-profit)" : "var(--color-loss)"
                         : "var(--color-text-secondary)",
                       border: `1px solid ${form.direction === d
-                        ? d === "LONG" ? "#34d399" : "#fb7185"
+                        ? d === "LONG" ? "var(--color-profit)" : "var(--color-loss)"
                         : "var(--color-border-subtle)"}`,
                     }}
                   >
-                    {d === "LONG" ? "? LONG" : "? SHORT"}
+                    {d === "LONG" ? "↑ LONG" : "↓ SHORT"}
                   </button>
                 ))}
               </div>
@@ -430,12 +441,12 @@ export default function RiskCalculatorPage() {
 
           {/* -- Calculate Button -------------------------------------------- */}
           <button
-            onClick={handleCalculate}
+            type="submit"
             disabled={!isFormReady()}
             className="w-full py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               backgroundColor: isFormReady() ? "var(--color-accent-primary)" : "var(--color-bg-tertiary)",
-              color: isFormReady() ? "#fff" : "var(--color-text-tertiary)",
+              color: isFormReady() ? "var(--background)" : "var(--color-text-tertiary)",
             }}
           >
             <Zap size={15} />
@@ -443,18 +454,21 @@ export default function RiskCalculatorPage() {
           </button>
 
           {fieldErrors.length > 0 && (
-            <div className="rounded-lg border border-rose-500/30 bg-[var(--color-loss-bg)] p-3">
+            <div
+              className="rounded-lg p-3"
+              style={{ border: "1px solid color-mix(in srgb, var(--color-loss) 30%, transparent)", backgroundColor: "var(--color-loss-bg)" }}
+            >
               <p className="text-xs font-semibold text-[var(--color-loss)] mb-1 flex items-center gap-1.5">
                 <AlertTriangle size={12} /> Fix the following errors:
               </p>
               <ul className="space-y-0.5">
                 {fieldErrors.map((e, i) => (
-                  <li key={i} className="text-[11px] text-rose-300/80">� {e.message}</li>
+                  <li key={i} className="text-[11px] text-[var(--color-loss)] opacity-80">— {e.message}</li>
                 ))}
               </ul>
             </div>
           )}
-        </div>
+        </form>
 
         {/* -- RIGHT: Results ------------------------------------------------- */}
         <div className="lg:col-span-2 flex flex-col gap-4 animate-fade-in-delay-2">
@@ -539,7 +553,7 @@ export default function RiskCalculatorPage() {
                     <div className="flex justify-between">
                       <span style={{ color: "var(--color-text-tertiary)" }}>R:R Ratio</span>
                       <span className="font-mono text-[var(--color-accent-primary)]">
-                        {results.rMultiple ? `${fmt(results.rMultiple, 2)}:1` : "�"}
+                        {results.rMultiple ? `${fmt(results.rMultiple, 2)}:1` : "—"}
                       </span>
                     </div>
                     {results.rewardAmount !== null && (
