@@ -2,20 +2,27 @@ import { Reveal } from "@/components/ui/reveal";
 
 const founders = [
   {
-    initials: "F1",
+    name: "Sajeev",
+    initials: "SK",
     role: "Product & Engineering",
-    note: "Self-taught builder · Hyderabad",
+    note: "Self-taught builder · Hyderabad · trades daily",
     quote: "AI should improve human decisions, not replace them.",
   },
   {
-    initials: "F2",
+    name: "Trading Lead",
+    initials: "TL",
     role: "Trading & Validation",
-    note: "Active crypto & forex trader",
+    note: "Active crypto & forex trader · trades daily",
     quote: "I didn't want a bot. I wanted a copilot that helps me think clearly.",
   },
 ];
 
-const chips = ["MVP in 6 hours", "Real-trader feedback", "Read-only by design", "No broker access"];
+const chips = [
+  "READ-ONLY BY DESIGN",
+  "NO BROKER ACCESS",
+  "REAL-TRADER FEEDBACK",
+  "SHIPPED WEEKLY",
+];
 
 export function FounderStory() {
   return (
@@ -37,21 +44,25 @@ export function FounderStory() {
           <Reveal key={i} delay={i * 80} className="tc-card">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl border border-[var(--color-border-strong)] bg-[var(--bg-band)] flex items-center justify-center">
-                <span className="font-mono text-[14px] font-semibold text-[var(--accent)]">{f.initials}</span>
+                <span className="font-mono text-[13px] font-semibold text-[var(--accent)]">{f.initials}</span>
               </div>
               <div>
-                <h3 className="text-[15px] font-semibold text-[var(--ink)] leading-tight">{f.role}</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-[14px] font-bold text-[var(--ink)]">{f.name}</span>
+                  <span className="text-[11px] text-[var(--muted)]">·</span>
+                  <h3 className="text-[13px] font-semibold text-[var(--muted)] leading-tight">{f.role}</h3>
+                </div>
                 <span className="text-[11px] font-mono text-[var(--muted)]">{f.note}</span>
               </div>
             </div>
-            <p className="tc-card__body italic mt-1">&ldquo;{f.quote}&rdquo;</p>
+            <p className="tc-card__body italic mt-2">&ldquo;{f.quote}&rdquo;</p>
           </Reveal>
         ))}
       </div>
 
       <Reveal delay={160} className="flex flex-wrap items-center justify-center gap-2">
         {chips.map((c) => (
-          <span key={c} className="tc-badge">{c}</span>
+          <span key={c} className="tc-badge text-[10px] font-mono tracking-wider">{c}</span>
         ))}
       </Reveal>
     </section>

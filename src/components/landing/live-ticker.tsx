@@ -3,43 +3,51 @@
 import { useBinanceMultiStream } from "@/hooks/useBinanceStream";
 import type { PriceData } from "@/lib/types";
 
-const TICKER_SYMBOLS = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD", "GBP/USD"];
+// Supported live WebSocket symbols (Binance spot). GBP/USD removed as Binance does not carry GBPUSDT.
+const TICKER_SYMBOLS = ["BTC/USD", "ETH/USD", "SOL/USD", "EUR/USD"];
 
 function fmtPrice(n: number | undefined | null): string {
-  if (n == null || !Number.isFinite(n)) return "—";
+  if (n == null || !Number.isFinite(n)) return "";
   if (n >= 1000) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
   return n.toLocaleString("en-US", { maximumFractionDigits: 4 });
 }
 
 function TickerItem({ symbol, data }: { symbol: string; data: PriceData | null }) {
+  const price = data?.price;
   const pct = data?.changePercent24h;
   const up = (pct ?? 0) >= 0;
+
   return (
     <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--color-border-default)] bg-[var(--surface)] whitespace-nowrap">
       <span className="text-[11px] font-mono font-semibold text-[var(--ink)]">{symbol}</span>
-      <span className="text-[11px] font-mono tabular-nums text-[var(--muted)]">
-        {data ? `$${fmtPrice(data.price)}` : "—"}
-      </span>
-      <span
-        className={`text-[11px] font-mono tabular-nums font-medium ${
-          pct == null ? "text-[var(--muted)]" : up ? "text-[var(--green)]" : "text-[var(--red)]"
-        }`}
-      >
-        {pct == null ? "—" : `${up ? "+" : ""}${pct.toFixed(2)}%`}
-      </span>
+      {price != null && Number.isFinite(price) ? (
+        <>
+          <span className="text-[11px] font-mono tabular-nums text-[var(--muted)]">
+            ${fmtPrice(price)}
+          </span>
+          {pct != null && (
+            <span
+              className={`text-[11px] font-mono tabular-nums font-medium ${
+                up ? "text-[var(--green)]" : "text-[var(--red)]"
+              }`}
+            >
+              {up ? "+" : ""}{pct.toFixed(2)}%
+            </span>
+          )}
+        </>
+      ) : (
+        <span className="text-[10px] font-mono text-[var(--muted)] flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
+          live
+        </span>
+      )}
     </div>
   );
 }
 
 /**
  * LiveTicker — a seamless marquee of GENUINELY live prices pulled from the
- * shared Binance WebSocket registry (public, no auth). Edge fades are masked
- * to the band surface so nothing clips awkwardly. The two track copies are
- * the standard seamless-marquee technique (translate -50%); content is
- * identical, not clipped.
- *
- * For symbols without a WebSocket feed the hook returns null and we show a
- * neutral placeholder rather than a fabricated price.
+ * shared Binance WebSocket registry (public, no auth).
  */
 export function LiveTicker() {
   const prices = useBinanceMultiStream(TICKER_SYMBOLS);

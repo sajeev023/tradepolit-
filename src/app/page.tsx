@@ -37,7 +37,17 @@ export default function LandingPage() {
           <span className="tp-masthead__sep" />
           <span>The Trader&apos;s Copilot</span>
           <span className="tp-masthead__sep" />
-          <Suspense fallback={<span className="tp-masthead__live">BTC&nbsp;—</span>}>
+          <Suspense
+            fallback={
+              <span className="tp-masthead__live inline-flex items-center gap-1.5">
+                BTC · live
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse shadow-[0_0_6px_rgba(var(--accent-rgb),0.6)]"
+                  style={{ animationDuration: "1.2s" }}
+                />
+              </span>
+            }
+          >
             <MastheadPrice />
           </Suspense>
           <span className="tp-masthead__sep" />
@@ -137,22 +147,53 @@ export default function LandingPage() {
                 Read-only · No broker access
               </span>
             </div>
-            <a
-              href="mailto:hello@tradcopilot.com"
-              className="inline-flex items-center gap-1.5 text-[12px] text-[var(--muted)] hover:text-[var(--ink)] transition-colors"
-            >
-              <Mail size={13} />
-              hello@tradcopilot.com
-            </a>
+
+            <div className="flex flex-wrap items-center gap-4 text-[12px] text-[var(--muted)]">
+              <a
+                href="https://x.com/tradcopilot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 hover:text-[var(--ink)] transition-colors"
+                aria-label="TradCopilot on X"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                <span>@tradcopilot</span>
+              </a>
+
+              <a
+                href="https://linkedin.com/company/tradcopilot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 hover:text-[var(--ink)] transition-colors"
+                aria-label="TradCopilot on LinkedIn"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76c.97 0 1.75-.79 1.75-1.76s-.78-1.75-1.75-1.75a1.75 1.75 0 0 0 0 3.51m1.39 9.74v-8.37H5.07v8.37h2.78z" />
+                </svg>
+                <span>LinkedIn</span>
+              </a>
+
+              <a
+                href="mailto:hello@tradcopilot.com"
+                className="inline-flex items-center gap-1.5 hover:text-[var(--ink)] transition-colors"
+              >
+                <Mail size={13} />
+                hello@tradcopilot.com
+              </a>
+            </div>
           </div>
+
           <p className="text-[11px] text-[var(--muted)] max-w-2xl leading-relaxed">
-            TradCopilot is a read-only analysis copilot. It does not execute trades, custody funds, or
-            connect to your brokerage. Market data may be delayed or illustrative during feed outages.
-            Nothing here is financial advice — trade your own plan.
+            Read-only analysis copilot — does not execute trades, hold funds, or connect to your brokerage.
+            Market data may be delayed or illustrative during feed outages. Nothing here is financial advice — trade your own plan.
           </p>
+
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2 border-t border-[var(--color-border-subtle)]">
             <p className="text-xs text-[var(--muted)]">© {year} TradCopilot Inc. All rights reserved.</p>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--muted)]">
+              <Link href="/changelog" className="hover:text-[var(--accent)] font-medium transition-colors">Changelog</Link>
               <Link href="/terms" className="hover:text-[var(--ink)] transition-colors">Terms</Link>
               <Link href="/privacy" className="hover:text-[var(--ink)] transition-colors">Privacy</Link>
               <Link href="/refund" className="hover:text-[var(--ink)] transition-colors">Refund</Link>

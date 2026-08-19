@@ -28,6 +28,10 @@ const faqs = [
     q: "Can I cancel without a phone call?",
     a: "Yes. Cancel, pause, or adjust your plan from Settings in one click. No lock-in contracts, no retention call. The 7-day Pro trial is risk-free and requires no card to start the Free tier.",
   },
+  {
+    q: "Who is behind this?",
+    a: "TradCopilot was built by Sajeev and an active discretionary trader based in Hyderabad. Frustrated by repetitive chart analysis and discipline breakdowns during active trading sessions, we built a read-only copilot to automate the routine analysis while keeping the trader firmly in control.",
+  },
 ];
 
 export function FaqAccordion() {

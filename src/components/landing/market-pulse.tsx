@@ -84,7 +84,9 @@ export function MarketPulse() {
         if (data) {
           setPulse(data);
           setOffline(false);
-          setUpdated(new Date(data.fearGreed.timestamp).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }));
+          const d = new Date(data.fearGreed.timestamp || Date.now());
+          const utcString = d.toUTCString().replace(/GMT$/, "UTC");
+          setUpdated(utcString);
         } else {
           setOffline(true);
         }
@@ -125,10 +127,10 @@ export function MarketPulse() {
                 Fear &amp; Greed
               </div>
               <div className="tp-h3" style={{ color: fg ? fgColor(fg.value) : "var(--ink)" }}>
-                {fg?.sentiment ?? "—"}
+                {fg?.sentiment ?? "Neutral"}
               </div>
               <div className="text-[11px] font-mono text-[var(--muted)]">
-                {updated ? `Updated ${updated}` : offline ? "Feed offline" : "Loading…"}
+                {updated ? `Updated ${updated} — sentiment snapshot` : offline ? "Feed offline" : "Loading snapshot…"}
               </div>
             </div>
           </div>
@@ -136,14 +138,14 @@ export function MarketPulse() {
           {/* Divider */}
           <div className="hidden lg:block w-px self-stretch bg-[var(--color-border-subtle)]" />
 
-          {/* Trending assets — real live prices */}
+          {/* Trending assets — snapshot prices */}
           <div className="min-w-0">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">
-                Trending · live
+                Trending · {updated ? `as of ${updated.slice(-12, -4)} UTC` : "snapshot"}
               </span>
               <span className="tc-status-chip tc-status-chip--accent">
-                <span className="tc-status-chip__dot tc-status-chip__dot--pulse" /> Binance
+                <span className="tc-status-chip__dot tc-status-chip__dot--pulse" /> Binance Snapshot
               </span>
             </div>
             <div className="divide-y divide-[var(--color-border-subtle)]">

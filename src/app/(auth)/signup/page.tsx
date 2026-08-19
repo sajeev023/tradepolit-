@@ -175,7 +175,7 @@ export default function SignupPage() {
 
       <div className="text-center space-y-4">
         <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-          Free during early access. No credit card required.
+          Free tier — no credit card required.
         </p>
         
         <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>

@@ -13,7 +13,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { JsonLd } from "@/components/JsonLd";
 import { MicrosoftClarity } from "@/components/MicrosoftClarity";
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://tradcopilot.com";
+const siteUrl = "https://tradcopilot.com";
 const siteName = "TradCopilot";
 
 /* Self-hosted variable fonts (next/font) — no external requests at runtime.

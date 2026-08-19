@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, Profiler } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TradingViewChart } from "@/components/charts/TradingViewChart";
 import type { PriceData } from "@/lib/types";
@@ -13,34 +12,23 @@ import { analytics } from "@/lib/analytics";
 import { useBinanceMultiStream, useBinanceStreamStatus, getLatestWebSocketPrice } from "@/hooks/useBinanceStream";
 import { LivePriceCard } from "@/components/charts/LivePriceCard";
 import { LivePriceTag } from "@/components/charts/LivePriceTag";
+import { TradCopilotPanel } from "@/components/charts/TradCopilotPanel";
 import { PerformanceOverlay } from "@/components/performance/PerformanceOverlay";
 import { profiler } from "@/lib/performance-profiler";
 import {
   TrendingUp,
-  RefreshCw,
   Bot,
-  BrainCircuit,
   Sparkles,
-  AlertTriangle,
   Send,
   Eye,
-  Copy,
-  Check,
-  ChevronDown,
-  Clock,
-  Bookmark,
   X,
   Zap,
   Maximize2,
   Minimize2,
   Camera,
   MoreHorizontal,
-  Activity,
-  Target,
-  Gauge,
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { getInstantFallbackAnalysis } from "@/lib/fallback-analysis";
 import { SnapshotExportCard } from "@/components/charts/SnapshotExportCard";
 import { formatPrice } from "@/lib/format-price";
@@ -71,45 +59,8 @@ interface ChatMessage {
   isStreaming?: boolean;
 }
 
-const QUICK_ACTIONS = ["Tell me more", "Show entry plan", "Explain the risk", "I'll wait"];
-
-const FOLLOW_UPS = [
-  "What's the risk if I enter now?",
-  "How does this compare to yesterday's setup?",
-  "What would invalidate this trade?",
-];
-
-// AI analysis diagnostic steps. Each step is bound to a REAL phase of the
-// analyze mutation (set inside mutationFn) — never to a cosmetic timer. If a
-// phase is skipped (e.g. indicators already cached → no "connecting" fetch),
-// that step is simply never marked active. This keeps the diagnostic honest:
-// it reflects actual processing, not fabricated progress.
+// AI analysis diagnostic phase — bound to real mutation fetch boundaries.
 type AnalysisPhase = "connecting" | "analyzing";
-const ANALYSIS_STEPS: { key: AnalysisPhase; label: string }[] = [
-  { key: "connecting", label: "Connecting to market feed" },
-  { key: "analyzing", label: "Running multi-model analysis" },
-];
-
-const COLLAPSE_THRESHOLD = 400;
-const COLLAPSE_PREVIEW = 300;
-
-function formatMetricNumber(val: any, symbol?: string, decimals = 2): string {
-  if (val === null || val === undefined) return "—";
-  const cleaned = typeof val === "string" ? val.replace(/[^0-9.-]/g, "") : val;
-  const num = Number(cleaned);
-  if (isNaN(num) || num === 0) return "—";
-  // Forex pairs (EUR/USD, USD/JPY, …) are quoted in fractional pips — never a
-  // "$ amount" and never comma-grouped at 2 decimals (which invents "$1,085.00"
-  // for a 1.0850 quote). Gold/metals keep the $ treatment below.
-  const quote = symbol?.includes("/") ? symbol.split("/")[1] : "USD";
-  const isForex = !!symbol && symbol.includes("/") && !symbol.startsWith("XAU") && !symbol.startsWith("XAG");
-  if (isForex) {
-    const fxDecimals = quote === "JPY" ? 3 : 5;
-    return num.toLocaleString("en-US", { minimumFractionDigits: fxDecimals, maximumFractionDigits: fxDecimals });
-  }
-  const prefix = quote === "USD" ? "$" : "";
-  return `${prefix}${num.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
-}
 
 // Generate proactive technical alerts based on compiled indicators
 const generateProactiveAlerts = (data: any, symbol: string) => {
@@ -227,9 +178,6 @@ export function ChartsClientPage() {
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showFollowUps, setShowFollowUps] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const chatContainerRef = useRef<HTMLDivElement | null>(null);
-  const [_shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [mobileTab, setMobileTab] = useState<"watchlist" | "chart" | "copilot">("chart");
   const [isMobile, setIsMobile] = useState(false);
   // Mobile chart-options menu (three-dot). React state instead of imperative
@@ -248,8 +196,6 @@ export function ChartsClientPage() {
   // Tracks a legitimately restored analysis so we can skip re-analyzing only that
   // exact symbol/timeframe. Reset on manual symbol change.
   const restoredAnalysisRef = useRef<{ symbol: string; timeframe: string } | null>(null);
-  // shouldAutoScroll stored in a ref to prevent stale closure in scrollToBottom
-  const shouldAutoScrollRef = useRef(true);
 
   // Restore session on mount — all fetches run in parallel for minimal latency
   useEffect(() => {
@@ -398,29 +344,6 @@ export function ChartsClientPage() {
     triggeredAlertsRef.current.clear();
   }, [selectedSymbol, selectedTimeframe]);
 
-  const handleScroll = useCallback(() => {
-    const container = chatContainerRef.current;
-    if (!container) return;
-    const threshold = 80;
-    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
-    shouldAutoScrollRef.current = isAtBottom;
-  }, []);
-
-  const scrollToBottom = useCallback((force = false) => {
-    const container = chatContainerRef.current;
-    if (force || shouldAutoScrollRef.current) {
-      requestAnimationFrame(() => {
-        if (container) container.scrollTop = container.scrollHeight;
-      });
-    }
-  }, []);
-
-  // Auto-scroll to bottom on new messages (skip during initial chat restoration)
-  useEffect(() => {
-    if (isRestoringChatRef.current) return;
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
   // ─── Word-by-word streaming helper ───────────────────────────────────────────
   const streamMessage = useCallback((
     fullText: string,
@@ -543,11 +466,6 @@ export function ChartsClientPage() {
         analytics.trackSignupModalOpened("demo_limit_reached");
         throw new Error(`You've used your ${analysisLimit} free demo AI analyses. Create a free account to continue.`);
       }
-
-      // Reset scroll to top on fresh analysis
-      requestAnimationFrame(() => {
-        if (chatContainerRef.current) chatContainerRef.current.scrollTop = 0;
-      });
 
       let telemetry = liveIndicators;
       const needsIndicatorFetch = !telemetry || telemetry.symbol !== sym || telemetry.timeframe !== tf;
@@ -916,8 +834,8 @@ Timestamp: ${new Date().toISOString()}
 
   // ─── Handlers ────────────────────────────────────────────────────────────────
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!inputText.trim() || chatMutation.isPending || isPending) return;
     const userText = inputText.trim();
     setInputText("");
@@ -929,7 +847,6 @@ Timestamp: ${new Date().toISOString()}
       createdAt: new Date().toISOString(),
     }]);
     chatMutation.mutate(userText);
-    scrollToBottom(true);
   };
 
   const handleQuickAction = (action: string) => {
@@ -942,7 +859,6 @@ Timestamp: ${new Date().toISOString()}
       createdAt: new Date().toISOString(),
     }]);
     chatMutation.mutate(action);
-    scrollToBottom(true);
   };
 
   const handleCopy = (content: string, id: string) => {
@@ -1007,12 +923,6 @@ Timestamp: ${new Date().toISOString()}
       setIsCapturingSnapshot(false);
     }
   };
-
-  // Index of last assistant message (for quick action buttons)
-  const lastAssistantIndex = messages.reduceRight(
-    (found, msg, idx) => (found === -1 && msg.role === "assistant" ? idx : found),
-    -1,
-  );
 
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
@@ -1381,728 +1291,64 @@ Timestamp: ${new Date().toISOString()}
 
         {/* ── AI Copilot Panel ───────────────────────────────────────────────── */}
         {aiPanelOpen && (
-          <div id="ai-copilot-panel" className={`card flex flex-col overflow-hidden border-[var(--color-border-subtle)] h-full min-h-0 min-w-0 ${mobileTab === "copilot" ? "flex" : "hidden lg:flex"}`}>
-
-            {/* Panel header */}
-            <div className="px-3 border-b flex items-center justify-between shrink-0" style={{ height: "38px", borderColor: "var(--color-border-subtle)" }}>
-              <div className="flex items-center gap-2.5">
-                <div className="relative flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent-primary-muted)] border border-[rgba(var(--accent-rgb),0.1)] shrink-0">
-                  <BrainCircuit size={15} className="text-[var(--color-accent-primary)]" />
-                  <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-[var(--color-profit)] animate-pulse border border-[var(--color-bg-deepest)]" />
-                </div>
-                <span className="text-sm font-bold tracking-tight text-[var(--color-text-primary)]">TradCopilot</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Bookmarks */}
-                <button
-                  onClick={() => {
-                    if (subscriptionStatus === "PRO_ACTIVE") {
-                      setShowSavedAnalyses(true);
-                    } else {
-                      toast.error("Upgrade to PRO to access Bookmarked analyses!");
-                    }
-                  }}
-                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-warning)] transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
-                  title="Saved Analyses"
-                >
-                  <Bookmark size={13} />
-                </button>
-                {/* History */}
-                <button
-                  onClick={() => {
-                    if (subscriptionStatus === "PRO_ACTIVE") {
-                      setShowHistorySidebar(true);
-                    } else {
-                      toast.error("Upgrade to PRO to access Chat History!");
-                    }
-                  }}
-                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-accent-primary)] transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
-                  title="Chat History"
-                >
-                  <Clock size={13} />
-                </button>
-                {/* Recalculate */}
-                <button
-                  onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe, bypassCache: true })}
-                  disabled={isPending}
-                  className="p-1.5 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-all text-[var(--color-text-tertiary)] cursor-pointer flex items-center justify-center"
-                  title="Recalculate Chart Analysis"
-                >
-                  <RefreshCw size={12} className={isPending ? "animate-spin text-[var(--color-accent-primary)]" : ""} />
-                </button>
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-profit)] animate-ping" />
-                  <span className="text-[11px] text-[var(--color-text-tertiary)] font-sans hidden sm:inline">Watching markets</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Color-coded key levels dashboard ─────────────────────────────── */}
-            {analysisData && !analysisData.loading && !isPending && (analysisData.support || analysisData.levels?.support) && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                className="p-3 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border-subtle)] flex flex-col gap-3 shrink-0"
-              >
-                {/* Bias / Setup / Confidence */}
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0 }}
-                    className="p-2 bg-[var(--color-bg-tertiary)] rounded-lg border border-[var(--color-border-default)] shadow-sm"
-                  >
-                    <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold block">BIAS</span>
-                    <span
-                      className="font-bold text-xs block mt-1"
-                      style={{
-                        color: String(analysisData.bias || "").includes("BUY") || String(analysisData.bias || "").includes("LONG")
-                          ? "var(--color-profit)"
-                          : String(analysisData.bias || "").includes("SELL") || String(analysisData.bias || "").includes("SHORT")
-                          ? "var(--color-loss)"
-                          : "var(--color-text-secondary)",
-                      }}
-                    >
-                      {analysisData.bias || "—"}
-                    </span>
-                  </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
-                      className="p-2 bg-[var(--color-bg-tertiary)] rounded-lg border border-[var(--color-border-default)] shadow-sm"
-                    >
-                      <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold block">SETUP</span>
-                      <span className="font-bold text-xs text-[var(--color-text-primary)] block mt-1">{analysisData.setupQuality || "—"}</span>
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-                      className="p-2 bg-[var(--color-bg-tertiary)] rounded-lg border border-[var(--color-border-default)] shadow-sm"
-                    >
-                      <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold block">CONFIDENCE</span>
-                      <span className="font-bold text-xs text-[var(--color-text-primary)] block mt-1">{typeof analysisData.confidence === "string" ? analysisData.confidence.split(" ")[0] : "—"}</span>
-                    </motion.div>
-                </div>
-
-                {/* 🟢 Support  🔴 Resistance  🎯 Invalidation */}
-                <div className="grid grid-cols-3 gap-2 text-[11px] font-mono border-t border-[var(--color-border-subtle)] pt-3">
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-                    className="text-center"
-                  >
-                    <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-profit)] flex items-center justify-center gap-1 mb-0.5">
-                      <span>🟢</span> Support
-                    </span>
-                    <span className="text-[var(--color-profit)] font-bold block">
-                      {formatMetricNumber(analysisData.support || analysisData.levels?.support, selectedSymbol)}
-                    </span>
-                    <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.supportSource}>
-                      {analysisData.sourceMetadata?.supportSource || "Swing-low detector"}
-                    </span>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-                    className="text-center"
-                  >
-                    <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-loss)] flex items-center justify-center gap-1 mb-0.5">
-                      <span>🔴</span> Resistance
-                    </span>
-                    <span className="text-[var(--color-loss)] font-bold block">
-                      {formatMetricNumber(analysisData.resistance || analysisData.levels?.resistance, selectedSymbol)}
-                    </span>
-                    <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.resistanceSource}>
-                      {analysisData.sourceMetadata?.resistanceSource || "Swing-high detector"}
-                    </span>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
-                    className="text-center border-l border-[var(--color-border-subtle)]"
-                  >
-                    <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-warning)] flex items-center justify-center gap-1 mb-0.5">
-                      <span>🎯</span> Invalidation
-                    </span>
-                    <span className="text-[var(--color-warning)] font-bold block">
-                      {formatMetricNumber(analysisData.invalidationLevel || analysisData.levels?.invalidation, selectedSymbol)}
-                    </span>
-                    <span className="text-[8px] font-sans text-[var(--color-text-quaternary)] block truncate mt-0.5" title={analysisData.sourceMetadata?.stopLossSource}>
-                      {analysisData.sourceMetadata?.stopLossSource || "Below support"}
-                    </span>
-                  </motion.div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ── Intelligence Brief — structured real-field snapshot ─────────── */}
-            {analysisData && !analysisData.loading && !isPending && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                className="p-3 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border-subtle)] flex flex-col gap-3 shrink-0"
-              >
-                {/* Momentum / indicator snapshot — real indicators field only */}
-                {analysisData.indicators && (
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    {/* Trend regime */}
-                    <div className="p-2 bg-[var(--color-bg-tertiary)] rounded-lg border border-[var(--color-border-default)]">
-                      <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold block">TREND</span>
-                      <span
-                        className="font-bold text-xs block mt-1"
-                        style={{
-                          color:
-                            analysisData.trend === "BULLISH" ? "var(--color-profit)"
-                            : analysisData.trend === "BEARISH" ? "var(--color-loss)"
-                            : "var(--color-text-secondary)",
-                        }}
-                      >
-                        {analysisData.trend
-                          ? analysisData.trend.charAt(0) + analysisData.trend.slice(1).toLowerCase()
-                          : "Range"}
-                      </span>
-                    </div>
-                    {/* RSI(14) */}
-                    <div className="p-2 bg-[var(--color-bg-tertiary)] rounded-lg border border-[var(--color-border-default)]">
-                      <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold block">RSI(14)</span>
-                      <span
-                        className="font-bold text-xs block mt-1 tp-mono"
-                        style={{
-                          color:
-                            Number(analysisData.indicators.rsi) >= 70 ? "var(--color-warning)"
-                            : Number(analysisData.indicators.rsi) <= 30 ? "var(--color-profit)"
-                            : "var(--color-text-primary)",
-                        }}
-                      >
-                        {analysisData.indicators.rsi !== undefined && !isNaN(Number(analysisData.indicators.rsi))
-                          ? Number(analysisData.indicators.rsi).toFixed(1)
-                          : "—"}
-                      </span>
-                    </div>
-                    {/* MACD posture */}
-                    <div className="p-2 bg-[var(--color-bg-tertiary)] rounded-lg border border-[var(--color-border-default)]">
-                      <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-bold block">MACD</span>
-                      {(() => {
-                        const m = analysisData.indicators.macd;
-                        const hasMacd = m && (Number(m.macd) !== 0 || Number(m.signal) !== 0);
-                        const bullish = hasMacd && Number(m.macd) >= Number(m.signal);
-                        return (
-                          <span
-                            className="font-bold text-xs block mt-1"
-                            style={{ color: !hasMacd ? "var(--color-text-quaternary)" : bullish ? "var(--color-profit)" : "var(--color-loss)" }}
-                          >
-                            {!hasMacd ? "—" : bullish ? "Bullish" : "Bearish"}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
-
-                {/* Trade thesis — real whyItMatters / shortTermScenario one-liners */}
-                {(analysisData.whyItMatters || analysisData.shortTermScenario) && (
-                  <div className="space-y-2">
-                    {analysisData.whyItMatters && (
-                      <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)]">
-                        <Target size={12} className="text-[var(--color-accent-primary)] shrink-0 mt-0.5" />
-                        <p className="text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
-                          <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-text-tertiary)] block mb-0.5">Why it matters</span>
-                          {analysisData.whyItMatters}
-                        </p>
-                      </div>
-                    )}
-                    {analysisData.shortTermScenario && (
-                      <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)]">
-                        <Activity size={12} className="text-[var(--color-accent-primary)] shrink-0 mt-0.5" />
-                        <p className="text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
-                          <span className="text-[9px] uppercase tracking-wider font-bold text-[var(--color-text-tertiary)] block mb-0.5">Near-term scenario</span>
-                          {analysisData.shortTermScenario}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Source provenance — real sourceMetadata */}
-                {analysisData.sourceMetadata?.aiModelSource && (
-                  <div className="flex items-center gap-1.5 text-[9px] font-mono text-[var(--color-text-quaternary)] pt-0.5 border-t border-[var(--color-border-subtle)]">
-                    <Gauge size={10} />
-                    <span className="truncate">{analysisData.sourceMetadata.aiModelSource}</span>
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* ── Scrollable message thread ──────────────────────────────────── */}
-            <div 
-              ref={chatContainerRef}
-              onScroll={handleScroll}
-              className="flex-1 overflow-y-auto px-4 py-3 space-y-4 bg-[var(--color-bg-primary)] min-h-0 custom-scrollbar pb-[120px] lg:pb-2"
-            >
-              
-              {/* Analysis error — inline result state, not a global toast */}
-              {!analysisData && !isPending && analysisError && (
-                <div className="animate-fade-in py-10 flex flex-col items-center text-center">
-                  <div
-                    className="w-full max-w-[320px] rounded-xl border p-4 text-left"
-                    style={{
-                      borderColor: "rgba(245, 185, 66, 0.22)",
-                      background: "linear-gradient(180deg, var(--color-warning-bg), var(--color-bg-tertiary) 82%)",
-                    }}
-                  >
-                    <div className="flex items-start gap-2.5 mb-2.5">
-                      <span
-                        className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0"
-                        style={{ background: "var(--color-warning-bg)", border: "1px solid rgba(245,185,66,0.30)" }}
-                      >
-                        <AlertTriangle size={14} className="text-[var(--color-warning)]" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-xs font-bold text-[var(--color-text-primary)] leading-tight">
-                          {analysisError.startsWith("AI trade analysis contained internal logical contradictions")
-                            ? "AI analysis rejected"
-                            : "Analysis couldn't complete"}
-                        </h3>
-                        <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5 leading-relaxed">
-                          {analysisError.startsWith("AI trade analysis contained internal logical contradictions")
-                            ? "The model's response failed internal validation. Re-run to regenerate it."
-                            : "Something went wrong reaching the analysis engine."}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* The actual reason — shown verbatim, never suppressed or fabricated */}
-                    <div
-                      className="rounded-lg p-2.5 mb-3 max-h-[120px] overflow-y-auto custom-scrollbar"
-                      style={{ background: "var(--color-bg-primary)", border: "1px solid var(--color-border-subtle)" }}
-                    >
-                      {(() => {
-                        const prefix = "AI trade analysis contained internal logical contradictions:";
-                        const isContradiction = analysisError.startsWith(prefix);
-                        const issues = isContradiction
-                          ? analysisError.slice(prefix.length).split(";").map((s) => s.trim()).filter(Boolean)
-                          : [];
-                        if (issues.length > 0) {
-                          return (
-                            <ul className="space-y-1">
-                              {issues.map((iss, i) => (
-                                <li key={i} className="flex items-start gap-1.5 text-[10px] font-mono leading-relaxed text-[var(--color-text-secondary)]">
-                                  <span className="text-[var(--color-warning)] mt-px shrink-0">•</span>
-                                  <span>{iss}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          );
-                        }
-                        return <p className="text-[10px] font-mono leading-relaxed text-[var(--color-text-secondary)]">{analysisError}</p>;
-                      })()}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe })}
-                        className="btn-primary btn-sm flex-1 flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <RefreshCw size={13} /> Retry analysis
-                      </button>
-                      <button
-                        onClick={() => setAnalysisError(null)}
-                        className="btn-ghost btn-sm cursor-pointer"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Inactive state */}
-              {!analysisData && !isPending && !analysisError && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 border border-dashed border-[rgba(var(--accent-rgb),0.3)]"
-                    style={{ background: "linear-gradient(135deg, var(--color-accent-primary-subtle), var(--color-bg-tertiary))" }}
-                  >
-                    <Bot size={20} className="text-[var(--color-accent-primary)] animate-pulse" />
-                  </div>
-                  <h3 className="text-xs font-bold text-[var(--color-text-primary)] mb-1.5">Chart Analysis Inactive</h3>
-                  <p className="text-[10px] leading-relaxed text-[var(--color-text-tertiary)] max-w-[200px] mb-4">
-                    Launch TradCopilot AI indicators scanning to initiate technical review and messaging.
-                  </p>
-                  {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && analysesCountToday >= analysisLimit ? (
-                    <button
-                      onClick={() => router.push("/pricing")}
-                      className="btn-primary bg-amber-500 hover:bg-amber-600 text-[var(--color-bg-deepest)] text-xs w-full max-w-[180px] shadow-md cursor-pointer font-bold flex items-center justify-center gap-1.5"
-                    >
-                      <Zap size={13} className="fill-[var(--color-bg-deepest)] text-[var(--color-bg-deepest)]" /> Upgrade to Pro
-                    </button>
-                  ) : (
-                    <button onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe })} className="btn-primary text-xs w-full max-w-[180px] shadow-md cursor-pointer press-scale">
-                      <Sparkles size={14} /> Analyze Chart
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* AI diagnostic — bound to real mutation phases, never faked */}
-              {isPending && (
-                <div className="space-y-4 animate-fade-in">
-                  {/* Header + honest telemetry state */}
-                  <div
-                    className="relative overflow-hidden rounded-xl border p-3.5"
-                    style={{
-                      borderColor: "rgba(var(--accent-rgb), 0.22)",
-                      background:
-                        "linear-gradient(180deg, rgba(var(--accent-rgb),0.08), rgba(var(--accent-rgb),0.02) 70%)",
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <BrainCircuit size={14} style={{ color: "var(--color-accent-primary)" }} />
-                        <span className="tp-eyebrow">AI Market Intelligence</span>
-                      </div>
-                      <span
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-[0.12em] uppercase"
-                        style={{ color: "var(--color-accent-primary)", background: "var(--color-accent-primary-muted)" }}
-                      >
-                        <span className="flex items-center gap-0.5">
-                          <span className="thinking-dot" />
-                          <span className="thinking-dot" />
-                          <span className="thinking-dot" />
-                        </span>
-                        Processing
-                      </span>
-                    </div>
-                    {/* Telemetry row — honest data-source label, never "LIVE" when disconnected/simulated */}
-                    <div className="flex items-center gap-2 text-[10px] font-mono" style={{ color: "var(--color-text-tertiary)" }}>
-                      <span style={{ color: "var(--color-text-primary)" }}>{selectedSymbol}</span>
-                      <span style={{ color: "var(--color-text-quaternary)" }}>·</span>
-                      <span>{selectedTimeframe}</span>
-                      <span style={{ color: "var(--color-text-quaternary)" }}>·</span>
-                      <span style={{ color: isWebSocketSymbol && !isWsDisconnected ? "var(--color-profit)" : "var(--color-warning)" }}>
-                        {isWebSocketSymbol && !isWsDisconnected ? "WS LIVE" : isWebSocketSymbol && isWsDisconnected ? "REST FALLBACK" : "REST"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Real phase stepper — reflects actual fetch boundaries, not timers */}
-                  <div className="space-y-2">
-                    {(() => {
-                      const currentIndex = analysisPhase ? ANALYSIS_STEPS.findIndex((s) => s.key === analysisPhase) : -1;
-                      return ANALYSIS_STEPS.map((step, i) => {
-                        const isDone = currentIndex > i;
-                        const isActive = currentIndex === i;
-                        return (
-                          <div
-                            key={step.key}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors duration-200"
-                            style={{
-                              borderColor: isActive ? "var(--color-border-active)" : isDone ? "var(--color-border-default)" : "transparent",
-                              background: isActive ? "var(--color-accent-primary-subtle)" : "transparent",
-                            }}
-                          >
-                            <span
-                              className="flex items-center justify-center w-4 h-4 rounded-full shrink-0"
-                              style={{
-                                background: isDone ? "var(--color-profit)" : isActive ? "var(--color-accent-primary)" : "var(--color-bg-hover)",
-                              }}
-                            >
-                              {isDone ? (
-                                <Check size={10} color="#030712" strokeWidth={3} />
-                              ) : isActive ? (
-                                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#030712" }} />
-                              ) : (
-                                <span className="w-1 h-1 rounded-full" style={{ background: "var(--color-text-quaternary)" }} />
-                              )}
-                            </span>
-                            <span
-                              className="text-[11px]"
-                              style={{
-                                color: isActive ? "var(--color-text-primary)" : isDone ? "var(--color-text-secondary)" : "var(--color-text-quaternary)",
-                                fontWeight: 500,
-                              }}
-                            >
-                              {step.label}
-                            </span>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-
-                  {/* Skeleton intelligence cards */}
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i, idx) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1], delay: idx * 0.08 }}
-                        className="space-y-2"
-                      >
-                        <div className="skeleton h-3.5 w-24 rounded-md" />
-                        <div className="skeleton h-16 w-full rounded-lg" />
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Messages */}
-              {analysisData && !isPending && (
-                <div className="space-y-5">
-                  {messages.map((msg, index) => {
-                    // ── Alert bubble ──
-                    if (msg.isAlert) {
-                      const [title, ...rest] = msg.content.split(" — ");
-                      return (
-                        <div
-                          key={msg.id || index}
-                          className="p-3.5 rounded-lg border flex items-start gap-3 animate-message-in"
-                          style={{ backgroundColor: "rgba(var(--accent-rgb), 0.06)", borderColor: "rgba(var(--accent-rgb), 0.15)" }}
-                        >
-                          <AlertTriangle className="text-[var(--color-accent-primary)] shrink-0 mt-0.5" size={15} />
-                          <div className="text-[12px] leading-relaxed text-[var(--color-text-primary)] font-sans">
-                            <span className="font-bold text-[var(--color-accent-primary)] block sm:inline">{title}</span>
-                            {rest.length > 0 && <span className="text-[var(--color-text-secondary)]"> — {rest.join(" — ")}</span>}
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // ── AI message ──
-                    if (msg.role === "assistant") {
-                      const msgId = msg.id || String(index);
-                      const isLong = msg.content.length > COLLAPSE_THRESHOLD;
-                      const isExpanded = expandedMessages.has(msgId);
-                      const display = isLong && !isExpanded && !msg.isStreaming
-                        ? msg.content.slice(0, COLLAPSE_PREVIEW) + "..."
-                        : msg.content;
-                      const isLast = index === lastAssistantIndex;
-
-                      return (
-                        <div key={msgId} className="flex items-start gap-3 animate-message-in">
-                          <div
-                            className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-[rgba(var(--accent-rgb),0.1)] mt-0.5"
-                            style={{ backgroundColor: "var(--color-accent-primary-subtle)" }}
-                          >
-                            <Bot size={13} style={{ color: "var(--color-accent-primary)" }} />
-                          </div>
-
-                          <div className="flex-1 space-y-2 min-w-0">
-                            {/* Message body */}
-                            <div className="text-[14px] leading-[1.6] text-[var(--color-text-primary)] whitespace-pre-line font-sans break-words">
-                              {display}
-                              {msg.isStreaming && <span className="cursor-blink" />}
-                            </div>
-
-                            {/* Expand/collapse for long messages */}
-                            {isLong && !msg.isStreaming && (
-                              <button
-                                onClick={() => toggleExpand(msgId)}
-                                className="flex items-center gap-1 text-[11px] text-[var(--color-text-tertiary)] hover:text-[var(--color-accent-primary)] transition-colors"
-                              >
-                                <ChevronDown
-                                  size={12}
-                                  className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`}
-                                />
-                                {isExpanded ? "Hide details" : "Show full analysis"}
-                              </button>
-                            )}
-
-                            {/* Footer: timestamp + copy */}
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] text-[var(--color-text-tertiary)] font-mono">
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-                              </span>
-                              {!msg.isStreaming && (
-                                <div className="flex items-center gap-1.5">
-                                  {/* Bookmark */}
-                                  {analysisData && (
-                                    <button
-                                      onClick={async () => {
-                                        if (bookmarkedIds.has(msgId)) return;
-                                        try {
-                                          const res = await fetch("/api/v1/ai/saved-analyses", {
-                                            method: "POST",
-                                            headers: { "Content-Type": "application/json" },
-                                            body: JSON.stringify({
-                                              symbol: selectedSymbol,
-                                              timeframe: selectedTimeframe,
-                                              bias: analysisData.bias || "RESTORED",
-                                              confidence: analysisData.confidence || "MEDIUM",
-                                              support: String(analysisData.support || "N/A"),
-                                              resistance: String(analysisData.resistance || "N/A"),
-                                              aiSummary: msg.content.slice(0, 500),
-                                            }),
-                                          });
-                                          if (res.ok) {
-                                            setBookmarkedIds(prev => new Set([...prev, msgId]));
-                                            toast.success("Analysis bookmarked!");
-                                          }
-                                        } catch {
-                                          toast.error("Failed to bookmark analysis");
-                                        }
-                                      }}
-                                      className={`flex items-center gap-1 text-[10px] transition-colors px-1.5 py-0.5 rounded hover:bg-[var(--color-warning-bg)] ${
-                                        bookmarkedIds.has(msgId) ? "text-[var(--color-warning)] font-semibold" : "text-[var(--color-text-tertiary)] hover:text-[var(--color-warning)]"
-                                      }`}
-                                      title="Bookmark this analysis"
-                                    >
-                                      {bookmarkedIds.has(msgId) ? <Check size={11} className="text-[var(--color-profit)]" /> : <Bookmark size={11} />}
-                                      <span>{bookmarkedIds.has(msgId) ? "Saved" : "Save"}</span>
-                                    </button>
-                                  )}
-                                  {/* Copy */}
-                                  <button
-                                    onClick={() => handleCopy(msg.content, msgId)}
-                                    className="flex items-center gap-1 text-[10px] text-[var(--color-text-tertiary)] hover:text-[var(--color-accent-primary)] transition-colors px-1.5 py-0.5 rounded hover:bg-[var(--color-accent-primary-subtle)]"
-                                    aria-label="Copy message"
-                                  >
-                                    {copiedId === msgId
-                                      ? <><Check size={11} className="text-[var(--color-profit)]" /><span className="text-[var(--color-profit)]">Copied</span></>
-                                      : <><Copy size={11} /><span>Copy</span></>}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Quick action buttons — only under last AI message, not while streaming */}
-                            {isLast && !msg.isStreaming && !chatMutation.isPending && (
-                              <div className="flex flex-wrap gap-1.5 pt-1">
-                                {QUICK_ACTIONS.map(action => (
-                                  <button
-                                    key={action}
-                                    onClick={() => handleQuickAction(action)}
-                                    className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-[rgba(var(--accent-rgb),0.3)] hover:text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-subtle)] transition-all duration-150 press-scale"
-                                  >
-                                    {action}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // ── User message ──
-                    return (
-                      <div key={msg.id || index} className="flex flex-col items-end gap-1.5 ml-auto max-w-[80%] animate-message-in">
-                        <div
-                          className="p-3 border text-[14px] leading-relaxed font-sans shadow-xs"
-                          style={{
-                            backgroundColor: "var(--color-bg-tertiary)",
-                            borderColor: "var(--color-border-default)",
-                            borderRadius: "12px 12px 4px 12px",
-                            color: "var(--color-text-primary)",
-                          }}
-                        >
-                          {msg.content}
-                        </div>
-                        <span className="text-[11px] text-[var(--color-text-tertiary)] font-mono pr-1">
-                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                  {/* Sequential thinking dots for follow-up chat */}
-                  {chatMutation.isPending && (
-                    <div className="flex items-start gap-3">
-                      <div
-                        className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-[rgba(var(--accent-rgb),0.1)] mt-0.5"
-                        style={{ backgroundColor: "var(--color-accent-primary-subtle)" }}
-                      >
-                        <Bot size={13} style={{ color: "var(--color-accent-primary)" }} />
-                      </div>
-                      <div className="flex items-center gap-2.5 py-2 select-none">
-                        <div className="flex items-center gap-1">
-                          <span className="thinking-dot" />
-                          <span className="thinking-dot" />
-                          <span className="thinking-dot" />
-                        </div>
-                        <span className="text-[11px] text-[var(--color-text-tertiary)] font-sans">Analyzing...</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-            </div>
-
-            {/* ── Input Bar ─────────────────────────────────────────────────── */}
-            <div className="border-t bg-[var(--color-bg-secondary)] border-[var(--color-border-subtle)] shrink-0">
-              {/* Suggested follow-up chips — desktop only */}
-              {showFollowUps && analysisData && !chatMutation.isPending && (
-                <div className="px-3.5 pt-3 pb-1 hidden lg:flex lg:flex-wrap gap-1.5">
-                  {FOLLOW_UPS.map(q => (
-                    <button
-                      key={q}
-                      onClick={() => { setInputText(q); setShowFollowUps(false); }}
-                      className="px-2.5 py-1 rounded-full text-[11px] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:border-[rgba(var(--accent-rgb),0.3)] hover:text-[var(--color-accent-primary)] hover:bg-[var(--color-accent-primary-subtle)] transition-all duration-150 active:scale-95 max-w-full truncate"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="p-3 pt-2.5">
-                {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && (
-                  <div className="hidden lg:flex items-center gap-2 mb-1 px-0.5 select-none">
-                    <span className={`text-[9px] font-mono font-bold ${analysesCountToday >= analysisLimit ? "text-[var(--color-loss)]" : "text-amber-400/80"}`}>
-                      {Math.max(0, analysisLimit - analysesCountToday)}/{analysisLimit}
-                    </span>
-                    {analysesCountToday >= analysisLimit && (
-                      <Link href="/pricing" className="text-[9px] font-semibold text-[var(--color-warning)] hover:text-amber-300 underline underline-offset-2">Upgrade</Link>
-                    )}
-                  </div>
-                )}
-                {analysisData ? (
-                  <form onSubmit={handleSendMessage} className="hidden lg:flex relative items-center h-[44px] rounded-lg border bg-[var(--color-bg-tertiary)] border-[var(--color-border-default)]">
-                    <input
-                      ref={chatInputRef}
-                      type="text"
-                      value={inputText}
-                      onChange={e => setInputText(e.target.value)}
-                      placeholder="Ask about your chart, journal a trade, or get coaching..."
-                      className="flex-grow bg-transparent border-none outline-none text-sm px-4 text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] h-full"
-                      disabled={chatMutation.isPending || isPending}
-                    />
-                    <div className="flex items-center gap-3 pr-3 shrink-0">
-                      <span className="hidden sm:inline-block text-[10px] font-mono text-[var(--color-text-quaternary)] bg-[var(--color-bg-hover)] border border-[var(--color-border-default)] px-1.5 py-0.5 rounded select-none">⌘↵</span>
-                      <button
-                        type="submit"
-                        disabled={!inputText.trim() || chatMutation.isPending || isPending}
-                        className="text-[var(--color-accent-primary)] hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer p-1"
-                        aria-label="Send message"
-                      >
-                        <Send size={16} />
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <button
-                    onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe })}
-                    disabled={isPending}
-                    className="btn-secondary w-full text-xs flex justify-center items-center gap-2 py-3 rounded-lg cursor-pointer border-[var(--color-border-default)]"
-                  >
-                    <RefreshCw size={14} className={analyzeMutation.isPending ? "animate-spin text-[var(--color-accent-primary)]" : "text-[var(--color-accent-primary)]"} />
-                    Run Chart Technical Scan
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          <TradCopilotPanel
+            symbol={selectedSymbol}
+            timeframe={selectedTimeframe}
+            priceData={priceData || null}
+            liveIndicators={liveIndicators}
+            wsStatus={wsStatus}
+            isWebSocketSymbol={isWebSocketSymbol}
+            analysisData={analysisData}
+            analysisError={analysisError}
+            isPending={isPending}
+            analysisPhase={analysisPhase}
+            messages={messages}
+            inputText={inputText}
+            setInputText={setInputText}
+            onSendChat={handleSendMessage}
+            onRunAnalysis={(opts) => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe, bypassCache: opts?.bypassCache })}
+            onDismissError={() => setAnalysisError(null)}
+            onOpenSavedAnalyses={() => setShowSavedAnalyses(true)}
+            onOpenChatHistory={() => setShowHistorySidebar(true)}
+            onClose={() => setAiPanelOpen(false)}
+            subscriptionStatus={subscriptionStatus}
+            analysisLimit={analysisLimit}
+            analysesCountToday={analysesCountToday}
+            isDemoMode={isDemoMode}
+            showFollowUps={showFollowUps}
+            chatMutationPending={chatMutation.isPending}
+            isMobile={isMobile}
+            copiedId={copiedId}
+            bookmarkedIds={bookmarkedIds}
+            expandedMessages={expandedMessages}
+            onCopy={handleCopy}
+            onToggleExpand={toggleExpand}
+            onBookmarkMessage={async (msg, msgId) => {
+              if (bookmarkedIds.has(msgId) || !analysisData) return;
+              try {
+                const res = await fetch("/api/v1/ai/saved-analyses", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    symbol: selectedSymbol,
+                    timeframe: selectedTimeframe,
+                    bias: analysisData.bias || "RESTORED",
+                    confidence: analysisData.confidence || "MEDIUM",
+                    support: String(analysisData.support || "N/A"),
+                    resistance: String(analysisData.resistance || "N/A"),
+                    aiSummary: msg.content.slice(0, 500),
+                  }),
+                });
+                if (res.ok) {
+                  setBookmarkedIds(prev => new Set([...prev, msgId]));
+                  toast.success("Analysis bookmarked!");
+                }
+              } catch {
+                toast.error("Failed to bookmark analysis");
+              }
+            }}
+            onQuickAction={handleQuickAction}
+          />
         )}
       </div>
 
@@ -2194,7 +1440,6 @@ Timestamp: ${new Date().toISOString()}
             setAnalysisData(null);
             restoredAnalysisRef.current = null;
           }
-          scrollToBottom(true);
         }}
         onNewChat={() => {
           setChatId(null);

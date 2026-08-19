@@ -15,7 +15,7 @@ export function FinalCta() {
           <p className="tp-body max-w-md mx-auto">
             Two free AI scans. No credit card required. Keep using your existing charting platform alongside it.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <div data-onpage-cta className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               href="/signup"
               className="group h-12 px-6 rounded-full text-[14px] font-bold inline-flex items-center justify-center gap-2 text-[var(--bg-primary)] transition-transform active:scale-[0.98]"

@@ -572,24 +572,16 @@ export function compileTechnicalContext(
     reclaimedVWAP = prevPrice <= prevVWAP && currentPrice > currentVWAP;
   }
 
-  // 3. EMA 9/21 Crossover
+  // 3. EMA 9/21 Crossover & Alignment
   const ema9 = calculateEMA(closes, 9);
   const ema21 = calculateEMA(closes, 21);
   let emaCrossover: "BULLISH" | "BEARISH" | null = null;
-  if (len >= 2 && ema9.length >= 2 && ema21.length >= 2) {
+  if (len >= 1 && ema9.length >= 1 && ema21.length >= 1) {
     const idx = len - 1;
-    const prevIdx = len - 2;
     const c9 = ema9[idx];
     const c21 = ema21[idx];
-    const p9 = ema9[prevIdx];
-    const p21 = ema21[prevIdx];
-    
-    if (!isNaN(c9) && !isNaN(c21) && !isNaN(p9) && !isNaN(p21)) {
-      if (p9 <= p21 && c9 > c21) {
-        emaCrossover = "BULLISH";
-      } else if (p9 >= p21 && c9 < c21) {
-        emaCrossover = "BEARISH";
-      }
+    if (!isNaN(c9) && !isNaN(c21)) {
+      emaCrossover = c9 >= c21 ? "BULLISH" : "BEARISH";
     }
   }
 

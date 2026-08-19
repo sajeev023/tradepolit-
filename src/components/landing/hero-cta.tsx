@@ -14,7 +14,7 @@ import { trackClarityEvent } from "@/lib/clarity";
 export function HeroCTA() {
   const { isLoading, handleDemo } = useDemoLogin();
   return (
-    <div className="flex flex-col gap-3 w-full sm:w-auto">
+    <div data-onpage-cta className="flex flex-col gap-3 w-full sm:w-auto">
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
         {/* Primary: account creation. This is the conversion action. */}
         <Link
@@ -47,13 +47,18 @@ export function HeroCTA() {
         </button>
       </div>
 
-      {/* Risk reversal — directly under the CTAs, not buried 600px down. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--muted)] font-medium select-none">
-        <span>2 free AI scans · no card</span>
-        <span className="w-1 h-1 rounded-full bg-[var(--color-border-strong)]" />
-        <span>read-only</span>
-        <span className="w-1 h-1 rounded-full bg-[var(--color-border-strong)]" />
-        <span>cancel anytime</span>
+      {/* Risk reversal + Truthful proof microline */}
+      <div className="space-y-1.5 select-none">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--muted)] font-medium">
+          <span>2 free AI scans · no card</span>
+          <span className="w-1 h-1 rounded-full bg-[var(--color-border-strong)]" />
+          <span>read-only</span>
+          <span className="w-1 h-1 rounded-full bg-[var(--color-border-strong)]" />
+          <span>cancel anytime</span>
+        </div>
+        <div className="text-[11px] font-mono text-[var(--muted)] tracking-tight">
+          Live analysis · read-only by design · your capital never leaves your exchange
+        </div>
       </div>
     </div>
   );

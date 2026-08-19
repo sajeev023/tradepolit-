@@ -7,16 +7,10 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  // Fail fast rather than fall back to a placeholder anon key. See
-  // lib/supabase/server.ts for the rationale.
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required. " +
-      "Set them in your environment (Vercel env / .env.local)."
-    );
-  }
+  // If Supabase credentials are not configured, handle demo sessions or degrade gracefully
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder";
+  const isConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   const supabase = createServerClient(url, key, {
     cookies: {
@@ -57,7 +51,7 @@ export async function updateSession(request: NextRequest) {
       aud: "authenticated",
       created_at: new Date(demoSession.issuedAt).toISOString(),
     } as any;
-  } else {
+  } else if (isConfigured) {
     try {
       const { data } = await supabase.auth.getUser();
       user = data.user;

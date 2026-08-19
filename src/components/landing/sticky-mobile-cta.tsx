@@ -5,49 +5,62 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 /**
- * StickyMobileCta — a compact CTA bar fixed to the bottom of the viewport
- * on mobile, revealed after the user scrolls past the first viewport.
- * Hidden on ≥768px (CSS). Respects safe-area inset.
+ * StickyMobileCta — a compact single-action primary CTA bar fixed to the bottom
+ * of the viewport on mobile (≤767px). Revealed after the user scrolls past the
+ * first viewport section, and automatically hidden when on-page CTA clusters
+ * are visible to prevent redundant button stacking.
  */
 export function StickyMobileCta() {
-  const [show, setShow] = useState(false);
+  const [scrolledPast, setScrolledPast] = useState(false);
+  const [onPageCtaVisible, setOnPageCtaVisible] = useState(false);
 
+  // Track scroll depth
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > window.innerHeight * 0.6);
+    const onScroll = () => {
+      setScrolledPast(window.scrollY > 280);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // When hidden (scrolled above the reveal threshold, or off-screen via the
-  // translateY(110%) CSS), the CTA links are invisible but still in the DOM
-  // and focusable — an "invisible focusable link" trap. Guard each focusable
-  // element so the hidden state is truly inert to keyboard, AT, and pointer.
-  const inert = !show;
-  const inertProps = inert
+  // Track visibility of on-page CTAs
+  useEffect(() => {
+    const ctas = document.querySelectorAll("[data-onpage-cta]");
+    if (ctas.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const anyVisible = entries.some((entry) => entry.isIntersecting);
+        setOnPageCtaVisible(anyVisible);
+      },
+      { threshold: 0.1 }
+    );
+
+    ctas.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  const isVisible = scrolledPast && !onPageCtaVisible;
+
+  const inertProps = !isVisible
     ? { tabIndex: -1 as const, "aria-hidden": true, style: { pointerEvents: "none" as const } }
     : { tabIndex: undefined, "aria-hidden": undefined, style: undefined };
 
   return (
-    <div className={`tc-mobile-cta ${show ? "in" : ""}`} aria-hidden={!show}>
-      <Link
-        href="/login"
-        tabIndex={inertProps.tabIndex}
-        aria-hidden={inertProps["aria-hidden"]}
-        style={inertProps.style}
-        className="flex-1 h-11 rounded-lg border border-[var(--color-border-default)] text-[13px] font-semibold text-[var(--ink)] flex items-center justify-center"
-      >
-        Sign in
-      </Link>
+    <div
+      className={`tc-mobile-cta ${isVisible ? "in" : ""}`}
+      aria-hidden={!isVisible}
+    >
       <Link
         href="/signup"
         tabIndex={inertProps.tabIndex}
         aria-hidden={inertProps["aria-hidden"]}
         style={inertProps.style}
-        className="flex-[1.4] h-11 rounded-lg bg-[var(--accent)] text-[var(--bg-primary)] text-[14px] font-bold flex items-center justify-center gap-1.5"
+        className="w-full h-12 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] text-[14px] font-bold flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(var(--accent-rgb),0.3)] active:scale-[0.98] transition-transform"
       >
-        Start Free — No Card
-        <ArrowRight size={14} />
+        <span>Start Free — No Card Required</span>
+        <ArrowRight size={15} />
       </Link>
     </div>
   );

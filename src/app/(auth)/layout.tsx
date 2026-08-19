@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, LineChart, Brain, BookOpen } from "lucide-react";
 
 /* ─── Cursor-Reactive Background ─── */
 function AmbientCanvas() {
@@ -154,7 +154,7 @@ function TrustBadge() {
         border: "1px solid rgba(var(--accent-rgb),0.25)",
         background: "rgba(var(--accent-rgb),0.06)",
         backdropFilter: "blur(12px)",
-        marginBottom: 28,
+        marginBottom: 24,
       }}
     >
       <span
@@ -169,27 +169,27 @@ function TrustBadge() {
         }}
       />
       <span style={{ fontSize: 12, fontWeight: 500, color: "var(--color-accent-primary)", letterSpacing: "0.02em" }}>
-        Early Access · Free during beta
+        Free tier — no card required
       </span>
     </div>
   );
 }
 
-/* ─── Feature row ─── */
-function FeatureRow({ icon, label, sub }: { icon: string; label: string; sub: string }) {
+/* ─── Feature row with line icons (no emojis) ─── */
+function FeatureRow({ icon, label, sub }: { icon: React.ReactNode; label: string; sub: string }) {
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
       <div
         style={{
-          width: 34,
-          height: 34,
+          width: 36,
+          height: 36,
           borderRadius: 8,
           background: "rgba(var(--accent-rgb),0.08)",
-          border: "1px solid rgba(var(--accent-rgb),0.12)",
+          border: "1px solid rgba(var(--accent-rgb),0.16)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 15,
+          color: "var(--color-accent-primary)",
           flexShrink: 0,
           marginTop: 1,
         }}
@@ -197,7 +197,7 @@ function FeatureRow({ icon, label, sub }: { icon: string; label: string; sub: st
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: "#FAFAFA", letterSpacing: "-0.01em" }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#FAFAFA", letterSpacing: "-0.01em" }}>
           {label}
         </div>
         <div style={{ fontSize: 12, color: "#71717A", marginTop: 2, lineHeight: 1.5 }}>
@@ -214,7 +214,7 @@ function DesignPrinciple() {
     <div
       className="auth-float-in"
       style={{
-        padding: "18px 20px",
+        padding: "16px 18px",
         borderRadius: 12,
         background: "rgba(255,255,255,0.025)",
         border: "1px solid rgba(255,255,255,0.06)",
@@ -229,12 +229,12 @@ function DesignPrinciple() {
           textTransform: "uppercase",
           color: "var(--color-accent-primary)",
           display: "block",
-          marginBottom: 10,
+          marginBottom: 8,
         }}
       >
         Read-only by design
       </span>
-      <p style={{ fontSize: 13, color: "#A1A1AA", lineHeight: 1.65 }}>
+      <p style={{ fontSize: 12, color: "#A1A1AA", lineHeight: 1.6 }}>
         No broker connection. No fund custody. No trade execution. TradCopilot analyzes your charts and coaches your discipline — your capital stays entirely yours.
       </p>
     </div>
@@ -278,7 +278,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div
           className="hidden lg:flex"
           style={{
-            width: "42%",
+            width: "44%",
+            maxWidth: "520px",
             flexShrink: 0,
             flexDirection: "column",
             justifyContent: "space-between",
@@ -325,18 +326,18 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             </span>
           </Link>
 
-          {/* Center copy */}
-          <div className="auth-enter" style={{ maxWidth: 340 }}>
+          {/* Center copy — vertically centered with fluid scaling */}
+          <div className="auth-enter my-auto py-8" style={{ width: "100%", maxWidth: 380 }}>
             <TrustBadge />
 
             <h2
               style={{
-                fontSize: 36,
+                fontSize: "clamp(2rem, 1.5rem + 1.5vw, 2.5rem)",
                 fontWeight: 700,
-                lineHeight: 1.1,
-                letterSpacing: "-0.035em",
+                lineHeight: 1.15,
+                letterSpacing: "-0.03em",
                 color: "#FAFAFA",
-                margin: "0 0 16px",
+                margin: "0 0 14px",
               }}
             >
               The AI Copilot for
@@ -356,26 +357,26 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               style={{
                 fontSize: 14,
                 color: "#71717A",
-                lineHeight: 1.7,
-                marginBottom: 36,
+                lineHeight: 1.6,
+                marginBottom: 28,
               }}
             >
               Chart analysis, trade journaling, and behavioral coaching — all in one calm, intelligent workspace.
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 36 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18, marginBottom: 28 }}>
               <FeatureRow
-                icon="📊"
+                icon={<LineChart size={17} />}
                 label="AI Chart Analysis"
                 sub="Institutional-grade read on any symbol, instantly"
               />
               <FeatureRow
-                icon="🧠"
+                icon={<Brain size={17} />}
                 label="Behavioral Coaching"
                 sub="Detects revenge trading, overtrading, and fear patterns"
               />
               <FeatureRow
-                icon="📓"
+                icon={<BookOpen size={17} />}
                 label="Trade Journal"
                 sub="Emotion tracking and AI weekly performance reports"
               />
@@ -385,7 +386,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Footer */}
-          <p style={{ fontSize: 11, color: "#3F3F46", lineHeight: 1.6 }}>
+          <p style={{ fontSize: 11, color: "#52525B", lineHeight: 1.6 }}>
             TradCopilot does not execute trades, hold funds, or provide financial advice.
             Analytical tool for educational purposes only.
           </p>
@@ -409,3 +410,4 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     </>
   );
 }
+

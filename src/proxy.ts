@@ -3,6 +3,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 
 const publicRoutes = [
   "/",
+  "/changelog",
   "/login",
   "/signup",
   "/forgot-password",

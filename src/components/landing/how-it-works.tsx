@@ -40,10 +40,36 @@ export function HowItWorks() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {steps.map((s, i) => (
-          <Reveal key={i} delay={i * 70} className="tc-card h-full">
+          <Reveal key={i} delay={i * 70} className="tc-card h-full flex flex-col">
             <span className="tc-card__badge">{s.badge}</span>
             <h3 className="tc-card__title">{s.title}</h3>
             <p className="tc-card__body">{s.body}</p>
+
+            {i === 1 && (
+              <div className="my-2 p-2.5 rounded-lg bg-[var(--bg-band)] border border-[var(--color-border-subtle)] space-y-1.5 select-none font-mono">
+                <div className="flex items-center justify-between gap-1 text-[10px]">
+                  <span className="text-[var(--green)] font-semibold">BIAS BUY/LONG</span>
+                  <span className="text-[9px] text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.3)] bg-[rgba(var(--accent-rgb),0.08)] rounded px-1.5 py-0.5">
+                    GRADE MEDIUM
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1 text-[10px]">
+                  <div>
+                    <span className="text-[8px] uppercase tracking-wider block text-[var(--muted)]">Entry</span>
+                    <span className="text-[var(--ink)] font-semibold">$67,420</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] uppercase tracking-wider block text-[var(--muted)]">Stop</span>
+                    <span className="text-[var(--red)] font-semibold">$66,800</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] uppercase tracking-wider block text-[var(--muted)]">Take-Profit</span>
+                    <span className="text-[var(--green)] font-semibold">$68,900</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="tc-card__divider mt-auto" />
             <div className="flex items-center justify-between">
               <span className={`tc-card__punch tc-card__punch--${s.tone}`}>{s.punch}</span>
