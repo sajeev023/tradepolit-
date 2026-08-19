@@ -18,7 +18,7 @@ import { profiler } from "@/lib/performance-profiler";
 import {
   TrendingUp,
   Bot,
-  Sparkles,
+  Activity,
   Send,
   Eye,
   X,
@@ -1456,14 +1456,13 @@ Timestamp: ${new Date().toISOString()}
         <div className="lg:hidden fixed right-4 z-40" style={{ bottom: "calc(72px + env(safe-area-inset-bottom, 0px))" }}>
           <button
             onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe })}
-            className="flex items-center gap-2 px-4 py-3 rounded-full shadow-lg cursor-pointer press-scale"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-md cursor-pointer press-scale"
             style={{
-              background: "linear-gradient(135deg, var(--color-accent-primary), var(--accent-bright))",
+              background: "var(--color-accent-primary)",
               color: "var(--background)",
-              boxShadow: "0 4px 20px rgba(47, 198, 232, 0.4)",
             }}
           >
-            <Sparkles size={16} strokeWidth={2.5} />
+            <Activity size={16} strokeWidth={2.5} />
             <span className="text-xs font-bold">Analyze</span>
           </button>
         </div>

@@ -121,7 +121,9 @@ export function HeroWorkbench() {
   // Mirror displayPrice into a ref so the boot effect can read the live value at
   // fire time without joining it to the effect deps (which would re-run on every
   // WebSocket tick and thrash the choreography).
-  displayPriceRef.current = displayPrice;
+  useEffect(() => {
+    displayPriceRef.current = displayPrice;
+  }, [displayPrice]);
 
   useEffect(() => {
     if (loading || !candles || candles.length < 2) return;

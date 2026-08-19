@@ -14,7 +14,7 @@ import type { User } from "@supabase/supabase-js";
 import {
   TrendingUp,
   BookOpen,
-  Sparkles,
+  Activity,
   Grid3X3,
   MoreHorizontal,
   Eye,
@@ -165,7 +165,7 @@ function MobileBottomNav() {
           }}
           aria-label="Analyze"
         >
-          <Sparkles size={20} color="var(--background)" strokeWidth={2.5} />
+          <Activity size={20} color="var(--background)" strokeWidth={2.5} />
         </motion.button>
       </div>
 

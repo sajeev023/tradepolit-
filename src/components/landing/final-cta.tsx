@@ -8,25 +8,25 @@ export function FinalCta() {
       <div className="tc-section tc-section--narrow text-center relative">
         <div className="tc-aurora" aria-hidden="true" />
         <Reveal blur className="space-y-5 relative z-10">
-          <span className="tp-eyebrow-mono">Start now</span>
+          <span className="tp-eyebrow-mono">GET STARTED</span>
           <h2 className="tp-h2 max-w-xl mx-auto">
-            Bring discipline to your <span className="tc-accent-phrase">next trade.</span>
+            Execute with structured discipline
           </h2>
           <p className="tp-body max-w-md mx-auto">
-            Two free AI scans. No credit card required. Keep using your existing charting platform alongside it.
+            Free access with zero credit card requirement. Keep using your primary broker and charting platforms alongside it.
           </p>
           <div data-onpage-cta className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               href="/signup"
-              className="group h-12 px-6 rounded-full text-[14px] font-bold inline-flex items-center justify-center gap-2 text-[var(--bg-primary)] transition-transform active:scale-[0.98]"
+              className="group h-11 px-6 rounded-md text-[13px] font-semibold inline-flex items-center justify-center gap-2 text-[var(--bg-primary)] transition-transform active:scale-[0.98]"
               style={{ background: "var(--accent)" }}
             >
-              <span>Start Free — No Card Required</span>
+              <span>Get Started Free</span>
               <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/login"
-              className="h-12 px-5 rounded-full border border-[var(--color-border-strong)] text-[var(--ink)] hover:border-[var(--accent)] text-[13px] font-semibold inline-flex items-center justify-center transition-colors"
+              className="h-11 px-5 rounded-md border border-[var(--color-border-strong)] text-[var(--ink)] hover:border-[var(--accent)] text-[13px] font-semibold inline-flex items-center justify-center transition-colors"
             >
               Sign in
             </Link>

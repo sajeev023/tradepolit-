@@ -20,11 +20,11 @@ export function HeroCTA() {
         <Link
           href="/signup"
           onClick={() => trackClarityEvent("hero_start_free_click")}
-          className="group w-full sm:w-auto h-12 px-6 rounded-full text-[14px] font-bold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150 text-[var(--bg-primary)]"
+          className="group w-full sm:w-auto h-11 px-6 rounded-md text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150 text-[var(--bg-primary)] shadow-sm"
           style={{ background: "var(--accent)" }}
           aria-label="Start free account"
         >
-          <span>Start Free — No Card Required</span>
+          <span>Get Started Free</span>
           <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </Link>
 
@@ -35,7 +35,7 @@ export function HeroCTA() {
             handleDemo();
           }}
           disabled={isLoading}
-          className="group w-full sm:w-auto h-12 px-5 rounded-full bg-transparent hover:bg-[var(--color-bg-hover)] border border-[var(--color-border-strong)] hover:border-[var(--accent)] text-[var(--ink)] text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150"
+          className="group w-full sm:w-auto h-11 px-5 rounded-md bg-transparent hover:bg-[var(--color-bg-hover)] border border-[var(--color-border-strong)] hover:border-[var(--accent)] text-[var(--ink)] text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150"
           aria-label="Try 2 free scans"
         >
           {isLoading ? (
@@ -43,21 +43,21 @@ export function HeroCTA() {
           ) : (
             <Eye size={14} className="text-[var(--accent)]" />
           )}
-          <span>{isLoading ? "Launching…" : "Try 2 Free Scans"}</span>
+          <span>{isLoading ? "Launching…" : "Interactive Terminal Demo"}</span>
         </button>
       </div>
 
       {/* Risk reversal + Truthful proof microline */}
-      <div className="space-y-1.5 select-none">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--muted)] font-medium">
-          <span>2 free AI scans · no card</span>
+      <div className="space-y-1 select-none">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--muted)] font-medium">
+          <span>Free tier included</span>
           <span className="w-1 h-1 rounded-full bg-[var(--color-border-strong)]" />
-          <span>read-only</span>
+          <span>No credit card required</span>
           <span className="w-1 h-1 rounded-full bg-[var(--color-border-strong)]" />
-          <span>cancel anytime</span>
+          <span>Read-only architecture</span>
         </div>
         <div className="text-[11px] font-mono text-[var(--muted)] tracking-tight">
-          Live analysis · read-only by design · your capital never leaves your exchange
+          Direct Binance &amp; OANDA feeds · Zero broker access · Capital stays on your exchange
         </div>
       </div>
     </div>

@@ -5,32 +5,24 @@ import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
-    q: "Is this just ChatGPT with a chart skin?",
-    a: "No. TradCopilot runs context-aware analysis on live candlestick data, real indicators, and your risk metrics — not a generic LLM prompt. It retains persistent memory of your trades, journal, and behavioral patterns across sessions, so the coaching is calibrated to you, not a stranger.",
+    q: "How does TradCopilot analyze market data?",
+    a: "TradCopilot computes technical indicators directly from real-time exchange feeds (Binance & OANDA) and evaluates RSI, MACD divergence, EMA trend alignment, and structural support/resistance levels. Responses are grounded in your session history and calculated risk metrics.",
   },
   {
-    q: "Will it actually stop me from revenge trading, or just nag me?",
-    a: "It flags revenge trades, sizing spikes, and overtrading inside the workspace before you deploy capital — using the pattern of your last 20 trades, not a generic rulebook. You stay in control; the copilot surfaces the pattern and blocks the entry pending your review. It won't execute anything for you.",
+    q: "How does the behavioral discipline engine work?",
+    a: "The terminal compares pending trade setups against your historical 20-trade journal patterns and declared risk rules. If a sizing spike, rapid re-entry, or revenge pattern is detected, the terminal displays an immediate risk alert before you deploy capital.",
   },
   {
-    q: "Do I have to connect my brokerage?",
-    a: "Never. TradCopilot is read-only. You import watchlists, review indicators, log entries, and get coaching — without connecting any trading account or custodial balance. We can't touch your capital.",
+    q: "Do I need to connect broker credentials or custody funds?",
+    a: "No. TradCopilot is strictly read-only. We do not connect to your exchange accounts, do not custody funds, and cannot execute orders. Your assets and keys remain solely under your control.",
   },
   {
-    q: "Is the 'AI analysis' real or generated?",
-    a: "Real. Every analysis is assembled from live exchange telemetry (Binance, TwelveData) — RSI, MACD, EMA, support/resistance, volume — then graded for bias, setup quality, and confidence. If a feed is ever unavailable, the UI labels it illustrative rather than pretending otherwise.",
+    q: "Which markets and asset classes are supported?",
+    a: "Major crypto pairs (BTC, ETH, SOL), major forex pairs (EUR/USD, GBP/USD), and global indices. You can use your primary broker or charting software alongside TradCopilot.",
   },
   {
-    q: "What markets can I actually trade with it?",
-    a: "Major crypto (BTC, ETH, SOL), forex (EUR/USD, GBP/USD), and indices. Equities and futures support is actively being expanded. You keep your existing charting platform; TradCopilot adds the analysis, journaling, and coaching layer on top.",
-  },
-  {
-    q: "Can I cancel without a phone call?",
-    a: "Yes. Cancel, pause, or adjust your plan from Settings in one click. No lock-in contracts, no retention call. The 7-day Pro trial is risk-free and requires no card to start the Free tier.",
-  },
-  {
-    q: "Who is behind this?",
-    a: "TradCopilot was built by Sajeev and an active discretionary trader based in Hyderabad. Frustrated by repetitive chart analysis and discipline breakdowns during active trading sessions, we built a read-only copilot to automate the routine analysis while keeping the trader firmly in control.",
+    q: "How does the 7-day Pro trial and cancellation work?",
+    a: "You can start the Free tier with no credit card required. Pro subscriptions include a 7-day trial and can be paused or cancelled at any time directly in your account settings with a single click.",
   },
 ];
 

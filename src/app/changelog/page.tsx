@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, TrendingUp, Sparkles, Shield, Cpu, Activity } from "lucide-react";
+import { ArrowLeft, TrendingUp, Zap, Shield, Cpu, Activity } from "lucide-react";
 import { SlimNav } from "@/components/landing/slim-nav";
 
 const updates = [
@@ -34,7 +34,7 @@ const updates = [
     version: "v1.2.0",
     title: "Persistent Trade Journal & Memory Architecture",
     badge: "WORKSPACES",
-    icon: <Sparkles size={16} className="text-[var(--accent)]" />,
+    icon: <Zap size={16} className="text-[var(--accent)]" />,
     items: [
       "Released persistent trade journal with automatic session memory across chart sessions.",
       "Added emotional state logging and discipline tracking to measure trade rule compliance over time.",

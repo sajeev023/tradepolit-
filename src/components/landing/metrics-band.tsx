@@ -51,7 +51,7 @@ export function MetricsBand() {
           ))}
         </div>
         <p className="mt-4 text-[11px] text-[var(--muted)] font-mono text-center">
-          Product specifications — not performance claims.
+          Product specifications · Zero performance claims.
         </p>
       </div>
     </section>

@@ -4,7 +4,6 @@ import { Inter, Space_Grotesk, JetBrains_Mono, Newsreader } from "next/font/goog
 import "./globals.css";
 import { Providers } from "./providers";
 import { SmoothScrollProvider } from "@/components/ui/smooth-scroll-provider";
-import { LiquidCursor } from "@/components/ui/liquid-cursor";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { GlobalLoader } from "@/components/GlobalLoader";
 import { OfflineBanner } from "@/components/OfflineBanner";
@@ -50,17 +49,17 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "TradCopilot — AI-Powered Trading Copilot",
+    default: "TradCopilot | Institutional Trading Terminal & Discipline Journal",
     template: "%s | TradCopilot",
   },
   description:
-    "The AI copilot that reads your charts, remembers every session, tracks behavioral patterns, and coaches you past emotional mistakes. Built for serious traders.",
+    "Real-time technical chart analysis, automated session trade journal, behavioral guardrails, and risk verification for active day traders.",
   keywords: [
-    "trading",
-    "AI copilot",
+    "trading terminal",
+    "technical analysis",
     "crypto",
     "forex",
-    "journal",
+    "trading journal",
     "analytics",
     "behavioral detection",
     "backtesting",
@@ -70,8 +69,8 @@ export const metadata: Metadata = {
     canonical: siteUrl,
   },
   openGraph: {
-    title: "TradCopilot — AI-Powered Trading Copilot",
-    description: "The AI copilot that trades with your discipline. Charts, memory, behavioral detection, and coaching in one workspace.",
+    title: "TradCopilot | Institutional Trading Terminal & Discipline Journal",
+    description: "Real-time technical chart analysis, trade journaling, and behavioral discipline enforcement in one workspace.",
     siteName,
     type: "website",
     locale: "en_US",
@@ -79,8 +78,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TradCopilot — AI-Powered Trading Copilot",
-    description: "The AI copilot that trades with your discipline.",
+    title: "TradCopilot | Institutional Trading Terminal & Discipline Journal",
+    description: "Real-time technical chart analysis, trade journaling, and behavioral discipline enforcement.",
   },
   robots: {
     index: true,
@@ -126,7 +125,6 @@ export default function RootLayout({
             <SpeedInsights />
             <MicrosoftClarity />
             <SmoothScrollProvider>
-              <LiquidCursor />
               {children}
             </SmoothScrollProvider>
           </Providers>

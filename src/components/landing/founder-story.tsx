@@ -1,70 +1,60 @@
 import { Reveal } from "@/components/ui/reveal";
+import { Shield, Eye, Clock, Terminal } from "lucide-react";
 
-const founders = [
+const principles = [
   {
-    name: "Sajeev",
-    initials: "SK",
-    role: "Product & Engineering",
-    note: "Self-taught builder · Hyderabad · trades daily",
-    quote: "AI should improve human decisions, not replace them.",
+    icon: Terminal,
+    title: "Read-Only Architecture",
+    body: "No broker keys, no fund custody, and no automated trade execution. Your accounts and assets remain entirely under your control.",
   },
   {
-    name: "Trading Lead",
-    initials: "TL",
-    role: "Trading & Validation",
-    note: "Active crypto & forex trader · trades daily",
-    quote: "I didn't want a bot. I wanted a copilot that helps me think clearly.",
+    icon: Eye,
+    title: "Real-Time Telemetry",
+    body: "Direct public Binance WebSocket streams and calculated indicators provide verifiable data without simulated delays.",
   },
-];
-
-const chips = [
-  "READ-ONLY BY DESIGN",
-  "NO BROKER ACCESS",
-  "REAL-TRADER FEEDBACK",
-  "SHIPPED WEEKLY",
+  {
+    icon: Clock,
+    title: "20-Trade Session Memory",
+    body: "Session history stays in memory so the terminal detects recurring revenge trade and overtrading patterns before entry.",
+  },
+  {
+    icon: Shield,
+    title: "Deterministic Risk Rules",
+    body: "Setup recommendations enforce structural pivot invalidations and fixed risk limits rather than arbitrary AI guesses.",
+  },
 ];
 
 export function FounderStory() {
   return (
     <section className="tc-section tc-section--narrow tc-band-alt">
       <Reveal blur className="text-center space-y-4 mb-12">
-        <span className="tp-eyebrow-mono">Why we built TradCopilot</span>
+        <span className="tp-eyebrow-mono">FOUNDATION</span>
         <h2 className="tp-h2 max-w-2xl mx-auto">
-          Built from trading frustration, <span className="tc-accent-phrase">not a trend.</span>
+          Built for disciplined execution
         </h2>
         <p className="tp-body max-w-xl mx-auto">
-          TradCopilot didn&apos;t start because AI became popular. One of us trades every day — and the
-          repetitive analysis was eating hours. So we built a copilot that handles the grind while the
-          trader stays in control.
+          TradCopilot was built to automate chart routines and protect active traders from emotional mistakes during high-volatility sessions.
         </p>
       </Reveal>
 
-      <div className="grid sm:grid-cols-2 gap-4 sm:gap-5 mb-8">
-        {founders.map((f, i) => (
-          <Reveal key={i} delay={i * 80} className="tc-card">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl border border-[var(--color-border-strong)] bg-[var(--bg-band)] flex items-center justify-center">
-                <span className="font-mono text-[13px] font-semibold text-[var(--accent)]">{f.initials}</span>
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[14px] font-bold text-[var(--ink)]">{f.name}</span>
-                  <span className="text-[11px] text-[var(--muted)]">·</span>
-                  <h3 className="text-[13px] font-semibold text-[var(--muted)] leading-tight">{f.role}</h3>
+      <div className="grid sm:grid-cols-2 gap-4 sm:gap-5">
+        {principles.map((p, i) => {
+          const Icon = p.icon;
+          return (
+            <Reveal key={p.title} delay={i * 60} className="tc-card space-y-2">
+              <div className="flex items-center gap-2.5 text-[var(--accent)] font-semibold text-[13px]">
+                <div className="w-7 h-7 rounded bg-[rgba(var(--accent-rgb),0.08)] border border-[rgba(var(--accent-rgb),0.2)] flex items-center justify-center">
+                  <Icon size={14} />
                 </div>
-                <span className="text-[11px] font-mono text-[var(--muted)]">{f.note}</span>
+                <span>{p.title}</span>
               </div>
-            </div>
-            <p className="tc-card__body italic mt-2">&ldquo;{f.quote}&rdquo;</p>
-          </Reveal>
-        ))}
+              <p className="tc-card__body text-[12px] leading-relaxed">
+                {p.body}
+              </p>
+            </Reveal>
+          );
+        })}
       </div>
-
-      <Reveal delay={160} className="flex flex-wrap items-center justify-center gap-2">
-        {chips.map((c) => (
-          <span key={c} className="tc-badge text-[10px] font-mono tracking-wider">{c}</span>
-        ))}
-      </Reveal>
     </section>
   );
 }

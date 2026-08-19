@@ -116,15 +116,12 @@ export function BehavioralReplay() {
     <section className="tc-section tc-section--wide">
       <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
         <div className="lg:col-span-5 space-y-4">
-          <span className="tp-eyebrow-mono">03 — Behavioral detection</span>
+          <span className="tp-eyebrow-mono">03 / DISCIPLINE</span>
           <h2 className="tp-h2">
-            The copilot catches the trade{" "}
-            <span className="tc-accent-phrase">you weren&apos;t going to take back.</span>
+            Automated guardrails against emotional trading
           </h2>
           <p className="tp-body max-w-md">
-            Revenge trades, sizing spikes, and overtrading are flagged inside the workspace
-            before capital is deployed — using the pattern of your last 20 trades, not a
-            generic rulebook.
+            Position sizing anomalies, rapid re-entries, and revenge trades are flagged inside the workspace before capital is deployed based on your declared discipline rules.
           </p>
           <div className="flex items-center gap-3 pt-2">
             <button

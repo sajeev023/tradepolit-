@@ -10,7 +10,6 @@ import {
   X,
   Send,
   Bot,
-  Sparkles,
   ChevronDown,
   Copy,
   Check,
@@ -92,7 +91,10 @@ function formatMetricNumber(val: any, symbol?: string, decimals = 2): string {
   if (isNaN(num) || num === 0) return "—";
   const quote = symbol?.includes("/") ? symbol.split("/")[1] : "USD";
   const isForex = !!symbol && symbol.includes("/") && !symbol.startsWith("XAU") && !symbol.startsWith("XAG");
-  if (isForex) {
+  // Only apply forex precision to small-ticket pairs. Crypto (BTC, ETH, SOL)
+  // trades at thousands of dollars per unit and should use the caller-supplied
+  // decimals instead of 5-decimal forex formatting.
+  if (isForex && num < 1000) {
     const fxDecimals = quote === "JPY" ? 3 : 5;
     return num.toLocaleString("en-US", { minimumFractionDigits: fxDecimals, maximumFractionDigits: fxDecimals });
   }
@@ -418,7 +420,7 @@ function ErrorState({
           <p className="text-[10px] text-[var(--color-text-tertiary)] mt-0.5 leading-relaxed">
             {isContradiction
               ? "The model's response failed internal validation. Re-run to regenerate it."
-              : "The market feed is connected, but the analysis engine didn't return a result."}
+              : "The analysis engine returned an error for this symbol/timeframe."}
           </p>
         </div>
       </div>
@@ -538,8 +540,8 @@ function IdleState({ symbol, timeframe, onAnalyze }: { symbol: string; timeframe
           .
         </p>
       </div>
-      <button onClick={onAnalyze} className="btn-primary btn-sm w-full flex items-center justify-center gap-1.5">
-        <Sparkles size={14} /> Analyze chart
+      <button onClick={onAnalyze} className="btn-primary btn-sm w-full flex items-center justify-center gap-1.5 cursor-pointer">
+        <Activity size={14} /> Analyze chart
       </button>
     </div>
   );

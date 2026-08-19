@@ -77,94 +77,144 @@ function PricingCardsContent() {
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-5 sm:gap-6 max-w-2xl mx-auto animate-enter-delay-1">
+    <div className="grid md:grid-cols-2 gap-5 sm:gap-6 max-w-3xl mx-auto animate-enter-delay-1 items-stretch">
       {/* Free */}
-      <div className="pricing-free-card card p-6 sm:p-7 flex flex-col justify-between order-2 md:order-1">
-        <div className="space-y-5 sm:space-y-6">
-          <div>
-            <h3 className="text-[15px] font-semibold text-[var(--color-text-secondary)]">Free</h3>
-            <p className="text-[12px] text-[var(--color-text-quaternary)] mt-0.5">Core day-trading tools</p>
+      <div className="card p-6 sm:p-7 flex flex-col justify-between order-2 md:order-1 border-[var(--color-border-subtle)] bg-[var(--surface)]">
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[11px] font-semibold text-[var(--accent)] tracking-wider">STARTER</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg-band)] border border-[var(--color-border-subtle)] text-[var(--color-text-tertiary)]">FREE</span>
           </div>
+
+          <div>
+            <h3 className="text-[18px] font-bold text-[var(--color-text-primary)]">Free</h3>
+            <p className="text-[12px] text-[var(--color-text-tertiary)] mt-1">Core day-trading telemetry and basic chart scans.</p>
+          </div>
+
           <div className="flex items-baseline">
-            <span className="text-[40px] font-semibold tracking-tight font-mono text-[var(--color-text-primary)]">$0</span>
-            <span className="ml-1.5 text-[13px] text-[var(--color-text-quaternary)]">/month</span>
+            <span className="text-[36px] font-bold tracking-tight font-mono text-[var(--color-text-primary)]">$0</span>
+            <span className="ml-1.5 text-[12px] text-[var(--color-text-quaternary)] font-mono">/ forever</span>
           </div>
 
           <button
             onClick={handleFreeClick}
-            className="btn-secondary w-full justify-center text-[13px] cursor-pointer"
-            style={{ height: 48 }}
+            className="btn-secondary w-full justify-center text-[13px] font-semibold cursor-pointer"
+            style={{ height: 42 }}
           >
             {profile ? "Back to Terminal" : "Start Free"}
           </button>
 
           <div className="h-px bg-[var(--color-border-subtle)]" />
 
-          <ul className="space-y-3">
-            {["5 analyses/day limit", "3 proactive alerts/day", "7-day history retention", "Basic journal (last 20 trades)", "Basic indicators (RSI, MACD)"].map((item, i) => (
-              <li key={i} className="flex items-center gap-2.5 text-[13px] text-[var(--color-text-secondary)]">
-                <Check size={14} className="text-[var(--color-profit)] shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-            {["Behavioral detection", "Market overview", "Weekly reports", "Saved analyses", "Performance dashboard"].map((item, i) => (
-              <li key={i} className="flex items-center gap-2.5 text-[13px] text-[var(--color-text-quaternary)]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--color-border-strong)] shrink-0"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4 text-left">
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-quaternary)]">Technical Analysis</span>
+              <ul className="space-y-1.5">
+                <li className="flex items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
+                  <Check size={13} className="text-[var(--color-accent-primary)] shrink-0" />
+                  <span>5 chart scans / day</span>
+                </li>
+                <li className="flex items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
+                  <Check size={13} className="text-[var(--color-accent-primary)] shrink-0" />
+                  <span>OHLCV candle telemetry</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-quaternary)]">Journal &amp; Alerts</span>
+              <ul className="space-y-1.5">
+                <li className="flex items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
+                  <Check size={13} className="text-[var(--color-accent-primary)] shrink-0" />
+                  <span>Last 20 trades session memory</span>
+                </li>
+                <li className="flex items-center gap-2 text-[12px] text-[var(--color-text-secondary)]">
+                  <Check size={13} className="text-[var(--color-accent-primary)] shrink-0" />
+                  <span>3 proactive alerts</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Pro */}
-      <div className="pricing-pro-card card p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden order-1 md:order-2" style={{ borderColor: "color-mix(in srgb, var(--color-accent-primary) 25%, transparent)" }}>
-        <div className="absolute top-0 right-0 px-3 py-1 bg-[var(--color-accent-primary)] text-[var(--color-bg-primary)] text-[10px] font-bold tracking-[0.04em] rounded-bl-lg">
-          POPULAR
-        </div>
+      <div
+        className="card p-6 sm:p-7 flex flex-col justify-between relative order-1 md:order-2 border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(var(--accent-rgb),0.02)]"
+      >
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[11px] font-semibold text-[var(--accent)] tracking-wider">INSTITUTIONAL</span>
+            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[rgba(var(--accent-rgb),0.12)] text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.25)]">
+              7-DAY TRIAL
+            </span>
+          </div>
 
-        <div className="space-y-6 relative z-10">
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">Pro</h3>
+              <h3 className="text-[18px] font-bold text-[var(--color-text-primary)]">Pro Terminal</h3>
               <Zap size={14} className="text-[var(--color-accent-primary)] fill-[var(--color-accent-primary)]" />
             </div>
-            <p className="text-[12px] text-[var(--color-text-tertiary)] mt-0.5">Full institutional workstation</p>
-          </div>
-          <div className="flex items-baseline">
-            <span className="text-[40px] font-semibold tracking-tight font-mono text-[var(--color-text-primary)]">$7.49</span>
-            <span className="ml-1.5 text-[13px] text-[var(--color-text-quaternary)]">/month</span>
+            <p className="text-[12px] text-[var(--color-text-tertiary)] mt-1">Full terminal capacity, sub-3s multi-model scans, and behavioral guardrails.</p>
           </div>
 
-          <button
-            onClick={handleProClick}
-            disabled={loadingCheckout}
-            className="btn-primary w-full justify-center text-[13px] disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-            style={{ height: 48 }}
-          >
-            {loadingCheckout ? (
-              <div className="w-3.5 h-3.5 border-2 border-[var(--color-bg-primary)] border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <Zap size={13} className="fill-[var(--color-bg-primary)]" />
-                {profile?.plan === "PRO" ? "Manage Subscription" : "Upgrade to Pro"}
-              </>
-            )}
-          </button>
-          <p className="text-center text-[11px] text-[var(--color-text-quaternary)]">
-            7-day free trial · Cancel anytime
-          </p>
+          <div className="flex items-baseline">
+            <span className="text-[36px] font-bold tracking-tight font-mono text-[var(--color-text-primary)]">$7.49</span>
+            <span className="ml-1.5 text-[12px] text-[var(--color-text-quaternary)] font-mono">/ month</span>
+          </div>
+
+          <div>
+            <button
+              onClick={handleProClick}
+              disabled={loadingCheckout}
+              className="btn-primary w-full justify-center text-[13px] font-semibold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              style={{ height: 42 }}
+            >
+              {loadingCheckout ? (
+                <div className="w-3.5 h-3.5 border-2 border-[var(--color-bg-primary)] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Zap size={13} className="fill-[var(--color-bg-primary)]" />
+                  {profile?.plan === "PRO" ? "Manage Subscription" : "Start 7-Day Free Trial"}
+                </>
+              )}
+            </button>
+            <p className="text-center text-[11px] text-[var(--color-text-quaternary)] mt-2 font-mono">
+              Cancel anytime in 1 click
+            </p>
+          </div>
 
           <div className="h-px bg-[var(--color-border-subtle)]" />
 
-          <ul className="space-y-3">
-            {["Unlimited analyses & alerts", "Unlimited history & journal entries", "All indicators (RSI, MACD, EMA, ATR)", "Full behavioral detection & insights", "Market overview with AI one-liners", "AI weekly performance reports", "Saved analyses + comparison view", "Performance analytics dashboard", "Session persistence + PRO badge", "Priority AI response time"].map((item, i) => (
-              <li key={i} className="flex items-center gap-2.5 text-[13px] text-[var(--color-text-primary)]">
-                <Check size={14} className="text-[var(--color-accent-primary)] shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4 text-left">
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-accent-primary)]">Technical Analysis</span>
+              <ul className="space-y-1.5">
+                <li className="flex items-center gap-2 text-[12px] text-[var(--color-text-primary)]">
+                  <Check size={13} className="text-[var(--color-accent-primary)] shrink-0" />
+                  <span>Unlimited scans (<span className="font-mono text-[11px] text-[var(--color-accent-primary)]">&lt;3s</span> race pipeline)</span>
+                </li>
+                <li className="flex items-center gap-2 text-[12px] text-[var(--color-text-primary)]">
+                  <Check size={13} className="text-[var(--color-accent-primary)] shrink-0" />
+                  <span>Full indicator matrix (RSI, MACD, EMA, ATR)</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--color-accent-primary)]">Discipline &amp; Journal</span>
+              <ul className="space-y-1.5">
+                <li className="flex items-center gap-2 text-[12px] text-[var(--color-text-primary)]">
+                  <Check size={13} className="text-[var(--color-accent-primary)] shrink-0" />
+                  <span>Real-time revenge &amp; sizing anomaly guardrails</span>
+                </li>
+                <li className="flex items-center gap-2 text-[12px] text-[var(--color-text-primary)]">
+                  <Check size={13} className="text-[var(--color-accent-primary)] shrink-0" />
+                  <span>Persistent full history trade journal &amp; weekly audit</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>

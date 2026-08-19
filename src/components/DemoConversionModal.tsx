@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, ShieldCheck, Sparkles, X, ArrowRight } from "lucide-react";
+import { Check, ShieldCheck, Activity, X, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { analytics } from "@/lib/analytics";
 
@@ -42,11 +42,11 @@ export function DemoConversionModal({ isOpen, onClose, analysesUsed = 2 }: DemoC
         {/* Header */}
         <div className="space-y-2 text-left mb-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[rgba(var(--green-rgb),0.3)] bg-[var(--color-profit-bg)] text-[var(--color-profit)] text-xs font-semibold">
-            <Sparkles size={12} />
-            YC Instant Demo
+            <Activity size={12} />
+            Terminal Live Demo
           </div>
           <h2 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">
-            You&apos;ve used your {analysesUsed} free AI analyses
+            You&apos;ve used your {analysesUsed} free scans
           </h2>
           <p className="text-xs text-[var(--color-text-tertiary)] leading-relaxed">
             Create your free account to unlock daily scans, persistent trade memory, and automatic risk guardrails.

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bot, Send, User, Trash2, Plus, MessageSquare, Loader2, Sparkles, Copy, Check, X } from "lucide-react";
+import { Bot, Send, User, Trash2, Plus, MessageSquare, Loader2, Activity, Copy, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 const SUGGESTED_PROMPTS = [
@@ -254,7 +254,7 @@ export default function AIAssistantPage() {
         <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-[var(--color-bg-deepest)]/40">
           {/* Static warning banner */}
           <div className="p-3 rounded-lg flex items-center gap-3 border border-[rgba(var(--accent-rgb),0.1)] bg-[var(--color-accent-primary-subtle)] max-w-2xl mx-auto">
-            <Sparkles size={16} className="text-[var(--color-accent-primary)] shrink-0" />
+            <Activity size={16} className="text-[var(--color-accent-primary)] shrink-0" />
             <p className="text-[10px] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
               Every response is grounded in your journal logs and performance stats. Responses are purely for educational reviews, not financial advice.
             </p>

@@ -13,7 +13,6 @@ import {
   Award,
   Flame,
   Calendar,
-  Sparkles,
   Clipboard,
   Check,
   Zap,
@@ -369,7 +368,7 @@ function DashboardContent() {
           <div className="card p-5 border-[var(--color-border-subtle)] flex flex-col justify-between">
             <div>
               <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 flex items-center gap-1.5">
-                <Sparkles size={15} className="text-[var(--color-accent-primary)]" /> Weekly AI Report
+                <Clipboard size={15} className="text-[var(--color-accent-primary)]" /> Weekly Performance Report
               </h2>
               <p className="text-xs text-[var(--color-text-quaternary)] leading-relaxed mb-3">
                 Aggregate trading performance, mistakes, and behavioral metrics for a comprehensive review.
@@ -444,7 +443,7 @@ function DashboardContent() {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-bold text-[var(--color-accent-primary)] flex items-center gap-1.5">
-                    <Sparkles size={14} /> Weekly Performance Report
+                    <Clipboard size={14} /> Weekly Performance Report
                   </h3>
                   <div className="flex items-center gap-1">
                     <button

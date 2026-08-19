@@ -1,18 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { profiler, PerformanceStats } from "@/lib/performance-profiler";
 import { Activity, X, Cpu, Database, Network } from "lucide-react";
 
 export function PerformanceOverlay() {
   const [stats, setStats] = useState<PerformanceStats | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const statsRef = useRef<PerformanceStats | null>(null);
 
   useEffect(() => {
+    // Write profiler updates to a ref instead of state. The overlay is rendered
+    // inside the profiled tree, so a synchronous setStats here would cause a
+    // render → Profiler onRender → setStats infinite loop. We mirror the ref
+    // into React state on a fixed interval so the HUD stays live without
+    // feeding back into the profiler.
     const unsubscribe = profiler.subscribe((updatedStats) => {
-      setStats(updatedStats);
+      statsRef.current = updatedStats;
     });
-    return unsubscribe;
+
+    // Initial mirror so the overlay appears immediately.
+    statsRef.current = profiler.getStats();
+    setStats(statsRef.current);
+
+    const id = setInterval(() => {
+      if (statsRef.current) {
+        setStats(statsRef.current);
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(id);
+      unsubscribe();
+    };
   }, []);
 
   if (!stats) return null;

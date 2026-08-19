@@ -60,14 +60,11 @@ export default function LandingPage() {
             reveal is the page's one signature motion moment. */}
         <Reveal blur className="max-w-[920px] space-y-5 sm:space-y-6">
           <h1 className="tp-display-xl">
-            Trade your plan —<br className="hidden sm:block" />{" "}
-            <span className="tp-serif-italic">not your impulses.</span>
+            Execute your trading plan with <span className="tp-serif-italic">institutional discipline.</span>
           </h1>
 
           <p className="tp-body max-w-[560px]">
-            TradCopilot brings real-time chart analysis, a persistent trade journal, and behavioral
-            coaching into one workspace — so every entry is prepared, reviewed, and consistent with
-            your own rules.
+            Real-time chart telemetry, persistent session trade journaling, and automated risk guardrails in one focused workspace.
           </p>
 
           <div className="pt-1">
@@ -118,9 +115,9 @@ export default function LandingPage() {
       {/* ━━━ 9 · FAQ (skeptic first-person) ━━━━━━━━━━━━━━━━ */}
       <section id="faq" className="tc-section tc-section--narrow scroll-mt-20">
         <Reveal blur className="text-center space-y-3 mb-12">
-          <span className="tp-eyebrow-mono">05 — FAQ</span>
+          <span className="tp-eyebrow-mono">05 / QUESTIONS</span>
           <h2 className="tp-h2">
-            The questions you&apos;d ask <span className="tc-accent-phrase">before signing up.</span>
+            Frequently asked questions about the terminal
           </h2>
         </Reveal>
         <Suspense fallback={<div className="h-64" />}>
@@ -186,8 +183,8 @@ export default function LandingPage() {
           </div>
 
           <p className="text-[11px] text-[var(--muted)] max-w-2xl leading-relaxed">
-            Read-only analysis copilot — does not execute trades, hold funds, or connect to your brokerage.
-            Market data may be delayed or illustrative during feed outages. Nothing here is financial advice — trade your own plan.
+            Read-only analytical terminal. Does not execute trades, hold funds, or connect to your brokerage.
+            Analytical workstation for educational and discipline purposes only.
           </p>
 
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2 border-t border-[var(--color-border-subtle)]">

@@ -108,12 +108,12 @@ export function MarketPulse() {
   return (
     <section id="market-pulse" className="tc-section tc-section--wide scroll-mt-20">
       <Reveal blur className="text-center space-y-3 mb-12 sm:mb-14">
-        <span className="tp-eyebrow-mono">02 — Market pulse</span>
+        <span className="tp-eyebrow-mono">02 / TELEMETRY</span>
         <h2 className="tp-h2">
-          Read the room <span className="tc-accent-phrase">before the chart.</span>
+          Real-time sentiment &amp; market momentum
         </h2>
         <p className="tp-body max-w-md mx-auto">
-          A live read on sentiment and momentum — the context that belongs next to every setup.
+          Macro sentiment and volume telemetry integrated directly into your technical workflow.
         </p>
       </Reveal>
 
