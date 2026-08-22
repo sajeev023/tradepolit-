@@ -2,14 +2,11 @@ import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 
 /**
- * Public sitemap. Only canonical, indexable marketing/legal routes belong here.
+ * Public sitemap. Only canonical, indexable marketing, guide, comparison,
+ * and legal routes belong here.
  *
- * lastModified policy: static ISO dates that are bumped by hand when a page's
- * CONTENT meaningfully changes. The previous `new Date()` at module scope gave
- * every URL a fresh lastmod on each deploy — an always-fresh lastmod is a weak
- * trust signal and destroys the one thing lastmod is for.
- *
- * When you ship a meaningful content change to a page, update its date here.
+ * lastModified policy: static ISO dates that are bumped when a page's
+ * content meaningfully changes.
  */
 
 const ROUTES: Array<{
@@ -22,15 +19,17 @@ const ROUTES: Array<{
   { path: "/", priority: 1.0, changeFrequency: "weekly", lastModified: "2026-08-22" },
   { path: "/features", priority: 0.9, changeFrequency: "monthly", lastModified: "2026-08-22" },
   { path: "/ai-chart-analysis", priority: 0.9, changeFrequency: "monthly", lastModified: "2026-08-22" },
-  { path: "/trading-journal", priority: 0.8, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/trading-journal", priority: 0.9, changeFrequency: "monthly", lastModified: "2026-08-22" },
   { path: "/risk-management", priority: 0.8, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/trading-alerts", priority: 0.8, changeFrequency: "monthly", lastModified: "2026-08-22" },
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly", lastModified: "2026-08-22" },
   { path: "/faq", priority: 0.7, changeFrequency: "monthly", lastModified: "2026-08-22" },
   { path: "/about", priority: 0.6, changeFrequency: "yearly", lastModified: "2026-08-22" },
   { path: "/compare/tradcopilot-vs-tradingview", priority: 0.7, changeFrequency: "monthly", lastModified: "2026-08-22" },
-  { path: "/guides/position-sizing-guide", priority: 0.6, changeFrequency: "monthly", lastModified: "2026-08-22" },
-  { path: "/guides/trading-discipline", priority: 0.6, changeFrequency: "monthly", lastModified: "2026-08-22" },
-  { path: "/guides/support-and-resistance", priority: 0.6, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/compare/tradcopilot-vs-chatgpt", priority: 0.7, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/guides/position-sizing-guide", priority: 0.7, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/guides/trading-discipline", priority: 0.7, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/guides/support-and-resistance", priority: 0.7, changeFrequency: "monthly", lastModified: "2026-08-22" },
   { path: "/changelog", priority: 0.7, changeFrequency: "weekly", lastModified: "2026-08-15" },
   { path: "/terms", priority: 0.4, changeFrequency: "yearly", lastModified: "2026-07-12" },
   { path: "/privacy", priority: 0.4, changeFrequency: "yearly", lastModified: "2026-07-12" },
