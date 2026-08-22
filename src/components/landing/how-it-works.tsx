@@ -31,7 +31,7 @@ const stages = [
 export function HowItWorks() {
   return (
     <section id="how-it-works" className="tc-section tc-section--wide scroll-mt-20">
-      <Reveal blur className="text-center space-y-3 mb-12 sm:mb-14">
+      <Reveal blur className="text-center space-y-2 sm:space-y-3 mb-6 sm:mb-10 lg:mb-14">
         <span className="tp-eyebrow-mono">01 / WORKFLOW</span>
         <h2 className="tp-h2">
           End-to-end technical analysis &amp; risk verification
@@ -41,32 +41,32 @@ export function HowItWorks() {
         </p>
       </Reveal>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
         {stages.map((s, i) => {
           const Icon = s.icon;
           return (
             <Reveal key={s.step} delay={i * 80} className="tc-card h-full flex flex-col justify-between">
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[11px] font-semibold text-[var(--accent)] tracking-wider">
+                  <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-[var(--accent)] tracking-wider">
                     {s.step} / {s.tag}
                   </span>
-                  <div className="w-7 h-7 rounded-md bg-[rgba(var(--accent-rgb),0.08)] border border-[rgba(var(--accent-rgb),0.2)] flex items-center justify-center text-[var(--accent)]">
-                    <Icon size={14} />
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-[rgba(var(--accent-rgb),0.08)] border border-[rgba(var(--accent-rgb),0.2)] flex items-center justify-center text-[var(--accent)]">
+                    <Icon size={13} />
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-[16px] font-bold text-[var(--ink)] tracking-tight mb-2">
+                  <h3 className="text-[15px] sm:text-[16px] font-bold text-[var(--ink)] tracking-tight mb-1 sm:mb-2">
                     {s.title}
                   </h3>
-                  <p className="text-[13px] text-[var(--muted)] leading-relaxed">
+                  <p className="text-[12px] sm:text-[13px] text-[var(--muted)] leading-relaxed">
                     {s.body}
                   </p>
                 </div>
 
                 {i === 1 && (
-                  <div className="my-2 p-3 rounded-md bg-[var(--bg-band)] border border-[var(--color-border-subtle)] space-y-2 select-none font-mono">
+                  <div className="my-1.5 p-2.5 sm:p-3 rounded-md bg-[var(--bg-band)] border border-[var(--color-border-subtle)] space-y-1.5 sm:space-y-2 select-none font-mono">
                     <div className="flex items-center justify-between text-[10px]">
                       <span className="text-[var(--green)] font-bold">BIAS: BUY / LONG</span>
                       <span className="text-[9px] text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.3)] bg-[rgba(var(--accent-rgb),0.08)] rounded px-1.5 py-0.5">
@@ -91,7 +91,7 @@ export function HowItWorks() {
                 )}
               </div>
 
-              <div className="pt-4 mt-auto border-t border-[var(--color-border-subtle)] flex items-center justify-between text-[11px] font-mono text-[var(--muted)]">
+              <div className="pt-3 sm:pt-4 mt-auto border-t border-[var(--color-border-subtle)] flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-[var(--muted)]">
                 <span>{s.metric}</span>
                 <ArrowRight size={13} className="text-[var(--accent)]" />
               </div>

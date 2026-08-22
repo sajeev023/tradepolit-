@@ -25,12 +25,12 @@ import { toast } from "sonner";
 /* ─── Skeleton Components ─── */
 function KPISkeleton() {
   return (
-    <div className="card p-5 flex flex-col justify-between min-h-[130px] animate-pulse">
+    <div className="card p-3.5 sm:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[130px] animate-pulse">
       <div>
-        <div className="h-3 w-24 bg-[var(--color-bg-tertiary)] rounded mb-3" />
-        <div className="h-8 w-32 bg-[var(--color-bg-tertiary)] rounded mb-2" />
+        <div className="h-3 w-20 sm:w-24 bg-[var(--color-bg-tertiary)] rounded mb-2 sm:mb-3" />
+        <div className="h-6 sm:h-8 w-24 sm:w-32 bg-[var(--color-bg-tertiary)] rounded mb-1.5 sm:mb-2" />
       </div>
-      <div className="h-3 w-40 bg-[var(--color-bg-tertiary)] rounded" />
+      <div className="h-2.5 sm:h-3 w-28 sm:w-40 bg-[var(--color-bg-tertiary)] rounded" />
     </div>
   );
 }
@@ -232,7 +232,7 @@ function DashboardContent() {
 
       {/* KPI stats section */}
       {summaryIsError ? (
-        <div className="card p-5 flex flex-col items-start gap-2">
+        <div className="card p-4 sm:p-5 flex flex-col items-start gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-loss)]">
             Couldn&apos;t load metrics
           </span>
@@ -248,11 +248,11 @@ function DashboardContent() {
           </button>
         </div>
       ) : summaryLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[1, 2, 3, 4].map((i) => <KPISkeleton key={i} />)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {kpiCards.map((stat, idx) => {
             const isPos = stat.isPnL && stat.rawVal > 0;
             const isNeg = stat.isPnL && stat.rawVal < 0;
@@ -263,12 +263,12 @@ function DashboardContent() {
             return (
               <div
                 key={idx}
-                className={`card p-5 flex flex-col justify-between min-h-[130px] border-[var(--color-border-subtle)] hover:border-[var(--color-border-default)] transition-colors animate-fade-in-delay-${(idx % 6) + 1}`}
+                className={`card p-3.5 sm:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[130px] border-[var(--color-border-subtle)] hover:border-[var(--color-border-default)] transition-colors animate-fade-in-delay-${(idx % 6) + 1}`}
               >
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
                     <div
-                      className="w-7 h-7 rounded-lg flex items-center justify-center"
+                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0"
                       style={{
                         backgroundColor: "var(--color-accent-primary-subtle)",
                         color: "var(--color-accent-primary)",
@@ -276,15 +276,15 @@ function DashboardContent() {
                     >
                       {stat.icon}
                     </div>
-                    <p className="text-[10px] uppercase tracking-widest font-semibold text-[var(--color-text-tertiary)]">
+                    <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold text-[var(--color-text-tertiary)] truncate">
                       {stat.label}
                     </p>
                   </div>
-                  <p className="text-2xl font-bold tp-mono mt-1" style={{ color: valColor }}>
+                  <p className="text-xl sm:text-2xl font-bold tp-mono mt-0.5 sm:mt-1" style={{ color: valColor }}>
                     {stat.value}
                   </p>
                 </div>
-                <p className="text-[11px] mt-3 text-[var(--color-text-tertiary)]">
+                <p className="text-[10px] sm:text-[11px] mt-1.5 sm:mt-3 text-[var(--color-text-tertiary)] truncate">
                   {stat.sub}
                 </p>
               </div>

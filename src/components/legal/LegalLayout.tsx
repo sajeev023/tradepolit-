@@ -18,33 +18,33 @@ type LegalLayoutProps = {
 export default function LegalLayout({ title, updated, icon, children }: LegalLayoutProps) {
   return (
     <div
-      className="min-h-screen py-16 px-6 max-w-3xl mx-auto flex flex-col justify-between"
+      className="min-h-screen py-8 sm:py-14 lg:py-16 px-4 sm:px-6 max-w-3xl mx-auto flex flex-col justify-between"
       style={{ backgroundColor: "var(--color-bg-primary)" }}
     >
       <div>
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold mb-8 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold mb-4 sm:mb-8 transition-colors"
           style={{ color: "var(--color-text-tertiary)" }}
         >
           <ArrowLeft size={14} />
           <span className="hover:text-[var(--color-text-primary)] transition-colors">Back to Home</span>
         </Link>
 
-        <div className="flex items-center gap-2 mb-6" style={{ color: "var(--color-accent-primary)" }}>
+        <div className="flex items-center gap-2 mb-4 sm:mb-6" style={{ color: "var(--color-accent-primary)" }}>
           {icon}
           <h1 className="tp-display-sm">{title}</h1>
         </div>
 
         <p
-          className="text-xs mb-8"
+          className="text-xs mb-5 sm:mb-8"
           style={{ color: "var(--color-text-tertiary)", fontFamily: "var(--font-mono)" }}
         >
           Last updated: {updated}
         </p>
 
         <div
-          className="space-y-6 text-sm leading-relaxed"
+          className="space-y-4 sm:space-y-6 text-[13px] sm:text-sm leading-relaxed"
           style={{ color: "var(--color-text-secondary)" }}
         >
           {children}
@@ -52,7 +52,7 @@ export default function LegalLayout({ title, updated, icon, children }: LegalLay
       </div>
 
       <footer
-        className="mt-16 pt-8 border-t text-[11px] text-center"
+        className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t text-[11px] text-center"
         style={{
           borderColor: "var(--color-border)",
           color: "var(--color-text-tertiary)",

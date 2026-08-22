@@ -143,19 +143,19 @@ export default function MarketPulsePage() {
       </div>
 
       {pulseData ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left / Center: Main widgets */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Fear & Greed panel */}
-            <div className={`card p-6 border flex items-center justify-between animate-fade-in-delay-1 ${getFearGreedBg(pulseData.fearGreed.value)}`}>
+            <div className={`card p-4 sm:p-6 border flex items-center justify-between animate-fade-in-delay-1 ${getFearGreedBg(pulseData.fearGreed.value)}`}>
               <div>
-                <span className="text-[10px] uppercase tracking-widest mb-2 font-semibold block" style={{ color: "var(--color-text-tertiary)" }}>
-                  Fear & Greed Sentiment
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider mb-1.5 sm:mb-2 font-semibold block" style={{ color: "var(--color-text-tertiary)" }}>
+                  Fear &amp; Greed Sentiment
                 </span>
-                <h2 className={`text-3xl font-extrabold tracking-tight ${getFearGreedColor(pulseData.fearGreed.value)}`}>
+                <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${getFearGreedColor(pulseData.fearGreed.value)}`}>
                   {pulseData.fearGreed.sentiment}
                 </h2>
-                <p className="text-[10px] mt-2 font-mono" style={{ color: "var(--color-text-tertiary)" }}>
+                <p className="text-[10px] mt-1.5 sm:mt-2 font-mono" style={{ color: "var(--color-text-tertiary)" }}>
                   Last updated: {new Date(pulseData.fearGreed.timestamp).toLocaleDateString()}
                 </p>
               </div>
@@ -164,17 +164,17 @@ export default function MarketPulsePage() {
             </div>
 
             {/* Trending assets */}
-            <div className="card p-5 animate-fade-in-delay-2">
-              <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--color-text-primary)" }}>
+            <div className="card p-4 sm:p-5 animate-fade-in-delay-2">
+              <h3 className="text-sm font-semibold mb-3 sm:mb-4" style={{ color: "var(--color-text-primary)" }}>
                 Top Trending Assets
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4">
                 {pulseData.trendingAssets.map((asset, idx) => {
                   const isUp = asset.change24h >= 0;
                   return (
                     <div
                       key={idx}
-                      className="p-4 rounded-xl flex flex-col justify-between min-h-[100px] transition-all duration-200 group"
+                      className="p-3 sm:p-4 rounded-xl flex flex-col justify-between min-h-[90px] sm:min-h-[100px] transition-all duration-200 group"
                       style={{
                         backgroundColor: "var(--color-bg-tertiary)",
                         border: "1px solid var(--color-border-subtle)",
@@ -187,21 +187,21 @@ export default function MarketPulsePage() {
                           <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
                             {asset.name}
                           </span>
-                          <span className="text-[10px] font-mono block" style={{ color: "var(--color-text-tertiary)" }}>
+                          <span className="text-[9px] sm:text-[10px] font-mono block" style={{ color: "var(--color-text-tertiary)" }}>
                             {asset.symbol}/USD
                           </span>
                         </div>
-                        <div className={`w-6 h-6 rounded-md flex items-center justify-center ${isUp ? "bg-[var(--color-profit-bg)]" : "bg-[var(--color-loss-bg)]"}`}>
+                        <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center ${isUp ? "bg-[var(--color-profit-bg)]" : "bg-[var(--color-loss-bg)]"}`}>
                           {isUp ? (
-                            <ArrowUpRight size={12} className="text-[var(--color-profit)]" />
+                            <ArrowUpRight size={11} className="text-[var(--color-profit)]" />
                           ) : (
-                            <ArrowDownRight size={12} className="text-[var(--color-loss)]" />
+                            <ArrowDownRight size={11} className="text-[var(--color-loss)]" />
                           )}
                         </div>
                       </div>
-                      <div className="mt-3 flex items-baseline justify-between">
-                        <span className="text-sm font-bold font-mono tabular-nums">${asset.price.toLocaleString()}</span>
-                        <span className={`text-[10px] font-bold font-mono tabular-nums ${isUp ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
+                      <div className="mt-2 sm:mt-3 flex items-baseline justify-between">
+                        <span className="text-xs sm:text-sm font-bold font-mono tabular-nums">${asset.price.toLocaleString()}</span>
+                        <span className={`text-[9px] sm:text-[10px] font-bold font-mono tabular-nums ${isUp ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
                           {isUp ? "+" : ""}{asset.change24h.toFixed(2)}%
                         </span>
                       </div>

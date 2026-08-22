@@ -193,10 +193,10 @@ export default function RiskCalculatorPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
         {/* -- LEFT: Inputs --------------------------------------------------- */}
         <form
-          className="lg:col-span-3 card p-5 space-y-5 animate-fade-in-delay-1"
+          className="lg:col-span-3 card p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fade-in-delay-1"
           onSubmit={(e) => {
             e.preventDefault();
             if (isFormReady()) handleCalculate();

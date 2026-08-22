@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { checkUserRateLimit } from "@/lib/rate-limit";
 import { rateLimitedError } from "@/lib/typed-errors";
+import { getSiteUrl } from "@/lib/site-url";
 
 // POST /api/stripe/portal
 // Redirects a logged-in user to their Stripe Billing Portal
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: { message: "Billing account not found. Subscribe first." } }, { status: 400 });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getSiteUrl();
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: profile.stripeCustomerId,

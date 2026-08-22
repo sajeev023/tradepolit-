@@ -64,56 +64,60 @@ export default function ChangelogPage() {
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--ink)] font-sans antialiased">
       <SlimNav />
 
-      <main className="max-w-[840px] mx-auto px-5 sm:px-6 pt-32 pb-24">
-        <div className="mb-8">
+      <main className="max-w-[840px] mx-auto px-4 sm:px-6 pt-20 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
+        <div className="mb-6 sm:mb-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-xs font-mono text-[var(--muted)] hover:text-[var(--ink)] transition-colors mb-6"
+            className="inline-flex items-center gap-2 text-xs font-mono text-[var(--muted)] hover:text-[var(--ink)] transition-colors mb-4 sm:mb-6"
           >
             <ArrowLeft size={14} /> Back to home
           </Link>
 
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <span className="tp-eyebrow-mono">Product Updates</span>
-            <h1 className="tp-display-xl !text-3xl sm:!text-4xl">Changelog</h1>
-            <p className="tp-body max-w-xl text-[14px]">
+            <h1 className="tp-display-xl !text-2xl sm:!text-3xl lg:!text-4xl">Changelog</h1>
+            <p className="tp-body max-w-xl text-[13px] sm:text-[14px]">
               Real shipped updates and verifiable improvements to TradCopilot. We ship weekly to improve analysis speed, guardrail precision, and memory capabilities.
             </p>
           </div>
         </div>
 
-        <hr className="border-[var(--color-border-subtle)] my-10" />
+        <hr className="border-[var(--color-border-subtle)] my-6 sm:my-10" />
 
-        <div className="space-y-12">
+        <div className="space-y-6 sm:space-y-10 lg:space-y-12">
           {updates.map((up, idx) => (
             <section
               key={up.version}
-              className="relative pl-0 sm:pl-8 sm:border-l sm:border-[var(--color-border-subtle)] space-y-4"
+              className="relative pl-0 sm:pl-8 sm:border-l sm:border-[var(--color-border-subtle)] space-y-3 sm:space-y-4"
             >
               {/* Desktop timeline marker */}
               <div className="hidden sm:flex absolute -left-[13px] top-1.5 w-6 h-6 rounded-full bg-[var(--bg-band)] border border-[var(--color-border-strong)] items-center justify-center">
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
               </div>
 
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <span className="text-xs font-mono text-[var(--muted)]">{up.date}</span>
                 <span className="text-xs font-mono text-[var(--muted)]">·</span>
-                <span className="text-xs font-mono font-semibold text-[var(--ink)]">{up.version}</span>
-                <span className="text-[10px] font-mono text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.3)] bg-[rgba(var(--accent-rgb),0.08)] rounded px-1.5 py-0.5">
+                <span className="text-xs font-mono font-semibold text-[var(--accent)]">{up.version}</span>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[rgba(var(--accent-rgb),0.1)] text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.25)]">
                   {up.badge}
                 </span>
               </div>
 
-              <div className="tc-card !p-6 space-y-4">
+              <div className="tc-card p-3.5 sm:p-5 lg:p-6 space-y-3 sm:space-y-4">
                 <div className="flex items-center gap-2.5">
-                  {up.icon}
-                  <h2 className="text-[17px] font-semibold text-[var(--ink)]">{up.title}</h2>
+                  <div className="w-7 h-7 rounded-md bg-[rgba(var(--accent-rgb),0.08)] border border-[rgba(var(--accent-rgb),0.2)] flex items-center justify-center shrink-0">
+                    {up.icon}
+                  </div>
+                  <h2 className="text-[15px] sm:text-[17px] font-bold text-[var(--ink)] tracking-tight">
+                    {up.title}
+                  </h2>
                 </div>
 
-                <ul className="space-y-2.5">
+                <ul className="space-y-2 text-[12px] sm:text-[13px] text-[var(--muted)] leading-relaxed">
                   {up.items.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-[13px] text-[var(--muted)] leading-relaxed">
-                      <span className="w-1 h-1 rounded-full bg-[var(--accent)] mt-2 shrink-0" />
+                    <li key={i} className="flex items-start gap-2.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] shrink-0 mt-1.5" />
                       <span>{item}</span>
                     </li>
                   ))}

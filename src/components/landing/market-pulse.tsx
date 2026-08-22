@@ -107,7 +107,7 @@ export function MarketPulse() {
 
   return (
     <section id="market-pulse" className="tc-section tc-section--wide scroll-mt-20">
-      <Reveal blur className="text-center space-y-3 mb-12 sm:mb-14">
+      <Reveal blur className="text-center space-y-2 sm:space-y-3 mb-6 sm:mb-10 lg:mb-14">
         <span className="tp-eyebrow-mono">02 / TELEMETRY</span>
         <h2 className="tp-h2">
           Real-time sentiment &amp; market momentum
@@ -117,20 +117,20 @@ export function MarketPulse() {
         </p>
       </Reveal>
 
-      <Reveal delay={80} className="tc-terminal p-5 sm:p-6">
-        <div className="grid lg:grid-cols-[auto_1fr] gap-6 lg:gap-10 items-center">
+      <Reveal delay={80} className="tc-terminal p-3.5 sm:p-5 lg:p-6">
+        <div className="grid lg:grid-cols-[auto_1fr] gap-5 sm:gap-6 lg:gap-10 items-center">
           {/* Fear & Greed */}
-          <div className="flex items-center gap-5 justify-center lg:justify-start">
+          <div className="flex items-center gap-4 sm:gap-5 justify-center lg:justify-start">
             <FearGreedRing value={fg?.value ?? 50} />
-            <div className="space-y-1">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">
+            <div className="space-y-0.5 sm:space-y-1">
+              <div className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">
                 Fear &amp; Greed
               </div>
               <div className="tp-h3" style={{ color: fg ? fgColor(fg.value) : "var(--ink)" }}>
                 {fg?.sentiment ?? "Neutral"}
               </div>
-              <div className="text-[11px] font-mono text-[var(--muted)]">
-                {updated ? `Updated ${updated} — sentiment snapshot` : offline ? "Feed offline" : "Loading snapshot…"}
+              <div className="text-[10px] sm:text-[11px] font-mono text-[var(--muted)]">
+                {updated ? `Updated ${updated.slice(-12, -4)} UTC` : offline ? "Feed offline" : "Loading snapshot…"}
               </div>
             </div>
           </div>
@@ -140,11 +140,11 @@ export function MarketPulse() {
 
           {/* Trending assets — snapshot prices */}
           <div className="min-w-0">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">
                 Trending · {updated ? `as of ${updated.slice(-12, -4)} UTC` : "snapshot"}
               </span>
-              <span className="tc-status-chip tc-status-chip--accent">
+              <span className="tc-status-chip tc-status-chip--accent text-[10px] sm:text-[11px]">
                 <span className="tc-status-chip__dot tc-status-chip__dot--pulse" /> Binance Snapshot
               </span>
             </div>
@@ -152,30 +152,30 @@ export function MarketPulse() {
               {trending.length === 0
                 ? offline
                   ? (
-                    <div className="py-3 text-[12px] font-mono text-[var(--muted)]">
+                    <div className="py-2 sm:py-3 text-[11px] sm:text-[12px] font-mono text-[var(--muted)]">
                       Live data unavailable — retrying.
                     </div>
                   )
                   : [0, 1, 2].map((i) => (
-                    <div key={i} className="flex items-center justify-between py-2.5">
-                      <div className="tc-skeleton h-4 w-24 rounded" />
-                      <div className="tc-skeleton h-4 w-20 rounded" />
+                    <div key={i} className="flex items-center justify-between py-2 sm:py-2.5">
+                      <div className="tc-skeleton h-3.5 sm:h-4 w-20 sm:w-24 rounded" />
+                      <div className="tc-skeleton h-3.5 sm:h-4 w-16 sm:w-20 rounded" />
                     </div>
                   ))
                 : trending.map((a) => (
-                    <div key={a.symbol} className="flex items-center justify-between py-2.5 gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="font-mono text-[11px] font-semibold text-[var(--ink)] w-9 shrink-0">
+                    <div key={a.symbol} className="flex items-center justify-between py-1.5 sm:py-2.5 gap-2 sm:gap-3">
+                      <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                        <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-[var(--ink)] w-8 sm:w-9 shrink-0">
                           {a.symbol}
                         </span>
-                        <span className="text-[12px] text-[var(--muted)] truncate">{a.name}</span>
+                        <span className="text-[11px] sm:text-[12px] text-[var(--muted)] truncate">{a.name}</span>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="tp-mono text-[13px] font-semibold text-[var(--ink)] tabular-nums">
+                      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+                        <span className="tp-mono text-[12px] sm:text-[13px] font-semibold text-[var(--ink)] tabular-nums">
                           ${fmtPrice(a.price)}
                         </span>
                         <span
-                          className={`tp-mono text-[12px] tabular-nums w-16 text-right ${
+                          className={`tp-mono text-[11px] sm:text-[12px] tabular-nums w-14 sm:w-16 text-right font-medium ${
                             a.change24h >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"
                           }`}
                         >
@@ -187,7 +187,7 @@ export function MarketPulse() {
             </div>
           </div>
         </div>
-        <p className="mt-5 text-[11px] text-[var(--muted)] font-mono leading-relaxed">
+        <p className="mt-3 sm:mt-5 text-[10px] sm:text-[11px] text-[var(--muted)] font-mono leading-relaxed">
           Sentiment via the CNN-style Fear &amp; Greed Index; prices via Binance. Figures may be
           delayed or neutral during feed outages. Not financial advice.
         </p>

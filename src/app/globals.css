@@ -1518,18 +1518,18 @@ iframe {
   font-family: var(--font-serif);
   font-weight: 500;
   font-optical-sizing: auto;
-  font-size: clamp(2.75rem, 1rem + 6vw, 4.75rem); /* 44 → 76px */
+  font-size: clamp(1.85rem, 1.15rem + 3.5vw, 4.75rem); /* ~30px on phone → 76px on desktop */
   letter-spacing: -0.02em;
-  line-height: 1.04;
+  line-height: 1.08;
   color: var(--ink);
 }
 .tp-h2 {
   font-family: var(--font-serif);
   font-weight: 500;
   font-optical-sizing: auto;
-  font-size: clamp(2rem, 1.4rem + 1.6vw, 2.5rem); /* 32 → 40px */
+  font-size: clamp(1.35rem, 1.1rem + 1.2vw, 2.5rem); /* ~24px on phone → 40px on desktop */
   letter-spacing: -0.015em;
-  line-height: 1.12;
+  line-height: 1.15;
   color: var(--ink);
 }
 /* Serif italic accent — the editorial emphasis that replaces the cyan
@@ -1545,11 +1545,11 @@ iframe {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.625rem;
+  gap: clamp(0.5rem, 0.4rem + 0.3vw, 0.625rem);
   font-family: var(--font-mono);
   font-size: 0.6875rem; /* 11px */
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -1576,24 +1576,29 @@ iframe {
 .tp-h3 {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 1.375rem; /* 22px */
+  font-size: clamp(1.125rem, 1.05rem + 0.35vw, 1.375rem); /* 18px on mobile → 22px on desktop */
   letter-spacing: -0.01em;
   line-height: 1.25;
   color: var(--ink);
 }
 .tp-body {
   font-family: var(--font-sans);
-  font-size: clamp(1rem, 0.97rem + 0.15vw, 1.0625rem); /* 16 → 17px */
-  line-height: 1.6;
+  font-size: clamp(0.875rem, 0.82rem + 0.25vw, 1.0625rem); /* 14px on mobile → 17px on desktop */
+  line-height: 1.55;
   color: var(--muted);
 }
 .tp-eyebrow-mono {
   font-family: var(--font-mono);
-  font-size: 0.75rem; /* 12px */
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-size: 0.6875rem; /* 11px on mobile */
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
+}
+@media (min-width: 640px) {
+  .tp-eyebrow-mono {
+    font-size: 0.75rem; /* 12px on desktop */
+  }
 }
 /* Mono data values — JetBrains Mono, tabular figures */
 .tp-mono {
@@ -1606,8 +1611,8 @@ iframe {
   width: 100%;
   max-width: 1120px;
   margin-inline: auto;
-  padding-inline: clamp(1.25rem, 0.5rem + 3vw, 2.5rem);
-  padding-block: clamp(4rem, 1rem + 8vw, 7rem);
+  padding-inline: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
+  padding-block: clamp(2.5rem, 1rem + 5vw, 6.5rem); /* 40px on mobile → 104px on desktop */
 }
 .tc-section--narrow { max-width: 880px; }
 .tc-section--wide   { max-width: 1200px; }
@@ -1628,8 +1633,8 @@ iframe {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1.5rem;
+  gap: 0.625rem;
+  padding: 1.125rem; /* 18px on mobile */
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 46%),
     var(--surface);
@@ -1640,6 +1645,12 @@ iframe {
     0 1px 2px rgba(0, 0, 0, 0.35),
     0 8px 24px rgba(0, 0, 0, 0.35);
   transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+@media (min-width: 640px) {
+  .tc-card {
+    gap: 0.75rem;
+    padding: 1.5rem; /* 24px on desktop */
+  }
 }
 .tc-card:hover {
   border-color: var(--color-border-strong);

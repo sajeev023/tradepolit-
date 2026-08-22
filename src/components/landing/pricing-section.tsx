@@ -57,7 +57,7 @@ const tiers = [
 export function PricingSection() {
   return (
     <section id="pricing" className="tc-section tc-section--wide scroll-mt-20">
-      <Reveal blur className="text-center space-y-3 mb-12">
+      <Reveal blur className="text-center space-y-2 sm:space-y-3 mb-6 sm:mb-10 lg:mb-12">
         <span className="tp-eyebrow-mono">04 / PRICING</span>
         <h2 className="tp-h2">
           Transparent, utility-based pricing
@@ -68,58 +68,58 @@ export function PricingSection() {
       </Reveal>
 
       {/* Calculator directly above the cards */}
-      <Reveal delay={80} className="max-w-3xl mx-auto mb-8">
+      <Reveal delay={80} className="max-w-3xl mx-auto mb-5 sm:mb-8">
         <ExpectancyCalculator />
       </Reveal>
 
-      <div className="grid md:grid-cols-2 gap-5 sm:gap-6 max-w-3xl mx-auto items-stretch">
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto items-stretch">
         {tiers.map((tier, i) => (
           <Reveal
             key={tier.name}
             delay={i * 80}
-            className={`tc-card h-full flex flex-col justify-between ${
+            className={`tc-card p-4 sm:p-6 lg:p-7 h-full flex flex-col justify-between ${
               tier.isPro ? "border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(var(--accent-rgb),0.02)]" : ""
             }`}
           >
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-mono text-[11px] font-semibold text-[var(--accent)] tracking-wider">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-[var(--accent)] tracking-wider">
                   {tier.tag}
                 </span>
                 {tier.isPro && (
-                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[rgba(var(--accent-rgb),0.12)] text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.25)]">
+                  <span className="text-[9px] sm:text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[rgba(var(--accent-rgb),0.12)] text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.25)]">
                     7-DAY TRIAL
                   </span>
                 )}
               </div>
 
-              <h3 className="text-[20px] font-bold text-[var(--ink)] tracking-tight">
+              <h3 className="text-[18px] sm:text-[20px] font-bold text-[var(--ink)] tracking-tight">
                 {tier.name}
               </h3>
 
-              <div className="flex items-baseline gap-1.5 my-2">
-                <span className="font-mono text-[2.25rem] font-bold text-[var(--ink)] tabular-nums">
+              <div className="flex items-baseline gap-1.5 my-1.5 sm:my-2">
+                <span className="font-mono text-[1.85rem] sm:text-[2.25rem] font-bold text-[var(--ink)] tabular-nums">
                   {tier.price}
                 </span>
-                <span className="text-[12px] text-[var(--muted)] font-mono">/ {tier.cadence}</span>
+                <span className="text-[11px] sm:text-[12px] text-[var(--muted)] font-mono">/ {tier.cadence}</span>
               </div>
 
-              <p className="text-[13px] text-[var(--muted)] leading-relaxed mb-6">
+              <p className="text-[12px] sm:text-[13px] text-[var(--muted)] leading-relaxed mb-4 sm:mb-6">
                 {tier.description}
               </p>
 
               <div className="tc-card__divider" />
 
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 sm:space-y-4 my-4 sm:my-6">
                 {tier.groups.map((group) => (
-                  <div key={group.title} className="space-y-1.5">
-                    <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--muted)]">
+                  <div key={group.title} className="space-y-1 sm:space-y-1.5">
+                    <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-[var(--muted)]">
                       {group.title}
                     </div>
-                    <ul className="space-y-1.5">
+                    <ul className="space-y-1 sm:space-y-1.5">
                       {group.items.map((item) => (
-                        <li key={item} className="flex items-start gap-2 text-[12px] text-[var(--ink)]">
-                          <Check size={13} className="text-[var(--accent)] shrink-0 mt-0.5" />
+                        <li key={item} className="flex items-start gap-2 text-[11px] sm:text-[12px] text-[var(--ink)]">
+                          <Check size={12} className="text-[var(--accent)] shrink-0 mt-0.5" />
                           <span>{item}</span>
                         </li>
                       ))}
@@ -131,7 +131,7 @@ export function PricingSection() {
 
             <Link
               href={tier.href}
-              className={`h-11 rounded-md text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-transform active:scale-[0.98] ${
+              className={`h-10 sm:h-11 rounded-md text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-transform active:scale-[0.98] ${
                 tier.isPro
                   ? "text-[var(--bg-primary)] shadow-sm"
                   : "border border-[var(--color-border-strong)] text-[var(--ink)] hover:border-[var(--accent)]"

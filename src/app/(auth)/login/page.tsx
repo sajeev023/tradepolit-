@@ -414,9 +414,9 @@ function LoginPageContent() {
           border-width: 0 2px 2px 0;
           transform: rotate(45deg);
         }
-        #remember:focus-visible + .remember-check {
-          outline: 2px solid var(--color-accent-primary);
-          outline-offset: 2px;
+        .login-card { padding: 22px 18px !important; }
+        @media (min-width: 640px) {
+          .login-card { padding: 36px 32px !important; }
         }
       `}</style>
 
@@ -430,7 +430,6 @@ function LoginPageContent() {
           WebkitBackdropFilter: "blur(20px)",
           border: "1px solid rgba(255,255,255,0.07)",
           borderRadius: 20,
-          padding: "36px 32px",
           boxShadow: "0 0 0 1px rgba(255,255,255,0.03), 0 24px 64px rgba(0,0,0,0.6)",
         }}
       >

@@ -20,12 +20,12 @@ import Link from "next/link";
 /* ─── Loading Skeletons ─── */
 function StatSkeleton() {
   return (
-    <div className="card p-5 flex flex-col justify-between min-h-[130px]">
+    <div className="card p-3.5 sm:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[130px]">
       <div>
-        <div className="skeleton h-3 w-20 mb-3" />
-        <div className="skeleton h-7 w-28" />
+        <div className="skeleton h-3 w-16 sm:w-20 mb-2 sm:mb-3" />
+        <div className="skeleton h-6 sm:h-7 w-20 sm:w-28" />
       </div>
-      <div className="skeleton h-3 w-36 mt-3" />
+      <div className="skeleton h-2.5 sm:h-3 w-28 sm:w-36 mt-1.5 sm:mt-3" />
     </div>
   );
 }
@@ -222,42 +222,42 @@ export default function AnalyticsPage() {
       )}
 
       {/* Primary KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           {
             label: "Net P/L",
             value: `$${metrics.totalPnL.toFixed(2)}`,
             trend: isProfit,
             sub: "All time net profit",
-            icon: <TrendingUp size={15} />,
+            icon: <TrendingUp size={14} />,
           },
           {
             label: "Win Rate",
             value: `${(metrics.winRate * 100).toFixed(1)}%`,
             trend: metrics.winRate >= 0.5,
             sub: `${winsCount(metrics)} wins / ${lossesCount(metrics)} losses`,
-            icon: <Target size={15} />,
+            icon: <Target size={14} />,
           },
           {
             label: "Profit Factor",
             value: metrics.profitFactor.toFixed(2),
             trend: metrics.profitFactor >= 1.0,
-            sub: "Gross Wins / Gross Losses",
-            icon: <Award size={15} />,
+            sub: "Gross Wins / Losses",
+            icon: <Award size={14} />,
           },
           {
             label: "Sharpe Ratio",
             value: metrics.sharpeRatio.toFixed(2),
             trend: metrics.sharpeRatio >= 1.0,
-            sub: "Risk-adjusted performance",
-            icon: <Flame size={15} />,
+            sub: "Risk-adjusted score",
+            icon: <Flame size={14} />,
           },
         ].map((stat, idx) => (
-          <div key={idx} className={`card p-5 flex flex-col justify-between min-h-[130px] animate-fade-in-delay-${idx + 1}`}>
+          <div key={idx} className={`card p-3.5 sm:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[130px] animate-fade-in-delay-${idx + 1}`}>
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
                 <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0"
                   style={{
                     backgroundColor: stat.trend ? "var(--color-profit-bg)" : "var(--color-loss-bg)",
                     color: stat.trend ? "var(--color-profit)" : "var(--color-loss)",
@@ -265,15 +265,15 @@ export default function AnalyticsPage() {
                 >
                   {stat.icon}
                 </div>
-                <p className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "var(--color-text-tertiary)" }}>
+                <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold truncate" style={{ color: "var(--color-text-tertiary)" }}>
                   {stat.label}
                 </p>
               </div>
-              <p className="text-2xl font-bold font-mono tabular-nums" style={{ color: stat.trend ? "var(--color-profit)" : "var(--color-loss)" }}>
+              <p className="text-xl sm:text-2xl font-bold font-mono tabular-nums mt-0.5 sm:mt-1" style={{ color: stat.trend ? "var(--color-profit)" : "var(--color-loss)" }}>
                 {stat.value}
               </p>
             </div>
-            <p className="text-[11px] mt-3" style={{ color: "var(--color-text-tertiary)" }}>
+            <p className="text-[10px] sm:text-[11px] mt-1.5 sm:mt-3 truncate" style={{ color: "var(--color-text-tertiary)" }}>
               {stat.sub}
             </p>
           </div>

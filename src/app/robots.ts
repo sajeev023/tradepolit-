@@ -1,16 +1,48 @@
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://tradcopilot.com";
+  const baseUrl = getSiteUrl();
 
   return {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/pricing", "/terms", "/privacy", "/refund", "/disclaimer", "/cookies", "/acceptable-use"],
-        disallow: ["/api/", "/admin/", "/dashboard/", "/settings/", "/charts/", "/watchlist/", "/news/", "/journal/", "/login", "/signup"],
+        allow: [
+          "/",
+          "/pricing",
+          "/changelog",
+          "/terms",
+          "/privacy",
+          "/refund",
+          "/disclaimer",
+          "/cookies",
+          "/acceptable-use",
+        ],
+        disallow: [
+          "/api/",
+          "/auth/",
+          "/admin/",
+          "/dashboard/",
+          "/settings/",
+          "/charts/",
+          "/watchlist/",
+          "/news/",
+          "/journal/",
+          "/ai-assistant/",
+          "/alerts/",
+          "/analytics/",
+          "/backtester/",
+          "/market-pulse/",
+          "/risk-calculator/",
+          "/login",
+          "/signup",
+          "/forgot-password",
+          "/reset-password",
+        ],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   };
 }
+

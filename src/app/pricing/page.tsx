@@ -33,13 +33,13 @@ export default function PricingPage() {
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-10 py-14 sm:py-20 lg:py-28">
-        <div className="text-center space-y-3 mb-16 animate-enter">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-10 py-8 sm:py-16 lg:py-24">
+        <div className="text-center space-y-2 sm:space-y-3 mb-6 sm:mb-12 lg:mb-16 animate-enter">
           <span className="section-eyebrow">Pricing</span>
-          <h1 className="text-[36px] sm:text-[44px] font-semibold tracking-[-0.03em] text-[var(--color-text-primary)]">
+          <h1 className="text-[28px] sm:text-[38px] lg:text-[44px] font-semibold tracking-[-0.03em] text-[var(--color-text-primary)]">
             Choose Your Plan
           </h1>
-          <p className="text-[15px] text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
+          <p className="text-[13px] sm:text-[15px] text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
             Start free. Upgrade when you need more. Cancel anytime.
           </p>
         </div>

@@ -374,15 +374,15 @@ function JournalPageContent() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b text-xs font-semibold uppercase tracking-wider" style={{ borderColor: "var(--color-border-subtle)", color: "var(--color-text-tertiary)" }}>
-                  <th className="px-6 py-4">Instrument</th>
-                  <th className="px-6 py-4">Type</th>
-                  <th className="px-6 py-4">Dir</th>
-                  <th className="px-6 py-4">Entry</th>
-                  <th className="px-6 py-4">Exit</th>
-                  <th className="px-6 py-4 text-right">PnL</th>
-                  <th className="px-6 py-4">R-Mult</th>
-                  <th className="px-6 py-4">Date</th>
-                  <th className="px-6 py-4">Actions</th>
+                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Instrument</th>
+                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Type</th>
+                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Dir</th>
+                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Entry</th>
+                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Exit</th>
+                  <th className="px-3.5 py-3 sm:px-6 sm:py-4 text-right">PnL</th>
+                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">R-Mult</th>
+                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Date</th>
+                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y text-sm font-medium" style={{ borderColor: "var(--color-border-subtle)" }}>
@@ -404,35 +404,35 @@ function JournalPageContent() {
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--color-bg-hover)")}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                     >
-                      <td className="px-6 py-4 font-mono font-bold" style={{ color: "var(--color-text-primary)" }}>
+                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono font-bold" style={{ color: "var(--color-text-primary)" }}>
                         {trade.instrument}
                       </td>
-                      <td className="px-6 py-4 text-xs font-bold tracking-wider">
+                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 text-xs font-bold tracking-wider">
                         <span className="px-2 py-0.5 rounded" style={{ backgroundColor: "var(--color-bg-tertiary)", color: "var(--color-text-secondary)" }}>
                           {trade.assetClass}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-xs font-bold">
+                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 text-xs font-bold">
                         <span className={`px-2 py-0.5 rounded ${isLong ? "text-[var(--color-profit)] bg-[var(--color-profit-bg)]" : "text-[var(--color-loss)] bg-[var(--color-loss-bg)]"}`}>
                           {trade.direction}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono tabular-nums">
+                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono tabular-nums">
                         {Number(trade.entryPrice).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 font-mono tabular-nums">
+                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono tabular-nums">
                         {trade.exitPrice ? Number(trade.exitPrice).toLocaleString() : "—"}
                       </td>
-                      <td className="px-6 py-4 font-mono text-right tabular-nums font-bold" style={{ color: pnlColor }}>
+                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono text-right tabular-nums font-bold" style={{ color: pnlColor }}>
                         {pnlNum ? `${isWin ? "+" : ""}${pnlNum.toFixed(2)}` : "—"}
                       </td>
-                      <td className="px-6 py-4 font-mono tabular-nums">
+                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono tabular-nums">
                         {trade.rMultiple ? `${Number(trade.rMultiple).toFixed(2)}R` : "—"}
                       </td>
-                      <td className="px-6 py-4 text-xs text-secondary" style={{ color: "var(--color-text-secondary)" }}>
+                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 text-xs text-secondary" style={{ color: "var(--color-text-secondary)" }}>
                         {new Date(trade.openedAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-3.5 py-3 sm:px-6 sm:py-4" onClick={(e) => e.stopPropagation()}>
                         {deleteConfirmId === trade.id ? (
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-[var(--color-loss)] font-semibold">Sure?</span>

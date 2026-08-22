@@ -28,11 +28,11 @@ export default function LandingPage() {
       <SlimNav />
 
       {/* ━━━ 2 · HERO — editorial masthead + full-width live desk ━━━ */}
-      <header className="relative max-w-[1200px] mx-auto px-5 sm:px-6 lg:px-10 pt-[120px] sm:pt-[140px] lg:pt-[160px] pb-14 lg:pb-20">
+      <header className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 pt-[80px] sm:pt-[130px] lg:pt-[160px] pb-8 sm:pb-14 lg:pb-20">
         {/* Editorial masthead — a publication-style dateline carrying one live
             datum (BTC, public Binance WS). Replaces the generic "who's it for"
             status chip with something that reads as a real desk. */}
-        <div className="tp-masthead mb-10 sm:mb-12 lg:mb-14">
+        <div className="tp-masthead mb-5 sm:mb-8 lg:mb-12">
           <span>Vol. 01</span>
           <span className="tp-masthead__sep" />
           <span>The Trader&apos;s Copilot</span>
@@ -58,7 +58,7 @@ export default function LandingPage() {
             The italic accent word replaces the old cyan gradient phrase:
             emphasis comes from the serif italic, not from color. The blur
             reveal is the page's one signature motion moment. */}
-        <Reveal blur className="max-w-[920px] space-y-5 sm:space-y-6">
+        <Reveal blur className="max-w-[920px] space-y-4 sm:space-y-6">
           <h1 className="tp-display-xl">
             Execute your trading plan with <span className="tp-serif-italic">institutional discipline.</span>
           </h1>
@@ -76,8 +76,8 @@ export default function LandingPage() {
             REAL candles, indicators, WS price; no fabricated AI. A subtle,
             scroll-scrubbed parallax (GSAP ScrollTrigger, reduced-motion off)
             gives the live desk a sense of depth as it passes the viewport. */}
-        <div className="mt-10 lg:mt-12">
-          <Suspense fallback={<div className="h-[420px] tc-skeleton rounded-2xl" />}>
+        <div className="mt-6 sm:mt-10 lg:mt-12">
+          <Suspense fallback={<div className="h-[320px] sm:h-[420px] tc-skeleton rounded-2xl" />}>
             <ScrollParallax distance={14}>
               <HeroWorkbench />
             </ScrollParallax>
@@ -86,7 +86,7 @@ export default function LandingPage() {
       </header>
 
       {/* ━━━ 3 · LIVE TICKER (real WS prices) ━━━━━━━━━━━━━━━ */}
-      <section className="tc-band-alt py-3">
+      <section className="tc-band-alt py-2.5 sm:py-3">
         <LiveTicker />
       </section>
 
@@ -114,7 +114,7 @@ export default function LandingPage() {
 
       {/* ━━━ 9 · FAQ (skeptic first-person) ━━━━━━━━━━━━━━━━ */}
       <section id="faq" className="tc-section tc-section--narrow scroll-mt-20">
-        <Reveal blur className="text-center space-y-3 mb-12">
+        <Reveal blur className="text-center space-y-2.5 sm:space-y-3 mb-6 sm:mb-10 lg:mb-12">
           <span className="tp-eyebrow-mono">05 / QUESTIONS</span>
           <h2 className="tp-h2">
             Frequently asked questions about the terminal
@@ -129,9 +129,9 @@ export default function LandingPage() {
       <FinalCta />
 
       {/* ━━━ FOOTER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <footer className="border-t border-[var(--color-border-subtle)] py-10 sm:py-12 bg-[var(--bg-band)]">
-        <div className="max-w-[1120px] mx-auto px-5 sm:px-6 lg:px-10 space-y-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <footer className="border-t border-[var(--color-border-subtle)] py-8 sm:py-10 lg:py-12 bg-[var(--bg-band)]">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-10 space-y-6 sm:space-y-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
             <div className="flex items-center gap-2.5">
               <div
                 className="flex items-center justify-center rounded-md w-6 h-6"
@@ -145,7 +145,7 @@ export default function LandingPage() {
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-[12px] text-[var(--muted)]">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[12px] text-[var(--muted)]">
               <a
                 href="https://x.com/tradcopilot"
                 target="_blank"
@@ -187,9 +187,9 @@ export default function LandingPage() {
             Analytical workstation for educational and discipline purposes only.
           </p>
 
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2 border-t border-[var(--color-border-subtle)]">
-            <p className="text-xs text-[var(--muted)]">© {year} TradCopilot Inc. All rights reserved.</p>
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--muted)]">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 pt-2 border-t border-[var(--color-border-subtle)]">
+            <p className="text-[11px] sm:text-xs text-[var(--muted)]">© {year} TradCopilot Inc. All rights reserved.</p>
+            <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-1.5 text-[11px] sm:text-xs text-[var(--muted)]">
               <Link href="/changelog" className="hover:text-[var(--accent)] font-medium transition-colors">Changelog</Link>
               <Link href="/terms" className="hover:text-[var(--ink)] transition-colors">Terms</Link>
               <Link href="/privacy" className="hover:text-[var(--ink)] transition-colors">Privacy</Link>

@@ -66,18 +66,18 @@ export function ExpectancyCalculator() {
   }, [winRate, rr, trades]);
 
   return (
-    <div className="tc-card">
-      <div className="flex items-center justify-between mb-5">
+    <div className="tc-card p-3.5 sm:p-5 lg:p-6">
+      <div className="flex items-center justify-between mb-3 sm:mb-5">
         <div>
-          <span className="tc-card__badge">Expectancy calculator</span>
-          <h3 className="tp-h3 mt-1">Pressure-test your edge</h3>
+          <span className="tc-card__badge text-[10px] sm:text-[11px]">Expectancy calculator</span>
+          <h3 className="tp-h3 mt-0.5 sm:mt-1">Pressure-test your edge</h3>
         </div>
-        <span className="tc-status-chip tc-status-chip--accent">
+        <span className="tc-status-chip tc-status-chip--accent text-[11px]">
           <span className="tc-status-chip__dot tc-status-chip__dot--pulse" /> Live
         </span>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-5 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-3 sm:mb-5">
         <Slider label="Win rate" value={winRate} min={10} max={90} step={1} unit="%" onChange={setWinRate} />
         <Slider label="Risk : Reward" value={rr} min={0.5} max={5} step={0.1} unit="R" onChange={setRr} />
         <Slider label="Trades / week" value={trades} min={1} max={100} step={1} unit="" onChange={setTrades} />
@@ -85,27 +85,27 @@ export function ExpectancyCalculator() {
 
       <div className="tc-card__divider" />
 
-      <div className="grid grid-cols-3 gap-4 pt-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-3 sm:pt-4">
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Per trade</div>
-          <div className="tp-mono text-xl font-semibold text-[var(--ink)] tabular-nums">
+          <div className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Per trade</div>
+          <div className="tp-mono text-base sm:text-xl font-semibold text-[var(--ink)] tabular-nums">
             {perTrade >= 0 ? "+" : ""}{perTrade.toFixed(2)}R
           </div>
         </div>
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Weekly</div>
-          <div className={`tp-mono text-xl font-semibold tabular-nums ${positive ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+          <div className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Weekly</div>
+          <div className={`tp-mono text-base sm:text-xl font-semibold tabular-nums ${positive ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
             {weeklyR >= 0 ? "+" : ""}{weeklyR.toFixed(1)}R
           </div>
         </div>
         <div>
-          <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Weekly $</div>
-          <div className={`tp-mono text-2xl sm:text-3xl font-bold tabular-nums ${positive ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
+          <div className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Weekly $</div>
+          <div className={`tp-mono text-lg sm:text-2xl lg:text-3xl font-bold tabular-nums ${positive ? "text-[var(--green)]" : "text-[var(--red)]"}`}>
             {weeklyUsd >= 0 ? "+" : "−"}${Math.abs(weeklyUsd).toLocaleString("en-US", { maximumFractionDigits: 0 })}
           </div>
         </div>
       </div>
-      <p className="mt-4 text-[11px] text-[var(--muted)] font-mono leading-relaxed">
+      <p className="mt-2.5 sm:mt-4 text-[10px] sm:text-[11px] text-[var(--muted)] font-mono leading-relaxed">
         Illustrative — assumes $100 risk per trade. Expectancy = (winRate · R:R) − (lossRate · 1). Not financial advice.
       </p>
     </div>

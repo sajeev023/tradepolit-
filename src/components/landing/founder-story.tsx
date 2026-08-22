@@ -27,7 +27,7 @@ const principles = [
 export function FounderStory() {
   return (
     <section className="tc-section tc-section--narrow tc-band-alt">
-      <Reveal blur className="text-center space-y-4 mb-12">
+      <Reveal blur className="text-center space-y-2 sm:space-y-3 mb-6 sm:mb-10 lg:mb-12">
         <span className="tp-eyebrow-mono">FOUNDATION</span>
         <h2 className="tp-h2 max-w-2xl mx-auto">
           Built for disciplined execution
@@ -37,18 +37,18 @@ export function FounderStory() {
         </p>
       </Reveal>
 
-      <div className="grid sm:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
         {principles.map((p, i) => {
           const Icon = p.icon;
           return (
-            <Reveal key={p.title} delay={i * 60} className="tc-card space-y-2">
-              <div className="flex items-center gap-2.5 text-[var(--accent)] font-semibold text-[13px]">
-                <div className="w-7 h-7 rounded bg-[rgba(var(--accent-rgb),0.08)] border border-[rgba(var(--accent-rgb),0.2)] flex items-center justify-center">
-                  <Icon size={14} />
+            <Reveal key={p.title} delay={i * 60} className="tc-card space-y-1.5 sm:space-y-2 p-3.5 sm:p-4 lg:p-5">
+              <div className="flex items-center gap-2 sm:gap-2.5 text-[var(--accent)] font-semibold text-[12px] sm:text-[13px]">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded bg-[rgba(var(--accent-rgb),0.08)] border border-[rgba(var(--accent-rgb),0.2)] flex items-center justify-center">
+                  <Icon size={13} />
                 </div>
                 <span>{p.title}</span>
               </div>
-              <p className="tc-card__body text-[12px] leading-relaxed">
+              <p className="tc-card__body text-[11px] sm:text-[12px] leading-relaxed">
                 {p.body}
               </p>
             </Reveal>

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { checkUserRateLimit } from "@/lib/rate-limit";
 import { rateLimitedError } from "@/lib/typed-errors";
+import { getSiteUrl } from "@/lib/site-url";
 
 // POST /api/stripe/create-checkout
 // Creates a Stripe Checkout Session for the PRO Plan ($7.49/month)
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const priceId = process.env.STRIPE_PRICE_ID || "price_mock_pro_tier";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getSiteUrl();
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

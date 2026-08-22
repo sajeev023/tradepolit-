@@ -213,13 +213,13 @@ export function HeroWorkbench() {
   return (
     <div ref={rootRef} className="tc-terminal !p-0 overflow-hidden w-full">
       {/* ── Top row: symbol tabs + live price + status ── */}
-      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--color-border-subtle)]">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 border-b border-[var(--color-border-subtle)]">
+        <div className="flex items-center gap-1 sm:gap-1.5">
           {SYMBOLS.map((s) => (
             <button
               key={s}
               onClick={() => setSymbol(s)}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-mono font-medium tracking-wide transition-colors ${
+              className={`px-2 sm:px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-mono font-medium tracking-wide transition-colors ${
                 s === symbol
                   ? "bg-[rgba(47,198,232,0.12)] text-[var(--accent)] border border-[rgba(47,198,232,0.25)]"
                   : "text-[var(--muted)] hover:text-[var(--ink)] border border-transparent"
@@ -230,12 +230,12 @@ export function HeroWorkbench() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2.5">
-          <span ref={priceRef} className="text-[15px] font-mono font-semibold tabular-nums text-[var(--ink)]">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <span ref={priceRef} className="text-[13px] sm:text-[15px] font-mono font-semibold tabular-nums text-[var(--ink)]">
             {booting ? `$${fmtPrice(bootStart ?? 0)}` : `$${fmtPrice(displayPrice)}`}
           </span>
           <span
-            className={`text-[11px] font-mono tabular-nums ${
+            className={`text-[10px] sm:text-[11px] font-mono tabular-nums ${
               changePct == null
                 ? "text-[var(--muted)]"
                 : changePct >= 0
@@ -249,39 +249,38 @@ export function HeroWorkbench() {
       </div>
 
       {/* ── Chart + side readout ── */}
-      {/* ── Chart + side readout ── */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_176px]">
-        <div className="relative p-3 min-h-[260px]">
+        <div className="relative p-2 sm:p-3 min-h-[190px] sm:min-h-[230px] md:min-h-[260px]">
           {loading ? (
             <ChartSkeleton />
           ) : candles && candles.length > 1 ? (
             <CandleChart candles={candles} support={tech?.support} resistance={tech?.resistance} />
           ) : (
-            <div className="h-[260px] flex items-center justify-center text-[12px] text-[var(--muted)] font-mono">
+            <div className="h-[180px] sm:h-[220px] md:h-[260px] flex items-center justify-center text-[12px] text-[var(--muted)] font-mono">
               Chart feed reconnecting…
             </div>
           )}
-          <div className="absolute top-3 left-3 flex items-center gap-2">
-            <span className="tc-status-chip tc-status-chip--accent">
+          <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex items-center gap-2">
+            <span className="tc-status-chip tc-status-chip--accent text-[11px] sm:text-[12px]">
               <span className={`tc-status-chip__dot ${live ? "tc-status-chip__dot--pulse" : ""}`} />
               {simulated ? "ILLUSTRATIVE" : "LIVE"}
             </span>
-            <span className="text-[10px] font-mono text-[var(--muted)]">{TF}</span>
+            <span className="text-[9px] sm:text-[10px] font-mono text-[var(--muted)]">{TF}</span>
           </div>
         </div>
 
         {/* Indicator + data readout: composed skeleton while loading, zero dashes after load */}
         {loading ? (
-          <div className="border-t md:border-t-0 md:border-l border-[var(--color-border-subtle)] p-3 grid grid-cols-2 md:grid-cols-1 gap-2.5">
+          <div className="border-t md:border-t-0 md:border-l border-[var(--color-border-subtle)] p-2.5 sm:p-3 grid grid-cols-3 sm:grid-cols-2 md:grid-cols-1 gap-2 sm:gap-2.5">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="space-y-1.5 py-0.5">
-                <div className="tc-skeleton h-2.5 w-14 rounded" />
-                <div className="tc-skeleton h-4 w-20 rounded" />
+              <div key={i} className="space-y-1 py-0.5">
+                <div className="tc-skeleton h-2 sm:h-2.5 w-12 sm:w-14 rounded" />
+                <div className="tc-skeleton h-3.5 sm:h-4 w-16 sm:w-20 rounded" />
               </div>
             ))}
           </div>
         ) : (
-          <div className="border-t md:border-t-0 md:border-l border-[var(--color-border-subtle)] p-3 grid grid-cols-2 md:grid-cols-1 gap-2.5 tc-boot-readout">
+          <div className="border-t md:border-t-0 md:border-l border-[var(--color-border-subtle)] p-2.5 sm:p-3 grid grid-cols-3 sm:grid-cols-2 md:grid-cols-1 gap-2 sm:gap-2.5 tc-boot-readout">
             <Readout label="RSI(14)" value={tech?.rsi != null ? tech.rsi.toFixed(1) : "52.4"} accent={tech?.rsi != null && tech.rsi > 70 ? "red" : tech?.rsi != null && tech.rsi < 30 ? "green" : undefined} />
             <Readout label="MACD" value={tech?.macdHistogram != null ? (tech.macdHistogram >= 0 ? "+" : "") + tech.macdHistogram.toFixed(3) : "+0.042"} accent={tech?.macdHistogram != null ? (tech.macdHistogram >= 0 ? "green" : "red") : "green"} />
             <Readout label="EMA 9/21" value={tech?.emaCrossover ?? (tech?.trend === "BULLISH" ? "BULLISH" : tech?.trend === "BEARISH" ? "BEARISH" : "BULLISH")} accent={tech?.emaCrossover === "BEARISH" || tech?.trend === "BEARISH" ? "red" : "green"} />
@@ -293,7 +292,7 @@ export function HeroWorkbench() {
       </div>
 
       {/* ── Bias + setup strip ── */}
-      <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-[var(--color-border-subtle)]">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-2.5 border-t border-[var(--color-border-subtle)]">
         {loading ? (
           <>
             <div className="flex items-center gap-2">
@@ -307,10 +306,10 @@ export function HeroWorkbench() {
           </>
         ) : (
           <>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Bias</span>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Bias</span>
               <span
-                className={`text-[11px] font-mono font-semibold ${
+                className={`text-[10px] sm:text-[11px] font-mono font-semibold ${
                   tech?.bias?.includes("LONG") || tech?.bias?.includes("BUY")
                     ? "text-[var(--green)]"
                     : tech?.bias?.includes("SHORT") || tech?.bias?.includes("SELL")
@@ -321,10 +320,10 @@ export function HeroWorkbench() {
                 {tech?.bias || "BUY/LONG"}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Setup</span>
-              <span className="text-[11px] font-mono font-semibold text-[var(--ink)]">{tech?.setupQuality || "A+ SELECT"}</span>
-              <span className="tc-badge tc-badge--accent">{tech?.confidence || "HIGH"}</span>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--muted)]">Setup</span>
+              <span className="text-[10px] sm:text-[11px] font-mono font-semibold text-[var(--ink)]">{tech?.setupQuality || "A+ SELECT"}</span>
+              <span className="tc-badge tc-badge--accent text-[10px] sm:text-[11px] py-0.5 px-1.5 sm:px-2">{tech?.confidence || "HIGH"}</span>
             </div>
           </>
         )}
@@ -385,7 +384,7 @@ function CandleChart({
       width="100%"
       height="100%"
       preserveAspectRatio="none"
-      className="block h-[240px] md:h-[260px]"
+      className="block h-[180px] sm:h-[220px] md:h-[260px]"
       role="img"
       aria-label={`${slice.length} most recent real candles`}
     >
@@ -463,7 +462,7 @@ function Readout({
   return (
     <div className="min-w-0">
       <div className="text-[9px] font-mono uppercase tracking-wider text-[var(--muted)]">{label}</div>
-      <div className={`text-[12px] font-mono font-semibold tabular-nums truncate ${color}`}>
+      <div className={`text-[11px] sm:text-[12px] font-mono font-semibold tabular-nums truncate ${color}`}>
         {value}
       </div>
     </div>
@@ -472,12 +471,12 @@ function Readout({
 
 function ChartSkeleton() {
   return (
-    <div className="h-[240px] md:h-[260px] flex flex-col justify-between p-2">
+    <div className="h-[180px] sm:h-[220px] md:h-[260px] flex flex-col justify-between p-2">
       <div className="flex items-center justify-between">
         <div className="tc-skeleton h-3.5 w-24 rounded" />
         <div className="tc-skeleton h-3.5 w-16 rounded" />
       </div>
-      <div className="flex items-end gap-1.5 h-[180px] w-full pt-4 pb-2">
+      <div className="flex items-end gap-1.5 h-[130px] sm:h-[180px] w-full pt-3 pb-1.5">
         {Array.from({ length: 30 }).map((_, i) => (
           <div
             key={i}
@@ -555,19 +554,19 @@ function WorkbenchChat({
   }, []);
 
   return (
-    <div className="border-t border-[var(--color-border-subtle)] p-3">
+    <div className="border-t border-[var(--color-border-subtle)] p-2.5 sm:p-3">
       {asked ? (
-        <div className="space-y-2.5 mb-3">
+        <div className="space-y-2 mb-2.5 sm:space-y-2.5 sm:mb-3">
           {/* User query */}
-          <div className="rounded-lg bg-[rgba(47,198,232,0.06)] border border-[rgba(47,198,232,0.16)] px-3 py-2 text-[11px] text-[var(--ink)] font-mono">
+          <div className="rounded-lg bg-[rgba(47,198,232,0.06)] border border-[rgba(47,198,232,0.16)] px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] text-[var(--ink)] font-mono">
             {asked}
           </div>
 
           {/* AI streamed thesis demo */}
           {demoCount === 1 && (
-            <div className="rounded-lg bg-[var(--bg-band)] border border-[var(--color-border-default)] p-3 space-y-2">
+            <div className="rounded-lg bg-[var(--bg-band)] border border-[var(--color-border-default)] p-2.5 sm:p-3 space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="tc-status-chip tc-status-chip--accent">
+                <span className="tc-status-chip tc-status-chip--accent text-[11px]">
                   <span className="tc-status-chip__dot tc-status-chip__dot--pulse" /> Copilot Thesis
                 </span>
                 <span className="text-[9px] font-mono text-[var(--muted)] border border-[var(--color-border-subtle)] rounded px-1.5 py-0.5">
@@ -575,14 +574,14 @@ function WorkbenchChat({
                 </span>
               </div>
 
-              <p className="text-[12px] font-mono text-[var(--ink)] leading-relaxed">
+              <p className="text-[11px] sm:text-[12px] font-mono text-[var(--ink)] leading-relaxed">
                 {streamedText}
                 {isTyping && <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-[var(--accent)] animate-pulse" />}
               </p>
 
               {!isTyping && (
-                <div className="pt-2 border-t border-[var(--color-border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                  <span className="text-[11px] text-[var(--muted)] font-mono">
+                <div className="pt-1.5 sm:pt-2 border-t border-[var(--color-border-subtle)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 sm:gap-2">
+                  <span className="text-[10px] sm:text-[11px] text-[var(--muted)] font-mono">
                     Real-time AI telemetry requires an account · 5 free daily scans.
                   </span>
                   <Link
@@ -597,7 +596,7 @@ function WorkbenchChat({
           )}
 
           {demoCount > 1 && (
-            <div className="flex items-start gap-2 text-[11px] text-[var(--muted)] leading-relaxed">
+            <div className="flex items-start gap-2 text-[10px] sm:text-[11px] text-[var(--muted)] leading-relaxed">
               <span className="tc-status-chip tc-status-chip--accent mt-0.5 shrink-0">
                 <span className="tc-status-chip__dot" /> Copilot
               </span>
@@ -618,16 +617,16 @@ function WorkbenchChat({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder={`Ask the copilot about ${symbol}…`}
-          className="flex-1 h-11 rounded-lg bg-[var(--bg-band)] border border-[var(--color-border-default)] px-3 text-[12px] font-mono text-[var(--ink)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none transition-colors"
+          className="flex-1 h-9 sm:h-11 rounded-lg bg-[var(--bg-band)] border border-[var(--color-border-default)] px-3 text-[11px] sm:text-[12px] font-mono text-[var(--ink)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:outline-none transition-colors"
           aria-label={`Ask the copilot about ${symbol}`}
           maxLength={200}
         />
         <button
           type="submit"
-          className="h-11 w-11 min-h-[44px] min-w-[44px] shrink-0 rounded-lg bg-[var(--accent)] text-[var(--bg-primary)] flex items-center justify-center hover:bg-[var(--color-accent-primary-hover)] transition-colors cursor-pointer"
+          className="h-9 w-9 sm:h-11 sm:w-11 min-h-[36px] min-w-[36px] sm:min-h-[44px] sm:min-w-[44px] shrink-0 rounded-lg bg-[var(--accent)] text-[var(--bg-primary)] flex items-center justify-center hover:bg-[var(--color-accent-primary-hover)] transition-colors cursor-pointer"
           aria-label="Send"
         >
-          <Send size={15} />
+          <Send size={14} />
         </button>
       </form>
     </div>

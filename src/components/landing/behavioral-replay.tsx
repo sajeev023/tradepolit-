@@ -114,8 +114,8 @@ export function BehavioralReplay() {
 
   return (
     <section className="tc-section tc-section--wide">
-      <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-        <div className="lg:col-span-5 space-y-4">
+      <div className="grid lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-14 items-center">
+        <div className="lg:col-span-5 space-y-3 sm:space-y-4">
           <span className="tp-eyebrow-mono">03 / DISCIPLINE</span>
           <h2 className="tp-h2">
             Automated guardrails against emotional trading
@@ -123,24 +123,24 @@ export function BehavioralReplay() {
           <p className="tp-body max-w-md">
             Position sizing anomalies, rapid re-entries, and revenge trades are flagged inside the workspace before capital is deployed based on your declared discipline rules.
           </p>
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 pt-1 sm:pt-2">
             <button
               onClick={() => play(0)}
-              className="inline-flex items-center gap-2 h-11 px-5 rounded-lg border border-[var(--color-border-default)] text-[13px] font-semibold text-[var(--ink)] hover:border-[var(--color-border-strong)] transition-all duration-150 active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 sm:gap-2 h-9 sm:h-11 px-4 sm:px-5 rounded-lg border border-[var(--color-border-default)] text-[12px] sm:text-[13px] font-semibold text-[var(--ink)] hover:border-[var(--color-border-strong)] transition-all duration-150 active:scale-95 cursor-pointer"
             >
-              <Play size={13} /> Replay
+              <Play size={12} /> Replay
             </button>
             <button
               onClick={() => {
                 stop();
                 setPhase(PHASES.length - 1);
               }}
-              className="inline-flex items-center gap-2 h-11 px-5 rounded-lg border border-[var(--color-border-default)] text-[13px] font-medium text-[var(--muted)] hover:text-[var(--ink)] transition-all duration-150 active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 sm:gap-2 h-9 sm:h-11 px-4 sm:px-5 rounded-lg border border-[var(--color-border-default)] text-[12px] sm:text-[13px] font-medium text-[var(--muted)] hover:text-[var(--ink)] transition-all duration-150 active:scale-95 cursor-pointer"
             >
-              <RotateCcw size={13} /> Resolve
+              <RotateCcw size={12} /> Resolve
             </button>
           </div>
-          <p className="text-[11px] font-mono text-[var(--muted)] pt-1">
+          <p className="text-[10px] sm:text-[11px] font-mono text-[var(--muted)] pt-0.5 sm:pt-1">
             Illustrative replay — based on real guardrail behavior.
           </p>
         </div>
@@ -148,42 +148,42 @@ export function BehavioralReplay() {
         <div ref={ref} className="lg:col-span-7">
           <div className="tc-terminal !p-0 overflow-hidden">
             {/* Header: title + timestamp + status */}
-            <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-[var(--color-border-subtle)] bg-[var(--bg-band)]">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--ink)] font-semibold">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3 border-b border-[var(--color-border-subtle)] bg-[var(--bg-band)]">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-[var(--ink)] font-semibold">
                   Behavioral Guardrail
                 </span>
-                <span className="text-[11px] font-mono text-[var(--muted)]">·</span>
-                <span className="text-[11px] font-mono text-[var(--muted)] tabular-nums">
+                <span className="text-[10px] sm:text-[11px] font-mono text-[var(--muted)]">·</span>
+                <span className="text-[10px] sm:text-[11px] font-mono text-[var(--muted)] tabular-nums">
                   {current.time}
                 </span>
               </div>
 
-              <span className={`tc-status-chip tc-status-chip--${current.chip.tone}`}>
+              <span className={`tc-status-chip tc-status-chip--${current.chip.tone} text-[11px]`}>
                 <span className={`tc-status-chip__dot ${phase === 1 ? "tc-status-chip__dot--pulse" : ""}`} />
                 {current.chip.text}
               </span>
             </div>
 
             {/* Timeline progress bar */}
-            <div className="p-4 sm:p-5 space-y-4">
-              <div className="flex items-center gap-2">
+            <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 {TIMELINE.map((t, i) => {
                   const active = i <= current.highlight;
                   const isCurrent = i === current.highlight;
                   const tone =
                     i === 1 ? "var(--red)" : i === 3 ? "var(--green)" : "var(--accent)";
                   return (
-                    <div key={t} className="flex-1 flex flex-col items-center gap-1.5">
+                    <div key={t} className="flex-1 flex flex-col items-center gap-1 sm:gap-1.5">
                       <div
-                        className="h-1.5 w-full rounded-full transition-all duration-500"
+                        className="h-1 sm:h-1.5 w-full rounded-full transition-all duration-500"
                         style={{
                           backgroundColor: active ? tone : "var(--color-border-default)",
                           boxShadow: isCurrent ? `0 0 8px ${tone}` : "none",
                         }}
                       />
                       <span
-                        className={`text-[9px] font-mono uppercase tracking-wider transition-colors duration-300 ${
+                        className={`text-[8px] sm:text-[9px] font-mono uppercase tracking-wider transition-colors duration-300 ${
                           isCurrent
                             ? "text-[var(--ink)] font-bold"
                             : active
@@ -199,48 +199,48 @@ export function BehavioralReplay() {
               </div>
 
               {/* Copilot log message */}
-              <div className="rounded-lg bg-[var(--bg-band)] border border-[var(--color-border-subtle)] p-3.5 flex items-start gap-3">
-                <span className="tc-status-chip tc-status-chip--accent mt-0.5 shrink-0">
+              <div className="rounded-lg bg-[var(--bg-band)] border border-[var(--color-border-subtle)] p-2.5 sm:p-3.5 flex items-start gap-2.5 sm:gap-3">
+                <span className="tc-status-chip tc-status-chip--accent mt-0.5 shrink-0 text-[11px]">
                   <span className="tc-status-chip__dot" /> Copilot
                 </span>
                 <p
                   key={phase}
-                  className="tc-reveal in text-[12px] font-mono text-[var(--ink)] leading-relaxed flex-1"
+                  className="tc-reveal in text-[11px] sm:text-[12px] font-mono text-[var(--ink)] leading-relaxed flex-1"
                 >
                   {current.log}
                 </p>
               </div>
 
               {/* Reasoning trace panel */}
-              <div className="rounded-lg bg-[var(--surface)] border border-[var(--color-border-subtle)] p-3.5 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-[var(--color-border-subtle)]">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--muted)] font-semibold flex items-center gap-1.5">
-                    <History size={12} className="text-[var(--accent)]" /> Guardrail Reasoning Trace
+              <div className="rounded-lg bg-[var(--surface)] border border-[var(--color-border-subtle)] p-2.5 sm:p-3.5 space-y-2 sm:space-y-3">
+                <div className="flex items-center justify-between pb-1.5 sm:pb-2 border-b border-[var(--color-border-subtle)]">
+                  <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-[var(--muted)] font-semibold flex items-center gap-1.5">
+                    <History size={11} className="text-[var(--accent)]" /> Guardrail Reasoning Trace
                   </span>
-                  <span className="text-[10px] font-mono text-[var(--muted)]">
+                  <span className="text-[9px] sm:text-[10px] font-mono text-[var(--muted)]">
                     Step {phase + 1} of 4
                   </span>
                 </div>
 
-                <div className="grid sm:grid-cols-3 gap-3 text-[11px] font-mono">
-                  <div className="space-y-1">
-                    <span className="text-[9px] uppercase tracking-wider text-[var(--muted)] block">Rule Fired</span>
-                    <span className="text-[11px] text-[var(--ink)] font-medium leading-tight block">
+                <div className="grid sm:grid-cols-3 gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-mono">
+                  <div className="space-y-0.5 sm:space-y-1">
+                    <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-[var(--muted)] block">Rule Fired</span>
+                    <span className="text-[10px] sm:text-[11px] text-[var(--ink)] font-medium leading-tight block">
                       {current.ruleFired}
                     </span>
                   </div>
 
-                  <div className="space-y-1">
-                    <span className="text-[9px] uppercase tracking-wider text-[var(--muted)] block">20-Trade Pattern</span>
-                    <span className="text-[11px] text-[var(--muted)] leading-tight block">
+                  <div className="space-y-0.5 sm:space-y-1">
+                    <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-[var(--muted)] block">20-Trade Pattern</span>
+                    <span className="text-[10px] sm:text-[11px] text-[var(--muted)] leading-tight block">
                       {current.patternMatched}
                     </span>
                   </div>
 
-                  <div className="space-y-1">
-                    <span className="text-[9px] uppercase tracking-wider text-[var(--muted)] block">Capital Preserved</span>
+                  <div className="space-y-0.5 sm:space-y-1">
+                    <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-[var(--muted)] block">Capital Preserved</span>
                     <span
-                      className={`text-[11px] font-semibold leading-tight block ${
+                      className={`text-[10px] sm:text-[11px] font-semibold leading-tight block ${
                         current.rSaved.includes("+") ? "text-[var(--green)]" : "text-[var(--ink)]"
                       }`}
                     >

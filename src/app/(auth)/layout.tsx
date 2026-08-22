@@ -237,7 +237,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "32px 20px",
+            padding: "20px 16px",
             overflowY: "auto",
             minHeight: "100dvh",
           }}

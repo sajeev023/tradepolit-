@@ -30,7 +30,7 @@ export function FaqAccordion() {
   const [expanded, setExpanded] = useState<number | null>(0);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       {faqs.map((faq, idx) => {
         const open = expanded === idx;
         return (
@@ -40,14 +40,14 @@ export function FaqAccordion() {
           >
             <button
               onClick={() => setExpanded(open ? null : idx)}
-              className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left cursor-pointer"
+              className="w-full flex items-center justify-between gap-3 px-3.5 py-3 sm:px-5 sm:py-4 text-left cursor-pointer"
               aria-expanded={open}
             >
-              <h4 className="text-[17px] sm:text-[18px] font-semibold text-[var(--ink)] leading-snug">
+              <h3 className="text-[14px] sm:text-[17px] font-semibold text-[var(--ink)] leading-snug">
                 {faq.q}
-              </h4>
+              </h3>
               <ChevronDown
-                size={18}
+                size={16}
                 className={`shrink-0 text-[var(--muted)] transition-transform duration-300 ${
                   open ? "rotate-180 text-[var(--accent)]" : ""
                 }`}
@@ -58,7 +58,7 @@ export function FaqAccordion() {
               style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
             >
               <div className="overflow-hidden">
-                <p className="px-5 pb-5 text-[14px] text-[var(--muted)] leading-relaxed">
+                <p className="px-3.5 pb-3.5 sm:px-5 sm:pb-5 text-[12px] sm:text-[14px] text-[var(--muted)] leading-relaxed">
                   {faq.a}
                 </p>
               </div>
