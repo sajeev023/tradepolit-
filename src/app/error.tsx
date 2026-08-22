@@ -45,11 +45,11 @@ export default function ErrorPage({
             <span>Try Again</span>
           </button>
           <Link
-            href="/charts"
+            href="/"
             className="btn-secondary h-10 px-5 text-xs font-semibold gap-2 cursor-pointer flex items-center border-[var(--color-border-default)] hover:border-[var(--color-border-default)]"
           >
             <Home size={13} />
-            <span>Go to Workstation</span>
+            <span>Back to Homepage</span>
           </Link>
         </div>
       </div>

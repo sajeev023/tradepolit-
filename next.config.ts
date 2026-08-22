@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Don't advertise the framework/version via the X-Powered-By header.
+  poweredByHeader: false,
   experimental: {
     instantNavigationDevToolsToggle: true,
   },

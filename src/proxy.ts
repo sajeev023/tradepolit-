@@ -22,18 +22,38 @@ const publicRoutes = [
   "/risk-calculator",
 ];
 
+// Authenticated app surfaces. Everything NOT listed here or in publicRoutes is
+// an unknown path and falls through to Next's own 404 handler.
+const protectedRoutes = [
+  "/dashboard",
+  "/charts",
+  "/journal",
+  "/alerts",
+  "/watchlist",
+  "/backtester",
+  "/analytics",
+  "/settings",
+  "/ai-assistant",
+];
+
 const adminRoutes = ["/admin"];
 
-function isPublicRoute(pathname: string): boolean {
-  return publicRoutes.some(
+function matchesRoute(pathname: string, routes: string[]): boolean {
+  return routes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 }
 
+function isPublicRoute(pathname: string): boolean {
+  return matchesRoute(pathname, publicRoutes);
+}
+
+function isProtectedRoute(pathname: string): boolean {
+  return matchesRoute(pathname, protectedRoutes);
+}
+
 function isAdminRoute(pathname: string): boolean {
-  return adminRoutes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
+  return matchesRoute(pathname, adminRoutes);
 }
 
 function isApiRoute(pathname: string): boolean {
@@ -41,15 +61,22 @@ function isApiRoute(pathname: string): boolean {
 }
 
 function isStaticAsset(pathname: string): boolean {
-  return (
+  if (
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon") ||
-    pathname.includes(".")
-  );
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt"
+  ) {
+    return true;
+  }
+  // Dotted paths (e.g. /assets/logo.svg) skip auth logic, but never let an
+  // authenticated surface masquerade as a static asset ("/dashboard/x.y").
+  const secondSegment = pathname.split("/")[1] ?? "";
+  return pathname.includes(".") && !matchesRoute(`/${secondSegment}`, [...protectedRoutes, ...adminRoutes]);
 }
 
 // Next.js 16 renamed the "middleware" file convention to "proxy". The
-// functionality is identical (see node_modules/next/dist/docs/.../16-proxy.md).
+// functionality is identical (see node_modules/next/dist/docs/.../proxy.md).
 // This is the request-time auth/CSRF gate; session logic lives in
 // @/lib/supabase/middleware (a helper module, unrelated to the convention).
 export async function proxy(request: NextRequest) {
@@ -64,7 +91,10 @@ export async function proxy(request: NextRequest) {
     // If no Supabase session cookies OR demo session cookie exist, return
     // response immediately without remote auth network call.
     const hasAuthCookie = request.cookies.getAll().some(
-      (c) => c.name.startsWith("sb-") || c.name === "tp_demo-session"
+      // NOTE: the demo cookie minted by /api/demo/start is "tp-demo-session"
+      // (hyphens — see lib/demo-session.ts). A previous underscore variant
+      // here never matched anything.
+      (c) => c.name.startsWith("sb-") || c.name === "tp-demo-session"
     );
     if (!hasAuthCookie) {
       return NextResponse.next();
@@ -130,6 +160,13 @@ export async function proxy(request: NextRequest) {
       }
     }
     return supabaseResponse;
+  }
+
+  if (!isProtectedRoute(pathname)) {
+    // Unknown path: let Next serve its real 404 instead of bouncing every
+    // stray URL (typos, crawlers probing old routes, case variants) onto
+    // /login as a soft redirect.
+    return NextResponse.next();
   }
 
   if (!user) {

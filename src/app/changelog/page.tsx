@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { ArrowLeft, TrendingUp, Zap, Shield, Cpu, Activity } from "lucide-react";
 import { SlimNav } from "@/components/landing/slim-nav";
+import { buildMetadata } from "@/lib/seo";
+
+export const metadata = buildMetadata({
+  title: "Changelog — Shipped Updates",
+  description:
+    "Every shipped TradCopilot update: live market data feeds, the multi-model AI analysis engine, behavioral guardrails, journal memory architecture, and read-only safety design.",
+  path: "/changelog",
+});
 
 const updates = [
   {
@@ -23,9 +31,9 @@ const updates = [
     badge: "CORE ENGINE",
     icon: <Cpu size={16} className="text-[var(--accent)]" />,
     items: [
-      "Launched multi-model race pipeline (Groq, NVIDIA NIM, Gemini fallback) delivering comprehensive chart theses in under 3 seconds.",
+      "Launched multi-model race pipeline (Groq, NVIDIA NIM, Gemini fallback) — models run in parallel and the first valid chart thesis wins.",
       "Built deterministic trade validation engine to flag RSI, MACD, and price level contradictions before output compilation.",
-      "Implemented real-time behavioral guardrail engine tracking revenge trades, rapid re-entries, and sizing spikes based on your last 20 trades.",
+      "Implemented behavioral guardrails that flag revenge-style re-entries and overtrading against your last 20 logged trades.",
       "Added inline thesis previews and structured setup recommendations (Bias, Entry, Stop, Take-Profit).",
     ],
   },
@@ -52,7 +60,7 @@ const updates = [
       "Established foundational read-only architecture: zero broker credentials, zero fund custody, zero execution risk.",
       "Public OHLCV candle streams and technical indicator math library (RSI, MACD, EMA 9/21, ATR, Key Levels).",
       "Interactive TradingView charting integration with high-contrast dark theme.",
-      "Sub-20s alert check cadence for key support and resistance structural breaks.",
+      "Alert engine covering price levels, RSI thresholds, EMA crossovers, and trend-change checks with scheduled daily evaluation.",
     ],
   },
 ];
@@ -88,7 +96,8 @@ export default function ChangelogPage() {
           {updates.map((up, idx) => (
             <section
               key={up.version}
-              className="relative pl-0 sm:pl-8 sm:border-l sm:border-[var(--color-border-subtle)] space-y-3 sm:space-y-4"
+              id={up.version}
+              className="relative pl-0 sm:pl-8 sm:border-l sm:border-[var(--color-border-subtle)] space-y-3 sm:space-y-4 scroll-mt-24"
             >
               {/* Desktop timeline marker */}
               <div className="hidden sm:flex absolute -left-[13px] top-1.5 w-6 h-6 rounded-full bg-[var(--bg-band)] border border-[var(--color-border-strong)] items-center justify-center">
@@ -98,7 +107,13 @@ export default function ChangelogPage() {
               <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <span className="text-xs font-mono text-[var(--muted)]">{up.date}</span>
                 <span className="text-xs font-mono text-[var(--muted)]">·</span>
-                <span className="text-xs font-mono font-semibold text-[var(--accent)]">{up.version}</span>
+                <a
+                  href={`#${up.version}`}
+                  className="text-xs font-mono font-semibold text-[var(--accent)] hover:underline"
+                  aria-label={`Permalink to ${up.version}`}
+                >
+                  {up.version}
+                </a>
                 <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[rgba(var(--accent-rgb),0.1)] text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.25)]">
                   {up.badge}
                 </span>

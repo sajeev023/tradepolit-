@@ -7,24 +7,24 @@ const stages = [
     tag: "TELEMETRY",
     icon: Database,
     title: "Market Ingestion",
-    body: "Real-time Binance and OANDA telemetry streams directly into the workstation. Price action, order book volume, and multi-timeframe candles load automatically without manual chart configuration.",
-    metric: "Direct WebSocket Feed",
+    body: "Real-time Binance candle data and multi-source OHLCV feeds stream directly into the workstation. Price action, volume, and multi-timeframe candles load automatically without manual chart configuration.",
+    metric: "Binance WebSocket Feed",
   },
   {
     step: "02",
     tag: "SYNTHESIS",
     icon: Cpu,
     title: "Multi-Model Technical Scan",
-    body: "RSI momentum, MACD divergence, EMA trend alignment, and pivot support/resistance levels are computed in parallel to construct a structured setup with explicit invalidation prices.",
-    metric: "Sub-3s Multi-Model Race",
+    body: "RSI momentum, MACD histogram, EMA trend alignment, and swing support/resistance levels are computed from OHLCV candles to construct a structured setup with explicit invalidation prices.",
+    metric: "Multi-Model Race Pipeline",
   },
   {
     step: "03",
     tag: "VERIFICATION",
     icon: ShieldCheck,
     title: "Behavioral Rule Guardrails",
-    body: "Every candidate trade is cross-referenced against your declared risk plan and historical 20-trade journal patterns to flag revenge trading, unplanned sizing spikes, or overtrading before entry.",
-    metric: "Rule Compliance Check",
+    body: "Every candidate trade is cross-referenced against your declared risk plan and your last 20 logged trades to flag revenge-style re-entries and overtrading before you enter — it warns, it never blocks.",
+    metric: "Warn-Only · Read-Only",
   },
 ];
 
@@ -37,7 +37,7 @@ export function HowItWorks() {
           End-to-end technical analysis &amp; risk verification
         </h2>
         <p className="tp-body max-w-lg mx-auto">
-          A structured execution pipeline that moves from raw market data to a disciplined, rule-checked thesis in seconds.
+          A structured pipeline that moves from raw market data to a disciplined, rule-checked thesis.
         </p>
       </Reveal>
 
@@ -86,6 +86,9 @@ export function HowItWorks() {
                         <span className="text-[8px] uppercase tracking-wider block text-[var(--muted)]">Take-Profit</span>
                         <span className="text-[var(--green)] font-semibold">$68,900</span>
                       </div>
+                    </div>
+                    <div className="pt-1 text-[8px] tracking-wider text-[var(--muted)] font-mono">
+                      ILLUSTRATIVE EXAMPLE — NOT A RECOMMENDATION
                     </div>
                   </div>
                 )}

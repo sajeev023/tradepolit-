@@ -24,9 +24,11 @@ export default function NotFound() {
           </p>
         </div>
 
-        <div className="pt-2">
+        <div className="pt-2 space-y-3">
+          {/* Primary escape goes to the public homepage — /charts is
+              auth-gated, so anonymous visitors just bounced to login. */}
           <Link
-            href="/charts"
+            href="/"
             className="inline-flex items-center gap-2 px-5 py-3 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer text-black"
             style={{
               backgroundColor: "var(--color-accent-primary)",
@@ -34,8 +36,14 @@ export default function NotFound() {
             }}
           >
             <TrendingUp size={14} />
-            <span>Return to Live Center</span>
+            <span>Back to Homepage</span>
           </Link>
+          <p className="text-[11px] text-[var(--color-text-quaternary)]">
+            or{" "}
+            <Link href="/features" className="underline hover:text-[var(--color-text-secondary)]">
+              explore TradCopilot features
+            </Link>
+          </p>
         </div>
       </div>
     </div>

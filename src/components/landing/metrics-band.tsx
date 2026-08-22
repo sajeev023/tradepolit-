@@ -17,10 +17,10 @@ const metrics = [
     gloss: "AI chart scans per day (free)",
   },
   {
-    cat: "Latency",
-    value: "20s",
-    label: "Alert check cadence",
-    gloss: "alert check cadence",
+    cat: "Discipline",
+    value: "<30 min",
+    label: "Revenge-re-entry window flagged",
+    gloss: "fast re-entries after a loss get flagged",
   },
   {
     cat: "Trial",

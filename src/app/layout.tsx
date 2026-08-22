@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { Viewport } from "next";
 import { Suspense } from "react";
 import { Inter, Space_Grotesk, JetBrains_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
@@ -10,7 +11,10 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { JsonLd } from "@/components/JsonLd";
-import { MicrosoftClarity } from "@/components/MicrosoftClarity";
+import {
+  organizationJsonLd,
+  websiteJsonLd,
+} from "@/lib/seo";
 
 const siteUrl = "https://tradcopilot.com";
 const siteName = "TradCopilot";
@@ -49,28 +53,28 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "TradCopilot | Institutional Trading Terminal & Discipline Journal",
+    default: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
     template: "%s | TradCopilot",
   },
   description:
-    "Real-time technical chart analysis, automated session trade journal, behavioral guardrails, and risk verification for active day traders.",
+    "Read-only AI trading copilot: live technical chart analysis (RSI, MACD, EMA, ATR), automated session journaling, behavioral guardrails, and risk tools for crypto & forex day traders.",
   keywords: [
-    "trading terminal",
+    "AI trading copilot",
+    "AI chart analysis",
+    "crypto market analysis",
+    "forex analysis tool",
     "technical analysis",
-    "crypto",
-    "forex",
     "trading journal",
-    "analytics",
-    "behavioral detection",
-    "backtesting",
     "risk management",
+    "trading discipline",
   ],
-  alternates: {
-    canonical: siteUrl,
-  },
+  // NOTE: no root alternates.canonical here. Every page sets its own canonical
+  // via buildMetadata() in lib/seo.ts — a root-level canonical used to collapse
+  // every subpage onto the homepage for search engines.
   openGraph: {
-    title: "TradCopilot | Institutional Trading Terminal & Discipline Journal",
-    description: "Real-time technical chart analysis, trade journaling, and behavioral discipline enforcement in one workspace.",
+    title: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
+    description:
+      "Live technical chart analysis, session trade journaling, behavioral guardrails, and risk tools for active crypto & forex traders.",
     siteName,
     type: "website",
     locale: "en_US",
@@ -78,8 +82,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TradCopilot | Institutional Trading Terminal & Discipline Journal",
-    description: "Real-time technical chart analysis, trade journaling, and behavioral discipline enforcement.",
+    title: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
+    description:
+      "Live technical chart analysis, trade journaling, and behavioral discipline guardrails for crypto & forex traders.",
   },
   robots: {
     index: true,
@@ -94,6 +99,10 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#05070B",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -102,19 +111,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable} ${newsreader.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://www.clarity.ms" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.__TP_START = performance.now();
-              if (window.gtag) { window.gtag('event', 'page_view'); }
-            `,
-          }}
-        />
+        {/* Entity-level structured data: Organization + WebSite on every page.
+            Page-specific schemas (SoftwareApplication, FAQPage, BreadcrumbList,
+            BlogPosting) are rendered by their own pages via lib/seo.ts builders.
+            No SearchAction: there is no public /search route. */}
+        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
       </head>
       <body className="antialiased">
-        <JsonLd />
         <ErrorBoundary>
           <Providers>
             <Suspense fallback={null}>
@@ -123,7 +126,6 @@ export default function RootLayout({
             <OfflineBanner />
             <Analytics />
             <SpeedInsights />
-            <MicrosoftClarity />
             <SmoothScrollProvider>
               {children}
             </SmoothScrollProvider>

@@ -22,38 +22,38 @@ const PHASES: Phase[] = [
     chip: { text: "Reviewing last trade", tone: "amber" },
     log: "Closed BTC/USD long at −1.2R after invalidation at $66,420. Loss automatically logged to journal with emotional baseline tag: NEUTRAL.",
     ruleFired: "STOP_LOSS_HIT · Disciplined Exit",
-    patternMatched: "Baseline risk: 1st loss in current session (Historical win rate 68%)",
-    rSaved: "0.0R (Stop-loss respected)",
+    patternMatched: "Baseline risk: 1st loss in current session — plan rules intact",
+    rSaved: "Stop-loss respected",
     highlight: 0,
   },
   {
     step: "Revenge attempt",
     time: "14:22:18 UTC (+14s)",
     chip: { text: "Revenge trade flagged", tone: "red" },
-    log: "Immediate market re-entry attempted 14 seconds after stop-out. Position sizing is +50% above your declared max risk (1.5% vs 1.0% plan limit).",
-    ruleFired: "RAPID_REENTRY & SIZING_ANOMALY",
-    patternMatched: "Historical re-entries <60s after stop-out fail 82% of the time with −2.4R mean drawdown",
-    rSaved: "Intervention triggered",
+    log: "Immediate market re-entry attempted 14 seconds after stop-out — well inside the flagged sub-30-minute revenge-re-entry window.",
+    ruleFired: "RAPID_REENTRY · Revenge pattern",
+    patternMatched: "Historically, fast revenge re-entries tend to compound losses — which is why this window is flagged",
+    rSaved: "Risk alert raised",
     highlight: 1,
   },
   {
-    step: "Copilot block",
+    step: "Copilot warning",
     time: "14:22:19 UTC",
-    chip: { text: "Copilot intervention", tone: "amber" },
-    log: "Outside your 20-trade discipline pattern. Entry blocked pending a 5-minute cooldown and structural setup review.",
-    ruleFired: "GUARDRAIL_INTERVENTION · Soft Lock",
-    patternMatched: "Discipline rule #2: Mandatory 5m pause required after unplanned sizing spike",
-    rSaved: "+1.8R capital preserved",
+    chip: { text: "Risk alert raised", tone: "amber" },
+    log: "Outside your last-20-trade discipline pattern. Cooldown recommended — review market structure before re-entering.",
+    ruleFired: "GUARDRAIL_WARNING · Pre-trade notice",
+    patternMatched: "Discipline rule: pause and review structure after a revenge-style re-entry flag",
+    rSaved: "Re-entry deferred",
     highlight: 2,
   },
   {
     step: "Plan restored",
     time: "14:27:30 UTC (+5m)",
     chip: { text: "Discipline restored", tone: "green" },
-    log: "Trader paused and reviewed checklist. Fresh setup compiled on genuine 4h support bounce. Next entry follows your rules.",
+    log: "Trader paused and reviewed the checklist. Fresh setup compiled on the 4h support bounce. Next entry follows your own rules.",
     ruleFired: "CHECKLIST_SATISFIED · Standard Risk",
-    patternMatched: "A+ pullback setup aligned with 4h trend structure and 1.0% standard sizing",
-    rSaved: "+1.8R drawdown avoided",
+    patternMatched: "Pullback setup aligned with 4h trend structure and planned risk sizing",
+    rSaved: "Plan followed — no revenge loss taken",
     highlight: 3,
   },
 ];
@@ -61,7 +61,7 @@ const PHASES: Phase[] = [
 const TIMELINE = [
   "Loss logged",
   "Revenge attempt",
-  "Copilot block",
+  "Copilot warning",
   "Plan restored",
 ];
 
@@ -121,7 +121,7 @@ export function BehavioralReplay() {
             Automated guardrails against emotional trading
           </h2>
           <p className="tp-body max-w-md">
-            Position sizing anomalies, rapid re-entries, and revenge trades are flagged inside the workspace before capital is deployed based on your declared discipline rules.
+            Rapid re-entries, overtrading days, and cutting-winners patterns are flagged inside the workspace before capital is deployed — based on your declared rules and your last 20 logged trades. It warns; it never blocks, because TradCopilot is read-only.
           </p>
           <div className="flex items-center gap-2.5 sm:gap-3 pt-1 sm:pt-2">
             <button
@@ -153,9 +153,11 @@ export function BehavioralReplay() {
                 <span className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-[var(--ink)] font-semibold">
                   Behavioral Guardrail
                 </span>
-                <span className="text-[10px] sm:text-[11px] font-mono text-[var(--muted)]">·</span>
-                <span className="text-[10px] sm:text-[11px] font-mono text-[var(--muted)] tabular-nums">
-                  {current.time}
+                <span className="text-[8px] sm:text-[9px] font-mono uppercase tracking-wider text-[var(--muted)] border border-[var(--color-border-subtle)] rounded px-1.5 py-0.5">
+                  Illustrative replay
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-mono text-[var(--muted)] tabular-nums hidden sm:inline">
+                  · {current.time}
                 </span>
               </div>
 
@@ -238,10 +240,14 @@ export function BehavioralReplay() {
                   </div>
 
                   <div className="space-y-0.5 sm:space-y-1">
-                    <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-[var(--muted)] block">Capital Preserved</span>
+                    <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-[var(--muted)] block">Outcome</span>
                     <span
                       className={`text-[10px] sm:text-[11px] font-semibold leading-tight block ${
-                        current.rSaved.includes("+") ? "text-[var(--green)]" : "text-[var(--ink)]"
+                        current.highlight === 1
+                          ? "text-[var(--red)]"
+                          : current.highlight === 3
+                          ? "text-[var(--green)]"
+                          : "text-[var(--ink)]"
                       }`}
                     >
                       {current.rSaved}

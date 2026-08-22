@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 export function GlobalLoader() {
@@ -8,8 +8,16 @@ export function GlobalLoader() {
   const searchParams = useSearchParams();
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
+  // Skip the fake-progress animation on the very first mount: nothing is
+  // loading during the initial render of a page, so this used to burn paint
+  // and re-render work on every cold visit (including all marketing pages).
+  const mounted = useRef(false);
 
   useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
     // Start progress bar animation on route/param transitions
     setVisible(true);
     setProgress(15);

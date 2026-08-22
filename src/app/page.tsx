@@ -18,14 +18,44 @@ import { FinalCta } from "@/components/landing/final-cta";
 import { StickyMobileCta } from "@/components/landing/sticky-mobile-cta";
 import { Reveal } from "@/components/ui/reveal";
 import { ScrollParallax } from "@/components/ui/scroll-parallax";
+import { JsonLd } from "@/components/JsonLd";
+import { buildMetadata, softwareApplicationJsonLd, faqPageJsonLd } from "@/lib/seo";
+import { HOME_FAQS } from "@/lib/faq-data";
+
+export const metadata = buildMetadata({
+  titleAbsolute: true,
+  title: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
+  description:
+    "Read-only AI trading copilot for crypto & forex day traders: live chart analysis with RSI, MACD, EMA & ATR, automated session journaling, behavioral guardrails, and risk tools. Free plan included.",
+  path: "/",
+  keywords: [
+    "AI trading copilot",
+    "AI trading assistant",
+    "crypto chart analysis tool",
+    "forex market analysis",
+    "trading discipline",
+  ],
+});
 
 export default function LandingPage() {
   const year = new Date().getFullYear();
 
   return (
     <div className="relative min-h-screen bg-[var(--bg-primary)] text-[var(--ink)] font-sans antialiased overflow-x-hidden">
+      {/* Product + FAQ structured data. The FAQPage schema mirrors the exact
+          questions rendered by <FaqAccordion /> below (HOME_FAQS). */}
+      <JsonLd
+        data={[softwareApplicationJsonLd(), faqPageJsonLd(HOME_FAQS)]}
+      />
+
       {/* ━━━ 1 · SLIM NAV (60px) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <SlimNav />
+      <SlimNav
+        items={[
+          { label: "How it works", href: "#how-it-works" },
+          { label: "Pricing", href: "#pricing" },
+          { label: "FAQ", href: "#faq" },
+        ]}
+      />
 
       {/* ━━━ 2 · HERO — editorial masthead + full-width live desk ━━━ */}
       <header className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 pt-[80px] sm:pt-[130px] lg:pt-[160px] pb-8 sm:pb-14 lg:pb-20">
@@ -56,9 +86,12 @@ export default function LandingPage() {
 
         {/* Headline block — serif voice, left-aligned, room to breathe.
             The italic accent word replaces the old cyan gradient phrase:
-            emphasis comes from the serif italic, not from color. The blur
-            reveal is the page's one signature motion moment. */}
-        <Reveal blur className="max-w-[920px] space-y-4 sm:space-y-6">
+            emphasis comes from the serif italic, not from color.
+            NOT wrapped in <Reveal>: the H1 is the LCP element and used to be
+            invisible until hydration flipped the reveal class, deferring LCP
+            to JS time and blanking the page without it. Below-fold sections
+            keep their scroll reveals. */}
+        <div className="max-w-[920px] space-y-4 sm:space-y-6">
           <h1 className="tp-display-xl">
             Execute your trading plan with <span className="tp-serif-italic">institutional discipline.</span>
           </h1>
@@ -70,7 +103,7 @@ export default function LandingPage() {
           <div className="pt-1">
             <HeroCTA />
           </div>
-        </Reveal>
+        </div>
 
         {/* Live-data workbench — full-width "live desk" below the masthead.
             REAL candles, indicators, WS price; no fabricated AI. A subtle,
@@ -123,6 +156,13 @@ export default function LandingPage() {
         <Suspense fallback={<div className="h-64" />}>
           <FaqAccordion />
         </Suspense>
+        <p className="text-center mt-6 sm:mt-8 text-[13px] text-[var(--muted)]">
+          More questions about markets, pricing, privacy, and how the analysis works?{" "}
+          <Link href="/faq" className="text-[var(--accent)] hover:underline font-medium">
+            Read the full FAQ
+          </Link>
+          .
+        </p>
       </section>
 
       {/* ━━━ 10 · FINAL CTA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -190,6 +230,12 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 pt-2 border-t border-[var(--color-border-subtle)]">
             <p className="text-[11px] sm:text-xs text-[var(--muted)]">© {year} TradCopilot Inc. All rights reserved.</p>
             <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-1.5 text-[11px] sm:text-xs text-[var(--muted)]">
+              <Link href="/features" className="hover:text-[var(--ink)] transition-colors">Features</Link>
+              <Link href="/ai-chart-analysis" className="hover:text-[var(--ink)] transition-colors">AI Chart Analysis</Link>
+              <Link href="/trading-journal" className="hover:text-[var(--ink)] transition-colors">Trading Journal</Link>
+              <Link href="/risk-management" className="hover:text-[var(--ink)] transition-colors">Risk Management</Link>
+              <Link href="/faq" className="hover:text-[var(--ink)] transition-colors">FAQ</Link>
+              <Link href="/about" className="hover:text-[var(--ink)] transition-colors">About</Link>
               <Link href="/changelog" className="hover:text-[var(--accent)] font-medium transition-colors">Changelog</Link>
               <Link href="/terms" className="hover:text-[var(--ink)] transition-colors">Terms</Link>
               <Link href="/privacy" className="hover:text-[var(--ink)] transition-colors">Privacy</Link>

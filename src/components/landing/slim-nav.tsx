@@ -5,13 +5,23 @@ import Link from "next/link";
 import { TrendingUp, ArrowRight } from "lucide-react";
 import { MobileMenu } from "./mobile-menu";
 
-const links = [
+const defaultLinks = [
   { label: "How it works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
 ];
 
-export function SlimNav() {
+export interface NavItem {
+  label: string;
+  href: string;
+}
+
+interface SlimNavProps {
+  items?: NavItem[];
+}
+
+export function SlimNav({ items }: SlimNavProps = {}) {
+  const navLinks = items || defaultLinks;
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -49,7 +59,7 @@ export function SlimNav() {
 
         {/* Desktop links */}
         <nav className="hidden md:flex items-center gap-1">
-          {links.map((l) => (
+          {navLinks.map((l) => (
             <a
               key={l.href}
               href={l.href}

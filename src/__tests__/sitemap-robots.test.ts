@@ -189,23 +189,57 @@ describe("Robots.txt Generation (robots.ts)", () => {
     expect(config.sitemap).not.toContain("localhost");
   });
 
-  it("disallows protected dashboard and API paths", () => {
+  it("disallows protected dashboard and API paths with correct prefix semantics", () => {
     (process.env as Record<string, string | undefined>).NODE_ENV = "production";
     const config = robots();
 
     const rules = Array.isArray(config.rules) ? config.rules[0] : config.rules;
     expect(rules).toBeDefined();
 
+    const rawDisallow = rules?.disallow;
+    const disallow: string[] = Array.isArray(rawDisallow)
+      ? (rawDisallow.filter(Boolean) as string[])
+      : rawDisallow
+      ? [rawDisallow]
+      : [];
+
+    expect(disallow).toContain("/api/");
+    expect(disallow).toContain("/auth/");
+    expect(disallow).toContain("/admin");
+    expect(disallow).toContain("/dashboard");
+    expect(disallow).toContain("/settings");
+    expect(disallow).toContain("/charts");
+
+    // Prefix patterns must NOT carry trailing slashes — "Disallow: /dashboard/"
+    // does not match "/dashboard" itself under robots prefix matching.
+    for (const entry of disallow) {
+      if (entry !== "/api/" && entry !== "/auth/") {
+        expect(entry.endsWith("/")).toBe(false);
+      }
+    }
+  });
+
+  it("keeps noindex-carrying pages crawlable (login/signup and anonymous tools are NOT robot-blocked)", () => {
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+    const config = robots();
+
+    const rules = Array.isArray(config.rules) ? config.rules[0] : config.rules;
     const disallow = Array.isArray(rules?.disallow)
       ? rules?.disallow
       : [rules?.disallow];
 
-    expect(disallow).toContain("/api/");
-    expect(disallow).toContain("/admin/");
-    expect(disallow).toContain("/dashboard/");
-    expect(disallow).toContain("/settings/");
-    expect(disallow).toContain("/charts/");
-    expect(disallow).toContain("/login");
-    expect(disallow).toContain("/signup");
+    // These pages emit <meta name="robots" content="noindex"> — blocking them
+    // here would hide that directive from crawlers.
+    for (const page of [
+      "/login",
+      "/signup",
+      "/forgot-password",
+      "/reset-password",
+      "/news",
+      "/market-pulse",
+      "/risk-calculator",
+    ]) {
+      expect(disallow).not.toContain(page);
+    }
   });
 });

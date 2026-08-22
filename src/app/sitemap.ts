@@ -1,30 +1,52 @@
 import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 
+/**
+ * Public sitemap. Only canonical, indexable marketing/legal routes belong here.
+ *
+ * lastModified policy: static ISO dates that are bumped by hand when a page's
+ * CONTENT meaningfully changes. The previous `new Date()` at module scope gave
+ * every URL a fresh lastmod on each deploy — an always-fresh lastmod is a weak
+ * trust signal and destroys the one thing lastmod is for.
+ *
+ * When you ship a meaningful content change to a page, update its date here.
+ */
+
+const ROUTES: Array<{
+  path: string;
+  priority: number;
+  changeFrequency: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
+  /** Date of the last meaningful content change for this route. */
+  lastModified: string;
+}> = [
+  { path: "/", priority: 1.0, changeFrequency: "weekly", lastModified: "2026-08-22" },
+  { path: "/features", priority: 0.9, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/ai-chart-analysis", priority: 0.9, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/trading-journal", priority: 0.8, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/risk-management", priority: 0.8, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/pricing", priority: 0.9, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/faq", priority: 0.7, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/about", priority: 0.6, changeFrequency: "yearly", lastModified: "2026-08-22" },
+  { path: "/compare/tradcopilot-vs-tradingview", priority: 0.7, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/guides/position-sizing-guide", priority: 0.6, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/guides/trading-discipline", priority: 0.6, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/guides/support-and-resistance", priority: 0.6, changeFrequency: "monthly", lastModified: "2026-08-22" },
+  { path: "/changelog", priority: 0.7, changeFrequency: "weekly", lastModified: "2026-08-15" },
+  { path: "/terms", priority: 0.4, changeFrequency: "yearly", lastModified: "2026-07-12" },
+  { path: "/privacy", priority: 0.4, changeFrequency: "yearly", lastModified: "2026-07-12" },
+  { path: "/refund", priority: 0.4, changeFrequency: "yearly", lastModified: "2026-07-12" },
+  { path: "/disclaimer", priority: 0.4, changeFrequency: "yearly", lastModified: "2026-07-12" },
+  { path: "/cookies", priority: 0.3, changeFrequency: "yearly", lastModified: "2026-07-12" },
+  { path: "/acceptable-use", priority: 0.3, changeFrequency: "yearly", lastModified: "2026-07-12" },
+];
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getSiteUrl();
 
-  const staticRoutes: Array<{
-    path: string;
-    priority: number;
-    changeFrequency: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
-  }> = [
-    { path: "/", priority: 1.0, changeFrequency: "weekly" },
-    { path: "/pricing", priority: 0.9, changeFrequency: "weekly" },
-    { path: "/changelog", priority: 0.7, changeFrequency: "weekly" },
-    { path: "/terms", priority: 0.4, changeFrequency: "monthly" },
-    { path: "/privacy", priority: 0.4, changeFrequency: "monthly" },
-    { path: "/refund", priority: 0.4, changeFrequency: "monthly" },
-    { path: "/disclaimer", priority: 0.4, changeFrequency: "monthly" },
-    { path: "/cookies", priority: 0.3, changeFrequency: "monthly" },
-    { path: "/acceptable-use", priority: 0.3, changeFrequency: "monthly" },
-  ];
-
-  return staticRoutes.map((route) => ({
+  return ROUTES.map((route) => ({
     url: route.path === "/" ? `${baseUrl}/` : `${baseUrl}${route.path}`,
-    lastModified: new Date(),
+    lastModified: new Date(route.lastModified),
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));
 }
-
