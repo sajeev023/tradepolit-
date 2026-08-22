@@ -114,7 +114,7 @@ describe("Sitemap Generation (sitemap.ts)", () => {
     const urls = entries.map((e) => e.url);
 
     // Required public routes
-    expect(urls).toContain("https://tradcopilot.com");
+    expect(urls).toContain("https://tradcopilot.com/");
     expect(urls).toContain("https://tradcopilot.com/pricing");
     expect(urls).toContain("https://tradcopilot.com/changelog");
     expect(urls).toContain("https://tradcopilot.com/terms");

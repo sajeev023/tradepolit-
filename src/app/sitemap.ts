@@ -9,7 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: number;
     changeFrequency: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
   }> = [
-    { path: "", priority: 1.0, changeFrequency: "weekly" },
+    { path: "/", priority: 1.0, changeFrequency: "weekly" },
     { path: "/pricing", priority: 0.9, changeFrequency: "weekly" },
     { path: "/changelog", priority: 0.7, changeFrequency: "weekly" },
     { path: "/terms", priority: 0.4, changeFrequency: "monthly" },
@@ -21,7 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   return staticRoutes.map((route) => ({
-    url: `${baseUrl}${route.path}`,
+    url: route.path === "/" ? `${baseUrl}/` : `${baseUrl}${route.path}`,
     lastModified: new Date(),
     changeFrequency: route.changeFrequency,
     priority: route.priority,
