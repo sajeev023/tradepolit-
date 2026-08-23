@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Shield } from "lucide-react";
+import { buildMetadata } from "@/lib/seo";
 import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLayout";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Privacy Policy",
-  description: "TradCopilot privacy policy — how we collect, use, and protect your personal data when you use our AI trading copilot.",
-};
+  description:
+    "How TradCopilot collects, uses, and protects your personal data: trading journal content, third-party processors, retention, and deletion rights.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

@@ -5,10 +5,16 @@ import Link from "next/link";
 import { TrendingUp, ArrowRight } from "lucide-react";
 import { MobileMenu } from "./mobile-menu";
 
+/**
+ * Fallback links for pages that don't pass explicit items (every inner page).
+ * These must be real routes — anchor-only defaults like "#pricing" are dead
+ * on pages without a matching element id, silently breaking the primary nav.
+ * The homepage passes its own in-page anchor items explicitly.
+ */
 const defaultLinks = [
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Features", href: "/features" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "FAQ", href: "/faq" },
 ];
 
 export interface NavItem {

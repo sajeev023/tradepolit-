@@ -6,9 +6,12 @@ import { X, MoreHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDemoLogin } from "./demo-button";
 
+// Real routes, not anchors: this menu renders inside SlimNav on every public
+// page, and in-page anchors like "#features" only exist on the homepage.
 const menuItems = [
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Features", href: "/features" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "FAQ", href: "/faq" },
   { label: "Live Demo", onClick: true },
 ];
 

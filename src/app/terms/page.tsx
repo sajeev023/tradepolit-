@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 import { FileText } from "lucide-react";
 import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLayout";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Terms of Service",
-  description: "TradCopilot terms of service — the rules and guidelines for using our AI-powered trading copilot platform.",
-};
+  description:
+    "The terms governing use of the TradCopilot terminal: accounts, subscriptions, acceptable use, and the read-only nature of the service.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

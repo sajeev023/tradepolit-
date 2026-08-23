@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ArrowLeft, TrendingUp, Zap, Shield, Cpu, Activity } from "lucide-react";
+import { ArrowLeft, Zap, Shield, Cpu, Activity } from "lucide-react";
 import { SlimNav } from "@/components/landing/slim-nav";
-import { buildMetadata } from "@/lib/seo";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { JsonLd } from "@/components/JsonLd";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
 export const metadata = buildMetadata({
   title: "Changelog — Shipped Updates",
@@ -66,11 +68,11 @@ const updates = [
 ];
 
 export default function ChangelogPage() {
-  const year = new Date().getFullYear();
-
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--ink)] font-sans antialiased">
       <SlimNav />
+
+      <JsonLd data={[breadcrumbJsonLd([{ name: "Changelog", path: "/changelog" }])]} />
 
       <main className="max-w-[840px] mx-auto px-4 sm:px-6 pt-20 sm:pt-28 lg:pt-32 pb-12 sm:pb-20">
         <div className="mb-6 sm:mb-8">
@@ -93,7 +95,7 @@ export default function ChangelogPage() {
         <hr className="border-[var(--color-border-subtle)] my-6 sm:my-10" />
 
         <div className="space-y-6 sm:space-y-10 lg:space-y-12">
-          {updates.map((up, idx) => (
+          {updates.map((up) => (
             <section
               key={up.version}
               id={up.version}
@@ -143,16 +145,7 @@ export default function ChangelogPage() {
         </div>
       </main>
 
-      <footer className="border-t border-[var(--color-border-subtle)] py-8 bg-[var(--bg-band)]">
-        <div className="max-w-[840px] mx-auto px-5 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--muted)]">
-          <p>© {year} TradCopilot Inc. Read-only analysis copilot.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/" className="hover:text-[var(--ink)] transition-colors">Home</Link>
-            <Link href="/terms" className="hover:text-[var(--ink)] transition-colors">Terms</Link>
-            <Link href="/privacy" className="hover:text-[var(--ink)] transition-colors">Privacy</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

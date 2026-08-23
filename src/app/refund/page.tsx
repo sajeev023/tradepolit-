@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 import { Landmark } from "lucide-react";
 import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLayout";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Refund Policy",
-  description: "TradCopilot refund policy — 7-day money-back guarantee on Pro plan subscriptions. Terms and conditions for refunds and cancellations.",
-};
+  description:
+    "TradCopilot refund policy: a 7-day money-back guarantee for first-time Pro subscribers, plus cancellation terms and how to request a refund.",
+  path: "/refund",
+});
 
 export default function RefundPage() {
   return (

@@ -3,16 +3,26 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { TrendingUp, ArrowLeft } from "lucide-react";
 import { PricingCards } from "@/components/pricing/pricing-cards";
+import { JsonLd } from "@/components/JsonLd";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Pricing",
+export const metadata: Metadata = buildMetadata({
+  title: "Pricing — Free Plan & $7.49/mo Pro Terminal",
   description:
-    "Start free with 5 analyses per day. Upgrade to Pro for $7.49/month for unlimited analyses, alerts, and full behavioral risk detection. 7-day free trial.",
-};
+    "Start free with 5 AI analyses per day, no card required. Upgrade to Pro at $7.49/month for unlimited analyses and alerts, performance analytics, and weekly reports. 7-day trial.",
+  path: "/pricing",
+  keywords: [
+    "tradcopilot pricing",
+    "ai trading tool cost",
+    "crypto analysis tool pricing",
+    "forex analysis subscription",
+  ],
+});
 
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)]">
+      <JsonLd data={[breadcrumbJsonLd([{ name: "Pricing", path: "/pricing" }])]} />
       <nav className="h-12 sm:h-14 glass sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 lg:px-10 select-none border-b border-[var(--color-border-subtle)]">
         <Link href="/" className="flex items-center gap-2 flex-shrink-0">
           <div
@@ -67,7 +77,15 @@ export default function PricingPage() {
         </Suspense>
 
         <p className="text-center text-[12px] text-[var(--color-text-quaternary)] mt-10">
-          USD pricing · Cancel anytime · 7-day money-back guarantee
+          USD pricing · Cancel anytime · 7-day money-back guarantee. Questions? See the{" "}
+          <Link href="/faq" className="underline underline-offset-2 hover:text-[var(--color-text-secondary)]">
+            FAQ
+          </Link>{" "}
+          or read our{" "}
+          <Link href="/refund" className="underline underline-offset-2 hover:text-[var(--color-text-secondary)]">
+            refund policy
+          </Link>
+          .
         </p>
       </div>
     </div>

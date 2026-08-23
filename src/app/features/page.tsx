@@ -104,8 +104,10 @@ export default function FeaturesPage() {
             <p className="tp-body max-w-2xl">{ENTITY_DEFINITION}</p>
             <p className="tp-body max-w-2xl text-[13px] sm:text-[14px]">
               This page is the complete inventory of what that means in practice. Every
-              capability below ships today, covering nine instruments — BTC/USD, ETH/USD,
-              SOL/USD, EUR/USD, GBP/USD, USD/JPY, gold (XAU/USD), NASDAQ, and S&P 500 — with
+              capability below ships today, covering nine instruments —{" "}
+              <Link href="/crypto-market-analysis" className="text-[var(--accent)] hover:underline">BTC/USD, ETH/USD, and SOL/USD</Link>,{" "}
+              <Link href="/forex-market-analysis" className="text-[var(--accent)] hover:underline">EUR/USD, GBP/USD, and USD/JPY</Link>,
+              gold (XAU/USD), NASDAQ, and S&P 500 — with
               selectable analysis timeframes from 1 minute to 1 week. Each section links to a
               deeper page on that capability.
             </p>
@@ -348,7 +350,14 @@ export default function FeaturesPage() {
               >
                 full FAQ
               </Link>
-              .
+              . New to the math behind it all? The{" "}
+              <Link
+                href="/guides"
+                className="text-[var(--accent)] underline decoration-[var(--color-border-strong)] underline-offset-2 hover:text-[var(--accent-bright)]"
+              >
+                trading guides
+              </Link>{" "}
+              explain every indicator this terminal computes.
             </p>
           </section>
 

@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 import { CheckSquare } from "lucide-react";
 import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLayout";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Acceptable Use Policy",
-  description: "TradCopilot acceptable use policy — the rules and prohibited conduct that keep our AI trading copilot platform safe and lawful.",
-};
+  description:
+    "The rules and prohibited conduct that keep the TradCopilot platform safe, lawful, and useful for every trader.",
+  path: "/acceptable-use",
+});
 
 export default function AcceptableUsePage() {
   return (

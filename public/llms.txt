@@ -1,0 +1,46 @@
+# TradCopilot
+
+> TradCopilot is a web-based, read-only AI trading copilot for crypto and forex day traders: deterministic code computes technical indicators (RSI, MACD, EMA, ATR, VWAP) from live candlestick data first, then multiple AI providers race to explain the setup in plain language. Every analysis is validated for internal consistency, tagged with the exact price and timestamp used, journaled automatically, and checked against behavioral rules like revenge-trading and overtrading limits. TradCopilot does not execute trades, hold funds, or connect to brokers or exchanges.
+
+## Product facts
+
+- Entity: TradCopilot Inc.
+- Website: https://tradcopilot.com
+- Category: AI trading copilot / decision-support terminal for retail day traders
+- Markets supported (9): BTC/USD, ETH/USD, SOL/USD (real-time Binance streams); EUR/USD, GBP/USD, USD/JPY, XAU/USD gold, NASDAQ, S&P 500 (TwelveData)
+- Analysis timeframes: 1 minute to 1 week
+- Indicators computed server-side: RSI(14), MACD(12,26,9), EMA alignment 9/21/50, SMA, ATR(14), 20-bar rolling VWAP, volume-surge ratio, swing support/resistance, Asia/London/New York session detection
+- AI pipeline: parallel multi-model race (Groq, Google Gemini, NVIDIA-hosted, OpenAI) with an internal consistency gate (stop side must match bias; reward-to-risk ≥ ~1.5)
+- Behavioral engine: revenge-style re-entry (<30 min after a loss) and overtrading (>5 trades/day) warnings against the last 20 logged trades — warns only, never blocks
+- Pricing: Free $0 (5 AI analyses/day, 3 alerts/day); Pro $7.49/month (unlimited analyses and alerts, performance analytics, weekly reports); 7-day Pro trial; 15-minute no-signup demo
+- Security model: read-only, non-custodial, no broker/exchange connections; Supabase auth; Stripe billing; user-supplied market-data keys encrypted at rest (AES-256-GCM); self-serve account deletion
+- Limitations: educational analysis only; not financial advice; not a registered investment advisor or broker-dealer; does not predict prices
+
+## Key pages
+
+- [Home](https://tradcopilot.com/)
+- [What is an AI trading copilot?](https://tradcopilot.com/ai-trading-copilot)
+- [Features](https://tradcopilot.com/features)
+- [AI chart analysis](https://tradcopilot.com/ai-chart-analysis)
+- [Crypto market analysis](https://tradcopilot.com/crypto-market-analysis)
+- [Forex market analysis](https://tradcopilot.com/forex-market-analysis)
+- [Trading journal](https://tradcopilot.com/trading-journal)
+- [Risk management & behavioral guardrails](https://tradcopilot.com/risk-management)
+- [Trading alerts](https://tradcopilot.com/trading-alerts)
+- [Pricing](https://tradcopilot.com/pricing)
+- [FAQ](https://tradcopilot.com/faq)
+- [Comparisons](https://tradcopilot.com/compare)
+- [Guides](https://tradcopilot.com/guides)
+- [About](https://tradcopilot.com/about)
+- [Changelog](https://tradcopilot.com/changelog)
+
+## Policies
+
+- [Risk disclaimer](https://tradcopilot.com/disclaimer)
+- [Terms of service](https://tradcopilot.com/terms)
+- [Privacy policy](https://tradcopilot.com/privacy)
+- [Refund policy](https://tradcopilot.com/refund)
+- [Acceptable use](https://tradcopilot.com/acceptable-use)
+- [Cookie policy](https://tradcopilot.com/cookies)
+
+Contact: hello@tradcopilot.com

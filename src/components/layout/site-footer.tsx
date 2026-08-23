@@ -48,7 +48,10 @@ export function SiteFooter() {
             </h4>
             <ul className="space-y-2 text-[12px]">
               <li><Link href="/features" className="hover:text-[var(--ink)] transition-colors">All Features</Link></li>
+              <li><Link href="/ai-trading-copilot" className="hover:text-[var(--ink)] transition-colors">What Is an AI Trading Copilot?</Link></li>
               <li><Link href="/ai-chart-analysis" className="hover:text-[var(--ink)] transition-colors">AI Chart Analysis</Link></li>
+              <li><Link href="/crypto-market-analysis" className="hover:text-[var(--ink)] transition-colors">Crypto Market Analysis</Link></li>
+              <li><Link href="/forex-market-analysis" className="hover:text-[var(--ink)] transition-colors">Forex Market Analysis</Link></li>
               <li><Link href="/trading-journal" className="hover:text-[var(--ink)] transition-colors">Trading Journal</Link></li>
               <li><Link href="/risk-management" className="hover:text-[var(--ink)] transition-colors">Risk Management</Link></li>
               <li><Link href="/trading-alerts" className="hover:text-[var(--ink)] transition-colors">Trading Alerts</Link></li>
@@ -63,9 +66,13 @@ export function SiteFooter() {
               Guides &amp; Compare
             </h4>
             <ul className="space-y-2 text-[12px]">
+              <li><Link href="/guides" className="hover:text-[var(--ink)] transition-colors">All Guides</Link></li>
               <li><Link href="/guides/position-sizing-guide" className="hover:text-[var(--ink)] transition-colors">Position Sizing Guide</Link></li>
+              <li><Link href="/guides/technical-indicators" className="hover:text-[var(--ink)] transition-colors">Technical Indicators</Link></li>
+              <li><Link href="/guides/multi-timeframe-analysis" className="hover:text-[var(--ink)] transition-colors">Multi-Timeframe Analysis</Link></li>
               <li><Link href="/guides/trading-discipline" className="hover:text-[var(--ink)] transition-colors">Trading Discipline</Link></li>
               <li><Link href="/guides/support-and-resistance" className="hover:text-[var(--ink)] transition-colors">Support &amp; Resistance</Link></li>
+              <li><Link href="/compare" className="hover:text-[var(--ink)] transition-colors">Compare Tools</Link></li>
               <li><Link href="/compare/tradcopilot-vs-tradingview" className="hover:text-[var(--ink)] transition-colors">vs TradingView</Link></li>
               <li><Link href="/compare/tradcopilot-vs-chatgpt" className="hover:text-[var(--ink)] transition-colors">vs ChatGPT</Link></li>
               <li><Link href="/faq" className="hover:text-[var(--ink)] transition-colors">Knowledge Base FAQ</Link></li>

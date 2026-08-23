@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 import { AlertOctagon } from "lucide-react";
 import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLayout";
 
-export const metadata: Metadata = {
-  title: "Disclaimer",
-  description: "TradCopilot disclaimer — our AI copilot provides educational analysis only. Not financial advice. Trading involves risk.",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Risk Disclaimer — Educational Analysis, Not Financial Advice",
+  description:
+    "TradCopilot provides educational market analysis only. Not financial advice; no trade execution; not a registered advisor or broker-dealer. Trading involves substantial risk of loss.",
+  path: "/disclaimer",
+});
 
 export default function DisclaimerPage() {
   return (

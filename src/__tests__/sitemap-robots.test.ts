@@ -116,16 +116,23 @@ describe("Sitemap Generation (sitemap.ts)", () => {
     // Required public routes
     expect(urls).toContain("https://tradcopilot.com/");
     expect(urls).toContain("https://tradcopilot.com/features");
+    expect(urls).toContain("https://tradcopilot.com/ai-trading-copilot");
     expect(urls).toContain("https://tradcopilot.com/ai-chart-analysis");
+    expect(urls).toContain("https://tradcopilot.com/crypto-market-analysis");
+    expect(urls).toContain("https://tradcopilot.com/forex-market-analysis");
     expect(urls).toContain("https://tradcopilot.com/trading-journal");
     expect(urls).toContain("https://tradcopilot.com/risk-management");
     expect(urls).toContain("https://tradcopilot.com/trading-alerts");
     expect(urls).toContain("https://tradcopilot.com/pricing");
     expect(urls).toContain("https://tradcopilot.com/faq");
     expect(urls).toContain("https://tradcopilot.com/about");
+    expect(urls).toContain("https://tradcopilot.com/compare");
     expect(urls).toContain("https://tradcopilot.com/compare/tradcopilot-vs-tradingview");
     expect(urls).toContain("https://tradcopilot.com/compare/tradcopilot-vs-chatgpt");
+    expect(urls).toContain("https://tradcopilot.com/guides");
     expect(urls).toContain("https://tradcopilot.com/guides/position-sizing-guide");
+    expect(urls).toContain("https://tradcopilot.com/guides/technical-indicators");
+    expect(urls).toContain("https://tradcopilot.com/guides/multi-timeframe-analysis");
     expect(urls).toContain("https://tradcopilot.com/guides/trading-discipline");
     expect(urls).toContain("https://tradcopilot.com/guides/support-and-resistance");
     expect(urls).toContain("https://tradcopilot.com/changelog");

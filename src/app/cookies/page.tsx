@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 import { Cookie } from "lucide-react";
 import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLayout";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Cookie Policy",
-  description: "TradCopilot cookie policy — how we use cookies and similar tracking technologies on our trading platform.",
-};
+  description:
+    "How TradCopilot uses essential and functional cookies for sessions, state, and theme — and why we use no marketing or cross-site trackers.",
+  path: "/cookies",
+});
 
 export default function CookiesPage() {
   return (

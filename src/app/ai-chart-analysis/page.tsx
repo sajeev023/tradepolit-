@@ -318,6 +318,15 @@ export default function AiChartAnalysisPage() {
               </Link>
               . Charts inside the terminal itself are powered by the embedded TradingView widget —
               the indicator readings and AI setups around them come from the pipeline above.
+              For the math behind those readings, see the{" "}
+              <Link href="/guides/technical-indicators" className="text-[var(--accent)] hover:underline underline-offset-2">
+                technical indicators guide
+              </Link>{" "}
+              and{" "}
+              <Link href="/guides/multi-timeframe-analysis" className="text-[var(--accent)] hover:underline underline-offset-2">
+                multi-timeframe analysis workflow
+              </Link>
+              .
             </p>
           </section>
 

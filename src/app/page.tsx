@@ -223,7 +223,11 @@ export default function LandingPage() {
           </div>
 
           <p className="text-[11px] text-[var(--muted)] max-w-2xl leading-relaxed">
-            Read-only analytical terminal. Does not execute trades, hold funds, or connect to your brokerage.
+            TradCopilot is a read-only{" "}
+            <Link href="/ai-trading-copilot" className="underline decoration-[var(--color-border-subtle)] underline-offset-2 hover:text-[var(--ink)]">
+              AI trading copilot
+            </Link>{" "}
+            for crypto and forex day traders. Does not execute trades, hold funds, or connect to your brokerage.
             Analytical workstation for educational and discipline purposes only.
           </p>
 
@@ -231,9 +235,12 @@ export default function LandingPage() {
             <p className="text-[11px] sm:text-xs text-[var(--muted)]">© {year} TradCopilot Inc. All rights reserved.</p>
             <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-1.5 text-[11px] sm:text-xs text-[var(--muted)]">
               <Link href="/features" className="hover:text-[var(--ink)] transition-colors">Features</Link>
+              <Link href="/pricing" className="hover:text-[var(--ink)] transition-colors">Pricing</Link>
               <Link href="/ai-chart-analysis" className="hover:text-[var(--ink)] transition-colors">AI Chart Analysis</Link>
               <Link href="/trading-journal" className="hover:text-[var(--ink)] transition-colors">Trading Journal</Link>
               <Link href="/risk-management" className="hover:text-[var(--ink)] transition-colors">Risk Management</Link>
+              <Link href="/trading-alerts" className="hover:text-[var(--ink)] transition-colors">Trading Alerts</Link>
+              <Link href="/guides" className="hover:text-[var(--ink)] transition-colors">Guides</Link>
               <Link href="/faq" className="hover:text-[var(--ink)] transition-colors">FAQ</Link>
               <Link href="/about" className="hover:text-[var(--ink)] transition-colors">About</Link>
               <Link href="/changelog" className="hover:text-[var(--accent)] font-medium transition-colors">Changelog</Link>
