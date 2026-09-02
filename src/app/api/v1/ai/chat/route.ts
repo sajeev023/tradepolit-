@@ -23,6 +23,8 @@ import { getEntitlementForUser } from "@/lib/entitlements";
 import { checkUserRateLimit } from "@/lib/rate-limit";
 import { dispatchCaughtError } from "@/lib/typed-errors";
 import { getExchangeName } from "@/lib/market-registry";
+import { validateSetup } from "@/lib/trade-logic";
+import { guardProse, renderProseCorrections } from "@/lib/prose-guard";
 
 const chartStateSchema = z.object({
   symbol: z.string().max(20).optional(),
@@ -148,6 +150,19 @@ export async function POST(request: NextRequest) {
     let isAnalysisSkipped = !!activeChartState;
 
     if (!activeChartState && candles.length > 0) {
+      // INTEGRITY GATE: never re-analyze on simulated candles — the same
+      // rule analyze-chart enforces. Chat must not become the backdoor
+      // that fabricates an analysis from invented prices.
+      const simulatedCount = candles.filter((c: any) => c?.source === "SIMULATED").length;
+      if (simulatedCount > 0) {
+        console.warn(`[INTEGRITY] Blocked chat re-analysis on ${resolvedSymbol} ${resolvedTimeframe}: ${simulatedCount} SIMULATED candles.`);
+        return errorResponse(
+          "UPSTREAM_UNAVAILABLE",
+          `Live market data for ${resolvedSymbol} is temporarily unavailable from all providers. Analysis is disabled rather than run on simulated prices — please retry in a few minutes.`,
+          503
+        );
+      }
+
       console.log(`[CHAT ROUTE] Recalculating indicators for ${resolvedSymbol} ${resolvedTimeframe}...`);
       const tech = compileTechnicalContext(resolvedSymbol, resolvedTimeframe, candles);
       validateAnalysisConsistency(tech);
@@ -283,7 +298,7 @@ REQUIRED JSON RESPONSE SCHEMA:
             ),
           ]);
 
-          const { parsed: parsedData } = safeParseAIResponse(raceResult.content, {
+          const parseResult = safeParseAIResponse(raceResult.content, {
             symbol: resolvedSymbol,
             timeframe: resolvedTimeframe,
             currentPrice: tech.currentPrice,
@@ -297,7 +312,52 @@ REQUIRED JSON RESPONSE SCHEMA:
             confidence: tech.confidence,
             trend: tech.trend,
             sourceMetadata: tech.sourceMetadata,
+            // Full MACD/ATR telemetry so the validator's narrative checks
+            // (and the trade-logic engine) run against real values. The
+            // previous call omitted these — MACD checks were effectively
+            // disabled (0 vs 0), letting contradictory output through.
+            macdValue: tech.macdValue,
+            macdSignal: tech.macdSignal,
+            macdHistogram: tech.macdHistogram,
+            volumeSurgeRatio: tech.volumeSurgeRatio,
+            volatility: tech.volatility,
+            isVolatilitySpike: tech.isVolatilitySpike,
+            atr: tech.atr,
           });
+
+          // V2 trade-logic gate: route the parsed analysis through the
+          // deterministic engine and only cache/render it when valid.
+          // Invalid output is discarded (not cached) — the chat continues
+          // with the previous chart state instead of a contradiction.
+          const setupResult = validateSetup(parseResult.parsed, {
+            symbol: resolvedSymbol,
+            timeframe: resolvedTimeframe,
+            currentPrice: tech.currentPrice,
+            support: tech.support,
+            resistance: tech.resistance,
+            invalidationLevel: tech.invalidationLevel,
+            rsi: tech.rsi,
+            bias: tech.bias,
+            setupQuality: tech.setupQuality,
+            confidence: tech.confidence,
+            trend: tech.trend,
+            macdValue: tech.macdValue,
+            macdSignal: tech.macdSignal,
+            macdHistogram: tech.macdHistogram,
+            volumeSurgeRatio: tech.volumeSurgeRatio,
+            volatility: tech.volatility,
+            isVolatilitySpike: tech.isVolatilitySpike,
+            atr: tech.atr,
+          });
+          const narrativeValid = !parseResult.validationResult || parseResult.validationResult.isValid;
+          if (!parseResult.schemaValid || !narrativeValid || !setupResult.isValid) {
+            const why = !parseResult.schemaValid
+              ? parseResult.rejectionReason
+              : [...(parseResult.validationResult?.issues ?? []), ...setupResult.issues].join("; ");
+            console.warn(`[CHAT ROUTE] Dynamic analysis rejected by validation — NOT cached. Issues: ${why}`);
+            throw new Error(`AI analysis failed validation: ${why}`);
+          }
+          const parsedData = parseResult.parsed;
 
           // Server-computed analysis object — cast because the analysis shape
           // (with indicators/levels/sourceMetadata) extends the client
@@ -437,10 +497,55 @@ REQUIRED JSON RESPONSE SCHEMA:
     const apiDuration = Date.now() - apiStartTime;
     console.log(`[STEP 5 COMPLETE] NVIDIA API request finished in ${apiDuration}ms`);
 
+    // V3 cost telemetry — chat-surface AI usage (the coach reply).
+    // runAIChat's sequential chain doesn't surface token usage per call
+    // yet, so this records duration + surface; token fields land when
+    // the chain is unified behind RaceResult.usage.
+    try {
+      const { analyticsServer } = await import("@/lib/analytics-server");
+      await analyticsServer.track(user.id, "ai_call", {
+        surface: "chat_coach",
+        provider: "sequential-chain",
+        latencyMs: apiDuration,
+        promptTokens: null,
+        completionTokens: null,
+        totalTokens: null,
+      });
+    } catch {
+      /* analytics must never break the response */
+    }
+
     // Append stale notice and telemetry metadata block
     let finalReply = assistantReply;
     if (staleNotice) {
       finalReply = staleNotice + finalReply;
+    }
+
+    // ── V3 PROSE GUARD ─────────────────────────────────────────────────
+    // Deterministic validation of price citations in the coach's free
+    // text against verified telemetry + the validated plan. The AI text
+    // is never silently rewritten — violations get an inline correction
+    // notice so the user sees both the claim and the verified value.
+    // Closes the last ungated surface for contradictory numbers.
+    if (activeChartState && activeChartState.currentPrice) {
+      try {
+        const liveBase = livePrice ?? activeChartState.currentPrice;
+        const guard = guardProse(assistantReply, {
+          currentPrice: activeChartState.currentPrice,
+          support: Number(activeChartState.support ?? liveBase * 0.98),
+          resistance: Number(activeChartState.resistance ?? liveBase * 1.02),
+          invalidation: activeChartState.invalidationLevel != null ? Number(activeChartState.invalidationLevel) : undefined,
+          bias: String(activeChartState.bias ?? ""),
+        }, null); // plan: the chat path carries no structured plan; the
+        // band + side checks run against telemetry levels directly.
+        if (guard.violations.length > 0) {
+          console.warn(`[PROSE-GUARD] ${guard.violations.length} citation(s) failed validation for ${resolvedSymbol}`);
+          finalReply = finalReply + renderProseCorrections(guard);
+        }
+      } catch (guardErr) {
+        // The guard must never break a reply — degrade to unguarded text.
+        console.warn("[PROSE-GUARD] Guard error (non-fatal):", guardErr);
+      }
     }
 
     if (activeChartState && activeChartState.currentPrice) {

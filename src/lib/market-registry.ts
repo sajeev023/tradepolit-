@@ -322,6 +322,12 @@ export function isCommodity(symbol: string): boolean {
   return SYMBOL_REGISTRY[symbol]?.assetClass === "COMMODITY";
 }
 
+/** Asset class for a registered symbol; CRYPTO as a safe default for
+ *  unknowns (matches the Prisma default and the product's roots). */
+export function getAssetClass(symbol: string): string {
+  return SYMBOL_REGISTRY[symbol]?.assetClass ?? "CRYPTO";
+}
+
 /** Returns true if Binance has a spot pair for this symbol. */
 export function isBinanceSupported(symbol: string): boolean {
   return symbol in BINANCE_SYMBOL_MAP;

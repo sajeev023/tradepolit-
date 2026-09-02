@@ -67,6 +67,10 @@ interface TradCopilotPanelProps {
   onToggleExpand: (id: string) => void;
   onBookmarkMessage: (msg: ChatMessage, msgId: string) => void;
   onQuickAction: (action: string) => void;
+  /** V2: save the current validated analysis as a monitored thesis. */
+  onSaveThesis: () => void;
+  thesisSaving?: boolean;
+  thesisSaved?: boolean;
 }
 
 const COLLAPSE_THRESHOLD = 400;
@@ -554,9 +558,14 @@ function IdleState({ symbol, timeframe, onAnalyze }: { symbol: string; timeframe
 function MarketRead({ analysisData }: { analysisData: any }) {
   const bias = String(analysisData.bias || "—");
   const setup = String(analysisData.setupQuality || "—");
-  const confidence = String(
-    typeof analysisData.confidence === "string" ? analysisData.confidence.split(" ")[0] : analysisData.confidence || "—",
-  );
+  // V2.5: derived confidence (evidence-based, from the confidence engine)
+  // takes precedence over the LLM's self-asserted label — and shows WHY.
+  const derived = analysisData.derivedConfidence as
+    | { score: number; tier: string; factors?: { name: string; direction: string; note: string }[] }
+    | undefined;
+  const confidence = derived
+    ? derived.tier
+    : String(typeof analysisData.confidence === "string" ? analysisData.confidence.split(" ")[0] : analysisData.confidence || "—");
 
   const biasColor =
     bias.includes("BUY") || bias.includes("LONG") || bias.includes("BULLISH")
@@ -565,10 +574,26 @@ function MarketRead({ analysisData }: { analysisData: any }) {
       ? "loss"
       : "primary";
 
+  const regime = analysisData.marketContext?.regime as
+    | { regime: string; label: string; reasons?: string[] }
+    | undefined;
+  const mtf = analysisData.marketContext?.mtf as
+    | { alignment: string; views?: { timeframe: string; trend: string }[] }
+    | undefined;
+
+  const regimeTone =
+    regime?.regime === "TRENDING_UP" || regime?.regime === "BREAKOUT"
+      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+      : regime?.regime === "TRENDING_DOWN" || regime?.regime === "BREAKDOWN"
+        ? "border-red-500/30 bg-red-500/10 text-red-300"
+        : regime?.regime === "HIGH_VOLATILITY" || regime?.regime === "TRANSITIONAL"
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+          : "border-zinc-700 bg-zinc-800/50 text-zinc-300";
+
   return (
     <div className="space-y-2">
       <MonoLabel>Market Read</MonoLabel>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <div>
           <MonoLabel>Bias</MonoLabel>
           <MetricValue color={biasColor as any}>{bias}</MetricValue>
@@ -579,11 +604,74 @@ function MarketRead({ analysisData }: { analysisData: any }) {
           <MetricValue color="primary">{setup}</MetricValue>
         </div>
         <span className="text-[var(--color-text-quaternary)]">·</span>
-        <div>
-          <MonoLabel>Confidence</MonoLabel>
+        <div className="group relative">
+          <MonoLabel>Confidence {derived ? <span className="text-[8px] text-[var(--color-text-quaternary)]">(evidence-based)</span> : null}</MonoLabel>
           <MetricValue color="primary">{confidence}</MetricValue>
+          {/* Evidence factors — WHY this confidence level exists. */}
+          {derived?.factors && derived.factors.length > 0 && (
+            <div className="absolute left-0 top-full z-30 hidden group-hover:block w-72 pt-2">
+              <div className="rounded-lg border border-zinc-700 bg-zinc-900/97 backdrop-blur p-3 shadow-xl text-left">
+                <div className="text-[10px] uppercase tracking-wider text-zinc-400 font-semibold mb-2 flex items-center justify-between">
+                  <span>Why confidence = {derived.tier}</span>
+                  <span className="text-zinc-500 normal-case">score {derived.score}/100</span>
+                </div>
+                <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                  {derived.factors.map((f, i: number) => (
+                    <div key={i} className="text-[11px] leading-snug">
+                      <span
+                        className={
+                          f.direction === "positive"
+                            ? "text-emerald-400"
+                            : f.direction === "negative"
+                              ? "text-red-400"
+                              : "text-zinc-400"
+                        }
+                      >
+                        {f.direction === "positive" ? "▲" : f.direction === "negative" ? "▼" : "•"} {f.name}
+                      </span>
+                      <span className="text-zinc-500"> — {f.note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Regime badge + MTF alignment — the deterministic market context,
+          previously computed but invisible. */}
+      {(regime || mtf) && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {regime && (
+            <span
+              title={regime.reasons?.[0] ?? regime.regime}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium ${regimeTone}`}
+            >
+              {regime.label}
+            </span>
+          )}
+          {mtf && (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium ${
+                mtf.alignment === "ALIGNED_BULLISH"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  : mtf.alignment === "ALIGNED_BEARISH"
+                    ? "border-red-500/30 bg-red-500/10 text-red-300"
+                    : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+              }`}
+              title={mtf.views?.map((v) => `${v.timeframe}: ${v.trend}`).join(" · ")}
+            >
+              MTF {mtf.alignment.replace("ALIGNED_", "").toLowerCase()}
+              {mtf.views && mtf.views.length > 0 && (
+                <span className="text-zinc-400 font-normal">
+                  ({mtf.views.map((v) => `${v.timeframe} ${v.trend.toLowerCase()}`).join(" · ")})
+                </span>
+              )}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -618,6 +706,96 @@ function KeyLevels({ analysisData, symbol }: { analysisData: any; symbol: string
             {analysisData.sourceMetadata?.stopLossSource || "Below support"}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V2.5 Risk Guardrails — plan vs the user's own risk profile
+// ─────────────────────────────────────────────────────────────────────────────
+
+function RiskGuardrails({ guardrails }: { guardrails: any }) {
+  const g = guardrails;
+  if (!g) return null;
+  const hasWarnings = Array.isArray(g.warnings) && g.warnings.length > 0;
+  return (
+    <div className="space-y-2">
+      <MonoLabel>Risk Guardrails · your profile</MonoLabel>
+      <div className="text-[10px] text-[var(--color-text-tertiary)] leading-relaxed space-y-1">
+        <div>
+          Max loss per trade at your{" "}
+          <span className="text-[var(--color-text-secondary)] font-medium">
+            ${Number(g.accountSize)?.toLocaleString()} / {Number(g.maxRiskPercent)}%
+          </span>{" "}
+          profile:{" "}
+          <span className="text-[var(--color-text-primary)] font-medium">
+            ${Number(g.maxLossAllowed)?.toLocaleString()}
+          </span>
+          {g.riskPerUnit != null && (
+            <>
+              {" "}· risk per unit here:{" "}
+              <span className="text-[var(--color-text-primary)] font-medium">
+                ${Number(g.riskPerUnit)?.toLocaleString()}
+              </span>
+            </>
+          )}
+        </div>
+        {g.suggestedMaxSize != null && g.suggestedMaxSize > 0 && (
+          <div>
+            Position size that respects your risk rule:{" "}
+            <span className="text-[var(--color-text-primary)] font-medium font-mono">
+              {g.suggestedMaxSize.toLocaleString()} units
+            </span>{" "}
+            max
+          </div>
+        )}
+        {hasWarnings &&
+          g.warnings.map((w: string, i: number) => (
+            <div key={i} className="flex items-start gap-1.5 text-amber-300/90">
+              <span>⚠</span>
+              <span>{w}</span>
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V3 Decision Brief — Evidence block (deterministic, from the context engine)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function EvidenceBlock({ evidence }: { evidence: { for?: string[]; against?: string[] } }) {
+  const forItems = (evidence.for ?? []).slice(0, 5);
+  const againstItems = (evidence.against ?? []).slice(0, 5);
+  if (forItems.length === 0 && againstItems.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <MonoLabel>Evidence · deterministic</MonoLabel>
+      <div className="space-y-1.5">
+        {forItems.length > 0 && (
+          <div className="space-y-1">
+            <div className="text-[9px] uppercase tracking-wider text-emerald-400 font-semibold">Supports the read</div>
+            {forItems.map((e, i) => (
+              <div key={i} className="flex items-start gap-1.5 text-[11px] leading-snug text-[var(--color-text-secondary)]">
+                <span className="text-emerald-400 shrink-0">▲</span>
+                <span>{e}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {againstItems.length > 0 && (
+          <div className="space-y-1">
+            <div className="text-[9px] uppercase tracking-wider text-red-400 font-semibold">Contradicts / risks</div>
+            {againstItems.map((e, i) => (
+              <div key={i} className="flex items-start gap-1.5 text-[11px] leading-snug text-[var(--color-text-secondary)]">
+                <span className="text-red-400 shrink-0">▼</span>
+                <span>{e}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -699,6 +877,9 @@ function SuccessState({
   copiedId,
   bookmarkedIds,
   expandedMessages,
+  onSaveThesis,
+  thesisSaving,
+  thesisSaved,
 }: {
   analysisData: any;
   symbol: string;
@@ -710,6 +891,9 @@ function SuccessState({
   copiedId: string | null;
   bookmarkedIds: Set<string>;
   expandedMessages: Set<string>;
+  onSaveThesis: () => void;
+  thesisSaving?: boolean;
+  thesisSaved?: boolean;
 }) {
   const lastAssistantIndex = messages.reduceRight(
     (found, msg, idx) => (found === -1 && msg.role === "assistant" ? idx : found),
@@ -726,7 +910,53 @@ function SuccessState({
       >
         <MarketRead analysisData={analysisData} />
         <Hairline />
+        {/* V3 DECISION BRIEF — the situation in evidence form: what
+            supports the read, what contradicts it, all deterministic. */}
+        {analysisData.evidence && (analysisData.evidence.for?.length > 0 || analysisData.evidence.against?.length > 0) && (
+          <EvidenceBlock evidence={analysisData.evidence} />
+        )}
+        <Hairline />
         <KeyLevels analysisData={analysisData} symbol={symbol} />
+        <Hairline />
+        {/* V2.5 pre-trade risk guardrails — the plan checked against the
+            user's own risk profile, at decision time. */}
+        {analysisData.riskGuardrails && (
+          <RiskGuardrails guardrails={analysisData.riskGuardrails} />
+        )}
+        <Hairline />
+        {/* V2: save as monitored thesis — the retention loop entry point.
+            Disabled for NEUTRAL/no-trade reads: a thesis requires a
+            direction, and the server would reject it anyway (422). */}
+        {(() => {
+          const plan = analysisData?.tradePlan;
+          const directional = !!plan && (plan.direction === "LONG" || plan.direction === "SHORT");
+          return (
+            <button
+              onClick={onSaveThesis}
+              disabled={thesisSaving || thesisSaved || !directional}
+              title={!directional ? "Bias is NEUTRAL — a thesis requires a LONG or SHORT read" : undefined}
+              className={classNames(
+                "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors border",
+                thesisSaved
+                  ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                  : directional
+                    ? "bg-blue-500/10 text-blue-300 border-blue-500/30 hover:bg-blue-500/20"
+                    : "bg-zinc-900/50 text-zinc-500 border-zinc-800 cursor-not-allowed"
+              )}
+            >
+              {thesisSaving ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-300/30 border-t-blue-300" />
+              ) : (
+                <Target size={13} />
+              )}
+              {thesisSaved
+                ? "Thesis saved — monitoring"
+                : directional
+                  ? "Save as Thesis — track it"
+                  : "No thesis — NEUTRAL read"}
+            </button>
+          );
+        })()}
         <Hairline />
         {analysisData.indicators && <IndicatorSnapshot analysisData={analysisData} />}
         {analysisData.indicators && <Hairline />}
@@ -740,6 +970,23 @@ function SuccessState({
             {analysisData.shortTermScenario}
           </NarrativeBlock>
         )}
+        {/* V3 Decision Brief — "what happens next": the monitoring
+            commitment. Makes the loop's promise explicit at decision
+            time. */}
+        <NarrativeBlock title="What happens next" icon={<Activity size={12} className="text-[var(--color-accent-primary)]" />}>
+          {analysisData.tradePlan ? (
+            <>
+              Save this as a thesis and TradeCopilot monitors it every 5 minutes against the
+              high/low of each candle window — you get notified the moment the target is hit
+              or the thesis is invalidated, and the outcome becomes part of your Decision Score.
+            </>
+          ) : (
+            <>
+              No directional plan on this read — nothing to monitor. When a setup forms with a
+              clear bias, save it as a thesis and tracking begins automatically.
+            </>
+          )}
+        </NarrativeBlock>
         <SourceLine analysisData={analysisData} />
       </motion.div>
 
@@ -1032,6 +1279,9 @@ export function TradCopilotPanel({
   onToggleExpand,
   onBookmarkMessage,
   onQuickAction,
+  onSaveThesis,
+  thesisSaving,
+  thesisSaved,
 }: TradCopilotPanelProps) {
   const chatInputRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -1170,6 +1420,9 @@ export function TradCopilotPanel({
                 copiedId={copiedId}
                 bookmarkedIds={bookmarkedIds}
                 expandedMessages={expandedMessages}
+                onSaveThesis={onSaveThesis}
+                thesisSaving={thesisSaving}
+                thesisSaved={thesisSaved}
               />
             </motion.div>
           )}

@@ -3,6 +3,18 @@
     {
       "path": "/api/cron/evaluate-alerts",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/evaluate-theses",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/thesis-digest",
+      "schedule": "17 * * * *"
+    },
+    {
+      "path": "/api/cron/analytics-rollup",
+      "schedule": "30 2 * * *"
     }
   ]
 }

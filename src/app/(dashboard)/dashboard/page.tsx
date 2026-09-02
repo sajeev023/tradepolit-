@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { EquityCurveChart } from "@/components/ui/equity-curve-chart";
+import { FreeDashboard } from "@/components/dashboard/FreeDashboard";
 import { toast } from "sonner";
 
 /* ─── Skeleton Components ─── */
@@ -173,29 +174,10 @@ function DashboardContent() {
   }
 
   if (profileData?.subscriptionStatus !== "PRO_ACTIVE") {
-    return (
-      <div className="flex flex-col gap-6 max-w-4xl mx-auto py-12 animate-fade-in">
-        <div className="card p-8 sm:p-10 flex flex-col items-center justify-center text-center gap-6 max-w-xl mx-auto">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[var(--color-warning-bg)] text-[var(--color-warning)]"
-            style={{ border: "1px solid rgba(var(--amber-rgb), 0.16)" }}
-          >
-            <Zap size={26} className="fill-[var(--color-warning)]" />
-          </div>
-          <div className="space-y-2.5">
-            <span className="tp-eyebrow text-[var(--color-warning)] mb-1 block">Workstation · Locked</span>
-            <h2 className="tp-display-sm tracking-tight text-[var(--color-text-primary)]">Pro Terminal</h2>
-            <p className="text-sm text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
-              Visual analytics, win/loss distributions, cumulative equity curves, and automated weekly insights are Pro Terminal features. Your trades and journal stay free.
-            </p>
-          </div>
-          <Link href="/settings" className="btn-primary text-xs font-semibold py-2.5 px-6 flex items-center gap-1.5">
-            <Zap size={13} className="fill-[var(--background)] text-[var(--background)]" />
-            Upgrade to Pro Terminal — $7.49/mo
-          </Link>
-        </div>
-      </div>
-    );
+    // V2: FREE users get a REAL home — not a locked door. Their theses
+    // and patterns are the reasons to return daily; the Pro upgrade is
+    // a contextual card, not the whole page.
+    return <FreeDashboard />;
   }
 
   return (

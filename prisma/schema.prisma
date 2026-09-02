@@ -71,6 +71,45 @@ enum AlertType {
 }
 
 // ============================================================
+// V2 enums — decision-intelligence layer
+// ============================================================
+
+enum ThesisStatus {
+  OPEN
+  HIT
+  INVALIDATED
+  EXPIRED
+}
+
+enum ThesisOutcomeResult {
+  WIN
+  LOSS
+  BREAKEVEN
+  NO_TRADE
+}
+
+enum InsightType {
+  WIN_RATE_BY_SETUP
+  WIN_RATE_BY_SESSION
+  WIN_RATE_BY_EMOTION
+  MISTAKE_PATTERN
+  RISK_BEHAVIOR
+}
+
+enum AttributionLabel {
+  GOOD_DECISION_GOOD_OUTCOME
+  GOOD_DECISION_BAD_OUTCOME
+  BAD_DECISION_GOOD_OUTCOME
+  BAD_DECISION_BAD_OUTCOME
+  EXECUTION_ERROR
+  RISK_MANAGEMENT_ERROR
+  REGIME_SHIFT
+  INFORMATION_FAILURE
+  BEHAVIORAL_ERROR
+  DATA_QUALITY_ISSUE
+}
+
+// ============================================================
 // Models
 // ============================================================
 
@@ -88,26 +127,34 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Subscription state lives in UserProfile. These counters stay on User.
-  analysesCountToday    Int       @default(0)
-  alertsCountToday      Int       @default(0)
-  lastUsageReset        DateTime  @default(now())
+  analysesCountToday Int      @default(0)
+  alertsCountToday   Int      @default(0)
+  lastUsageReset     DateTime @default(now())
 
-  trades         Trade[]
-  strategies     Strategy[]
-  watchlists     Watchlist[]
-  alerts         Alert[]
-  journalEntries JournalEntry[]
-  backtests      Backtest[]
-  notifications  Notification[]
-  performance    Performance?
-  settings       Setting?
-  aiChats        AIChat[]
-  apiKeys        UserApiKey[]
-  profile             UserProfile?
-  behavioralEvents    BehavioralEvent[]
-  sessionPerformance  SessionPerformance[]
-  conversationMemory  ConversationMemory[]
-  savedAnalyses       SavedAnalysis[]
+  // V2.5: digest throttle — the thesis-resolution email sends at most
+  // once per user per 20 hours (the digest cron reads this stamp).
+  lastDigestSentAt DateTime?
+
+  trades             Trade[]
+  strategies         Strategy[]
+  watchlists         Watchlist[]
+  alerts             Alert[]
+  journalEntries     JournalEntry[]
+  backtests          Backtest[]
+  notifications      Notification[]
+  performance        Performance?
+  settings           Setting?
+  aiChats            AIChat[]
+  apiKeys            UserApiKey[]
+  profile            UserProfile?
+  behavioralEvents   BehavioralEvent[]
+  sessionPerformance SessionPerformance[]
+  conversationMemory ConversationMemory[]
+  savedAnalyses      SavedAnalysis[]
+  theses             Thesis[]
+  thesisOutcomes     ThesisOutcome[]
+  insights           UserInsight[]
+  analyticsEvents    AnalyticsEvent[]
 }
 
 model Trade {
@@ -258,7 +305,7 @@ model News {
 
   // Provenance — which upstream API the row was sourced from.
   // Optional so legacy rows continue to load (parseDbArticle defaults to "DB").
-  provider       String?
+  provider String?
 
   @@index([publishedAt])
 }
@@ -278,8 +325,8 @@ model AIChat {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
-  symbol    String?  // e.g. "BTC/USD" — set when chat is created from chart context
-  timeframe String?  // e.g. "4h" — set when chat is created from chart context
+  symbol    String? // e.g. "BTC/USD" — set when chat is created from chart context
+  timeframe String? // e.g. "4h" — set when chat is created from chart context
   messages  Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -310,29 +357,29 @@ model MarketCache {
 }
 
 model UserProfile {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountSize     Decimal  @default(10000.0)
-  maxRiskPercent  Decimal  @default(1.0)
-  preferredRR     Decimal  @default(2.0)
-  maxDrawdown     Decimal  @default(10.0)
-  winRate         Decimal  @default(0.0)
-  profitFactor    Decimal  @default(0.0)
-  avgWinLoss      Decimal  @default(0.0)
-  totalTrades     Int      @default(0)
-  holdTimeAvg     Float    @default(0.0)
-  lastSymbol      String   @default("BTC/USD")
-  lastTimeframe   String   @default("4h")
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountSize    Decimal  @default(10000.0)
+  maxRiskPercent Decimal  @default(1.0)
+  preferredRR    Decimal  @default(2.0)
+  maxDrawdown    Decimal  @default(10.0)
+  winRate        Decimal  @default(0.0)
+  profitFactor   Decimal  @default(0.0)
+  avgWinLoss     Decimal  @default(0.0)
+  totalTrades    Int      @default(0)
+  holdTimeAvg    Float    @default(0.0)
+  lastSymbol     String   @default("BTC/USD")
+  lastTimeframe  String   @default("4h")
+  updatedAt      DateTime @updatedAt
 
   // Single source of truth for subscription / plan gating.
-  plan                    String    @default("FREE")
-  stripeCustomerId        String?   @unique
-  stripeSubscriptionId    String?
-  stripePriceId           String?
-  subscriptionStatus      String    @default("INACTIVE")
-  subscriptionExpiresAt   DateTime?
+  plan                  String    @default("FREE")
+  stripeCustomerId      String?   @unique
+  stripeSubscriptionId  String?
+  stripePriceId         String?
+  subscriptionStatus    String    @default("INACTIVE")
+  subscriptionExpiresAt DateTime?
 
   @@map("user_profiles")
 }
@@ -350,7 +397,7 @@ model BehavioralEvent {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  eventType   String   // "stop_moved", "revenge_trade", "overtrading", "early_winner", "warnings_ignored", "hesitation"
+  eventType   String // "stop_moved", "revenge_trade", "overtrading", "early_winner", "warnings_ignored", "hesitation"
   description String
   instrument  String?
   metadata    Json?
@@ -364,7 +411,7 @@ model SessionPerformance {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionType String   // "LONDON", "NY", "ASIA"
+  sessionType String // "LONDON", "NY", "ASIA"
   tradesCount Int      @default(0)
   winRate     Decimal  @default(0.0)
   netProfit   Decimal  @default(0.0)
@@ -399,18 +446,178 @@ model FeatureFlag {
 }
 
 model SavedAnalysis {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  symbol      String
-  timeframe   String
-  bias        String
-  confidence  String
-  support     String
-  resistance  String
-  aiSummary   String
-  savedAt     DateTime @default(now())
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol     String
+  timeframe  String
+  bias       String
+  confidence String
+  support    String
+  resistance String
+  aiSummary  String
+  savedAt    DateTime @default(now())
 
   @@index([userId])
   @@map("saved_analyses")
+}
+
+// ============================================================
+// V2 models — the decision-intelligence loop
+//
+// Thesis → (market monitoring) → Outcome → UserInsight forms the
+// retention core: every analysis can become a tracked thesis whose
+// result closes the loop and feeds learned context back into the AI.
+// All migrations are additive; SavedAnalysis is preserved read-only.
+// ============================================================
+
+model Thesis {
+  id                     String       @id @default(uuid())
+  userId                 String
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol                 String
+  timeframe              String
+  assetClass             AssetClass   @default(CRYPTO)
+  bias                   Direction
+  setupType              String?
+  // Enum-structured confidence — never free-text from the LLM.
+  confidence             String
+  // Structured, validated trade plan (passed through the trade-logic
+  // engine before persist — see src/lib/trade-logic/).
+  entryZone              Decimal
+  stopLoss               Decimal
+  invalidation           Decimal
+  target                 Decimal
+  riskReward             Decimal
+  // Market context at creation — deterministic, from the context engine.
+  regimeAtCreation       String?
+  evidenceFor            String[]
+  evidenceAgainst        String[]
+  invalidationConditions String?
+  aiSummary              String
+  // Link back to the conversation-memory row that produced this thesis
+  // (best-effort; cache rows may be evicted).
+  sourceAnalysisId       String?
+  savedAnalysisId        String?
+  status                 ThesisStatus @default(OPEN)
+  // Monitoring state — updated by the evaluate-theses cron / on-load eval.
+  resolvedAt             DateTime?
+  resolvedPrice          Decimal?
+  checkedAt              DateTime?
+  // V2.5: regime at resolution — the attribution engine needs to know
+  // whether the market state CHANGED between thesis creation and
+  // resolution (regime-shift attribution vs decision-error attribution).
+  regimeAtResolution     String?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  outcome    ThesisOutcome?
+  sharedLink SharedAnalysis?
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([status, symbol])
+  @@map("theses")
+}
+
+model ThesisOutcome {
+  id                   String              @id @default(uuid())
+  thesisId             String              @unique
+  thesis               Thesis              @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  userId               String
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  result               ThesisOutcomeResult
+  tookTrade            Boolean             @default(false)
+  rMultiple            Decimal?
+  pnl                  Decimal?
+  followedPlan         Boolean?
+  whatILearned         String?
+  // ── V2.5 ATTRIBUTION — the labeled-decision dataset core ────────────
+  // WHO labeled: the deterministic engine proposes, the user confirms.
+  attribution          AttributionLabel?
+  attributionSource    String? // "engine" | "user" | "ai-assisted"
+  attributionReasoning String? // one-sentence why this label fits
+  // Joins the outcome back to the user's trade journal so the loop
+  // flows into the existing behavioral layer.
+  linkedTradeId        String?
+  createdAt            DateTime            @default(now())
+
+  @@index([userId])
+  @@index([userId, attribution])
+  @@map("thesis_outcomes")
+}
+
+model UserInsight {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  insightType InsightType
+  // Deterministic payload — recomputed from trades/theses, never
+  // AI-invented. Contains metric values + sample sizes.
+  payload     Json
+  // Honest statistics: every insight exposes its sample size so the
+  // UI can suppress under-powered claims instead of overstating them.
+  sampleSize  Int         @default(0)
+  note        String?
+  computedAt  DateTime    @default(now())
+  validUntil  DateTime?
+
+  @@unique([userId, insightType])
+  @@map("user_insights")
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(uuid())
+  // Null for anonymous (pre-signup) events; the anonymousId links
+  // pre- and post-signup activity once the user authenticates.
+  userId      String?
+  anonymousId String
+  eventType   String
+  payload     Json?
+  pathname    String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([eventType, createdAt])
+  @@index([anonymousId, createdAt])
+  @@index([userId, createdAt])
+  @@map("analytics_events")
+}
+
+// V3: daily per-event-type rollups. The raw analytics_events table is
+// unbounded — at 50K+ users it becomes the largest table in the DB.
+// The retention cron aggregates each day into one row per event type,
+// then deletes the raw rows older than 90 days. Funnel queries older
+// than 90d read from here; recent queries keep hitting the raw table.
+model AnalyticsDaily {
+  id            String   @id @default(uuid())
+  day           DateTime // UTC day, stored at midnight
+  eventType     String
+  eventCount    Int      @default(0)
+  distinctUsers Int      @default(0)
+  // Summed numeric payload fields when present (e.g. totalTokens).
+  totalsJson    Json?
+
+  @@unique([day, eventType])
+  @@index([eventType, day])
+  @@map("analytics_daily")
+}
+
+model SharedAnalysis {
+  id         String   @id @default(uuid())
+  // Public share token — unguessable by construction (uuid + random).
+  shareToken String   @unique
+  thesisId   String   @unique
+  thesis     Thesis   @relation(fields: [thesisId], references: [id], onDelete: Cascade)
+  symbol     String
+  timeframe  String
+  bias       String
+  confidence String
+  // Frozen snapshot of the analysis at share time — renders without
+  // PII, journal, or trade history.
+  snapshot   Json
+  createdAt  DateTime @default(now())
+  viewCount  Int      @default(0)
+
+  @@map("shared_analyses")
 }

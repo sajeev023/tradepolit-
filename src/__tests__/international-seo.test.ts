@@ -177,7 +177,7 @@ describe("International SEO — Sitemap Integration", () => {
     expect(urls).not.toContain("https://tradcopilot.com/pt-br/terms");
     expect(urls).not.toContain("https://tradcopilot.com/es/privacy");
     } finally {
-      process.env.NODE_ENV = originalEnv;
+      (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv;
     }
   });
 });

@@ -257,6 +257,11 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/charts";
+  // Signup redirects here with ?checkEmail=true after creating the
+  // account. Previously this state was never rendered — users landed on
+  // a plain login form, tried to log in, and hit a raw "Email not
+  // confirmed" Supabase error. Show the confirmation instruction instead.
+  const showCheckEmail = searchParams.get("checkEmail") === "true";
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -504,6 +509,26 @@ function LoginPageContent() {
               }}
             >
               {error}
+            </div>
+          )}
+
+          {/* Post-signup email confirmation notice — fixes the dead-end
+              where users hit a raw "Email not confirmed" error. */}
+          {showCheckEmail && !error && (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "rgba(var(--accent-rgb),0.07)",
+                border: "1px solid rgba(var(--accent-rgb),0.25)",
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: "#D4D4D8",
+              }}
+            >
+              <strong style={{ color: "#E4E4E7" }}>Check your email.</strong> We sent a confirmation
+              link to finish creating your account. Click it, then log in here. (Google sign-up
+              doesn&rsquo;t need this step.)
             </div>
           )}
 

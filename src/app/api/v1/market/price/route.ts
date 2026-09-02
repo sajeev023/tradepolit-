@@ -1,14 +1,17 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { MarketDataService } from "@/lib/market-data-service";
-import { successResponse, validationError } from "@/lib/api-helpers";
+import { isRegisteredSymbol } from "@/lib/market";
+import { successResponse, validationError, errorResponse } from "@/lib/api-helpers";
 import { checkIpRateLimit } from "@/lib/rate-limit";
 import { rateLimitedError, dispatchCaughtError } from "@/lib/typed-errors";
 
 export const dynamic = "force-dynamic";
 
 const priceQuerySchema = z.object({
-  symbol: z.string().min(1, "Symbol is required"),
+  symbol: z.string().min(1, "Symbol is required").refine(isRegisteredSymbol, {
+    message: "Unsupported symbol",
+  }),
 });
 
 export async function GET(request: NextRequest) {

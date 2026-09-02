@@ -62,9 +62,15 @@ function createPrismaClient() {
     connectionString?.includes("localhost") ||
     connectionString?.includes("127.0.0.1");
 
+  // TLS verification for remote databases. `rejectUnauthorized: false`
+  // disables certificate validation — a MITM between the app and the DB
+  // host could intercept credentials and traffic. Default to FULL
+  // verification; allow the old behavior only via an explicit opt-in env
+  // (for providers with self-signed chains), never silently.
+  const sslDisabledEnv = process.env.DB_ALLOW_UNVERIFIED_TLS === "true";
   const pool = new pg.Pool({
     connectionString,
-    ssl: isLocal ? false : { rejectUnauthorized: false },
+    ssl: isLocal ? false : { rejectUnauthorized: !sslDisabledEnv },
   });
   const adapter = new PrismaPg(pool);
 
@@ -77,9 +83,29 @@ function createPrismaClient() {
   });
 }
 
-// The in-memory mock is active when explicitly opted in via USE_DB_MOCK=true,
-// or automatically as a safe fallback if DATABASE_URL is missing (preventing build crashes).
-const isMockDb = process.env.USE_DB_MOCK === "true" || !process.env.DATABASE_URL;
+// Mock-DB resolution:
+//  - USE_DB_MOCK=true → explicit opt-in (tests, local).
+//  - No DATABASE_URL during `next build` (NEXT_PHASE=phase-production-build)
+//    or outside production → lenient fallback so CI/builds never need
+//    the secret (see assertDbConfig docstring).
+//  - No DATABASE_URL at PRODUCTION RUNTIME → FAIL FAST with a loud error.
+//    Previously this silently ran the app on an in-memory mock: user
+//    actions (signups, trades, theses) were accepted and then evaporated
+//    on instance recycle. A prod deployment without a DB is a
+//    misconfiguration that must surface, not silently lose data.
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+const isProdRuntime = process.env.NODE_ENV === "production" && !isBuildPhase;
+const dbUrlMissing = !process.env.DATABASE_URL;
+
+if (dbUrlMissing && isProdRuntime) {
+  throw new Error(
+    "[PRISMA RUNTIME] FATAL: DATABASE_URL is missing in production runtime. " +
+    "Refusing to start on the in-memory mock DB (user data would be silently lost). " +
+    "Set DATABASE_URL, or USE_DB_MOCK=true only for non-production."
+  );
+}
+
+export const isMockDb = process.env.USE_DB_MOCK === "true" || dbUrlMissing;
 
 if (process.env.USE_DB_MOCK === "true") {
   console.log(`[PRISMA RUNTIME] Using in-memory database mock (USE_DB_MOCK=true)`);

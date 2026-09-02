@@ -38,7 +38,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: portalSession.url });
   } catch (err: any) {
+    // Never leak raw Stripe SDK errors to the client (same policy as
+    // create-checkout): full detail goes to server logs only.
     console.error("Create stripe portal session failed:", err);
-    return NextResponse.json({ error: { message: err.message || "Failed to initiate billing portal" } }, { status: 500 });
+    return NextResponse.json(
+      { error: { message: "We couldn't open the billing portal right now. Please try again in a moment — if it persists, contact support." } },
+      { status: 500 }
+    );
   }
 }

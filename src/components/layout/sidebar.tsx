@@ -19,6 +19,8 @@ import {
   TrendingUp,
   Zap,
   CreditCard,
+  Target,
+  Sparkles,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -47,10 +49,17 @@ const navSections: NavSection[] = [
   {
     title: "Tools",
     items: [
+      { label: "Theses", href: "/theses", icon: <Target size={18} /> },
       { label: "Journal", href: "/journal", icon: <BookOpen size={18} /> },
       { label: "Risk Calculator", href: "/risk-calculator", icon: <Calculator size={18} /> },
       { label: "Backtester", href: "/backtester", icon: <FlaskConical size={18} /> },
       { label: "Alerts", href: "/alerts", icon: <Bell size={18} /> },
+    ],
+  },
+  {
+    title: "Intelligence",
+    items: [
+      { label: "Your Patterns", href: "/patterns", icon: <Sparkles size={18} /> },
     ],
   },
 ];

@@ -76,7 +76,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
+    // Never leak raw provider errors to the client — Stripe SDK messages
+    // can expose configuration details (missing keys, price IDs, customer
+    // data). Log the full error server-side; return a generic message.
     console.error("Create stripe checkout session failed:", err);
-    return NextResponse.json({ error: { message: err.message || "Failed to initiate checkout" } }, { status: 500 });
+    return NextResponse.json(
+      { error: { message: "We couldn't start checkout right now. Please try again in a moment — if it persists, contact support." } },
+      { status: 500 }
+    );
   }
 }

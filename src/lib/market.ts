@@ -41,6 +41,18 @@ export function normalizeSymbol(symbol: string): string {
   return clean;
 }
 
+/**
+ * Whitelist check: is this a registered instrument?
+ *
+ * Unknown symbols previously flowed through into upstream provider URLs
+ * (`symbol=${...}` interpolation) and — when all providers failed —
+ * produced SIMULATED data for instruments that don't exist. Routes must
+ * reject unregistered symbols with a 4xx instead.
+ */
+export function isRegisteredSymbol(symbol: string): boolean {
+  return ALL_SYMBOLS.includes(normalizeSymbol(symbol));
+}
+
 function downsampleCandles(candles: OHLCVCandle[], factor: number): OHLCVCandle[] {
   const result: OHLCVCandle[] = [];
   for (let i = 0; i < candles.length; i += factor) {
@@ -93,7 +105,10 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
 
     if (symbolWantsTwelveData && tdKeyValid) {
       const tdSymbol = twelvedataSymbolFor(normSymbol);
-      const url = `https://api.twelvedata.com/price?symbol=${tdSymbol}&apikey=${process.env.TWELVEDATA_API_KEY}`;
+      // Encode both the symbol and the key — they flow into a query
+      // string and must never allow parameter injection or leak
+      // malformed credentials into proxy logs.
+      const url = `https://api.twelvedata.com/price?symbol=${encodeURIComponent(tdSymbol)}&apikey=${encodeURIComponent(process.env.TWELVEDATA_API_KEY!)}`;
       try {
         const res = await fetch(url, { signal: AbortSignal.timeout(3000), cache: "no-store" });
         if (res.ok) {
@@ -124,7 +139,7 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
         const tdStatsSymbol = twelvedataSymbolFor(normSymbol);
         try {
           const res = await fetch(
-            `https://api.twelvedata.com/time_series?symbol=${tdStatsSymbol}&interval=1min&outputsize=2&apikey=${process.env.TWELVEDATA_API_KEY}`,
+            `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(tdStatsSymbol)}&interval=1min&outputsize=2&apikey=${encodeURIComponent(process.env.TWELVEDATA_API_KEY!)}`,
             { signal: AbortSignal.timeout(3000), cache: "no-store" }
           );
           if (res.ok) {

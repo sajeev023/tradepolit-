@@ -70,19 +70,48 @@ export async function POST(request: NextRequest) {
       } as any);
     }
 
-    const alert = await prisma.alert.create({
-      data: {
-        userId: user.id,
-        instrument,
-        type,
-        condition: condition as any,
-        isActive: true,
-      },
-    });
+    // RESERVE-FIRST quota pattern (same as analyze-chart): the atomic
+    // conditional increment in recordUsage is the single source of truth.
+    // Creating the alert first and incrementing after left a TOCTOU
+    // window where concurrent requests all passed the non-atomic
+    // checkUsageLimit read and created alerts beyond the limit (the
+    // increment result was discarded). Now: reserve the slot, create
+    // only if reserved, release the slot if creation fails.
+    const reserved = await recordUsage(user.id, "alerts", user.email);
+    if (!reserved) {
+      // Lost the race (or over limit at the atomic guard).
+      const recheck = await checkUsageLimit(user.id, "alerts", user.email);
+      if (recheck.isDemo) {
+        const demoError = getDemoAlertLimitError();
+        return errorResponse(demoError.error, demoError.message, 403, {
+          cta: demoError.cta,
+          ctaLink: demoError.ctaLink,
+        });
+      }
+      return errorResponse("FORBIDDEN", "Daily alert limit reached. Upgrade to Pro.", 403);
+    }
 
-    await recordUsage(user.id, "alerts", user.email);
-
-    return successResponse(alert, 201);
+    try {
+      const alert = await prisma.alert.create({
+        data: {
+          userId: user.id,
+          instrument,
+          type,
+          condition: condition as any,
+          isActive: true,
+        },
+      });
+      return successResponse(alert, 201);
+    } catch (createErr) {
+      // Release the reservation so the failed creation doesn't consume quota.
+      await prisma.user
+        .updateMany({
+          where: { id: user.id, alertsCountToday: { gt: 0 } },
+          data: { alertsCountToday: { decrement: 1 } },
+        })
+        .catch(() => {});
+      throw createErr;
+    }
   } catch (error) {
     console.error("Create alert API error:", error);
     return dispatchCaughtError("Failed to create alert", error);

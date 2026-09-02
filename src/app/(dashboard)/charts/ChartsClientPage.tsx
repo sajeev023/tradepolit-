@@ -27,6 +27,7 @@ import {
   Minimize2,
   Camera,
   MoreHorizontal,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getInstantFallbackAnalysis } from "@/lib/fallback-analysis";
@@ -177,6 +178,9 @@ export function ChartsClientPage() {
   const [inputText, setInputText] = useState("");
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  // V2 thesis state — saving / saved feedback for the Save-as-Thesis CTA.
+  const [thesisSaving, setThesisSaving] = useState(false);
+  const [thesisSaved, setThesisSaved] = useState(false);
   const [showFollowUps, setShowFollowUps] = useState(false);
   const [mobileTab, setMobileTab] = useState<"watchlist" | "chart" | "copilot">("chart");
   const [isMobile, setIsMobile] = useState(false);
@@ -532,6 +536,8 @@ export function ChartsClientPage() {
       setAnalysisError(null);
       setChatId(null);
       setShowFollowUps(false);
+      // A new analysis invalidates the previous thesis-saved state.
+      setThesisSaved(false);
 
       if (isDemoMode) {
         const nextCount = demoAnalysesCount + 1;
@@ -615,6 +621,13 @@ Timestamp: ${new Date().toISOString()}
       // Surface inline in the Copilot panel — NOT a global toast. The long
       // validation-rejection message was rendering as a huge persistent
       // bottom-right toast that covered the chart and the AI input.
+      //
+      // CRITICAL: clear the optimistic instant fallback so the error state
+      // actually renders. Previously the synthetic placeholder kept
+      // `analysisData` populated, which masked real failures (including
+      // validation rejections) behind an "Analysis unavailable" badge
+      // while a fake, plausible-looking analysis stayed on screen.
+      setAnalysisData(null);
       setAnalysisError(err?.message || "Analysis request timed out. Please try again.");
     },
   });
@@ -746,7 +759,13 @@ Timestamp: ${new Date().toISOString()}
   // re-run every time the useMutation object changes (isPending toggles).
   const analyzeMutate = analyzeMutation.mutate;
 
-  // Run analysis ONLY on symbol/timeframe change or first mount
+  // Run analysis on FIRST mount (instant activation value) — but never
+  // auto-fire billable analyses on subsequent symbol/timeframe changes.
+  // Previously every switch silently consumed one of a FREE user's 5
+  // daily analyses. Now: explicit "Analyze" click (or retry) runs the
+  // AI; a symbol switch shows the live placeholder + Analyze CTA.
+  // The server-side cache still serves free instant analyses when fresh.
+  const autoAnalyzedOnceRef = useRef(false);
   useEffect(() => {
     const hasSymbolChanged = lastAnalyzedSymbolRef.current !== selectedSymbol;
     const hasTimeframeChanged = lastAnalyzedTimeframeRef.current !== selectedTimeframe;
@@ -754,6 +773,8 @@ Timestamp: ${new Date().toISOString()}
     if (hasSymbolChanged || hasTimeframeChanged) {
       console.log(`[SYNC] Symbol/timeframe changed: ${lastAnalyzedSymbolRef.current} -> ${selectedSymbol} (${selectedTimeframe})`);
       const prevSym = lastAnalyzedSymbolRef.current;
+      const isFirstAutoRun = !autoAnalyzedOnceRef.current;
+      autoAnalyzedOnceRef.current = true;
 
       // Update refs synchronously so a rapid second effect run won't see the
       // same pair as "changed" and fire another analysis.
@@ -780,7 +801,9 @@ Timestamp: ${new Date().toISOString()}
       // Immediately clear stale analysis state for previous symbol
       setAnalysisData(null);
 
-      analyzeMutate({ symbol: selectedSymbol, timeframe: selectedTimeframe });
+      if (isFirstAutoRun) {
+        analyzeMutate({ symbol: selectedSymbol, timeframe: selectedTimeframe });
+      }
     }
   }, [selectedSymbol, selectedTimeframe, analyzeMutate]);
 
@@ -984,6 +1007,22 @@ Timestamp: ${new Date().toISOString()}
           priceFetching={priceFetching}
         />
       </div>
+
+      {/* ── Simulated-data honesty banner ────────────────────────────────────────
+          When every upstream provider fails, the market layer falls back to a
+          labeled random-walk (source: "SIMULATED"). The AI gate refuses to
+          analyze it server-side; this banner ensures the user also always
+          knows they are looking at illustrative prices, never silently
+          presented as live. */}
+      {priceData?.source === "SIMULATED" && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-500/30 bg-[var(--color-warning-bg)] text-[11px] text-[var(--color-text-primary)] shrink-0">
+          <AlertTriangle size={13} className="text-amber-400 shrink-0" />
+          <span>
+            <strong>Simulated prices.</strong> Live data for {selectedSymbol} is temporarily unavailable from all
+            providers. AI analysis is paused until the feed recovers — do not trade on these values.
+          </span>
+        </div>
+      )}
 
       {/* ── Mobile tab switcher ───────────────────────────────────────────────── */}
       <div className="flex lg:hidden bg-[var(--color-bg-tertiary)] p-1 rounded-lg border border-[var(--color-border-default)] gap-1 w-full shrink-0">
@@ -1323,6 +1362,73 @@ Timestamp: ${new Date().toISOString()}
             expandedMessages={expandedMessages}
             onCopy={handleCopy}
             onToggleExpand={toggleExpand}
+            onSaveThesis={async () => {
+              if (!analysisData || thesisSaving || thesisSaved) return;
+              setThesisSaving(true);
+              try {
+                const res = await fetch("/api/v1/theses", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    symbol: selectedSymbol,
+                    timeframe: selectedTimeframe,
+                    analysis: {
+                      bias: analysisData.bias || "NEUTRAL",
+                      setupQuality: analysisData.setupQuality,
+                      confidence: analysisData.confidence,
+                      entryIdeas: analysisData.entryIdeas,
+                      stopLossIdea: analysisData.stopLossIdea,
+                      takeProfitIdea: analysisData.takeProfitIdea,
+                      whyItMatters: analysisData.whyItMatters,
+                      support: analysisData.support,
+                      resistance: analysisData.resistance,
+                      invalidationLevel: analysisData.invalidationLevel,
+                    },
+                    telemetry: {
+                      currentPrice: analysisData.currentPrice || liveIndicators?.currentPrice,
+                      support: analysisData.support || liveIndicators?.support,
+                      resistance: analysisData.resistance || liveIndicators?.resistance,
+                      invalidationLevel: analysisData.invalidationLevel,
+                      rsi: analysisData.indicators?.rsi,
+                      macdValue: analysisData.indicators?.macd?.macd,
+                      macdSignal: analysisData.indicators?.macd?.signal,
+                      macdHistogram: analysisData.indicators?.macd?.macd != null && analysisData.indicators?.macd?.signal != null
+                        ? analysisData.indicators.macd.macd - analysisData.indicators.macd.signal
+                        : undefined,
+                      trend: analysisData.marketRegime || liveIndicators?.trend,
+                      bias: analysisData.bias,
+                    },
+                    aiSummary: analysisData.whyItMatters || analysisData.shortTermScenario || "Tracked thesis from chart analysis.",
+                    // V2.5: deterministic evidence captured at analysis time —
+                    // the structured "why" that powers later attribution.
+                    evidenceFor: Array.isArray(analysisData.evidence?.for)
+                      ? analysisData.evidence.for.slice(0, 10).map((e: string) => String(e).slice(0, 300))
+                      : undefined,
+                    evidenceAgainst: Array.isArray(analysisData.evidence?.against)
+                      ? analysisData.evidence.against.slice(0, 10).map((e: string) => String(e).slice(0, 300))
+                      : undefined,
+                  }),
+                });
+                const body = await res.json();
+                if (!res.ok) throw new Error(body.error?.message || "Failed to save thesis");
+                if (body.data?.demoLocked) {
+                  toast.info(body.data.message);
+                  return;
+                }
+                setThesisSaved(true);
+                toast.success("Thesis saved — we'll monitor it and notify you when it resolves.");
+                // NOTE: no client analytics emission here. The POST handler
+                // writes the authoritative `thesis_created` event server-side;
+                // emitting from both double-counts the funnel (verified in the
+                // V2 state audit).
+              } catch (err: any) {
+                toast.error(err?.message || "Failed to save thesis");
+              } finally {
+                setThesisSaving(false);
+              }
+            }}
+            thesisSaving={thesisSaving}
+            thesisSaved={thesisSaved}
             onBookmarkMessage={async (msg, msgId) => {
               if (bookmarkedIds.has(msgId) || !analysisData) return;
               try {

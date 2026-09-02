@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { getOHLCV } from "@/lib/market";
+import { getOHLCV, isRegisteredSymbol } from "@/lib/market";
 import { successResponse, validationError } from "@/lib/api-helpers";
 import { checkIpRateLimit } from "@/lib/rate-limit";
 import { rateLimitedError, dispatchCaughtError } from "@/lib/typed-errors";
@@ -8,7 +8,13 @@ import { rateLimitedError, dispatchCaughtError } from "@/lib/typed-errors";
 export const dynamic = "force-dynamic";
 
 const ohlcvQuerySchema = z.object({
-  symbol: z.string().min(1, "Symbol is required"),
+  symbol: z
+    .string()
+    .min(1, "Symbol is required")
+    // Whitelist against the registry — unknown symbols previously flowed
+    // into upstream provider URLs and produced SIMULATED data for
+    // instruments that don't exist.
+    .refine(isRegisteredSymbol, { message: "Unsupported symbol" }),
   tf: z.enum(["1m", "5m", "15m", "1h", "4h", "1d", "1W"]).default("1h"),
   limit: z.preprocess(
     (val) => (val ? parseInt(val as string, 10) : undefined),

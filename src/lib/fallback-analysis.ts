@@ -11,6 +11,18 @@ export interface FallbackLiveData {
   trend?: string;
 }
 
+/**
+ * Optimistic placeholder shown WHILE the real AI analysis is running.
+ *
+ * V2 honesty rules:
+ *  - It is explicitly labeled as a placeholder ("AI analysis in progress"),
+ *    never as a completed "Synchronized" analysis.
+ *  - It only mirrors verified telemetry (price/S-R/RSI from the server
+ *    indicators snapshot). It never fabricates MACD values, entry
+ *    "sources", or model provenance.
+ *  - It is cleared on error (see ChartsClientPage onError) so real
+ *    failures always render.
+ */
 export function getInstantFallbackAnalysis(symbol: string, timeframe: string, liveData?: FallbackLiveData) {
   if (!liveData || !liveData.currentPrice || !liveData.support || !liveData.resistance || liveData.rsi === undefined || isNaN(liveData.rsi)) {
     return null;
@@ -27,49 +39,34 @@ export function getInstantFallbackAnalysis(symbol: string, timeframe: string, li
   const rsiVal = liveData.rsi;
   const rsiLbl = liveData.rsiLabel ?? "Neutral";
   const biasVal = liveData.bias ?? "NEUTRAL";
-  const setupVal = liveData.setupQuality ?? "HIGH GRADE";
-  const confVal = liveData.confidence ?? "MEDIUM";
 
   return {
     symbol,
     timeframe,
     cached: false,
-    loading: false,
+    loading: true,
     marketRegime: liveData.trend ? `${liveData.trend} continuation favored.` : `Active telemetry for ${symbol} on ${timeframe}.`,
     bias: biasVal,
     support: supportVal,
     resistance: resistanceVal,
-    setupQuality: setupVal,
+    setupQuality: liveData.setupQuality ?? "PENDING",
     riskLevel: "Medium",
-    confidence: confVal,
+    confidence: liveData.confidence ?? "MEDIUM",
     invalidationLevel: invalidationVal,
-    whyItMatters: `Defended key local structure with indicator alignment backing the active bias.`,
-    entryIdeas: `Limit entry orders near support at $${supportStr}`,
-    stopLossIdea: invalidationVal ? invalidationVal.toString() : null,
-    takeProfitIdea: resistanceVal ? resistanceVal.toString() : null,
-    shortTermScenario: `Price action is expected to respect support at $${supportStr} and build momentum towards resistance at $${resistanceStr}.`,
-    coachNarrative: `Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | TF: ${timeframe} | Price: $${price.toLocaleString()} | Status: Synchronized
+    whyItMatters: `Live structure: support $${supportStr} / resistance $${resistanceStr}. The full AI analysis is being prepared.`,
+    entryIdeas: `Awaiting AI analysis — entry plan will populate here.`,
+    stopLossIdea: null,
+    takeProfitIdea: null,
+    shortTermScenario: `Structure is contained between $${supportStr} and $${resistanceStr}.`,
+    coachNarrative: `Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | TF: ${timeframe} | Price: $${price.toLocaleString()} | Status: AI analysis in progress
 
-## Market Structure
-Live telemetry data is available from the exchange feed. ${symbol} is trading at $${price.toLocaleString()} on the ${timeframe} timeframe, with swing-low pivot support at $${supportStr} and swing-high pivot resistance at $${resistanceStr}.
-
-## Momentum
-The RSI(14) is at ${rsiVal.toFixed(2)} (${rsiLbl}), indicating momentum is currently in a ${rsiLbl.toLowerCase()} state. Volume and trend indicators are validating this baseline.
+## Live Snapshot
+Verified telemetry from the exchange feed: ${symbol} is trading at $${price.toLocaleString()} on the ${timeframe} timeframe. RSI(14) at ${rsiVal.toFixed(2)} (${rsiLbl}).
 
 ## Key Levels
-Key pivot points stand at $${supportStr} (Support) and $${resistanceStr} (Resistance). These areas represent critical historical order block defense.
+Support: $${supportStr} | Resistance: $${resistanceStr}
 
-## Trade Thesis
-The technical alignment supports a ${biasVal} bias. If support at $${supportStr} holds, momentum favors expansion toward resistance at $${resistanceStr}.
-
-## Invalidation
-A structural candle close on the ${timeframe} timeframe below $${invalidationVal.toLocaleString()} invalidates the active thesis.
-
-## Risk Assessment
-Risk parameters are defined by potential volatility swings. Tighten position sizing if macro indicators diverge from the current structure.
-
-## Bottom Line
-Highest probability path is trend resolution within the key swing levels at $${supportStr} and $${resistanceStr}.`,
+The full AI analysis — market structure read, momentum synthesis, and a validated trade plan — will replace this snapshot in a few seconds.`,
     indicators: {
       rsi: rsiVal,
       rsiLabel: rsiLbl,
@@ -83,15 +80,13 @@ Highest probability path is trend resolution within the key swing levels at $${s
     sourceMetadata: {
       symbolSource: `User active selection (${symbol})`,
       timeframeSource: `Selected chart interval (${timeframe})`,
-      priceSource: `Binance spot real-time ticker ($${price.toLocaleString()})`,
+      priceSource: `Live exchange feed ($${price.toLocaleString()})`,
       rsiSource: `RSI(14) calculated from close prices (${rsiVal.toFixed(2)})`,
       supportSource: "Swing-low detector",
       resistanceSource: "Swing-high detector",
-      entrySource: "Fibonacci retracement",
-      stopLossSource: "Structural invalidation",
-      takeProfitSource: "Target liquidity zone",
-      confidenceSource: "Syncing indicator alignment...",
-      aiModelSource: "Groq / NVIDIA Multi-Model Race",
+      confidenceSource: "AI analysis in progress — placeholder from live telemetry",
+      aiModelSource: "Pending — multi-model race in progress",
     },
+    _placeholder: true,
   };
 }

@@ -24,6 +24,8 @@ import {
   Bell,
   Settings,
   Newspaper,
+  Target,
+  Sparkles,
   X,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,6 +33,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
 const MORE_ITEMS = [
+  { label: "Theses", icon: Target, href: "/theses" },
+  { label: "Your Patterns", icon: Sparkles, href: "/patterns" },
   { label: "Watchlist", icon: Eye, href: "/watchlist" },
   { label: "News", icon: Newspaper, href: "/news" },
   { label: "Risk Calculator", icon: Calculator, href: "/risk-calculator" },

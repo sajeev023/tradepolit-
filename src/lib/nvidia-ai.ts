@@ -191,6 +191,8 @@ export interface RaceResult {
   duration: number;
   rank: number;
   provider: Provider;
+  /** V3 cost telemetry — token usage when the provider reports it. */
+  usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number };
 }
 
 export interface NvidiaErrorResponse {
@@ -302,10 +304,27 @@ async function callSingleModel(
     const _parseMs = Date.now() - parseStart;
 
     let content = "";
+    let usage: RaceResult["usage"];
     if (modelDef.provider === "gemini") {
       content = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      const mu = data.usageMetadata;
+      if (mu && typeof mu.promptTokenCount === "number") {
+        usage = {
+          promptTokens: mu.promptTokenCount,
+          completionTokens: typeof mu.candidatesTokenCount === "number" ? mu.candidatesTokenCount : undefined,
+          totalTokens: typeof mu.totalTokenCount === "number" ? mu.totalTokenCount : undefined,
+        };
+      }
     } else {
       content = data.choices?.[0]?.message?.content ?? "";
+      const u = data.usage;
+      if (u && typeof u.prompt_tokens === "number") {
+        usage = {
+          promptTokens: u.prompt_tokens,
+          completionTokens: typeof u.completion_tokens === "number" ? u.completion_tokens : undefined,
+          totalTokens: typeof u.total_tokens === "number" ? u.total_tokens : undefined,
+        };
+      }
     }
 
     if (!content) throw new Error("Empty content in response");
@@ -331,6 +350,7 @@ async function callSingleModel(
       duration: totalMs,
       rank: modelDef.id,
       provider: modelDef.provider,
+      usage,
     };
   } catch (err: any) {
     clearTimeout(modelTimeout);
