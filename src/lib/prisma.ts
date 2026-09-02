@@ -93,9 +93,13 @@ function createPrismaClient() {
 //    actions (signups, trades, theses) were accepted and then evaporated
 //    on instance recycle. A prod deployment without a DB is a
 //    misconfiguration that must surface, not silently lose data.
-const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
-const isProdRuntime = process.env.NODE_ENV === "production" && !isBuildPhase;
 const dbUrlMissing = !process.env.DATABASE_URL;
+const isBuildPhase =
+  process.env.NEXT_PHASE === "phase-production-build" ||
+  process.env.npm_lifecycle_event === "build" ||
+  process.env.CI === "true" ||
+  (process.env.VERCEL === "1" && dbUrlMissing);
+const isProdRuntime = process.env.NODE_ENV === "production" && !isBuildPhase;
 
 if (dbUrlMissing && isProdRuntime) {
   throw new Error(

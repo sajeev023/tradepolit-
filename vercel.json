@@ -6,11 +6,11 @@
     },
     {
       "path": "/api/cron/evaluate-theses",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/cron/thesis-digest",
-      "schedule": "17 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/analytics-rollup",
