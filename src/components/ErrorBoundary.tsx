@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Component, type ErrorInfo, type ReactNode } from "react";
+import Link from "next/link";
 import { AlertTriangle, RefreshCw, Home, RotateCcw } from "lucide-react";
 
 interface Props {
@@ -95,13 +96,13 @@ export class ErrorBoundary extends Component<Props, State> {
                 <RefreshCw size={13} />
                 <span>Reload Page</span>
               </button>
-              <a
+              <Link
                 href="/charts"
                 className="btn-secondary h-10 px-5 text-xs font-semibold gap-2 cursor-pointer flex items-center border-[var(--color-border-default)] hover:border-[var(--color-border-strong)]"
               >
                 <Home size={13} />
                 <span>Reset to Safety</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

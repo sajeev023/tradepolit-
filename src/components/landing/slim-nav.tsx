@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TrendingUp, ArrowRight } from "lucide-react";
 import { MobileMenu } from "./mobile-menu";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 /**
  * Fallback links for pages that don't pass explicit items (every inner page).
@@ -78,6 +79,7 @@ export function SlimNav({ items }: SlimNavProps = {}) {
 
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-2">
+          <LanguageSwitcher variant="nav" />
           <Link
             href="/login"
             className="h-8 px-3.5 inline-flex items-center rounded-md text-[13px] font-semibold text-[var(--muted)] hover:text-[var(--ink)] transition-colors"
@@ -96,6 +98,7 @@ export function SlimNav({ items }: SlimNavProps = {}) {
 
         {/* Mobile CTA + menu */}
         <div className="flex md:hidden items-center gap-2">
+          <LanguageSwitcher variant="nav" compact />
           <Link
             href="/signup"
             className="h-8 px-3 inline-flex items-center rounded-md text-[12px] font-semibold text-[var(--bg-primary)]"

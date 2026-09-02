@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TrendingUp, Mail } from "lucide-react";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
@@ -100,6 +101,7 @@ export function SiteFooter() {
         <div className="pt-6 border-t border-[var(--color-border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
           <p>© {year} TradCopilot Inc. All rights reserved. Read-only analytical terminal. Not financial advice.</p>
           <div className="flex items-center gap-4">
+            <LanguageSwitcher variant="footer" />
             <Link href="/disclaimer" className="hover:text-[var(--ink)] transition-colors">Disclaimer</Link>
             <Link href="/terms" className="hover:text-[var(--ink)] transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-[var(--ink)] transition-colors">Privacy</Link>

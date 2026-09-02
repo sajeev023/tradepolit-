@@ -1,9 +1,20 @@
 import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site-url";
+import {
+  LOCALIZABLE_PAGES,
+  NON_DEFAULT_LOCALE_KEYS,
+  LOCALE_CONFIGS,
+  SUPPORTED_LOCALE_KEYS,
+  localePath,
+} from "@/lib/i18n/config";
 
 /**
  * Public sitemap. Only canonical, indexable marketing, guide, comparison,
  * and legal routes belong here.
+ *
+ * International SEO: for every route that appears in LOCALIZABLE_PAGES,
+ * locale-prefixed variants (e.g., /pt-br/ai-chart-analysis) are also emitted
+ * with hreflang alternates pointing to all language versions.
  *
  * lastModified policy: static ISO dates that are bumped when a page's
  * content meaningfully changes.
@@ -46,13 +57,53 @@ const ROUTES: Array<{
   { path: "/acceptable-use", priority: 0.3, changeFrequency: "yearly", lastModified: "2026-07-12" },
 ];
 
+/**
+ * Builds hreflang alternates for a given English path (used in sitemap entries).
+ * Only emitted for localizable pages.
+ */
+function buildAlternates(basePath: string, baseUrl: string) {
+  if (!LOCALIZABLE_PAGES.includes(basePath)) return undefined;
+  const languages: Record<string, string> = {};
+  for (const loc of SUPPORTED_LOCALE_KEYS) {
+    const config = LOCALE_CONFIGS[loc];
+    const locPath = localePath(loc, basePath);
+    languages[config.hreflang] = locPath === "/" ? `${baseUrl}/` : `${baseUrl}${locPath}`;
+  }
+  languages["x-default"] = basePath === "/" ? `${baseUrl}/` : `${baseUrl}${basePath}`;
+  return { languages };
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = getSiteUrl();
+  const entries: MetadataRoute.Sitemap = [];
 
-  return ROUTES.map((route) => ({
-    url: route.path === "/" ? `${baseUrl}/` : `${baseUrl}${route.path}`,
-    lastModified: new Date(route.lastModified),
-    changeFrequency: route.changeFrequency,
-    priority: route.priority,
-  }));
+  for (const route of ROUTES) {
+    const url = route.path === "/" ? `${baseUrl}/` : `${baseUrl}${route.path}`;
+    const alternates = buildAlternates(route.path, baseUrl);
+
+    // English (root) entry
+    entries.push({
+      url,
+      lastModified: new Date(route.lastModified),
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
+      ...(alternates ? { alternates } : {}),
+    });
+
+    // Locale entries for localizable pages
+    if (LOCALIZABLE_PAGES.includes(route.path)) {
+      for (const loc of NON_DEFAULT_LOCALE_KEYS) {
+        const locPath = localePath(loc, route.path);
+        entries.push({
+          url: `${baseUrl}${locPath}`,
+          lastModified: new Date(route.lastModified),
+          changeFrequency: route.changeFrequency,
+          priority: Math.max(route.priority - 0.1, 0.3), // Locale variants slightly lower priority
+          alternates,
+        });
+      }
+    }
+  }
+
+  return entries;
 }

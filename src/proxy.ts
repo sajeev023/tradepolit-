@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { NON_DEFAULT_LOCALE_KEYS } from "@/lib/i18n/config";
 
 const publicRoutes = [
   "/",
@@ -45,7 +46,12 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
 }
 
 function isPublicRoute(pathname: string): boolean {
-  return matchesRoute(pathname, publicRoutes);
+  if (matchesRoute(pathname, publicRoutes)) return true;
+  // Locale-prefixed routes (e.g., /pt-br/*, /es/*) are always public SEO pages
+  for (const loc of NON_DEFAULT_LOCALE_KEYS) {
+    if (pathname === `/${loc}` || pathname.startsWith(`/${loc}/`)) return true;
+  }
+  return false;
 }
 
 function isProtectedRoute(pathname: string): boolean {

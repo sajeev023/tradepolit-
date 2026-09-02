@@ -15,12 +15,25 @@
  *    9 supported instruments, RSI/MACD/EMA/ATR/VWAP indicators, revenge-trade
  *    and overtrading detectors, read-only (no execution, no broker links),
  *    $0 free tier (5 analyses/day) and $7.49/month Pro.
+ *  - International SEO: locale-aware metadata, hreflang alternates, OG locale,
+ *    and JSON-LD inLanguage for all supported locales.
  *
  * Usage on any server page/layout:
+ *   // English (default — backwards compatible):
  *   export const metadata = buildMetadata({ title: "...", description: "...", path: "/pricing" });
+ *   // Localized:
+ *   export const metadata = buildMetadata({ title: "...", description: "...", path: "/pricing", locale: "pt-br" });
  */
 
 import type { Metadata } from "next";
+import {
+  type SupportedLocale,
+  DEFAULT_LOCALE,
+  LOCALE_CONFIGS,
+  SUPPORTED_LOCALE_KEYS,
+  LOCALIZABLE_PAGES,
+  localePath,
+} from "@/lib/i18n/config";
 
 /** Canonical production origin. Never localhost — see lib/site-url.ts for env-aware dev fallbacks. */
 export const SITE_URL = "https://tradcopilot.com";
@@ -50,8 +63,12 @@ export interface PageMetaInput {
   title: string;
   /** Unique meta description (150–165 chars recommended). */
   description: string;
-  /** Canonical path on the production origin, e.g. "/", "/pricing", "/guides/x". */
+  /** Canonical path on the production origin, e.g. "/", "/pricing", "/guides/x".
+   *  For localized pages, this is the BASE English path (e.g. "/pricing"),
+   *  not the locale-prefixed path. The locale prefix is derived from the locale param. */
   path: string;
+  /** Locale for this page. Defaults to "en" (backwards compatible). */
+  locale?: SupportedLocale;
   /** Absolute title override (bypasses template). Only the homepage needs this. */
   titleAbsolute?: boolean;
   /** A handful of genuinely topical keywords. Optional; never stuffed. */
@@ -69,6 +86,7 @@ export function buildMetadata({
   title,
   description,
   path,
+  locale = DEFAULT_LOCALE,
   titleAbsolute = false,
   keywords,
   ogType = "website",
@@ -76,8 +94,26 @@ export function buildMetadata({
   modifiedTime,
   noindex = false,
 }: PageMetaInput): Metadata {
-  const url = path === "/" ? SITE_URL : `${SITE_URL}${path}`;
+  const localeConfig = LOCALE_CONFIGS[locale];
+  // Build the actual canonical path for this locale
+  const canonicalPath = localePath(locale, path);
+  const url = canonicalPath === "/" ? SITE_URL : `${SITE_URL}${canonicalPath}`;
   const ogTitle = titleAbsolute ? title : `${title} | ${SITE_NAME}`;
+
+  // Build hreflang alternates: only include locales where this page is localizable
+  const isLocalizable = LOCALIZABLE_PAGES.includes(path);
+  const languages: Record<string, string> = {};
+  if (isLocalizable) {
+    for (const loc of SUPPORTED_LOCALE_KEYS) {
+      const config = LOCALE_CONFIGS[loc];
+      const locPath = localePath(loc, path);
+      const locUrl = locPath === "/" ? `${SITE_URL}/` : `${SITE_URL}${locPath}`;
+      languages[config.hreflang] = locUrl;
+    }
+    // x-default points to the English (root) version
+    const defaultPath = path === "/" ? `${SITE_URL}/` : `${SITE_URL}${path}`;
+    languages["x-default"] = defaultPath;
+  }
 
   const metadata: Metadata = {
     title: titleAbsolute ? { absolute: title } : title,
@@ -86,7 +122,10 @@ export function buildMetadata({
       // Relative paths resolve against metadataBase from the root layout.
       // "/" intentionally emits the bare origin (https://tradcopilot.com),
       // matching how Next normalizes the trailing-slash 308.
-      canonical: path,
+      canonical: canonicalPath,
+      ...(isLocalizable && Object.keys(languages).length > 0
+        ? { languages }
+        : {}),
     },
     openGraph: {
       title: ogTitle,
@@ -94,7 +133,7 @@ export function buildMetadata({
       url,
       siteName: SITE_NAME,
       type: ogType,
-      locale: "en_US",
+      locale: localeConfig.ogLocale,
       ...(ogType === "article" && publishedTime ? { publishedTime } : {}),
       ...(ogType === "article" && modifiedTime ? { modifiedTime } : {}),
     },
@@ -147,15 +186,16 @@ export function organizationJsonLd() {
   };
 }
 
-/** WebSite entity — identity of the site itself. No SearchAction: there is no public /search route. */
-export function websiteJsonLd() {
+/** WebSite entity — identity of the site itself. No SearchAction: there is no public /search route.
+ *  Accepts an optional locale to set the correct inLanguage. */
+export function websiteJsonLd(locale: SupportedLocale = DEFAULT_LOCALE) {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "@id": WEBSITE_ID,
     name: SITE_NAME,
     url: SITE_URL,
-    inLanguage: "en",
+    inLanguage: LOCALE_CONFIGS[locale].code,
     description:
       "AI-powered trading copilot for crypto and forex market analysis, journaling, and risk awareness.",
     publisher: { "@id": ORGANIZATION_ID },
@@ -252,20 +292,23 @@ export function articleJsonLd({
   path,
   datePublished,
   dateModified,
+  locale = DEFAULT_LOCALE,
 }: {
   headline: string;
   description: string;
   path: string;
   datePublished: string;
   dateModified?: string;
+  locale?: SupportedLocale;
 }) {
+  const fullPath = localePath(locale, path);
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline,
     description,
-    mainEntityOfPage: `${SITE_URL}${path}`,
-    url: `${SITE_URL}${path}`,
+    mainEntityOfPage: `${SITE_URL}${fullPath}`,
+    url: `${SITE_URL}${fullPath}`,
     datePublished,
     ...(dateModified ? { dateModified } : {}),
     author: { "@id": ORGANIZATION_ID },
@@ -275,7 +318,7 @@ export function articleJsonLd({
       name: SITE_NAME,
       logo: { "@type": "ImageObject", url: `${SITE_URL}/icon.svg` },
     },
-    inLanguage: "en",
+    inLanguage: LOCALE_CONFIGS[locale].code,
   };
 }
 
