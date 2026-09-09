@@ -102,6 +102,7 @@ interface MetricCardProps {
   icon?: React.ReactElement;
   tone?: "default" | "profit" | "loss" | "accent" | "warning";
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function MetricCard({
@@ -111,6 +112,7 @@ export function MetricCard({
   icon,
   tone = "default",
   className = "",
+  style,
 }: MetricCardProps) {
   const toneColor =
     tone === "profit"
@@ -124,7 +126,7 @@ export function MetricCard({
       : "var(--color-text-primary)";
 
   return (
-    <div className={`card p-4 border-[var(--color-border-default)] ${className}`}>
+    <div className={`card p-4 border-[var(--color-border-default)] ${className}`} style={style}>
       <div className="flex items-center justify-between">
         <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-semibold text-[var(--color-text-tertiary)]">
           {label}

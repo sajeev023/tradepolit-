@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DirectionBadge, RegimeTag } from "@/components/ui/decision-primitives";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PageShell, PageHeader, SectionCard, AttentionBanner } from "@/components/layout/page-shell";
 
 const AVAILABLE_ASSETS = [
   { symbol: "BTC/USD", group: "Crypto" },
@@ -186,44 +187,31 @@ export default function WatchlistPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 select-none animate-fade-in pb-12">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--color-border-subtle)] pb-5">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-6 h-6 rounded-md bg-[var(--color-accent-primary-subtle)] text-[var(--color-accent-primary)] flex items-center justify-center border border-[rgba(var(--accent-rgb),0.2)]">
-              <Eye size={14} />
-            </span>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--color-accent-primary)] font-semibold">
-              Market Intelligence Surface
-            </span>
+    <PageShell gap="md" className="pb-12 animate-fade-in">
+      <PageHeader
+        eyebrow="Market Intelligence Surface"
+        eyebrowIcon={<Eye size={14} />}
+        title="Intelligent Watchlist"
+        subtitle="What deserves your attention right now? Correlating live price telemetry with active decisions and structural regime shifts."
+        actions={
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="New list name..."
+              value={newWatchlistName}
+              onChange={(e) => setNewWatchlistName(e.target.value)}
+              className="px-3 py-1.5 rounded-lg text-xs bg-[var(--color-bg-deepest)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] font-mono placeholder-[var(--color-text-quaternary)] focus:outline-none focus:border-[var(--color-accent-primary)]"
+            />
+            <button
+              onClick={() => newWatchlistName.trim() && createMutation.mutate()}
+              disabled={!newWatchlistName.trim() || createMutation.isPending}
+              className="btn-primary btn-sm"
+            >
+              <Plus size={13} /> Add List
+            </button>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
-            Intelligent Watchlist
-          </h1>
-          <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-1">
-            What deserves your attention right now? Correlating live price telemetry with active decisions and structural regime shifts.
-          </p>
-        </div>
-
-        {/* Create new watchlist input */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="New list name..."
-            value={newWatchlistName}
-            onChange={(e) => setNewWatchlistName(e.target.value)}
-            className="px-3 py-1.5 rounded-lg text-xs bg-[var(--color-bg-deepest)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] font-mono placeholder-[var(--color-text-quaternary)] focus:outline-none focus:border-[var(--color-accent-primary)]"
-          />
-          <button
-            onClick={() => newWatchlistName.trim() && createMutation.mutate()}
-            disabled={!newWatchlistName.trim() || createMutation.isPending}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-accent-primary)] text-[#05070B] disabled:opacity-50 flex items-center gap-1 cursor-pointer"
-          >
-            <Plus size={13} /> Add List
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* ── Watchlist Tabs ── */}
       <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
@@ -585,6 +573,6 @@ export default function WatchlistPage() {
           })}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

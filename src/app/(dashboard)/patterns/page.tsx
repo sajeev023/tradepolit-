@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles, Loader2, TrendingUp, TrendingDown, AlertTriangle, ShieldAlert, ArrowRight, Compass, Activity } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ConfidenceVisualizer } from "@/components/theses/ConfidenceVisualizer";
+import { PageShell, PageHeader, SectionCard, MetricCard } from "@/components/layout/page-shell";
 
 /**
  * YOUR PATTERNS — V4 Personal Intelligence Laboratory.
@@ -55,73 +56,61 @@ export default function PatternsPage() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 select-none animate-fade-in pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--color-border-subtle)] pb-5">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-6 h-6 rounded-md bg-[var(--color-accent-primary-subtle)] text-[var(--color-accent-primary)] flex items-center justify-center border border-[rgba(var(--accent-rgb),0.2)]">
-              <Sparkles size={14} />
-            </span>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--color-accent-primary)] font-semibold">
-              Personal Intelligence Laboratory
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
-            Your Patterns
-          </h1>
-          <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-1 max-w-2xl">
-            Deterministic insights from your own decisions and outcomes. Every claim shows its sample size — no fabricated intelligence.
-          </p>
-        </div>
-        <Link
-          href="/theses"
-          className="text-xs text-[var(--color-accent-primary)] hover:underline flex items-center gap-1 font-medium"
-        >
-          Decision History <ArrowRight size={11} />
-        </Link>
-      </div>
+    <PageShell gap="md" className="pb-12 animate-fade-in">
+      <PageHeader
+        eyebrow="Personal Intelligence Laboratory"
+        eyebrowIcon={<Sparkles size={14} />}
+        title="Your Patterns"
+        subtitle="Deterministic insights from your own decisions and outcomes. Every claim shows its sample size — no fabricated intelligence."
+        actions={
+          <Link href="/theses" className="text-xs text-[var(--color-accent-primary)] hover:underline flex items-center gap-1 font-medium">
+            Decision History <ArrowRight size={11} />
+          </Link>
+        }
+      />
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="app-shell__full flex flex-col items-center justify-center py-20 text-center">
           <Loader2 className="h-6 w-6 animate-spin text-[var(--color-accent-primary)] mb-2" />
           <span className="text-xs font-mono text-[var(--color-text-secondary)]">Loading personal intelligence...</span>
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)] p-6 text-sm text-[var(--color-text-secondary)]">
+        <div className="app-shell__full rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)] p-6 text-sm text-[var(--color-text-secondary)]">
           {error instanceof Error ? error.message : "Failed to load patterns"}
         </div>
       ) : data ? (
         <>
-          {/* Summary strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Stat label="Closed trades" value={data.summary.closedTrades} />
-            <Stat label="Thesis outcomes" value={data.summary.thesisOutcomes} />
-            <Stat
+          <div className="app-shell__full grid grid-cols-2 md:grid-cols-4 gap-3">
+            <MetricCard label="Closed trades" value={data.summary.closedTrades} />
+            <MetricCard label="Thesis outcomes" value={data.summary.thesisOutcomes} />
+            <MetricCard
               label="Thesis follow-through"
               value={data.summary.followRate !== null ? `${Math.round(data.summary.followRate * 100)}%` : "—"}
             />
-            <Stat
+            <MetricCard
               label="Insights"
               value={data.winRateBySetup.length + data.winRateByEmotion.length + data.mistakePatterns.length + data.riskBehavior.length}
             />
           </div>
 
-          {/* Decision Score — process vs outcome */}
-          {data.decisionScore && <DecisionScoreCard score={data.decisionScore} />}
+          <div className="app-shell__full">
+            {data.decisionScore && <DecisionScoreCard score={data.decisionScore} />}
+          </div>
 
           {data.summary.closedTrades < 5 ? (
-            <EmptyState
-              icon={<Sparkles size={24} />}
-              badge="DATA-BACKED INTELLIGENCE"
-              title="Not enough empirical observations yet"
-              description="Your personal patterns and DecisionScore are calculated deterministically from your closed trades and resolved theses. Every insight displays its exact sample size — we never fabricate or generalize from thin data."
-              reason="Requires minimum 5 closed trades or resolved decisions to establish statistical significance."
-              actionLabel="View Decision History"
-              actionHref="/theses"
-            />
+            <div className="app-shell__full">
+              <EmptyState
+                icon={<Sparkles size={24} />}
+                badge="DATA-BACKED INTELLIGENCE"
+                title="Not enough empirical observations yet"
+                description="Your personal patterns and DecisionScore are calculated deterministically from your closed trades and resolved theses. Every insight displays its exact sample size — we never fabricate or generalize from thin data."
+                reason="Requires minimum 5 closed trades or resolved decisions to establish statistical significance."
+                actionLabel="View Decision History"
+                actionHref="/theses"
+              />
+            </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="app-shell__full grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Section title="Your Edge" icon={<TrendingUp className="h-4 w-4 text-[var(--color-profit)]" />} items={data.winRateBySetup} tone="profit" />
               <Section title="Emotional State & Results" icon={<TrendingDown className="h-4 w-4 text-[var(--color-loss)]" />} items={data.winRateByEmotion} tone="loss" />
               <Section title="Recurring Mistakes" icon={<AlertTriangle className="h-4 w-4 text-[var(--color-warning)]" />} items={data.mistakePatterns} tone="warning" />
@@ -130,16 +119,7 @@ export default function PatternsPage() {
           )}
         </>
       ) : null}
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)] p-4">
-      <div className="text-[11px] text-[var(--color-text-tertiary)]">{label}</div>
-      <div className="text-lg font-semibold text-[var(--color-text-primary)] mt-0.5 font-mono">{value}</div>
-    </div>
+    </PageShell>
   );
 }
 
@@ -149,17 +129,11 @@ function DecisionScoreCard({ score }: { score: DecisionScore }) {
   const gap = processScore !== null && outcomeScore !== null ? processScore - outcomeScore : null;
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-secondary)] p-5 sm:p-6 space-y-4"
-      style={{ background: "linear-gradient(180deg, var(--color-bg-secondary), rgba(47,198,232,0.03))" }}
+    <SectionCard
+      title="Decision Score"
+      titleIcon={<Compass size={16} className="text-[var(--color-accent-primary)]" />}
+      headerActions={<span className="text-[10px] font-mono text-[var(--color-text-tertiary)]">n={sampleSize} graded decisions</span>}
     >
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <Compass size={16} className="text-[var(--color-accent-primary)]" />
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Decision Score</h2>
-        </div>
-        <span className="text-[10px] font-mono text-[var(--color-text-tertiary)]">n={sampleSize} graded decisions</span>
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]/40 p-4">
           <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-tertiary)]">Process</div>
@@ -217,7 +191,7 @@ function DecisionScoreCard({ score }: { score: DecisionScore }) {
         Process score: plan adherence (30%), process-sound attributions (30%), loop closure (20%), risk discipline (20%).
         Requires 3+ graded outcomes and 5+ closed trades.
       </p>
-    </div>
+    </SectionCard>
   );
 }
 

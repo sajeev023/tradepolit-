@@ -132,93 +132,62 @@ export function DecisionBrief({
   const contradictions = findContradictions(evidenceFor, evidenceAgainst);
   const hasContradictions = contradictions.length > 0;
 
-  const statusTone = isCommitted ? "committed" : "uncommitted";
-
   return (
-    <div
-      className={`rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-bg-secondary)] overflow-hidden shadow-2xl select-none ${className}`}
-      style={{ backgroundColor: "#080C14" }}
-    >
-      {/* ─── 1. SIGNATURE DECISION HEADER ─── */}
+    <div className={`card border-[var(--color-border-strong)] overflow-hidden shadow-2xl ${className}`}>
+      {/* ─── SIGNATURE DECISION HEADER ─── */}
       <div className="p-4 sm:p-5 border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]/60">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center border shrink-0"
-              style={{
-                backgroundColor: "rgba(47, 198, 232, 0.08)",
-                borderColor: "rgba(47, 198, 232, 0.25)",
-                color: "var(--color-accent-primary)",
-              }}
-            >
-              <Compass size={17} />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-[var(--color-text-tertiary)]">
+                Decision Brief
+              </span>
+              <span className="badge badge-neutral font-mono">
+                {symbol} · {timeframe.toUpperCase()}
+              </span>
+              {isCommitted ? (
+                <StatusPill status="OPEN" size="xs" />
+              ) : (
+                <span className="badge badge-neutral">UNCOMMITTED</span>
+              )}
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs uppercase font-mono tracking-widest text-[var(--color-text-tertiary)]">
-                  Decision Brief
-                </span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded border border-[var(--color-border-subtle)] bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)]">
-                  {symbol} · {timeframe.toUpperCase()}
-                </span>
-                {isCommitted ? (
-                  <StatusPill status="OPEN" size="xs" />
-                ) : (
-                  <span className="text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]">
-                    UNCOMMITTED
-                  </span>
-                )}
-              </div>
-              <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)] tracking-tight mt-0.5">
-                {isLong ? "LONG" : "SHORT"} {symbol} · {confidence} ({confidenceScore}%)
-              </h2>
+            <h2 className="text-lg sm:text-xl font-semibold text-[var(--color-text-primary)] tracking-tight">
+              {isLong ? "LONG" : "SHORT"} {symbol}
+            </h2>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <DirectionBadge direction={bias} size="sm" />
+              <SetupQualityBadge quality={setupQuality} />
+              <span className="text-[11px] font-mono text-[var(--color-text-tertiary)]">
+                Confidence {confidence} ({confidenceScore}%)
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <DirectionBadge direction={bias} size="md" />
-            <SetupQualityBadge quality={setupQuality} />
+          {/* Layer tabs as floating segmented control */}
+          <div className="flex items-center gap-0.5 p-0.5 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]/40 shrink-0">
+            {[
+              { id: 1 as const, label: "Summary" },
+              { id: 2 as const, label: "Analysis" },
+              { id: 3 as const, label: "Evidence" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setLayer(tab.id)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                  layer === tab.id
+                    ? "bg-[var(--color-accent-primary-subtle)] text-[var(--color-accent-primary)]"
+                    : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
-        </div>
-
-        {/* ─── LAYER TABS ─── */}
-        <div className="flex items-center gap-1 mt-4 pt-3 border-t border-[var(--color-border-subtle)]">
-          {[
-            { id: 1 as const, label: "Summary", desc: "5s read" },
-            { id: 2 as const, label: "Analysis", desc: "30s read" },
-            { id: 3 as const, label: "Deep Evidence", desc: "Full audit" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setLayer(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                layer === tab.id
-                  ? "bg-[var(--color-accent-primary-subtle)] text-[var(--color-accent-primary)] border border-[rgba(var(--accent-rgb),0.2)]"
-                  : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] border border-transparent"
-              }`}
-            >
-              {tab.label}
-              <span className="text-[9px] font-mono opacity-60">{tab.desc}</span>
-            </button>
-          ))}
         </div>
       </div>
 
       <div className="p-4 sm:p-5 space-y-5">
-        {/* ─── FACT / INTERPRETATION / DECISION LABELS ─── */}
-        <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-mono uppercase tracking-wider font-semibold">
-          <div className="p-1.5 rounded border border-[var(--color-border-subtle)] bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)]">
-            Fact
-          </div>
-          <div className="p-1.5 rounded border border-[var(--color-border-subtle)] bg-[var(--color-bg-tertiary)] text-[var(--color-accent-primary)]">
-            Interpretation
-          </div>
-          <div className={`p-1.5 rounded border ${statusTone === "committed" ? "border-[var(--color-profit)]/30 bg-[rgba(45,212,168,0.08)] text-[var(--color-profit)]" : "border-[var(--color-border-subtle)] bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)]"}`}>
-            {isCommitted ? "Committed" : "Decision"}
-          </div>
-        </div>
-
         {/* ─── LAYER 1: SUMMARY ─── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <DecisionMetric label="Current Price" value={formatPrice(currentPrice)} mono />

@@ -29,6 +29,7 @@ import { StatusPill, DirectionBadge, RegimeTag, SetupQualityBadge, ConfidenceBad
 import { EmptyState } from "@/components/ui/EmptyState";
 import { EvidenceChip } from "@/components/theses/EvidenceChip";
 import { OutcomeReview } from "@/components/theses/OutcomeReview";
+import { PageShell, PageHeader, SectionCard, AttentionBanner } from "@/components/layout/page-shell";
 
 type StatusFilter = "ALL" | "OPEN" | "RESOLVED" | "HIT" | "INVALIDATED" | "EXPIRED" | "NEEDS_REVIEW";
 type SortField = "createdAt" | "symbol" | "confidence" | "status" | "riskReward";
@@ -123,51 +124,45 @@ export default function DecisionsPage() {
   const selectedForReview = rawTheses?.find((t) => t.id === reviewId);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 select-none animate-fade-in pb-12">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--color-border-subtle)] pb-5">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-6 h-6 rounded-md bg-[var(--color-accent-primary-subtle)] text-[var(--color-accent-primary)] flex items-center justify-center border border-[rgba(var(--accent-rgb),0.2)]">
-              <Compass size={14} />
-            </span>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--color-accent-primary)] font-semibold">
-              Financial Decision Intelligence
-            </span>
+    <PageShell gap="md" className="pb-12 animate-fade-in">
+      <PageHeader
+        eyebrow="Financial Decision Intelligence"
+        eyebrowIcon={<Compass size={14} />}
+        title="Decision History & Review Desk"
+        subtitle="Auditable repository of every committed trading decision, evidence snapshot, and outcome attribution."
+        actions={
+          <div className="flex items-center gap-2">
+            <Link href="/charts" className="btn-primary btn-sm">
+              <Plus size={14} />
+              <span>New Decision Brief</span>
+            </Link>
+            <button onClick={() => refetch()} className="icon-button" title="Refresh decisions">
+              <RefreshCw size={14} />
+            </button>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
-            Decision History & Review Desk
-          </h1>
-          <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-1">
-            Auditable repository of every committed trading decision, evidence snapshot, and outcome attribution.
-          </p>
-        </div>
+        }
+      />
 
-        <div className="flex items-center gap-2.5">
-          <Link
-            href="/charts"
-            className="px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
-            style={{
-              backgroundColor: "var(--color-accent-primary)",
-              color: "#05070B",
-            }}
-          >
-            <Plus size={14} />
-            <span>New Decision Brief</span>
-          </Link>
-          <button
-            onClick={() => refetch()}
-            className="btn-secondary p-2 rounded-lg text-xs"
-            title="Refresh decisions"
-          >
-            <RefreshCw size={14} />
-          </button>
-        </div>
+      <div className="app-shell__full">
+        {needsReviewCount > 0 && filter !== "NEEDS_REVIEW" && (
+          <AttentionBanner
+            severity="medium"
+            title={
+              <span className="flex items-center gap-2">
+                <ClipboardList size={14} />
+                {needsReviewCount} resolved decision{needsReviewCount > 1 ? "s" : ""} need outcome review
+              </span>
+            }
+            action={
+              <button onClick={() => setFilter("NEEDS_REVIEW")} className="btn-secondary btn-sm">
+                Show Review Queue
+              </button>
+            }
+          />
+        )}
       </div>
 
-      {/* ── Filter Bar & Controls ── */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {/* Filter Pills */}
+      <div className="app-shell__full flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar text-xs">
           {[
             { key: "ALL", label: "All Decisions", count: rawTheses?.length },
@@ -202,7 +197,6 @@ export default function DecisionsPage() {
           ))}
         </div>
 
-        {/* Search & Density Controls */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1 md:w-56">
             <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-quaternary)]" />
@@ -214,7 +208,6 @@ export default function DecisionsPage() {
               className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-[var(--color-bg-deepest)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] focus:outline-none focus:border-[var(--color-accent-primary)] font-mono"
             />
           </div>
-
           <div className="hidden sm:flex items-center border border-[var(--color-border-subtle)] rounded-lg p-0.5 bg-[var(--color-bg-deepest)]">
             <button
               onClick={() => setDensity("comfortable")}
@@ -235,24 +228,6 @@ export default function DecisionsPage() {
           </div>
         </div>
       </div>
-
-      {/* ── Review Queue (always visible if present) ── */}
-      {needsReviewCount > 0 && filter !== "NEEDS_REVIEW" && (
-        <div className="rounded-xl border p-4" style={{ borderColor: "rgba(245, 185, 66, 0.30)", backgroundColor: "rgba(245, 185, 66, 0.04)" }}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[var(--color-warning)]">
-              <ClipboardList size={14} />
-              <span>{needsReviewCount} resolved decision{needsReviewCount > 1 ? "s" : ""} need outcome review</span>
-            </div>
-            <button
-              onClick={() => setFilter("NEEDS_REVIEW")}
-              className="text-xs font-semibold text-[var(--color-warning)] hover:underline font-mono"
-            >
-              Show Review Queue &rarr;
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── Financial Data Table ── */}
       {isLoading ? (
@@ -524,6 +499,6 @@ export default function DecisionsPage() {
           }}
         />
       )}
-    </div>
+    </PageShell>
   );
 }
