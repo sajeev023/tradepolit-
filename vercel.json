@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/evaluate-alerts",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/evaluate-theses",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/thesis-digest",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/analytics-rollup",
+      "schedule": "30 2 * * *"
+    }
+  ]
+}

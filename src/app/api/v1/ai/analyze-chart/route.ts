@@ -1,0 +1,1169 @@
+import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { getOHLCV } from "@/lib/market";
+import {
+  compileTechnicalContext,
+  validateAnalysisConsistency,
+  appendTelemetryMetadata,
+  calculateEMA,
+} from "@/lib/indicators";
+import {
+  successResponse,
+  unauthorizedError,
+  validationError,
+  errorResponse,
+} from "@/lib/api-helpers";
+import { dbError, authFailedError, isPrismaTransientError } from "@/lib/typed-errors";
+import { checkUserRateLimit } from "@/lib/rate-limit";
+import { rateLimitedError } from "@/lib/typed-errors";
+import { getExchangeName } from "@/lib/market-registry";
+import { checkUsageLimit, recordUsage } from "@/lib/limit-checker";
+import { getEntitlementForUser, getAnalysisLimitError } from "@/lib/entitlements";
+import { callFastestModel } from "@/lib/nvidia-ai";
+import { getAnalyzeChartSystemPrompt } from "@/lib/prompt-cache";
+import { safeParseAIResponse } from "@/lib/ai-response-parser";
+import { validateMarketData, validateIndicators, validateLevels, isDataFresh } from "@/lib/validate-market-data";
+import { checkTokenBudget } from "@/lib/token-budget";
+import { validateSetup } from "@/lib/trade-logic";
+import { synthSetup } from "@/lib/trade-logic/setup-synthesis";
+import { isRegisteredSymbol } from "@/lib/market";
+import { buildMarketContext } from "@/lib/market-context";
+import { computeConfidence } from "@/lib/confidence-engine";
+import { buildEvidence } from "@/lib/evidence-builder";
+
+const telemetrySchema = z.object({
+  symbol: z.string(),
+  timeframe: z.string(),
+  currentPrice: z.number(),
+  lastCandleTime: z.string(),
+  trend: z.enum(["BULLISH", "BEARISH", "SIDEWAYS"]),
+  rsi: z.number(),
+  rsiSentiment: z.enum(["OVERBOUGHT", "OVERSOLD", "NEUTRAL"]),
+  rsiLabel: z.string(),
+  macdValue: z.number(),
+  macdSignal: z.number(),
+  macdHistogram: z.number(),
+  support: z.number(),
+  resistance: z.number(),
+  volatility: z.number(),
+  isVolatilitySpike: z.boolean(),
+  bias: z.enum(["BUY/LONG", "SELL/SHORT", "NEUTRAL"]),
+  setupQuality: z.enum(["A+ SELECT", "HIGH GRADE", "B-GRADE", "NO SETUP"]),
+  confidence: z.enum(["HIGH", "MEDIUM", "LOW"]),
+  entryPrice: z.number(),
+  stopLoss: z.number(),
+  takeProfit: z.number(),
+  invalidationLevel: z.number(),
+  atr: z.number(),
+  volume: z.number().optional(),
+  sourceMetadata: z.any().optional(),
+  volumeSurgeRatio: z.number().optional(),
+  lostVWAP: z.boolean().optional(),
+  reclaimedVWAP: z.boolean().optional(),
+  emaCrossover: z.enum(["BULLISH", "BEARISH"]).nullable().optional(),
+  macdCrossover: z.enum(["BULLISH", "BEARISH"]).nullable().optional(),
+  liquiditySweep: z.boolean().optional(),
+  fakeBreakout: z.boolean().optional(),
+  approachingKeyLevel: z.enum(["SUPPORT", "RESISTANCE"]).nullable().optional(),
+  activeSession: z.enum(["LONDON", "NEWYORK", "ASIA"]).nullable().optional(),
+});
+
+const analyzeChartSchema = z.object({
+  symbol: z.string().min(1, "Asset symbol is required").refine(isRegisteredSymbol, {
+    message: "Unsupported symbol",
+  }),
+  timeframe: z.enum(["1m", "5m", "15m", "1h", "4h", "1d", "1W"]).default("1h"),
+  bypassCache: z.boolean().optional(),
+  // Client telemetry is ignored; all indicators are computed server-side.
+  // The field is accepted for backwards compatibility but discarded immediately.
+  telemetry: telemetrySchema.optional(),
+  // WebSocket live price from client may be used as a price sanity cross-check,
+  // but it never drives indicator calculations.
+  livePrice: z.number().positive().optional(),
+});
+
+// Allow up to 60s for AI model race — overrides Next.js default 10s timeout
+export const maxDuration = 60;
+
+function buildFallbackAnalysis(symbol: string, timeframe: string, tech: any, exchange: string, traderName = "Trader", behavioralCtx = "", aiOffline: boolean = false) {
+  // Hard guard: if no verified telemetry, refuse to fabricate a Synchronized narrative.
+  // Callers MUST handle the null return (e.g. 503 upstream-unavailable).
+  if (!tech || !tech.currentPrice || tech.currentPrice <= 0 || !tech.support || !tech.resistance) {
+    return null;
+  }
+
+  const price = tech.currentPrice;
+  const supportVal = tech.support;
+  const resistanceVal = tech.resistance;
+  // Direction-aware invalidation: LONG invalidates below support, SHORT
+  // invalidates above resistance. (The old fallback always used support —
+  // producing an invalid SHORT shape: target at resistance, invalidation
+  // below price.)
+  const isLongBias = String(tech.bias).includes("BUY") || String(tech.bias).includes("LONG");
+  const invalidationVal =
+    tech.invalidationLevel && tech.invalidationLevel > 0
+      ? tech.invalidationLevel
+      : isLongBias
+        ? supportVal * 0.98
+        : String(tech.bias).includes("SELL") || String(tech.bias).includes("SHORT")
+          ? resistanceVal * 1.02
+          : price * 0.98;
+
+  // Route the fallback's trade plan through the same deterministic
+  // synthesis as AI output — consistency by construction, never invented
+  // prose numbers. (V2 trade-logic engine.)
+  const fallbackPlan = synthSetup(
+    { bias: tech.bias },
+    {
+      symbol,
+      timeframe,
+      currentPrice: price,
+      support: supportVal,
+      resistance: resistanceVal,
+      invalidationLevel: invalidationVal,
+      rsi: tech.rsi ?? 50,
+      macdValue: tech.macdValue ?? 0,
+      macdSignal: tech.macdSignal ?? 0,
+      macdHistogram: tech.macdHistogram ?? 0,
+      trend: tech.trend ?? "SIDEWAYS",
+      bias: tech.bias ?? "NEUTRAL",
+      atr: tech.atr,
+    }
+  );
+
+  const supportStr = supportVal.toLocaleString();
+  const resistanceStr = resistanceVal.toLocaleString();
+
+  const biasLabel = tech.bias || "NEUTRAL";
+  const rsiVal = typeof tech.rsi === "number" && !isNaN(tech.rsi) ? tech.rsi : 50;
+  const rsiLbl = tech.rsiLabel || "Neutral";
+
+  // Extract key behavioral flags for the narrative
+  const overtradingNotice = behavioralCtx.includes("OVERTRADING") ? `\n\n⚠️ **Behavioral Alert:** ${traderName}, you're at risk of overtrading today. Consider this analysis a moment to pause and reflect, not a signal to enter.` : "";
+  const revengeNotice = behavioralCtx.includes("Revenge Trading Detected: YES") ? `\n\n⚠️ **Behavioral Alert:** ${traderName}, I notice a revenge trading pattern in your recent history. After your last loss, you entered another trade within minutes. Take a 30-minute break before making any decisions.` : "";
+
+  const isMacdBullish = (tech.macdValue ?? 0) > (tech.macdSignal ?? 0);
+  const sourceTag = aiOffline
+    ? "Analysis Source: TradCopilot Telemetry (Indicators Only) | "
+    : "Analysis Source: TradCopilot Telemetry | ";
+  const statusTag = aiOffline ? "Status: Indicator-Only (AI unavailable)" : "Status: Synchronized";
+
+  return {
+    symbol,
+    timeframe,
+    cached: false,
+    marketRegime: tech.trend ? `${tech.trend} momentum favored.` : `Range-bound structure on ${timeframe}.`,
+    bias: biasLabel,
+    support: supportVal,
+    resistance: resistanceVal,
+    invalidationLevel: invalidationVal,
+    setupQuality: tech.setupQuality || "SPECULATIVE",
+    riskLevel: "Medium",
+    confidence: tech.confidence || "MEDIUM",
+    whyItMatters: `Key local structure at $${supportStr} / $${resistanceStr} with ${rsiLbl.toLowerCase()} RSI.`,
+    entryIdeas: fallbackPlan
+      ? `Limit near $${fallbackPlan.entry.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`
+      : "No entry — bias is NEUTRAL; stand aside until structure resolves.",
+    stopLossIdea: fallbackPlan ? fallbackPlan.stopLoss.toString() : null,
+    takeProfitIdea: fallbackPlan ? fallbackPlan.target.toString() : null,
+    shortTermScenario: `Price respecting support at $${supportStr} with momentum toward $${resistanceStr}.`,
+    coachNarrative: `${sourceTag}Symbol: ${symbol} | Exchange: ${exchange} | TF: ${timeframe} | Price: $${price.toLocaleString()} | ${statusTag}\n\n## Executive Summary\n${traderName}, ${symbol} is in a ${tech.trend || "neutral"} regime on the ${timeframe} timeframe. Price is at $${price.toLocaleString()}, with support at $${supportStr} and resistance at $${resistanceStr}.${overtradingNotice}${revengeNotice}\n\n## Market Structure\nTechnical indicators show ${symbol} in a ${tech.trend || "neutral"} regime. ${price > supportVal * 1.01 ? "Price is holding above key support, suggesting buyers are still in control." : "Price is near support — this is a decision zone."}\n\n## Momentum Analysis\nRSI(14) at ${rsiVal.toFixed(2)} (${rsiLbl}). ${rsiVal >= 70 ? "Overbought — caution on longs." : rsiVal <= 30 ? "Oversold — watch for reversal." : "Momentum neutral to directional."} ${isMacdBullish ? "MACD is bullish (signal line above)." : "MACD is bearish (signal line below)."}\n\n## Key Levels\nSupport: $${supportStr} | Resistance: $${resistanceStr} | Invalidation: $${invalidationVal.toLocaleString()}\n\n## Trade Thesis\n${biasLabel} bias favored while support at $${supportStr} holds. ${tech.setupQuality === "A+ SELECT" ? "This is a high-conviction setup — clear levels, aligned momentum." : tech.setupQuality === "HIGH GRADE" ? "Decent setup with manageable risk." : "Enter only if you have a specific catalyst or additional confluence."}\n\n## Risk Assessment\nVolatility: ${tech.volatility ? tech.volatility.toFixed(2) + "%" : "normal"}. Position size accordingly. Risk from current price to invalidation is $${Math.abs(price - invalidationVal).toFixed(2)}.\n\n## Invalidation\nA close below $${invalidationVal.toLocaleString()} invalidates the thesis.\n\n## Bottom Line\n${price > supportVal * 1.02 ? "WAIT for a pullback to support or a confirmed breakout above resistance before entering." : "HOLDING support — watch for confirmation before committing capital."}`,
+    indicators: {
+      rsi: rsiVal,
+      rsiLabel: rsiLbl,
+      macd: { macd: tech.macdValue || 0, signal: tech.macdSignal || 0 },
+    },
+    levels: {
+      support: supportVal,
+      resistance: resistanceVal,
+      invalidation: invalidationVal,
+    },
+    // Deterministic, direction-consistent trade plan (V2 trade-logic).
+    // Null when the bias is NEUTRAL — an honest no-trade read, not a
+    // silently-invented LONG plan.
+    tradePlan: fallbackPlan
+      ? {
+          direction: fallbackPlan.direction,
+          entry: fallbackPlan.entry,
+          stopLoss: fallbackPlan.stopLoss,
+          invalidation: fallbackPlan.invalidation,
+          target: fallbackPlan.target,
+          riskReward: fallbackPlan.riskReward,
+          provenance: fallbackPlan.provenance,
+        }
+      : null,
+    sourceMetadata: {
+      symbolSource: `User selection (${symbol})`,
+      timeframeSource: `Chart interval (${timeframe})`,
+      priceSource: `${exchange} spot ($${price.toLocaleString()})`,
+      rsiSource: `RSI(14) from close prices (${rsiVal.toFixed(2)})`,
+      supportSource: "Swing-low detector",
+      resistanceSource: "Swing-high detector",
+      aiModelSource: aiOffline
+        ? "Indicators-only fallback (AI providers unavailable)"
+        : "Groq / NVIDIA Multi-Model Race",
+    },
+    _aiFallback: aiOffline,
+  };
+}
+
+export async function POST(request: NextRequest) {
+  const t0 = Date.now();
+  console.log(`[STEP 1: Request received] [0ms]`);
+  let reservedUserId: string | null = null;
+  // Tracked outside the try block so the outer catch can build a best-effort
+  // fallback from whichever pieces of the pipeline did complete before the
+  // throw. `tech` populated means market data + indicators succeeded — we
+  // can still return buildFallbackAnalysis even if the AI race or DB writes
+  // blew up afterwards.
+  let tech: any = null;
+  let userName = "Trader";
+  let behavioralContext = "";
+  let validatedSymbol = "";
+  let validatedTimeframe: "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1W" = "1h";
+  // Hoisted out of the behavioral-context try block below so the token-budget
+  // tier resolution (which runs later in the same outer try) can read it.
+  // Declared inside that try it was in scope for the behavioral context but
+  // out of scope for the entitlement lookup — a ReferenceError the outer catch
+  // silently swallowed, so PRO users were occasionally graded as FREE.
+  let userProfile: any = null;
+
+  const releaseReservation = async () => {
+    if (reservedUserId) {
+      const uid = reservedUserId;
+      reservedUserId = null;
+      // Floor at 0 — a bare `decrement` can drive the counter negative if this
+      // ever runs twice for the same reservation (e.g. outer catch after the
+      // success path already nulled it). Conditional update makes it idempotent.
+      await prisma.user.updateMany({
+        where: { id: uid, analysesCountToday: { gt: 0 } },
+        data: { analysesCountToday: { decrement: 1 } },
+      }).catch(() => {});
+    }
+  };
+
+  try {
+    const json = await request.json();
+    const validation = analyzeChartSchema.safeParse(json);
+    if (!validation.success) {
+      return validationError(validation.error);
+    }
+
+    const { symbol, timeframe, bypassCache, livePrice } = validation.data;
+    console.log('[TELEMETRY-4] Backend received:', { symbol, timeframe, bypassCache, livePrice, telemetry: validation.data.telemetry });
+    validatedSymbol = symbol;
+    validatedTimeframe = timeframe;
+
+    // Exchange name comes from the market registry so new markets are
+    // picked up automatically without touching this route.
+    const exchangeName = getExchangeName(symbol);
+
+    // Check user auth first
+    const { user, error } = await getAuthenticatedUser();
+    if (error || !user) return error ?? unauthorizedError();
+
+    // Per-user rate limit: 20 analyses / minute. AI analysis is expensive
+    // (model race + market data + DB writes); an unauthenticated attacker
+    // or a script-kiddie loop can starve the providers and degrade the
+    // service for everyone. The 429 carries Retry-After so the client
+    // backs off cleanly instead of retrying into the same wall.
+    const rl = checkUserRateLimit(user.id, request, "analyze-chart", 20, 60_000);
+    if (!rl.result.allowed) {
+      const retryAfterSec = Math.ceil((rl.result.resetAt - Date.now()) / 1000);
+      return rateLimitedError(retryAfterSec * 1000, "Analysis rate limit reached. Please slow down.");
+    }
+
+    console.log(`[STEP 2: Environment loaded] authUser=verified | NVIDIA_KEY=${!!process.env.NVIDIA_API_KEY} | GROQ_KEY=${!!process.env.GROQ_API_KEY}`);
+
+    // ─── STEP 2b: Load behavioral context for personalized analysis ──────
+    try {
+      const settled = await Promise.allSettled([
+        prisma.user.findUnique({ where: { id: user.id }, select: { displayName: true, email: true } }),
+        prisma.trade.findMany({ where: { userId: user.id }, orderBy: { openedAt: "desc" }, take: 20 }),
+        prisma.journalEntry.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 5 }),
+        prisma.behavioralEvent.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 10 }),
+        prisma.userProfile.findUnique({ where: { userId: user.id } }),
+      ]);
+      const [dbUser, rawTrades, journalEntries, behavioralEvents, fetchedProfile] = settled.map(r => r.status === "fulfilled" ? r.value : null);
+      userProfile = fetchedProfile;
+      const userTrades = rawTrades || [];
+
+      if (dbUser) {
+        const rawName = dbUser.displayName || (dbUser.email ? dbUser.email.split("@")[0].replace(/[._-]/g, " ") : "Trader");
+        userName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+      }
+
+      const closedTrades = userTrades.filter((t: any) => t.status === "CLOSED");
+      const openTrades = userTrades.filter((t: any) => t.status === "OPEN");
+      const winningTrades = closedTrades.filter((t: any) => Number(t.pnl) > 0);
+      const losingTrades = closedTrades.filter((t: any) => Number(t.pnl) < 0);
+      const _avgWin = winningTrades.length ? winningTrades.reduce((a: number, t: any) => a + Number(t.pnl), 0) / winningTrades.length : 0;
+      const _avgLoss = losingTrades.length ? losingTrades.reduce((a: number, t: any) => a + Math.abs(Number(t.pnl)), 0) / losingTrades.length : 0;
+
+      const today = new Date();
+      const tradesToday = userTrades.filter((t: any) => {
+        const d = new Date(t.openedAt);
+        return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+      }).length;
+
+      let revengeDetected = false;
+      for (let i = 0; i < userTrades.length - 1; i++) {
+        const cur = userTrades[i];
+        const prev = userTrades[i + 1];
+        if (prev.status === "CLOSED" && Number(prev.pnl) < 0) {
+          const diff = new Date(cur.openedAt).getTime() - new Date(prev.closedAt!).getTime();
+          if (diff > 0 && diff < 30 * 60 * 1000) { revengeDetected = true; break; }
+        }
+      }
+
+      const recentMistakes = closedTrades.slice(0, 5).flatMap((t: any) => (t.mistakeTags || []) as string[]);
+      const topMistakes = [...new Set(recentMistakes)].slice(0, 3).join(", ");
+
+      const profile = userProfile || { accountSize: 10000, maxRiskPercent: 1.0, preferredRR: 2.0, maxDrawdown: 10.0 };
+      const recentJournalEntries = journalEntries.slice(0, 3).map((j: any) => `- [${new Date(j.createdAt).toLocaleDateString()}] Mood:${j.mood || "NEUTRAL"} | "${j.title}"`).join("\n");
+      const recentEventsStr = behavioralEvents.slice(0, 5).map((e: any) => `- ${e.eventType}: ${e.description}`).join("\n");
+
+      behavioralContext = `
+TRADER IDENTITY:
+- Name: ${userName}
+- Account Size: $${(profile as any).accountSize?.toString() || "10,000"}
+- Max Risk Per Trade: ${(profile as any).maxRiskPercent?.toString() || "1.0"}%
+- Trades Today: ${tradesToday}${tradesToday > 5 ? " ⚠️ OVERTRADING" : ""}
+- Recent Mistakes: ${topMistakes || "None recorded"}
+- Win Rate: ${closedTrades.length ? ((winningTrades.length / closedTrades.length) * 100).toFixed(0) + "%" : "No closed trades"}
+- Revenge Trading Detected: ${revengeDetected ? "YES ⚠️" : "No"}
+
+RECENT BEHAVIORAL EVENTS:
+${recentEventsStr || "None recorded"}
+
+RECENT JOURNAL ENTRIES:
+${recentJournalEntries || "None recorded"}
+
+RECENT CLOSED TRADES:
+${closedTrades.slice(0, 5).map((t: any) => {
+  const d = new Date(t.openedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `- ${d} | ${t.instrument} ${t.direction} | PnL: $${Number(t.pnl).toFixed(2)} | ${t.emotionTag || "NEUTRAL"} | ${(t.mistakeTags || []).join(", ") || "No tags"}`;
+}).join("\n") || "No closed trades yet"}
+
+ACTIVE OPEN POSITIONS:
+${openTrades.length === 0 ? "None" : openTrades.map((t: any) => `- ${t.instrument} ${t.direction} | Entry: $${t.entryPrice}`).join("\n")}
+
+COACHING MANDATE:
+- You MUST address ${userName} by name throughout the analysis.
+- If behavioral red flags exist (overtrading, revenge, repeated mistakes), call them out BEFORE discussing the chart.
+- ${userName} needs to see that you know their personal trading patterns.
+- Cite specific trades, dates, and dollar amounts from the data above.
+- If this is analysis-only (no coaching question), still include a brief behavioral check at the end.`;
+    } catch (ctxErr) {
+      console.warn("[ANALYZE-CHART] Behavioral context fetch failed:", ctxErr);
+      behavioralContext = "\nTRADER IDENTITY:\n- Name: Valued Trader\n- Note: Behavioral data temporarily unavailable.\n";
+    }
+
+    let candles: any[] = [];
+
+    // All technical context is computed server-side from exchange OHLCV data.
+    // Client-supplied telemetry is intentionally ignored to prevent manipulation.
+    console.log(`[STEP 3: Market API response] Fetching candles for ${symbol} ${timeframe}`);
+    const fetchedCandles = await getOHLCV(symbol, timeframe, 100);
+    if (fetchedCandles.length === 0) {
+      return errorResponse("INTERNAL_ERROR", "No historical data available for selected asset", 500);
+    }
+    candles = fetchedCandles;
+    console.log(`[STEP 4: OHLCV fetched] candleCount=${candles.length} | lastPrice=${candles[candles.length - 1]?.close}`);
+
+    // INTEGRITY GATE: never run AI analysis on simulated candles. When all
+    // upstream providers fail, getOHLCV returns a labeled random-walk
+    // (source: "SIMULATED") that passes freshness/shape validation —
+    // analyzing it would fabricate a "Synchronized" analysis from
+    // invented prices. Hard-fail with a typed upstream error instead.
+    const simulatedCount = candles.filter((c: any) => c?.source === "SIMULATED").length;
+    if (simulatedCount > 0) {
+      console.warn(`[INTEGRITY] Blocked analysis on ${symbol} ${timeframe}: ${simulatedCount}/${candles.length} candles are SIMULATED.`);
+      return errorResponse(
+        "UPSTREAM_UNAVAILABLE",
+        `Live market data for ${symbol} is temporarily unavailable from all providers. Analysis is disabled rather than run on simulated prices — please retry in a few minutes.`,
+        503
+      );
+    }
+
+    const lastCandle = candles[candles.length - 1];
+    const lastCandleTime: string = lastCandle ? new Date(lastCandle.timestamp).toISOString() : new Date().toISOString();
+
+    // Verify data freshness and reject stale data
+    const lastCandleTimestamp = lastCandle ? lastCandle.timestamp : Date.now();
+    const dataIsFresh = isDataFresh(lastCandleTimestamp, timeframe);
+    if (!dataIsFresh) {
+      return errorResponse(
+        "UPSTREAM_UNAVAILABLE",
+        "Market telemetry is stale. Please refresh chart data and try again.",
+        503
+      );
+    }
+
+    // Compile Technical Context (Market data compilation)
+    tech = compileTechnicalContext(symbol, timeframe, candles);
+    validateAnalysisConsistency(tech);
+    console.log(`[STEP 5: Indicators calculated] RSI=${tech.rsi.toFixed(2)} | MACD=${tech.macdValue.toFixed(4)}`);
+    console.log(`[STEP 6: Support calculated] Support=$${tech.support} | Resistance=$${tech.resistance} | Invalidation=$${tech.invalidationLevel}`);
+
+    // ── Live Price Override ────────────────────────────────────────────────────
+    // The client sends the Binance WebSocket price (sub-100ms latency).
+    // The telemetry currentPrice is derived from the last closed candle (up to
+    // 60s stale on 1h timeframe). We override with the live WebSocket price
+    // if it is within 5% of the candle price (sanity guard against bad data).
+    if (livePrice && livePrice > 0 && tech.currentPrice > 0) {
+      const deviation = Math.abs(livePrice - tech.currentPrice) / tech.currentPrice;
+      if (deviation <= 0.05) {
+        console.log(
+          `[LIVE PRICE OVERRIDE] Replacing stale candle price $${tech.currentPrice.toFixed(4)} ` +
+          `with live WebSocket price $${livePrice.toFixed(4)} ` +
+          `(deviation: ${(deviation * 100).toFixed(4)}%)`
+        );
+        tech = { ...tech, currentPrice: livePrice };
+      } else {
+        console.warn(
+          `[LIVE PRICE OVERRIDE REJECTED] Deviation ${(deviation * 100).toFixed(2)}% exceeds 5% threshold. ` +
+          `livePrice=$${livePrice} candle=$${tech.currentPrice} — keeping candle price.`
+        );
+      }
+    }
+
+    // VALIDATION: Reject if price, indicators, or pivot levels are incomplete/NaN
+    const dataErrors: string[] = [];
+
+    // Always validate server-computed market data. Client-supplied telemetry is
+    // ignored for indicator calculation, so validation must not be skipped when
+    // it is present.
+    const marketErrors = validateMarketData({
+      symbol,
+      currentPrice: tech.currentPrice,
+      ohlcv: candles
+    }, symbol, timeframe);
+    dataErrors.push(...marketErrors);
+
+    const indicatorErrors = validateIndicators({
+      rsi: tech.rsi,
+      macd: { macd: tech.macdValue, signal: tech.macdSignal },
+      ema9: candles.length >= 9 ? calculateEMA(candles.map(c => c.close), 9).pop() ?? NaN : NaN,
+      ema21: candles.length >= 21 ? calculateEMA(candles.map(c => c.close), 21).pop() ?? NaN : NaN,
+      atr: tech.atr
+    });
+    dataErrors.push(...indicatorErrors);
+
+    const levelErrors = validateLevels({
+      support: tech.support,
+      resistance: tech.resistance
+    }, tech.currentPrice);
+    dataErrors.push(...levelErrors);
+
+    const requiredFields = ['currentPrice', 'rsi', 'support', 'resistance'];
+    const missing = requiredFields.filter(f => {
+      const val = tech[f];
+      return val === undefined || val === null || (typeof val === 'number' && (isNaN(val) || val === 0));
+    });
+
+    if (missing.length > 0 || dataErrors.length > 0) {
+      console.error('[TELEMETRY] Missing required fields or validation failed:', { missing, dataErrors });
+      return errorResponse(
+        "TELEMETRY_UNAVAILABLE",
+        "Live market data is temporarily unavailable. Please try again in a moment.",
+        503
+      );
+    }
+
+    // Cache lookup: check if user or system pre-warm cache is available for instant response.
+    // Wrapped — a transient DB miss degrades to "no cache" (slower path) rather than
+    // bubbling to the outer catch and returning a generic "AI unavailable" 503.
+    if (!bypassCache) {
+      let cachedRecord: any = null;
+      try {
+        cachedRecord = await prisma.conversationMemory.findFirst({
+          where: {
+            userId: user.id,
+            role: "cached_analysis",
+            chatId: `${symbol}-${timeframe}`,
+          }
+        });
+      } catch (cacheLookupErr) {
+        console.warn("[ANALYZE-CHART] Cache lookup failed (non-fatal, continuing without cache):", cacheLookupErr);
+      }
+
+      if (cachedRecord) {
+        try {
+          const cachedData = JSON.parse(cachedRecord.content);
+          let analysis = cachedData;
+          let isCacheValid = false;
+
+          if (cachedData.analysis && cachedData.analyzedAt && cachedData.analyzedPrice) {
+            analysis = cachedData.analysis;
+            const analyzedAt = new Date(cachedData.analyzedAt).getTime();
+            const ageMs = Date.now() - analyzedAt;
+            const ageThresholdMs = 15 * 60 * 1000; // 15 minutes window for instant UX
+            
+            const priceDiffPercent = Math.abs(tech.currentPrice - cachedData.analyzedPrice) / cachedData.analyzedPrice;
+            const priceThresholdPercent = 0.005; // 0.5% price variance window (replaces 2%)
+            
+            isCacheValid = ageMs < ageThresholdMs && priceDiffPercent < priceThresholdPercent;
+          } else {
+            isCacheValid = false; // Legacy/un-timestamped entries are invalid
+          }
+          if (isCacheValid) {
+            console.log(`[STEP 11: Response returned] INSTANT CACHE HIT | duration=${Date.now() - t0}ms`);
+
+            let narrative = analysis.coachNarrative || "";
+            const expectedHeader = `Symbol: ${symbol}`;
+            if (!narrative.includes(expectedHeader)) {
+              const headerLine = `Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized`;
+              narrative = narrative.replace(/^Analysis Source:[^\n]*\n?/, "");
+              narrative = `${headerLine}\n\n${narrative.trim()}`;
+            }
+
+            // Append metadata block
+            narrative = appendTelemetryMetadata(
+              narrative,
+              cachedData.analyzedAt,
+              cachedData.lastCandleTime || new Date().toISOString(),
+              cachedData.analyzedPrice,
+              tech.currentPrice,
+              exchangeName
+            );
+
+            return successResponse({
+              ...analysis,
+              symbol,
+              timeframe,
+              coachNarrative: narrative,
+              support: tech.support,
+              resistance: tech.resistance,
+              invalidationLevel: tech.invalidationLevel,
+              rsi: tech.rsi,
+              rsiLabel: tech.rsiLabel,
+              currentPrice: tech.currentPrice,
+              sourceMetadata: tech.sourceMetadata,
+              cached: true,
+            });
+          }
+        } catch (parseErr) {
+          console.warn("Failed to parse cached analysis JSON", parseErr);
+        }
+      }
+    }
+    
+    // Reserve one analysis slot atomically (race-condition safe).
+    // The slot is reserved BEFORE the AI call to prevent exceeding the limit.
+    // If the AI call fails the reservation is kept (user is charged for the
+    // attempt); on DB outage we proceed without reservation and log the
+    // degradation — quota enforcement is best-effort, not a hard gate that
+    // should produce a generic "AI unavailable" 503.
+    let usageReserved = false;
+    let usageLimitError: any = null;
+    try {
+      usageReserved = await recordUsage(user.id, "analyses", user.email);
+      if (!usageReserved) {
+        const limitResult = await checkUsageLimit(user.id, "analyses", user.email);
+        const entitlement = getEntitlementForUser(user.id, user.email);
+        usageLimitError = getAnalysisLimitError(entitlement, limitResult.analysesUsed);
+      }
+    } catch (usageErr: any) {
+      console.warn("[ANALYZE-CHART] Usage reservation failed (non-fatal, proceeding without quota gate):", usageErr);
+      usageReserved = true; // proceed optimistically on DB outage
+    }
+    if (usageLimitError) {
+      return errorResponse(usageLimitError.error as any, usageLimitError.message, 403, {
+        cta: usageLimitError.cta,
+        ctaLink: usageLimitError.ctaLink,
+      });
+    }
+    reservedUserId = user.id;
+
+    // 3. Formulate Prompts
+    const systemPrompt = getAnalyzeChartSystemPrompt();
+
+    // Use the user's resolved entitlement tier for the token budget (M-5 fix).
+    const userEntitlement = getEntitlementForUser(
+      user.id,
+      user.email ?? undefined,
+      userProfile?.plan ?? undefined,
+      userProfile?.subscriptionStatus ?? undefined
+    );
+    const tier = userEntitlement.isUnlimitedAnalyses ? "PRO" : "FREE";
+    const budget = checkTokenBudget("chart analysis", systemPrompt, [], tier);
+    if (!budget.isWithinLimit) {
+      const fallback = buildFallbackAnalysis(symbol, timeframe, tech, exchangeName, userName, behavioralContext, true);
+      if (!fallback) {
+        return errorResponse("TELEMETRY_UNAVAILABLE", "Live market data is temporarily unavailable. Please try again in a moment.", 503);
+      }
+      return successResponse({
+        ...fallback,
+        budget,
+        _aiSkipped: true,
+      });
+    }
+
+    // ── V2 Market Context Engine ─────────────────────────────────────────
+    // Deterministic regime classification + multi-timeframe alignment.
+    // Higher-TF fetch failures degrade gracefully (MTF is context, not a
+    // hard dependency). Feeds both the AI prompt and the confidence engine.
+    const marketCtx = await buildMarketContext(
+      symbol,
+      timeframe,
+      candles,
+      {
+        trend: tech.trend,
+        volatilityPct: tech.volatility,
+        isVolatilitySpike: tech.isVolatilitySpike,
+        support: tech.support,
+        resistance: tech.resistance,
+        currentPrice: tech.currentPrice,
+        rsi: tech.rsi,
+        macdValue: tech.macdValue,
+        macdSignal: tech.macdSignal,
+        macdHistogram: tech.macdHistogram,
+        atr: tech.atr,
+      },
+      async (s, tf, limit) => getOHLCV(s, tf, limit)
+    );
+    console.log(`[STEP 5b: Market context] Regime=${marketCtx.regime.regime} | MTF=${marketCtx.mtf?.alignment ?? "n/a"}`);
+
+    // ── V2.5 Evidence capture ───────────────────────────────────────────
+    // Deterministic evidence from the verified context/telemetry — the
+    // structured "why" that rides with every thesis. Built BEFORE the AI
+    // runs so it reflects exactly what was knowable at decision time;
+    // the AI may append narrative evidence later (mergeAiEvidence).
+    const techBiasStr = String(tech.bias ?? "NEUTRAL").toUpperCase();
+    const deterministicEvidence = buildEvidence(
+      techBiasStr.includes("BUY") || techBiasStr.includes("LONG") || techBiasStr.includes("BULLISH")
+        ? "LONG"
+        : techBiasStr.includes("SELL") || techBiasStr.includes("SHORT") || techBiasStr.includes("BEARISH")
+          ? "SHORT"
+          : null,
+      marketCtx,
+      {
+        rsi: tech.rsi,
+        rsiLabel: tech.rsiLabel,
+        macdValue: tech.macdValue,
+        macdSignal: tech.macdSignal,
+        macdHistogram: tech.macdHistogram,
+        trend: tech.trend,
+        emaCrossover: tech.emaCrossover,
+        macdCrossover: tech.macdCrossover,
+        liquiditySweep: tech.liquiditySweep,
+        fakeBreakout: tech.fakeBreakout,
+        volumeSurgeRatio: tech.volumeSurgeRatio,
+        isVolatilitySpike: tech.isVolatilitySpike,
+        lostVWAP: tech.lostVWAP,
+        approachingKeyLevel: tech.approachingKeyLevel,
+      }
+    );
+    console.log(`[STEP 5c: Evidence] for=${deterministicEvidence.for.length} against=${deterministicEvidence.against.length}`);
+
+    const userPrompt = `Conduct an elite chart analysis on ${symbol} on the ${timeframe} timeframe.
+
+LIVE CHART TECHNICAL DATA (from real-time exchange telemetry — use as primary data source):
+- Symbol: ${symbol}
+- Exchange: ${exchangeName}
+- Timeframe: ${timeframe}
+- Telemetry Status: CONNECTED
+- Current Price: $${tech.currentPrice.toLocaleString()}
+- Volume: ${tech.volume.toLocaleString()}
+- ATR (14): ${tech.atr.toFixed(4)}
+- Trend Regime: ${tech.trend}
+- RSI(14): ${tech.rsi.toFixed(2)} (${tech.rsiLabel})
+- MACD Value: ${tech.macdValue.toFixed(4)}, Signal: ${tech.macdSignal.toFixed(4)}, Histogram: ${tech.macdHistogram.toFixed(4)}
+- Local Support: $${tech.support.toLocaleString()}
+- Local Resistance: $${tech.resistance.toLocaleString()}
+- Volatility: ${tech.volatility.toFixed(2)}% (Spike: ${tech.isVolatilitySpike})
+- Indicated Bias: ${tech.bias}
+- Setup Grade: ${tech.setupQuality}
+- Calculated Confidence: ${tech.confidence}
+- Volume Surge: ${tech.volumeSurgeRatio.toFixed(2)}x
+- Lost VWAP: ${tech.lostVWAP}
+- EMA Cross: ${tech.emaCrossover || "None"}
+- MACD Cross: ${tech.macdCrossover || "None"}
+- Liquidity Sweep: ${tech.liquiditySweep}
+- Fake Breakout: ${tech.fakeBreakout}
+- Active Session: ${tech.activeSession || "None"}
+
+MARKET REGIME (deterministic classification — treat as ground truth):
+- Regime: ${marketCtx.regime.label}
+- Why: ${marketCtx.regime.reasons.join(" ")}
+${marketCtx.mtf ? `- Multi-timeframe: ${marketCtx.mtf.alignment} (selected ${timeframe}; ${marketCtx.mtf.views.map((v) => `${v.timeframe}=${v.trend}`).join(", ")})` : "- Multi-timeframe context unavailable — reason from the selected timeframe only."}
+- Regime guidance: In RANGING regimes, favor fade setups at structure edges and avoid breakout-chasing. In TRENDING regimes, favor continuation entries on pullbacks. In HIGH_VOLATILITY regimes, widen stops conceptually and reduce conviction. In BREAKOUT/BREAKDOWN regimes, demand confirmation before entry.
+
+TRADER BEHAVIORAL CONTEXT (Use this to personalize the analysis):
+${behavioralContext}
+
+RSI INTERPRETATION RULES (Follow EXACTLY):
+- RSI < 30: "Oversold — potential bounce zone"
+- RSI 30-40: "Weak — approaching oversold"
+- RSI 40-50: "Bearish momentum — below neutral"
+- RSI 50-60: "Bullish momentum — above neutral"
+- RSI 60-70: "Strong bullish momentum"
+- RSI 70-80: "Overbought — strong momentum, tighten stops"
+- RSI >= 80: "Extremely overbought — reversal likely"
+- NEVER state "neutral" when RSI > 60.
+
+TELEMETRY USAGE RULE:
+- You HAVE live real-time market data. The LIVE CHART TECHNICAL DATA above is from the exchange feed.
+- Never say "I don't have real-time market data" or "I cannot see the chart."
+- If asked about live data, respond with the current price and indicators from the data above.
+- Tag every specific data point with [CONFIRMED] (from telemetry), [ESTIMATED] (calculated), or [UNVERIFIED] (historical knowledge — avoid).
+- If unsure about a historical price or date, respond "VERIFICATION NEEDED" rather than guessing.
+
+LEVEL TRACEABILITY MANDATE:
+- Support & Resistance MUST come from the swing-low and swing-high detector.
+- Cite support as $${tech.support.toLocaleString()} and resistance as $${tech.resistance.toLocaleString()}.
+
+REQUIRED JSON RESPONSE SCHEMA:
+{
+  "marketRegime": "string (e.g. Bullish Trend / Range-bound)",
+  "bias": "BULLISH" | "BEARISH" | "NEUTRAL",
+  "support": "${tech.support}",
+  "resistance": "${tech.resistance}",
+  "invalidationLevel": "${tech.invalidationLevel}",
+  "setupQuality": "A+ SET UP" | "HIGH GRADE" | "SPECULATIVE" | "NO TRADE ZONE",
+  "riskLevel": "Low" | "Medium" | "High",
+  "confidence": "HIGH" | "MEDIUM" | "LOW",
+  "whyItMatters": "string (1-2 sentences)",
+  "entryIdeas": "string",
+  "stopLossIdea": "string",
+  "takeProfitIdea": "string",
+  "shortTermScenario": "string",
+  "coachNarrative": "Analysis Source: TradCopilot Telemetry | Symbol: ${symbol} | Exchange: ${exchangeName} | TF: ${timeframe} | Price: $${tech.currentPrice.toLocaleString()} | Status: Synchronized\\n\\n## Market Structure\\n[Provide institutional discretionary analysis of structure]\\n\\n## Momentum\\n[Synthesize RSI, MACD, volume, and trend together - no indicator lists]\\n\\n## Key Levels\\n[Explain importance of support/resistance pivots]\\n\\n## Trade Thesis\\n[Step-by-step thesis with telemetry backup]\\n\\n## Invalidation\\n[Exact structural invalidation close event]\\n\\n## Risk Assessment\\n[Detail uncertainties, conflicting signals, volatility risk]\\n\\n## Bottom Line\\n[Concise firm-level summary of highest probability path]"
+}`;
+    console.log(`[STEP 7: Prompt generated] userPromptLength=${userPrompt.length}B`);
+
+    // 4. Multi-model race
+    console.log(`[STEP 8: NVIDIA request sent] Dispatching AI race...`);
+    let raceResult;
+    const raceStart = Date.now();
+    try {
+      raceResult = await Promise.race([
+        callFastestModel([
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ], {
+          temperature: 0.25,
+          maxTokens: 600,
+        }),
+        new Promise<any>((_, reject) =>
+          setTimeout(() => reject(new Error("AI analysis timed out after 55s")), 55000)
+        ),
+      ]);
+      console.log(`[STEP 9: AI response received] Provider=${raceResult.provider.toUpperCase()} Model=${raceResult.model} in ${Date.now() - raceStart}ms`);
+    } catch (raceErr: any) {
+      console.error(`[STEP 9 FAILED] Race error | duration=${Date.now() - raceStart}ms | err=${raceErr?.message}`);
+
+      // Fallback: compute indicator-based analysis when all AI providers are unavailable.
+      // The user is NOT charged for a failed AI attempt — release the quota
+      // reservation before returning the deterministic fallback.
+      console.log(`[STEP 9 FALLBACK] Returning indicator-derived analysis for ${symbol} ${timeframe}`);
+      const fallbackAnalysis = buildFallbackAnalysis(symbol, timeframe, tech, exchangeName, userName, behavioralContext, true);
+      if (!fallbackAnalysis) {
+        // No verified telemetry reached the AI race — surface the upstream error
+        // rather than fabricating a Synchronized narrative with N/A values.
+        await releaseReservation();
+        return errorResponse("TELEMETRY_UNAVAILABLE", "Live market data is temporarily unavailable. Please try again in a moment.", 503);
+      }
+      await releaseReservation();
+
+      console.log(`[STEP 11: Response returned] FALLBACK ANALYSIS SUCCESSFUL | totalDuration=${Date.now() - t0}ms`);
+      return successResponse(fallbackAnalysis);
+    }
+
+    // 5. Parse & validate AI output with post-analysis validation engine
+    const techTelemetryData = {
+      symbol,
+      timeframe,
+      currentPrice: tech.currentPrice,
+      support: tech.support,
+      resistance: tech.resistance,
+      invalidationLevel: tech.invalidationLevel,
+      rsi: tech.rsi,
+      rsiLabel: tech.rsiLabel,
+      bias: tech.bias,
+      setupQuality: tech.setupQuality,
+      confidence: tech.confidence,
+      trend: tech.trend,
+      sourceMetadata: tech.sourceMetadata,
+      macdValue: tech.macdValue,
+      macdSignal: tech.macdSignal,
+      macdHistogram: tech.macdHistogram,
+      volumeSurgeRatio: tech.volumeSurgeRatio,
+      volatility: tech.volatility,
+      isVolatilitySpike: tech.isVolatilitySpike,
+      atr: tech.atr,
+    };
+
+    let activeContent = raceResult.content;
+    let parseResult = safeParseAIResponse(activeContent, techTelemetryData);
+
+    // AI REGENERATION LOOP (Attempt 1 Retry if validation fails)
+    if (!parseResult.schemaValid || (parseResult.validationResult && !parseResult.validationResult.isValid)) {
+      const issues = parseResult.validationResult?.issues || [parseResult.rejectionReason || "Validation failed"];
+      console.warn(`[AI VALIDATION REJECTED ATTEMPT 1] Issues:\n${issues.map(i => `  - ${i}`).join("\n")}\nTriggering 1 AI Regeneration attempt...`);
+
+      const retryUserPrompt = `CRITICAL LOGICAL CONTRADICTION DETECTED IN PREVIOUS ATTEMPT:
+Your previous response contained the following errors and contradictions:
+${issues.map(i => `- ${i}`).join("\n")}
+
+REQUIREMENTS TO FIX:
+1. MACD: MACD Value ${tech.macdValue.toFixed(4)}, Signal ${tech.macdSignal.toFixed(4)}. If MACD > Signal, describe MACD as BULLISH. If MACD < Signal, describe MACD as BEARISH.
+2. STOP LOSS: For ${tech.bias}, Stop Loss MUST be strictly ${tech.bias.includes("BUY") || tech.bias.includes("LONG") ? `below Entry ($${tech.currentPrice}) and <= Support ($${tech.support})` : `above Entry ($${tech.currentPrice}) and >= Resistance ($${tech.resistance})`}.
+3. RSI: RSI is ${tech.rsi.toFixed(2)}. Narrative must describe it as "${parseResult.validationResult?.rsiClassification || tech.rsiLabel}".
+4. RISK LEVEL: Dynamic telemetry risk is calculated as ${parseResult.validationResult?.calculatedRisk || "Medium"}. Set JSON riskLevel and narrative to reflect this.
+5. REWARD TO RISK: Ensure Take Profit is positioned to achieve R:R ratio >= 1.5.
+
+Return a PERFECT, logically consistent JSON payload matching the required schema.`;
+
+      try {
+        const regenResult = await callFastestModel([
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+          { role: "assistant", content: activeContent },
+          { role: "user", content: retryUserPrompt }
+        ], {
+          temperature: 0.1,
+          maxTokens: 600,
+        });
+
+        console.log(`[AI REGENERATION COMPLETED] Latency: ${regenResult.duration}ms`);
+        activeContent = regenResult.content;
+        parseResult = safeParseAIResponse(activeContent, techTelemetryData);
+      } catch (retryErr: any) {
+        console.error(`[AI REGENERATION ATTEMPT FAILED] Error:`, retryErr);
+      }
+    }
+
+    const {
+      parsed: parsedData,
+      isRepaired,
+      isFallback: _isFallback,
+      jsonParseSuccess,
+      schemaValid,
+      rejectionReason,
+      validationResult,
+    } = parseResult;
+
+    // -------------------------------------------------------------
+    // V2 TRADE-LOGIC ENGINE — single source of truth for numbers.
+    // The AI's narrative/selection is kept; the trade plan's numbers
+    // are (re)computed deterministically from verified telemetry and
+    // validated through the invariant engine. A contradictory plan is
+    // repaired deterministically; narrative contradictions (MACD/RSI
+    // mismatches) still trigger the regeneration/422 flow below.
+    // -------------------------------------------------------------
+    const setupResult = validateSetup(parsedData, techTelemetryData);
+    if (setupResult.setup && setupResult.isValid) {
+      // Overwrite the prose ideas with the validated, consistent plan so
+      // downstream consumers (thesis save, journal prefill, UI) always
+      // see mathematically coherent numbers.
+      parsedData.entryIdeas = `Limit near $${setupResult.setup.entry.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`;
+      parsedData.stopLossIdea = setupResult.setup.stopLoss.toString();
+      parsedData.takeProfitIdea = setupResult.setup.target.toString();
+      parsedData.invalidationLevel = setupResult.setup.invalidation;
+      if (setupResult.repairs.length > 0) {
+        console.log(`[TRADE-LOGIC] Deterministic repairs applied: ${setupResult.repairs.join(" | ")}`);
+      }
+    } else {
+      console.warn(`[TRADE-LOGIC] Setup failed validation after repair attempt: ${setupResult.issues.join("; ")}`);
+    }
+
+    // Structured Error Response if validation fails even after regeneration.
+    // Note the split of concerns:
+    //   - Narrative issues (MACD/RSI text contradictions, template junk)
+    //     come from the legacy validator — regenerated, then 422.
+    //   - Numeric issues are owned by the trade-logic engine; a numeric
+    //     failure that could not be repaired deterministically is a hard
+    //     rejection — we never render a contradictory trade plan.
+    const numericIssues = setupResult.isValid ? [] : setupResult.issues;
+    if (!schemaValid || (validationResult && !validationResult.isValid) || numericIssues.length > 0) {
+      const finalIssues = [...(validationResult?.issues || []), ...numericIssues];
+      const uniqueIssues = [...new Set(finalIssues.length > 0 ? finalIssues : [rejectionReason || "Analysis failed post-analysis validation checks"])];
+      console.error(`[ROUTER REJECTED RESPONSE AFTER REGENERATION] Issues:`, uniqueIssues);
+      // Don't charge the user for an analysis we refused to deliver.
+      await releaseReservation();
+
+      // V3 cost telemetry — validation rejection after regeneration =
+      // double spend with zero user value. Tracked to quantify the
+      // validation-rejection rate over time.
+      void (async () => {
+        try {
+          const { analyticsServer } = await import("@/lib/analytics-server");
+          await analyticsServer.track(user.id, "ai_call", {
+            surface: "analyze_chart",
+            outcome: "validation_rejected",
+            provider: raceResult.provider,
+            model: raceResult.model,
+            latencyMs: raceResult.duration,
+            issueCount: uniqueIssues.length,
+          });
+        } catch { /* non-fatal */ }
+      })();
+
+      return errorResponse(
+        "VALIDATION_ERROR",
+        `AI trade analysis contained internal logical contradictions: ${uniqueIssues.join("; ")}`,
+        422,
+        {
+          validationIssues: uniqueIssues,
+          attemptedRegeneration: true,
+          telemetry: {
+            symbol,
+            timeframe,
+            currentPrice: tech.currentPrice,
+            support: tech.support,
+            resistance: tech.resistance,
+            rsi: tech.rsi,
+            bias: tech.bias,
+          }
+        }
+      );
+    }
+
+    console.log(
+      `\n[RESPONSE EVALUATION SUMMARY]` +
+      `\nProvider: ${raceResult.provider.toUpperCase()}` +
+      `\nModel: ${raceResult.model}` +
+      `\nHTTP Status: 200` +
+      `\nLatency: ${raceResult.duration}ms` +
+      `\nResponse Length: ${raceResult.content.length} bytes` +
+      `\nJSON Parsing Succeeded: ${jsonParseSuccess} (Repaired: ${isRepaired})` +
+      `\nSchema Validation Succeeded: ${schemaValid}` +
+      `\nResponse Accepted: TRUE\n`
+    );
+
+    const analyzedAtStr = new Date().toISOString();
+    const formattedNarrative = appendTelemetryMetadata(
+      parsedData.coachNarrative || "",
+      analyzedAtStr,
+      lastCandleTime,
+      tech.currentPrice,
+      tech.currentPrice,
+      exchangeName
+    );
+
+    const finalResponse = {
+      ...parsedData,
+      coachNarrative: formattedNarrative,
+      symbol,
+      timeframe,
+      support: tech.support,
+      resistance: tech.resistance,
+      invalidationLevel: tech.invalidationLevel,
+      rsi: tech.rsi,
+      rsiLabel: tech.rsiLabel,
+      currentPrice: tech.currentPrice,
+      sourceMetadata: tech.sourceMetadata,
+      indicators: {
+        rsi: tech.rsi,
+        rsiLabel: tech.rsiLabel,
+        macd: { macd: tech.macdValue, signal: tech.macdSignal },
+      },
+      levels: {
+        support: tech.support,
+        resistance: tech.resistance,
+        invalidation: tech.invalidationLevel,
+      },
+      // Structured, deterministic, validated trade plan — the single
+      // source of truth the thesis-save and journal-prefill flows read.
+      tradePlan: setupResult.setup
+        ? {
+            direction: setupResult.setup.direction,
+            entry: setupResult.setup.entry,
+            stopLoss: setupResult.setup.stopLoss,
+            invalidation: setupResult.setup.invalidation,
+            target: setupResult.setup.target,
+            riskReward: setupResult.setup.riskReward,
+            provenance: setupResult.setup.provenance,
+          }
+        : null,
+      // V2 derived confidence — computed from evidence (regime, MTF,
+      // momentum, structure, R:R), never the LLM's self-asserted label.
+      derivedConfidence: computeConfidence({
+        marketContext: marketCtx,
+        setup: {
+          riskReward: setupResult.setup?.riskReward ?? 1.5,
+          direction: setupResult.setup?.direction ?? "LONG",
+        },
+        conflicts: setupResult.issues.length > 0 ? setupResult.issues.slice(0, 3) : undefined,
+      }),
+      // V2 market context — deterministic regime + MTF alignment.
+      marketContext: {
+        regime: marketCtx.regime,
+        mtf: marketCtx.mtf,
+      },
+      // V2.5 deterministic evidence — what was knowable at decision time.
+      // The structured "why" behind the thesis; rides into Thesis.evidenceFor/
+      // evidenceAgainst on save, powering attribution and the decision dataset.
+      evidence: deterministicEvidence,
+      // V2.5 pre-trade risk guardrails — the validated plan checked against
+      // the user's OWN risk profile (account size, max risk %/trade).
+      // Deterministic, computed server-side, shown at decision time.
+      riskGuardrails: (() => {
+        if (!setupResult.setup) return null;
+        const accountSize = Number(userProfile?.accountSize ?? 10000);
+        const maxRiskPct = Number(userProfile?.maxRiskPercent ?? 1.0);
+        if (!Number.isFinite(accountSize) || accountSize <= 0) return null;
+        const plan = setupResult.setup;
+        const riskPerUnit = Math.abs(plan.entry - plan.stopLoss);
+        const maxLossAllowed = accountSize * (maxRiskPct / 100);
+        // Position size that respects the user's max risk per trade.
+        const safeSize = riskPerUnit > 0 ? maxLossAllowed / riskPerUnit : null;
+        const warnings: string[] = [];
+        if (plan.riskReward < Number(userProfile?.preferredRR ?? 2.0)) {
+          warnings.push(
+            `R:R ${plan.riskReward.toFixed(2)}:1 is below your preferred ${(Number(userProfile?.preferredRR ?? 2.0)).toFixed(1)}:1 — taking this setup repeatedly undercuts your expectancy target.`
+          );
+        }
+        if (riskPerUnit / plan.entry > maxRiskPct / 100 * 10) {
+          warnings.push(
+            `Stop distance is ${(riskPerUnit / plan.entry * 100).toFixed(2)}% of entry — a full position at your account size would risk far beyond your ${maxRiskPct}% rule unless sized down.`
+          );
+        }
+        return {
+          accountSize,
+          maxRiskPercent: maxRiskPct,
+          maxLossAllowed: Math.round(maxLossAllowed * 100) / 100,
+          riskPerUnit: Math.round(riskPerUnit * 100) / 100,
+          suggestedMaxSize: safeSize !== null ? Math.round(safeSize * 1000) / 1000 : null,
+          warnings,
+        };
+      })(),
+    };
+
+    reservedUserId = null; // Analysis completed successfully — keep the reservation
+
+    // V2 analytics — the funnel backbone (activation, repeat usage).
+    // First-analysis detection: no prior successful analysis event for
+    // this user (client also emits its own first_ai_analysis; the
+    // server event is authoritative).
+    void (async () => {
+      try {
+        const { analyticsServer } = await import("@/lib/analytics-server");
+        const prior = await prisma.analyticsEvent.findFirst({
+          where: { userId: user.id, eventType: "analysis_completed" },
+          select: { id: true },
+        });
+        if (!prior) {
+          await analyticsServer.track(user.id, "first_ai_analysis", { symbol, timeframe });
+        }
+        await analyticsServer.track(user.id, "analysis_completed", {
+          symbol,
+          timeframe,
+          source: "ai",
+          provider: raceResult.provider,
+          latencyMs: raceResult.duration,
+        });
+        // V3 cost telemetry — tokens + validation outcome per AI call.
+        // The 7-model race is the dominant variable cost; without this
+        // the economics of rising usage are invisible.
+        await analyticsServer.track(user.id, "ai_call", {
+          surface: "analyze_chart",
+          provider: raceResult.provider,
+          model: raceResult.model,
+          latencyMs: raceResult.duration,
+          promptTokens: raceResult.usage?.promptTokens ?? null,
+          completionTokens: raceResult.usage?.completionTokens ?? null,
+          totalTokens: raceResult.usage?.totalTokens ?? null,
+          validated: setupResult.isValid,
+          repaired: setupResult.repairs.length > 0,
+        });
+      } catch {
+        /* analytics must never break the response */
+      }
+    })();
+
+    // Save fresh analysis to cache
+    try {
+      const cachePayload = {
+        analyzedAt: new Date().toISOString(),
+        analyzedPrice: tech.currentPrice,
+        lastCandleTime,
+        analysis: finalResponse
+      };
+
+      const existingCache = await prisma.conversationMemory.findFirst({
+        where: {
+          userId: user.id,
+          role: "cached_analysis",
+          chatId: `${symbol}-${timeframe}`,
+        }
+      });
+      if (existingCache) {
+        await prisma.conversationMemory.update({
+          where: { id: existingCache.id },
+          data: { content: JSON.stringify(cachePayload) }
+        });
+      } else {
+        await prisma.conversationMemory.create({
+          data: {
+            userId: user.id,
+            chatId: `${symbol}-${timeframe}`,
+            role: "cached_analysis",
+            content: JSON.stringify(cachePayload),
+          }
+        });
+      }
+    } catch (cacheErr) {
+      console.warn("Failed to update cache", cacheErr);
+    }
+
+    console.log(`[STEP 11: Response returned] FRESH ANALYSIS SUCCESSFUL | totalDuration=${Date.now() - t0}ms`);
+    return successResponse(finalResponse);
+
+  } catch (err: any) {
+    console.error("Critical error in analyze-chart route:", err);
+    await releaseReservation();
+
+    // Classify the failure so the user sees a specific, actionable error
+    // (or a best-effort fallback analysis) instead of a generic "AI
+    // temporarily unavailable" 503 that masks the real cause.
+    //
+    // 1. If `tech` is populated, market data + indicators succeeded — we can
+    //    still return a deterministic fallback analysis even if the AI race
+    //    or DB writes blew up afterwards. This is the same fallback the
+    //    race-failure path uses; the user gets a substantive answer.
+    // 2. If the failure is a transient Prisma connectivity error, return a
+    //    typed dbError(503) with Retry-After so the client can back off.
+    // 3. If auth failed, return 401 so the client redirects to sign-in.
+    // 4. If market data threw, return upstreamError so the client knows the
+    //    issue is upstream, not AI.
+    // 5. Only as a last resort (no tech, unknown cause) return aiUnavailableError.
+    if (isPrismaTransientError(err)) {
+      console.warn("[ANALYZE-CHART] DB transient error:", err?.code);
+      return dbError(30_000, { route: "analyze-chart" });
+    }
+
+    const status = err?.status ?? err?.statusCode;
+    if (status === 401 || status === 403) {
+      return authFailedError();
+    }
+
+    console.log(`[STEP 11: Response returned] OUTER-CATCH FALLBACK ANALYSIS | totalDuration=${Date.now() - t0}ms`);
+    // Only return 200 + fallback if we have verified telemetry. Otherwise the
+    // caller never got a real price, so fabricating a Synchronized narrative
+    // with N/A values would be a lie — surface the failure as 503.
+    const catchFallback = tech
+      ? buildFallbackAnalysis(
+          validatedSymbol || "BTC/USD",
+          validatedTimeframe || "4h",
+          tech,
+          "AUTO",
+          userName || "Trader",
+          behavioralContext || "",
+          true
+        )
+      : null;
+    if (catchFallback) {
+      return successResponse(catchFallback);
+    }
+    return errorResponse(
+      "TELEMETRY_UNAVAILABLE",
+      "Live market data is temporarily unavailable. Please try again in a moment.",
+      503
+    );
+  }
+}
