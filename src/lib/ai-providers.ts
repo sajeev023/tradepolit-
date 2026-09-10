@@ -155,7 +155,7 @@ async function callSingleProvider(
       max_tokens: options.maxTokens ?? 350
     });
   } else {
-    modelName = "nvidia/llama-3.3-nemotron-super-49b-v1.5";
+    modelName = "meta/llama-3.2-11b-vision-instruct";
     endpoint = "https://integrate.api.nvidia.com/v1/chat/completions";
     headers["Authorization"] = `Bearer ${apiKey}`;
     bodyJson = JSON.stringify({

@@ -341,6 +341,21 @@ export const prismaMock = {
     count: async () => {
       return memoryDb.users.length;
     },
+    updateMany: async ({ where, data }: any) => {
+      let count = 0;
+      for (let i = 0; i < memoryDb.users.length; i++) {
+        const u = memoryDb.users[i];
+        if (where?.id && u.id !== where.id) continue;
+        if (where?.analysesCountToday?.gt !== undefined && (u.analysesCountToday ?? 0) <= where.analysesCountToday.gt) continue;
+        const updated = { ...u, ...data, updatedAt: new Date() };
+        if (data?.analysesCountToday?.decrement) {
+          updated.analysesCountToday = Math.max(0, (u.analysesCountToday ?? 0) - data.analysesCountToday.decrement);
+        }
+        memoryDb.users[i] = updated;
+        count++;
+      }
+      return { count };
+    },
   },
   trade: {
     findMany: async ({ where, skip = 0, take = 20 }: any) => {

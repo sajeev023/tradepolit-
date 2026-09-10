@@ -109,7 +109,8 @@ export function checkInvariants(setup: InvariantCheckSetup, opts: InvariantCheck
   const stopPercent = entry > 0 ? riskAmount / entry : 0;
 
   if (direction === "LONG" || direction === "SHORT") {
-    if (computedRR > 0 && computedRR < opts.minRR) {
+    // Epsilon tolerance (1e-4) accounts for standard IEEE 754 precision artifacts (e.g. 1.4999999999999984 vs 1.50)
+    if (computedRR > 0 && computedRR < opts.minRR - 1e-4) {
       issues.push(`Risk:Reward Violation: Calculated R:R is ${computedRR.toFixed(2)}:1, below the ${opts.minRR}:1 minimum.`);
     }
     const statedRR = setup.riskReward;

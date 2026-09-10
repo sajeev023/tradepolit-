@@ -237,10 +237,16 @@ export async function POST(request: NextRequest) {
       // Floor at 0 — a bare `decrement` can drive the counter negative if this
       // ever runs twice for the same reservation (e.g. outer catch after the
       // success path already nulled it). Conditional update makes it idempotent.
-      await prisma.user.updateMany({
-        where: { id: uid, analysesCountToday: { gt: 0 } },
-        data: { analysesCountToday: { decrement: 1 } },
-      }).catch(() => {});
+      try {
+        if (typeof (prisma.user as any)?.updateMany === "function") {
+          await prisma.user.updateMany({
+            where: { id: uid, analysesCountToday: { gt: 0 } },
+            data: { analysesCountToday: { decrement: 1 } },
+          });
+        }
+      } catch (err) {
+        console.warn("[ANALYZE-CHART] Failed to release quota reservation:", err);
+      }
     }
   };
 
@@ -800,9 +806,23 @@ REQUIRED JSON RESPONSE SCHEMA:
     let activeContent = raceResult.content;
     let parseResult = safeParseAIResponse(activeContent, techTelemetryData);
 
+    // Check if the AI output contains narrative contradictions (MACD/RSI/Risk) or unparseable JSON.
+    // Numeric issues (entry/SL/TP) are handled deterministically by the V2 trade-logic engine
+    // (synthSetup/validateSetup) and should not trigger an expensive regeneration loop that times out
+    // the user's browser unless synthesis itself cannot produce a valid plan.
+    const initialSetup = validateSetup(parseResult.parsed, techTelemetryData);
+    const narrativeContradictions = (parseResult.validationResult?.issues || []).filter(i =>
+      i.includes("Contradiction") || i.includes("MISMATCH")
+    );
+    const needsRegeneration = !parseResult.jsonParseSuccess || narrativeContradictions.length > 0 || !initialSetup.isValid;
+
     // AI REGENERATION LOOP (Attempt 1 Retry if validation fails)
-    if (!parseResult.schemaValid || (parseResult.validationResult && !parseResult.validationResult.isValid)) {
-      const issues = parseResult.validationResult?.issues || [parseResult.rejectionReason || "Validation failed"];
+    if (needsRegeneration) {
+      const issues = narrativeContradictions.length > 0
+        ? narrativeContradictions
+        : initialSetup.issues.length > 0
+          ? initialSetup.issues
+          : [parseResult.rejectionReason || "Validation failed"];
       console.warn(`[AI VALIDATION REJECTED ATTEMPT 1] Issues:\n${issues.map(i => `  - ${i}`).join("\n")}\nTriggering 1 AI Regeneration attempt...`);
 
       const retryUserPrompt = `CRITICAL LOGICAL CONTRADICTION DETECTED IN PREVIOUS ATTEMPT:
@@ -842,9 +862,7 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
       isRepaired,
       isFallback: _isFallback,
       jsonParseSuccess,
-      schemaValid,
       rejectionReason,
-      validationResult,
     } = parseResult;
 
     // -------------------------------------------------------------
@@ -871,16 +889,20 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
       console.warn(`[TRADE-LOGIC] Setup failed validation after repair attempt: ${setupResult.issues.join("; ")}`);
     }
 
-    // Structured Error Response if validation fails even after regeneration.
-    // Note the split of concerns:
-    //   - Narrative issues (MACD/RSI text contradictions, template junk)
-    //     come from the legacy validator — regenerated, then 422.
-    //   - Numeric issues are owned by the trade-logic engine; a numeric
-    //     failure that could not be repaired deterministically is a hard
-    //     rejection — we never render a contradictory trade plan.
+    // Re-verify the updated parsedData with validateTradeAnalysis using the synthesized invalidation level
+    // so narrative and structural checks are evaluated on the final validated numbers.
+    const revalContext = {
+      ...techTelemetryData,
+      invalidationLevel: setupResult.setup?.invalidation ?? techTelemetryData.invalidationLevel,
+    };
+    const revalResult = validateTradeAnalysis(parsedData, revalContext);
+    const finalNarrativeIssues = revalResult.issues.filter(i =>
+      i.includes("Contradiction") || i.includes("MISMATCH")
+    );
     const numericIssues = setupResult.isValid ? [] : setupResult.issues;
-    if (!schemaValid || (validationResult && !validationResult.isValid) || numericIssues.length > 0) {
-      const finalIssues = [...(validationResult?.issues || []), ...numericIssues];
+    const finalIssues = [...new Set([...finalNarrativeIssues, ...numericIssues])];
+
+    if (!jsonParseSuccess || !setupResult.isValid || finalIssues.length > 0) {
       const uniqueIssues = [...new Set(finalIssues.length > 0 ? finalIssues : [rejectionReason || "Analysis failed post-analysis validation checks"])];
       console.error(`[ROUTER REJECTED RESPONSE AFTER REGENERATION] Issues:`, uniqueIssues);
       // Don't charge the user for an analysis we refused to deliver.
