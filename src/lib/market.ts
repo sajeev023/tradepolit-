@@ -32,12 +32,58 @@ function isTwelvedataKeyValid(): boolean {
 }
 
 export function normalizeSymbol(symbol: string): string {
-  const clean = symbol.toUpperCase().replace("-", "/").replace("USDT", "/USD");
+  if (!symbol || typeof symbol !== "string") return "";
+  let clean = symbol.trim().toUpperCase();
+
+  // Strip provider prefixes e.g. "BINANCE:BTCUSDT" -> "BTCUSDT"
+  if (clean.includes(":")) {
+    clean = clean.split(":").pop() || clean;
+  }
+
+  // Replace separators with slash
+  clean = clean.replace(/[-_]/g, "/");
+
+  // Handle double slash if present
+  clean = clean.replace(/\/+/g, "/");
+
+  // Handle /USDT -> /USD
+  clean = clean.replace(/\/USDT$/, "/USD");
+
+  // If directly in registry, return
   if (ALL_SYMBOLS.includes(clean)) return clean;
-  // Fallback map
-  if (clean === "BTC" || clean === "BTCUSDT") return "BTC/USD";
-  if (clean === "ETH" || clean === "ETHUSDT") return "ETH/USD";
-  if (clean === "SOL" || clean === "SOLUSDT") return "SOL/USD";
+
+  // Concatenated crypto/forex/commodity mappings
+  const CONCAT_MAP: Record<string, string> = {
+    BTC: "BTC/USD",
+    BTCUSD: "BTC/USD",
+    BTCUSDT: "BTC/USD",
+    ETH: "ETH/USD",
+    ETHUSD: "ETH/USD",
+    ETHUSDT: "ETH/USD",
+    SOL: "SOL/USD",
+    SOLUSD: "SOL/USD",
+    SOLUSDT: "SOL/USD",
+    EURUSD: "EUR/USD",
+    EURUSDT: "EUR/USD",
+    GBPUSD: "GBP/USD",
+    GBPUSDT: "GBP/USD",
+    USDJPY: "USD/JPY",
+    XAUUSD: "XAU/USD",
+    XAU: "XAU/USD",
+    NDX: "NASDAQ",
+    SPX: "S&P500",
+    SPXUSD: "S&P500",
+  };
+
+  if (CONCAT_MAP[clean]) return CONCAT_MAP[clean];
+
+  // Regex fallback: 3-4 letter asset + USD or USDT
+  const m = clean.match(/^([A-Z0-9]+)(?:USD|USDT)$/);
+  if (m) {
+    const candidate = `${m[1]}/USD`;
+    if (ALL_SYMBOLS.includes(candidate)) return candidate;
+  }
+
   return clean;
 }
 

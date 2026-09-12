@@ -32,7 +32,17 @@ export type ErrorCode =
   | "AUTH_FAILED"
   | "MARKET_DATA_STALE"
   | "UPSTREAM_PARTIAL"
-  | "TELEMETRY_UNAVAILABLE";
+  | "TELEMETRY_UNAVAILABLE"
+  | "MARKET_DATA_ERROR"
+  | "SYMBOL_MAPPING_ERROR"
+  | "INSUFFICIENT_DATA"
+  | "MARKET_CONTEXT_ERROR"
+  | "EVIDENCE_ERROR"
+  | "AI_PROVIDER_ERROR"
+  | "AI_TIMEOUT"
+  | "AI_PARSE_ERROR"
+  | "SYNTHESIS_ERROR"
+  | "UNKNOWN_ERROR";
 
 // Mirror Prisma enums as string unions for client-side use
 export type AssetClass =

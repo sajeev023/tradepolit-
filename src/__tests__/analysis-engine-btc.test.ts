@@ -117,6 +117,10 @@ LIVE CHART TECHNICAL DATA:
 - MACD Value: ${tech.macdValue.toFixed(4)}, Signal: ${tech.macdSignal.toFixed(4)}, Histogram: ${tech.macdHistogram.toFixed(4)}
 - ATR (14): ${tech.atr.toFixed(4)}
 
+MACD INTERPRETATION RULES:
+- MACD Value (${tech.macdValue.toFixed(4)}) ${tech.macdValue >= tech.macdSignal ? ">=" : "<"} Signal (${tech.macdSignal.toFixed(4)}): Describe MACD as ${tech.macdValue >= tech.macdSignal ? "BULLISH" : "BEARISH"}.
+- NEVER describe MACD as ${tech.macdValue >= tech.macdSignal ? "bearish" : "bullish"} when MACD ${tech.macdValue >= tech.macdSignal ? ">=" : "<"} Signal.
+
 REQUIRED JSON RESPONSE SCHEMA:
 {
   "marketRegime": "string",

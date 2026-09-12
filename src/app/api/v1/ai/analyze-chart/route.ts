@@ -28,7 +28,9 @@ import { validateMarketData, validateIndicators, validateLevels, isDataFresh } f
 import { checkTokenBudget } from "@/lib/token-budget";
 import { validateSetup } from "@/lib/trade-logic";
 import { synthSetup } from "@/lib/trade-logic/setup-synthesis";
-import { isRegisteredSymbol } from "@/lib/market";
+import { isRegisteredSymbol, normalizeSymbol } from "@/lib/market";
+import { validateTradeAnalysis } from "@/lib/trade-validator";
+import { randomUUID } from "crypto";
 import { buildMarketContext } from "@/lib/market-context";
 import { computeConfidence } from "@/lib/confidence-engine";
 import { buildEvidence } from "@/lib/evidence-builder";
@@ -211,6 +213,8 @@ function buildFallbackAnalysis(symbol: string, timeframe: string, tech: any, exc
 
 export async function POST(request: NextRequest) {
   const t0 = Date.now();
+  const reqId = randomUUID();
+  console.log(`[STAGE: ANALYSIS_REQUEST_RECEIVED] reqId=${reqId} [0ms]`);
   console.log(`[STEP 1: Request received] [0ms]`);
   let reservedUserId: string | null = null;
   // Tracked outside the try block so the outer catch can build a best-effort
@@ -257,8 +261,12 @@ export async function POST(request: NextRequest) {
       return validationError(validation.error);
     }
 
-    const { symbol, timeframe, bypassCache, livePrice } = validation.data;
-    console.log('[TELEMETRY-4] Backend received:', { symbol, timeframe, bypassCache, livePrice, telemetry: validation.data.telemetry });
+    const { symbol: rawSymbol, timeframe, bypassCache, livePrice } = validation.data;
+    const symbol = normalizeSymbol(rawSymbol);
+    if (!isRegisteredSymbol(symbol)) {
+      return errorResponse("SYMBOL_MAPPING_ERROR", `Unsupported symbol: ${rawSymbol}`, 400);
+    }
+    console.log('[TELEMETRY-4] Backend received:', { rawSymbol, symbol, timeframe, bypassCache, livePrice, telemetry: validation.data.telemetry });
     validatedSymbol = symbol;
     validatedTimeframe = timeframe;
 
@@ -371,12 +379,15 @@ COACHING MANDATE:
 
     // All technical context is computed server-side from exchange OHLCV data.
     // Client-supplied telemetry is intentionally ignored to prevent manipulation.
+    console.log(`[STAGE: MARKET_DATA_LOADED] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=START`);
     console.log(`[STEP 3: Market API response] Fetching candles for ${symbol} ${timeframe}`);
     const fetchedCandles = await getOHLCV(symbol, timeframe, 100);
     if (fetchedCandles.length === 0) {
-      return errorResponse("INTERNAL_ERROR", "No historical data available for selected asset", 500);
+      console.error(`[STAGE: MARKET_DATA_LOADED] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=FAILURE (0 candles)`);
+      return errorResponse("INSUFFICIENT_DATA", "No historical data available for selected asset", 500);
     }
     candles = fetchedCandles;
+    console.log(`[STAGE: MARKET_DATA_LOADED] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=SUCCESS candleCount=${candles.length} | lastPrice=${candles[candles.length - 1]?.close} duration=${Date.now() - t0}ms`);
     console.log(`[STEP 4: OHLCV fetched] candleCount=${candles.length} | lastPrice=${candles[candles.length - 1]?.close}`);
 
     // INTEGRITY GATE: never run AI analysis on simulated candles. When all
@@ -388,7 +399,7 @@ COACHING MANDATE:
     if (simulatedCount > 0) {
       console.warn(`[INTEGRITY] Blocked analysis on ${symbol} ${timeframe}: ${simulatedCount}/${candles.length} candles are SIMULATED.`);
       return errorResponse(
-        "UPSTREAM_UNAVAILABLE",
+        "MARKET_DATA_ERROR",
         `Live market data for ${symbol} is temporarily unavailable from all providers. Analysis is disabled rather than run on simulated prices — please retry in a few minutes.`,
         503
       );
@@ -402,7 +413,7 @@ COACHING MANDATE:
     const dataIsFresh = isDataFresh(lastCandleTimestamp, timeframe);
     if (!dataIsFresh) {
       return errorResponse(
-        "UPSTREAM_UNAVAILABLE",
+        "MARKET_DATA_ERROR",
         "Market telemetry is stale. Please refresh chart data and try again.",
         503
       );
@@ -471,11 +482,12 @@ COACHING MANDATE:
     });
 
     if (missing.length > 0 || dataErrors.length > 0) {
-      console.error('[TELEMETRY] Missing required fields or validation failed:', { missing, dataErrors });
+      console.error(`[STAGE: MARKET_DATA_LOADED] reqId=${reqId} Missing required fields or validation failed:`, { missing, dataErrors });
       return errorResponse(
-        "TELEMETRY_UNAVAILABLE",
+        "MARKET_DATA_ERROR",
         "Live market data is temporarily unavailable. Please try again in a moment.",
-        503
+        503,
+        { missing, dataErrors, reqId }
       );
     }
 
@@ -612,6 +624,7 @@ COACHING MANDATE:
     // Deterministic regime classification + multi-timeframe alignment.
     // Higher-TF fetch failures degrade gracefully (MTF is context, not a
     // hard dependency). Feeds both the AI prompt and the confidence engine.
+    console.log(`[STAGE: MARKET_CONTEXT_BUILT] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=START`);
     const marketCtx = await buildMarketContext(
       symbol,
       timeframe,
@@ -631,6 +644,7 @@ COACHING MANDATE:
       },
       async (s, tf, limit) => getOHLCV(s, tf, limit)
     );
+    console.log(`[STAGE: MARKET_CONTEXT_BUILT] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=SUCCESS regime=${marketCtx.regime.label} MTF=${marketCtx.mtf?.alignment ?? "n/a"} duration=${Date.now() - t0}ms`);
     console.log(`[STEP 5b: Market context] Regime=${marketCtx.regime.regime} | MTF=${marketCtx.mtf?.alignment ?? "n/a"}`);
 
     // ── V2.5 Evidence capture ───────────────────────────────────────────
@@ -638,6 +652,7 @@ COACHING MANDATE:
     // structured "why" that rides with every thesis. Built BEFORE the AI
     // runs so it reflects exactly what was knowable at decision time;
     // the AI may append narrative evidence later (mergeAiEvidence).
+    console.log(`[STAGE: EVIDENCE_BUILT] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=START`);
     const techBiasStr = String(tech.bias ?? "NEUTRAL").toUpperCase();
     const deterministicEvidence = buildEvidence(
       techBiasStr.includes("BUY") || techBiasStr.includes("LONG") || techBiasStr.includes("BULLISH")
@@ -663,6 +678,7 @@ COACHING MANDATE:
         approachingKeyLevel: tech.approachingKeyLevel,
       }
     );
+    console.log(`[STAGE: EVIDENCE_BUILT] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=SUCCESS for=${deterministicEvidence.for.length} against=${deterministicEvidence.against.length} duration=${Date.now() - t0}ms`);
     console.log(`[STEP 5c: Evidence] for=${deterministicEvidence.for.length} against=${deterministicEvidence.against.length}`);
 
     const userPrompt = `Conduct an elite chart analysis on ${symbol} on the ${timeframe} timeframe.
@@ -711,6 +727,10 @@ RSI INTERPRETATION RULES (Follow EXACTLY):
 - RSI >= 80: "Extremely overbought — reversal likely"
 - NEVER state "neutral" when RSI > 60.
 
+MACD INTERPRETATION RULES (Follow EXACTLY):
+- MACD Value (${tech.macdValue.toFixed(4)}) ${tech.macdValue >= tech.macdSignal ? ">=" : "<"} Signal (${tech.macdSignal.toFixed(4)}): Describe MACD as ${tech.macdValue >= tech.macdSignal ? "BULLISH (signal line below / positive momentum crossover)" : "BEARISH (signal line above / negative momentum crossover)"}.
+- NEVER describe MACD as ${tech.macdValue >= tech.macdSignal ? "bearish" : "bullish"} when MACD ${tech.macdValue >= tech.macdSignal ? ">=" : "<"} Signal.
+
 TELEMETRY USAGE RULE:
 - You HAVE live real-time market data. The LIVE CHART TECHNICAL DATA above is from the exchange feed.
 - Never say "I don't have real-time market data" or "I cannot see the chart."
@@ -742,6 +762,7 @@ REQUIRED JSON RESPONSE SCHEMA:
     console.log(`[STEP 7: Prompt generated] userPromptLength=${userPrompt.length}B`);
 
     // 4. Multi-model race
+    console.log(`[STAGE: AI_REQUEST_STARTED] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=START`);
     console.log(`[STEP 8: NVIDIA request sent] Dispatching AI race...`);
     let raceResult;
     const raceStart = Date.now();
@@ -758,6 +779,7 @@ REQUIRED JSON RESPONSE SCHEMA:
           setTimeout(() => reject(new Error("AI analysis timed out after 55s")), 55000)
         ),
       ]);
+      console.log(`[STAGE: AI_REQUEST_COMPLETED] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=SUCCESS provider=${raceResult.provider} model=${raceResult.model} duration=${Date.now() - raceStart}ms`);
       console.log(`[STEP 9: AI response received] Provider=${raceResult.provider.toUpperCase()} Model=${raceResult.model} in ${Date.now() - raceStart}ms`);
     } catch (raceErr: any) {
       console.error(`[STEP 9 FAILED] Race error | duration=${Date.now() - raceStart}ms | err=${raceErr?.message}`);
@@ -862,6 +884,7 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
       isRepaired,
       isFallback: _isFallback,
       jsonParseSuccess,
+      schemaValid,
       rejectionReason,
     } = parseResult;
 
@@ -888,6 +911,7 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
     } else {
       console.warn(`[TRADE-LOGIC] Setup failed validation after repair attempt: ${setupResult.issues.join("; ")}`);
     }
+    console.log(`[STAGE: SYNTHESIS_COMPLETED] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=${setupResult.isValid ? "SUCCESS" : "REPAIRED"}`);
 
     // Re-verify the updated parsedData with validateTradeAnalysis using the synthesized invalidation level
     // so narrative and structural checks are evaluated on the final validated numbers.
@@ -896,7 +920,7 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
       invalidationLevel: setupResult.setup?.invalidation ?? techTelemetryData.invalidationLevel,
     };
     const revalResult = validateTradeAnalysis(parsedData, revalContext);
-    const finalNarrativeIssues = revalResult.issues.filter(i =>
+    const finalNarrativeIssues = revalResult.issues.filter((i: string) =>
       i.includes("Contradiction") || i.includes("MISMATCH")
     );
     const numericIssues = setupResult.isValid ? [] : setupResult.issues;
@@ -904,6 +928,7 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
 
     if (!jsonParseSuccess || !setupResult.isValid || finalIssues.length > 0) {
       const uniqueIssues = [...new Set(finalIssues.length > 0 ? finalIssues : [rejectionReason || "Analysis failed post-analysis validation checks"])];
+      console.error(`[STAGE: VALIDATION_COMPLETED] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=FAILURE issues:`, uniqueIssues);
       console.error(`[ROUTER REJECTED RESPONSE AFTER REGENERATION] Issues:`, uniqueIssues);
       // Don't charge the user for an analysis we refused to deliver.
       await releaseReservation();
@@ -956,6 +981,8 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
       `\nSchema Validation Succeeded: ${schemaValid}` +
       `\nResponse Accepted: TRUE\n`
     );
+    console.log(`[STAGE: VALIDATION_COMPLETED] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=SUCCESS`);
+    console.log(`[STAGE: ANALYSIS_RESPONSE_READY] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=SUCCESS duration=${Date.now() - t0}ms`);
 
     const analyzedAtStr = new Date().toISOString();
     const formattedNarrative = appendTelemetryMetadata(
@@ -1180,12 +1207,16 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
         )
       : null;
     if (catchFallback) {
+      console.log(`[STAGE: ANALYSIS_RESPONSE_READY] reqId=${reqId} symbol=${validatedSymbol} tf=${validatedTimeframe} status=FALLBACK duration=${Date.now() - t0}ms`);
       return successResponse(catchFallback);
     }
+    const isTimeout = err?.message?.includes("timed out") || err?.name === "TimeoutError";
+    const errorCode = isTimeout ? "AI_TIMEOUT" : "UNKNOWN_ERROR";
     return errorResponse(
-      "TELEMETRY_UNAVAILABLE",
-      "Live market data is temporarily unavailable. Please try again in a moment.",
-      503
+      errorCode,
+      "The analysis engine returned an error for this symbol/timeframe.",
+      isTimeout ? 504 : 500,
+      { reqId, error: err?.message }
     );
   }
 }
