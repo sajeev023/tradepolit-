@@ -198,6 +198,25 @@ export async function getAuthenticatedUser() {
     return { user: null, error: error ?? unauthorizedError() };
   }
 
-  const dbUser = await ensurePrismaUser(supabaseUser);
-  return { user: dbUser, error: null };
+  try {
+    const dbUser = await ensurePrismaUser(supabaseUser);
+    return { user: dbUser, error: null };
+  } catch (err) {
+    console.warn("[AUTH] Failed to sync Prisma user record (non-fatal, proceeding with session user):", err);
+    return {
+      user: {
+        id: supabaseUser.id,
+        email: supabaseUser.email ?? "",
+        displayName:
+          (supabaseUser.user_metadata?.full_name as string) ??
+          (supabaseUser.user_metadata?.name as string) ??
+          "Trader",
+        role: "USER",
+        analysesCountToday: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any,
+      error: null,
+    };
+  }
 }

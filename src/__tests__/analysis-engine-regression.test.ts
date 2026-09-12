@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { normalizeSymbol, isRegisteredSymbol } from "@/lib/market";
-import { validateMarketData, validateIndicators, isDataFresh } from "@/lib/validate-market-data";
+import { validateMarketData, isDataFresh } from "@/lib/validate-market-data";
 import { synthSetup } from "@/lib/trade-logic/setup-synthesis";
 import { validateSetup } from "@/lib/trade-logic";
 import { safeParseAIResponse } from "@/lib/ai-response-parser";

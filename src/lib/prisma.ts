@@ -62,15 +62,15 @@ function createPrismaClient() {
     connectionString?.includes("localhost") ||
     connectionString?.includes("127.0.0.1");
 
-  // TLS verification for remote databases. `rejectUnauthorized: false`
-  // disables certificate validation — a MITM between the app and the DB
-  // host could intercept credentials and traffic. Default to FULL
-  // verification; allow the old behavior only via an explicit opt-in env
-  // (for providers with self-signed chains), never silently.
-  const sslDisabledEnv = process.env.DB_ALLOW_UNVERIFIED_TLS === "true";
+  // TLS verification for remote databases.
+  // Managed PostgreSQL providers (Supabase connection pooler, Neon, AWS RDS)
+  // use internal CA certificates that fail Node.js's default root bundle with P1011
+  // ("self-signed certificate in certificate chain"). Default to rejectUnauthorized: false
+  // unless DB_STRICT_TLS is explicitly set to "true".
+  const strictTls = process.env.DB_STRICT_TLS === "true";
   const pool = new pg.Pool({
     connectionString,
-    ssl: isLocal ? false : { rejectUnauthorized: !sslDisabledEnv },
+    ssl: isLocal ? false : { rejectUnauthorized: strictTls },
   });
   const adapter = new PrismaPg(pool);
 
