@@ -41,7 +41,7 @@ export const MODELS: ModelDef[] = [
     name: "llama-3.3-70b-versatile",
     provider: "groq",
     quality: "good",
-    timeout: 15_000,
+    timeout: 8_000,
     groqKeyIndex: 0,
   },
   {
@@ -50,7 +50,7 @@ export const MODELS: ModelDef[] = [
     name: "llama-3.1-8b-instant",
     provider: "groq",
     quality: "fast",
-    timeout: 12_000,
+    timeout: 6_000,
     groqKeyIndex: 0,
   },
   {
@@ -59,7 +59,7 @@ export const MODELS: ModelDef[] = [
     name: "llama-3.3-70b-versatile",
     provider: "groq",
     quality: "good",
-    timeout: 15_000,
+    timeout: 8_000,
     groqKeyIndex: 1,
   },
   {
@@ -68,7 +68,7 @@ export const MODELS: ModelDef[] = [
     name: "gemini-2.0-flash",
     provider: "gemini",
     quality: "good",
-    timeout: 10_000,
+    timeout: 6_000,
   },
   {
     // NVIDIA fastest small model
@@ -76,7 +76,7 @@ export const MODELS: ModelDef[] = [
     name: "meta/llama-3.2-11b-vision-instruct",
     provider: "nvidia",
     quality: "fast",
-    timeout: 26_000,
+    timeout: 10_000,
   },
   {
     // NVIDIA highest quality model
@@ -84,7 +84,7 @@ export const MODELS: ModelDef[] = [
     name: "meta/llama-3.2-90b-vision-instruct",
     provider: "nvidia",
     quality: "good",
-    timeout: 26_000,
+    timeout: 10_000,
   },
   {
     // OpenAI fallback model
@@ -92,7 +92,7 @@ export const MODELS: ModelDef[] = [
     name: "gpt-4o-mini",
     provider: "openai",
     quality: "good",
-    timeout: 15_000,
+    timeout: 8_000,
   },
 ];
 
@@ -105,7 +105,7 @@ const NVIDIA_ENDPOINT =
 const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
 const OPENAI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 
-const HARD_CAP_MS = 27_000; // 27-second hard cap safety net safely within client 30s fetch timeout
+const HARD_CAP_MS = 12_000; // 12-second hard cap safety net safely within client fetch timeout
 
 const GROQ_KEY_COOLDOWN_MS = 60_000; // after 429/401, skip this key for 60s
 

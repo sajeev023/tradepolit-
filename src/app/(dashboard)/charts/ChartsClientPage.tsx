@@ -509,7 +509,7 @@ export function ChartsClientPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(30000), // 30s fetch timeout matching serverless capacity
+          signal: AbortSignal.timeout(45000), // 45s fetch timeout matching serverless capacity
         });
         const body = await res.json();
         if (!res.ok) throw new Error(body.error?.message || body.message || "Analysis failed");

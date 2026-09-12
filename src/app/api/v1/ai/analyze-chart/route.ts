@@ -255,7 +255,12 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    const json = await request.json();
+    let json: any;
+    try {
+      json = await request.json();
+    } catch {
+      return errorResponse("VALIDATION_ERROR", "Invalid JSON payload in request body", 400);
+    }
     const validation = analyzeChartSchema.safeParse(json);
     if (!validation.success) {
       return validationError(validation.error);
@@ -776,7 +781,7 @@ REQUIRED JSON RESPONSE SCHEMA:
           maxTokens: 600,
         }),
         new Promise<any>((_, reject) =>
-          setTimeout(() => reject(new Error("AI analysis timed out after 55s")), 55000)
+          setTimeout(() => reject(new Error("AI analysis timed out after 14s")), 14000)
         ),
       ]);
       console.log(`[STAGE: AI_REQUEST_COMPLETED] reqId=${reqId} symbol=${symbol} tf=${timeframe} status=SUCCESS provider=${raceResult.provider} model=${raceResult.model} duration=${Date.now() - raceStart}ms`);
@@ -1192,6 +1197,18 @@ Return a PERFECT, logically consistent JSON payload matching the required schema
     }
 
     console.log(`[STEP 11: Response returned] OUTER-CATCH FALLBACK ANALYSIS | totalDuration=${Date.now() - t0}ms`);
+    // Attempt telemetry recovery if an error occurred before tech was compiled
+    if (!tech && validatedSymbol && isRegisteredSymbol(validatedSymbol)) {
+      try {
+        const recoveryCandles = await getOHLCV(validatedSymbol, validatedTimeframe || "4h", 100);
+        if (recoveryCandles.length > 0) {
+          tech = compileTechnicalContext(validatedSymbol, validatedTimeframe || "4h", recoveryCandles);
+        }
+      } catch (recoverErr) {
+        console.warn("[ANALYZE-CHART] Failed to recover telemetry in outer catch:", recoverErr);
+      }
+    }
+
     // Only return 200 + fallback if we have verified telemetry. Otherwise the
     // caller never got a real price, so fabricating a Synchronized narrative
     // with N/A values would be a lie — surface the failure as 503.
