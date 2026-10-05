@@ -270,7 +270,7 @@ export default function BacktesterPage() {
   const inline = "h-9 rounded-lg px-2.5 font-mono text-[12.5px] text-[var(--color-text-primary)]";
   const isRunning = activeBacktest?.status === "PENDING" || activeBacktest?.status === "RUNNING";
 
-  const RuleSentence = ({ verb, tone, a, op, b, setA, setOp, setB }: { verb: string; tone: string; a: string; op: string; b: string; setA: (v: string) => void; setOp: (v: string) => void; setB: (v: string) => void }) => (
+  const renderRule = ({ verb, tone, a, op, b, setA, setOp, setB }: { verb: string; tone: string; a: string; op: string; b: string; setA: (v: string) => void; setOp: (v: string) => void; setB: (v: string) => void }) => (
     <div>
       <p className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em]" style={{ color: tone }}>{verb} when</p>
       <div className="flex flex-wrap items-center gap-2">
@@ -312,8 +312,8 @@ export default function BacktesterPage() {
                   <Label className="mb-2 block">Description</Label>
                   <textarea value={newStratDesc} onChange={(e) => setNewStratDesc(e.target.value)} className="min-h-[64px] w-full px-3 py-2 text-[13px] text-[var(--color-text-primary)]" placeholder="What is this rule trying to catch?" />
                 </div>
-                <RuleSentence verb="Buy" tone="var(--color-profit)" a={entryIndA} op={entryOp} b={entryIndB} setA={setEntryIndA} setOp={setEntryOp} setB={setEntryIndB} />
-                <RuleSentence verb="Sell" tone="var(--color-loss)" a={exitIndA} op={exitOp} b={exitIndB} setA={setExitIndA} setOp={setExitOp} setB={setExitIndB} />
+                {renderRule({ verb: "Buy", tone: "var(--color-profit)", a: entryIndA, op: entryOp, b: entryIndB, setA: setEntryIndA, setOp: setEntryOp, setB: setEntryIndB })}
+                {renderRule({ verb: "Sell", tone: "var(--color-loss)", a: exitIndA, op: exitOp, b: exitIndB, setA: setExitIndA, setOp: setExitOp, setB: setExitIndB })}
                 <div className="flex gap-2 pt-1">
                   <button type="submit" disabled={createStrategyMutation.isPending} className="btn-primary flex-1">Save ruleset</button>
                   <button type="button" onClick={() => setIsCreatingStrategy(false)} className="btn-secondary">Cancel</button>

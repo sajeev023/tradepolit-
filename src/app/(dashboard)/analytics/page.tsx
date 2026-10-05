@@ -68,7 +68,7 @@ export default function AnalyticsPage() {
   const equityCurveData = performanceResponse?.equityCurve || [];
   const isProfit = metrics.totalPnL >= 0;
 
-  const Heading = ({ sub }: { sub: string }) => (
+  const renderHeading = (sub: string) => (
     <header>
       <Label>Analytics</Label>
       <h1 className="mt-2 text-[var(--color-text-primary)]">
@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
   if (isError) {
     return (
       <div className="mx-auto flex max-w-[1080px] flex-col gap-6">
-        <Heading sub="We couldn't load your performance data." />
+        {renderHeading("We couldn't load your performance data.")}
         <div className="card flex flex-col items-start gap-3 p-6">
           <Chip tone="loss" dot>Loading failed</Chip>
           <p className="text-[13px] text-[var(--color-text-secondary)]">{error instanceof Error ? error.message : "Unknown error"}</p>
@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
   if (metrics.totalTrades === 0) {
     return (
       <div className="mx-auto flex max-w-[1080px] flex-col gap-6">
-        <Heading sub="Aggregated metrics, equity progression and behavior summaries." />
+        {renderHeading("Aggregated metrics, equity progression and behavior summaries.")}
         <div className="card p-8 sm:p-12">
           <EmptyState
             icon={<BarChart3 size={18} />}
@@ -122,7 +122,7 @@ export default function AnalyticsPage() {
   return (
     <div className="mx-auto flex max-w-[1080px] flex-col gap-6 lg:gap-8">
       <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
-        <Heading sub={`Computed from ${metrics.totalTrades} closed trades.`} />
+        {renderHeading(`Computed from ${metrics.totalTrades} closed trades.`)}
         <button onClick={() => recomputeMutation.mutate()} disabled={recomputeMutation.isPending || isFetching} className="btn-secondary self-start md:self-auto">
           <RefreshCw size={14} className={recomputeMutation.isPending || isFetching ? "animate-spin" : ""} /> Recalculate
         </button>

@@ -126,7 +126,7 @@ export default function NewsPage() {
     }
   };
 
-  const Meta = ({ story }: { story: NewsStory }) => (
+  const renderMeta = (story: NewsStory) => (
     <div className="flex items-center justify-between gap-3 text-[11px] text-[var(--color-text-tertiary)]">
       <span className="flex min-w-0 items-center gap-1.5">
         {story.sourceLogo ? (
@@ -141,7 +141,7 @@ export default function NewsPage() {
     </div>
   );
 
-  const Tags = ({ story }: { story: NewsStory }) => (
+  const renderTags = (story: NewsStory) => (
     <div className="flex flex-wrap items-center gap-1.5">
       {sentimentChip(story.sentimentLabel, story.sentimentConfidence)}
       {impactChip(story.impactScore)}
@@ -227,12 +227,12 @@ export default function NewsPage() {
               )}
               <div className={`flex flex-col justify-between gap-5 p-5 sm:p-7 ${lead.image ? "" : "md:col-span-2"}`}>
                 <div>
-                  <Meta story={lead} />
+                  {renderMeta(lead)}
                   <h2 className="mt-4 font-serif text-[28px] leading-[1.08] tracking-[-0.01em] text-[var(--color-text-primary)] sm:text-[34px]">{lead.title}</h2>
                   <p className="mt-3 line-clamp-4 text-[14px] leading-relaxed text-[var(--color-text-secondary)]">{lead.summary}</p>
                 </div>
                 <div className="space-y-4">
-                  <Tags story={lead} />
+                  {renderTags(lead)}
                   <a href={lead.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[var(--accent)] transition-opacity hover:opacity-70">
                     Read the story <ExternalLink size={11} />
                   </a>
@@ -246,12 +246,12 @@ export default function NewsPage() {
               <li key={story.id}>
                 <article className="grid gap-4 p-5 transition-colors hover:bg-[var(--color-bg-hover)] sm:grid-cols-[1fr_auto] sm:p-6">
                   <div className="min-w-0 space-y-3">
-                    <Meta story={story} />
+                    {renderMeta(story)}
                     <a href={story.url} target="_blank" rel="noreferrer" className="group block">
                       <h2 className="line-clamp-2 text-[16px] font-semibold leading-snug tracking-[-0.01em] text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--accent)]">{story.title}</h2>
                       <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-[var(--color-text-tertiary)]">{story.summary}</p>
                     </a>
-                    <Tags story={story} />
+                    {renderTags(story)}
                   </div>
                   {story.image && (
                     // eslint-disable-next-line @next/next/no-img-element
