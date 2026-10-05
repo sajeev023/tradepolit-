@@ -16,7 +16,7 @@ import { FAQS } from "@/lib/faq-data";
 export const metadata: Metadata = buildMetadata({
   title: "Features — AI Chart Analysis, Journal, Risk & Discipline Tools",
   description:
-    "Every TradCopilot feature in one place: AI chart analysis from live candles, session journaling, behavioral guardrails, position sizing, backtesting, and alerts.",
+    "Every TradePilot feature in one place: AI chart analysis from live candles, session journaling, behavioral guardrails, position sizing, backtesting, and alerts.",
   path: "/features",
   keywords: [
     "ai trading copilot features",
@@ -29,7 +29,7 @@ export const metadata: Metadata = buildMetadata({
 /** The three most feature-relevant entries from the shared FAQ source of truth. */
 const FEATURE_FAQS = FAQS.filter((faq) =>
   [
-    "How does TradCopilot analyze market data?",
+    "How does TradePilot analyze market data?",
     "How does the behavioral discipline engine work?",
     "Which markets and instruments are supported?",
   ].includes(faq.question),
@@ -99,7 +99,7 @@ export default function FeaturesPage() {
             <Breadcrumbs items={[{ name: "Features", path: "/features" }]} />
             <span className="tp-eyebrow-mono block pt-2">PRODUCT FEATURES</span>
             <h1 className="tp-h1 tp-display-xl text-3xl! sm:text-4xl! lg:text-5xl!">
-              Every tool in the TradCopilot workspace
+              Every tool in the TradePilot workspace
             </h1>
             <p className="tp-body max-w-2xl">{ENTITY_DEFINITION}</p>
             <p className="tp-body max-w-2xl text-[13px] sm:text-[14px]">
@@ -160,7 +160,7 @@ export default function FeaturesPage() {
               "Overtrading flag: more than five trades in a single day.",
               "Cutting-winners-early flag: your average win is smaller than 0.6× your average loss.",
               "A weekly discipline summary of the patterns it saw.",
-              "It warns — it never blocks, locks, or cools anything down. TradCopilot is read-only; the decision stays yours.",
+              "It warns — it never blocks, locks, or cools anything down. TradePilot is read-only; the decision stays yours.",
             ]}
             href="/risk-management"
             linkLabel="How the behavioral engine and risk warnings work"
@@ -242,7 +242,7 @@ export default function FeaturesPage() {
             title="Under the hood: read-only by design"
             lead="The constraints that make the rest of it trustworthy:"
             bullets={[
-              "No trade execution, no broker or exchange connections, no custody of funds — TradCopilot cannot place an order.",
+              "No trade execution, no broker or exchange connections, no custody of funds — TradePilot cannot place an order.",
               "The only optional keys are market-data API keys you supply yourself, encrypted at rest with AES-256-GCM.",
               "Supabase authentication (email and Google), Stripe billing, and self-serve account and data deletion from Settings.",
               "Charts are the embedded TradingView widget, and any analysis can be exported as a PNG snapshot.",
@@ -378,7 +378,7 @@ export default function FeaturesPage() {
               </Link>
             </div>
             <p className="text-xs text-[var(--muted)] pt-1">
-              TradCopilot provides educational market analysis, not financial advice — read the{" "}
+              TradePilot provides educational market analysis, not financial advice — read the{" "}
               <Link
                 href="/disclaimer"
                 className="underline decoration-[var(--color-border-strong)] underline-offset-2 hover:text-[var(--ink)]"

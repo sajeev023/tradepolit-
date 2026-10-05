@@ -82,7 +82,7 @@ export default function TechnicalIndicatorsGuidePage() {
               <p className="tp-body">
                 RSI measures the speed of recent gains versus losses on a 0–100 scale,
                 smoothing price changes over a lookback window — 14 periods is the standard,
-                and the setting TradCopilot uses.
+                and the setting TradePilot uses.
               </p>
               <Formula>
                 RSI = 100 − 100 / (1 + average gain / average loss)
@@ -205,7 +205,7 @@ export default function TechnicalIndicatorsGuidePage() {
               <p className="tp-body">
                 Price repeatedly rejecting above VWAP leans bullish; persistent acceptance
                 below it leans bearish. Because crypto trades around the clock, platforms
-                compute it as a rolling window (TradCopilot uses a 20-bar rolling VWAP)
+                compute it as a rolling window (TradePilot uses a 20-bar rolling VWAP)
                 rather than resetting at a daily session open like equities do — worth
                 knowing before you compare readings across tools.
               </p>
@@ -230,7 +230,7 @@ export default function TechnicalIndicatorsGuidePage() {
               &ldquo;no trade.&rdquo;
             </p>
             <p className="tp-body">
-              That synthesis is exactly what TradCopilot automates: it computes all five
+              That synthesis is exactly what TradePilot automates: it computes all five
               server-side from live candles — RSI(14), MACD(12,26,9), EMA 9/21/50, ATR(14),
               rolling VWAP — then produces a written setup with bias, quality grade, entry,
               stop, target, and invalidation level.{" "}
@@ -272,7 +272,7 @@ export default function TechnicalIndicatorsGuidePage() {
           <section className="tc-terminal p-6 sm:p-10 text-center space-y-4">
             <h2 className="tp-h2">Let the terminal do the arithmetic</h2>
             <p className="tp-body max-w-xl mx-auto text-[13px] sm:text-[14px]">
-              TradCopilot computes these exact indicators from live crypto and forex data and
+              TradePilot computes these exact indicators from live crypto and forex data and
               journals every analysis. Educational tool — not financial advice; see our{" "}
               <Link href="/disclaimer" className="underline decoration-[var(--color-border-strong)] underline-offset-2 hover:text-[var(--ink)]">
                 disclaimer

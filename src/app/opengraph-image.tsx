@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "TradCopilot — Trade your plan, not your impulses";
+export const alt = "TradePilot — Trade your plan, not your impulses";
 export const size = {
   width: 1200,
   height: 630,
@@ -19,7 +19,7 @@ export default async function Image() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "70px 80px",
-          backgroundColor: "#05070B",
+          backgroundColor: "#0A0A09",
           color: "#F3F4F6",
           fontFamily: "sans-serif",
           position: "relative",
@@ -34,7 +34,7 @@ export default async function Image() {
             width: "600px",
             height: "600px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(47, 198, 232, 0.18) 0%, rgba(5, 7, 11, 0) 70%)",
+            background: "radial-gradient(circle, rgba(215, 248, 60, 0.18) 0%, rgba(10, 10, 9, 0) 70%)",
           }}
         />
 
@@ -52,19 +52,18 @@ export default async function Image() {
                 width: "44px",
                 height: "44px",
                 borderRadius: "12px",
-                background: "linear-gradient(135deg, #2FC6E8, #0EA5E9)",
+                background: "linear-gradient(135deg, #D7F83C, #B8D82B)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#05070B" strokeWidth="2.5">
-                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                <polyline points="17 6 23 6 23 12" />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#10120A">
+                <path d="M4.5 17.5 12 3l7.5 14.5L12 13.4z" />
               </svg>
             </div>
             <span style={{ fontSize: "28px", fontWeight: "700", letterSpacing: "-0.02em" }}>
-              TradCopilot
+              TradePilot
             </span>
           </div>
 
@@ -82,7 +81,7 @@ export default async function Image() {
               color: "#9CA3AF",
             }}
           >
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#2FC6E8" }} />
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#D7F83C" }} />
             <span>READ-ONLY ANALYSIS COPILOT</span>
           </div>
         </div>
@@ -100,7 +99,7 @@ export default async function Image() {
           >
             Trade your plan —
             <br />
-            <span style={{ fontStyle: "italic", color: "#2FC6E8" }}>not your impulses.</span>
+            <span style={{ fontStyle: "italic", color: "#D7F83C" }}>not your impulses.</span>
           </div>
           <p
             style={{
@@ -135,7 +134,7 @@ export default async function Image() {
             <span>·</span>
             <span>BEHAVIORAL GUARDRAILS</span>
           </div>
-          <span style={{ color: "#2FC6E8" }}>tradcopilot.com</span>
+          <span style={{ color: "#D7F83C" }}>tradcopilot.com</span>
         </div>
       </div>
     ),

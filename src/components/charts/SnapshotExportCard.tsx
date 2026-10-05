@@ -51,7 +51,7 @@ export const SnapshotExportCard: React.FC<SnapshotExportCardProps> = ({
             TP
           </div>
           <div>
-            <span className="text-sm font-extrabold tracking-tight text-[var(--color-text-primary)] block">TradCopilot</span>
+            <span className="text-sm font-extrabold tracking-tight text-[var(--color-text-primary)] block">TradePilot</span>
             <span className="text-[9px] text-[var(--color-text-tertiary)] uppercase tracking-wider block">Institutional Analytics</span>
           </div>
         </div>

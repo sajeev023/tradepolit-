@@ -8,7 +8,7 @@ interface SvgTracedLineProps {
   color?: string;
 }
 
-export function SvgTracedLine({ className = "", color = "rgba(47, 198, 232, 0.4)" }: SvgTracedLineProps) {
+export function SvgTracedLine({ className = "", color = "rgba(215, 248, 60, 0.4)" }: SvgTracedLineProps) {
   const ref = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
 

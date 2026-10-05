@@ -8,9 +8,9 @@ import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata, breadcrumbJsonLd, faqPageJsonLd, type FaqItem } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "TradCopilot vs TradingView — How TradCopilot Complements TradingView",
+  title: "TradePilot vs TradingView — How TradePilot Complements TradingView",
   description:
-    "A factual comparison of TradingView and TradCopilot. TradCopilot uses TradingView for charts while adding deterministic AI analysis, session journaling, and behavioral risk guardrails.",
+    "A factual comparison of TradingView and TradePilot. TradePilot uses TradingView for charts while adding deterministic AI analysis, session journaling, and behavioral risk guardrails.",
   path: "/compare/tradcopilot-vs-tradingview",
   keywords: [
     "tradcopilot vs tradingview",
@@ -23,14 +23,14 @@ export const metadata: Metadata = buildMetadata({
 
 const BREADCRUMBS = [
   { name: "Compare", path: "/compare" },
-  { name: "TradCopilot vs TradingView", path: "/compare/tradcopilot-vs-tradingview" },
+  { name: "TradePilot vs TradingView", path: "/compare/tradcopilot-vs-tradingview" },
 ];
 
 const COMPARISON_FAQS: FaqItem[] = [
   {
-    question: "Do I have to choose between TradCopilot and TradingView?",
+    question: "Do I have to choose between TradePilot and TradingView?",
     answer:
-      "No. In fact, TradCopilot is designed to work alongside TradingView. The charts inside the TradCopilot workspace are powered directly by the official TradingView widget. You keep your familiar charting interface while gaining TradCopilot's AI setup evaluation, deterministic indicator readouts, and behavioral journaling.",
+      "No. In fact, TradePilot is designed to work alongside TradingView. The charts inside the TradePilot workspace are powered directly by the official TradingView widget. You keep your familiar charting interface while gaining TradePilot's AI setup evaluation, deterministic indicator readouts, and behavioral journaling.",
   },
   {
     question: "Can TradingView do automated behavioral discipline tracking?",
@@ -40,7 +40,7 @@ const COMPARISON_FAQS: FaqItem[] = [
   {
     question: "How do the AI capabilities differ?",
     answer:
-      "TradingView does not synthesize multi-model AI theses with strict invalidation levels from live OHLCV feeds. TradCopilot runs a server-side race across Groq, Gemini, NVIDIA, and OpenAI to explain setups and audits them with an internal consistency validator before display.",
+      "TradingView does not synthesize multi-model AI theses with strict invalidation levels from live OHLCV feeds. TradePilot runs a server-side race across Groq, Gemini, NVIDIA, and OpenAI to explain setups and audits them with an internal consistency validator before display.",
   },
 ];
 
@@ -106,10 +106,10 @@ export default function TradcopilotVsTradingviewPage() {
             <Breadcrumbs items={BREADCRUMBS} />
             <span className="tp-eyebrow-mono block pt-2">OBJECTIVE COMPARISON</span>
             <h1 className="tp-display-xl text-3xl! sm:text-4xl! lg:text-5xl!">
-              TradCopilot vs TradingView: <span className="tp-serif-italic">How they work together.</span>
+              TradePilot vs TradingView: <span className="tp-serif-italic">How they work together.</span>
             </h1>
             <p className="tp-body max-w-2xl text-[15px] sm:text-[16px] leading-relaxed">
-              TradingView is the premier charting platform in the world. TradCopilot is an AI decision-support and behavioral workspace built on top of it. Here is an honest, objective breakdown of their respective strengths.
+              TradingView is the premier charting platform in the world. TradePilot is an AI decision-support and behavioral workspace built on top of it. Here is an honest, objective breakdown of their respective strengths.
             </p>
           </header>
 
@@ -127,7 +127,7 @@ export default function TradcopilotVsTradingviewPage() {
 
             <div className="tc-card space-y-3 border-[rgba(var(--accent-rgb),0.3)] bg-[rgba(var(--accent-rgb),0.02)]">
               <span className="tp-eyebrow-mono text-[var(--accent)]">DECISION SUPPORT &amp; DISCIPLINE</span>
-              <h2 className="tp-h3 !text-[18px]">TradCopilot</h2>
+              <h2 className="tp-h3 !text-[18px]">TradePilot</h2>
               <p className="text-[13px] text-[var(--muted)] leading-relaxed">
                 Exceptional for turning live indicators into structured AI trade hypotheses, calculating exact position sizes, tracking session trades with emotion tags, and stopping revenge trading.
               </p>
@@ -144,7 +144,7 @@ export default function TradcopilotVsTradingviewPage() {
                   <tr className="border-b border-[var(--color-border-strong)]">
                     <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">Feature</th>
                     <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">TradingView</th>
-                    <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[var(--accent)] font-semibold">TradCopilot</th>
+                    <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[var(--accent)] font-semibold">TradePilot</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -168,10 +168,10 @@ export default function TradcopilotVsTradingviewPage() {
             <h2 className="tp-h2">Why we embed TradingView charts</h2>
             <div className="space-y-4 max-w-[65ch]">
               <p className="tp-body">
-                We didn&apos;t reinvent candlestick rendering because TradingView already built the best charting library in the industry. TradCopilot embeds TradingView directly in the analysis terminal, allowing you to use professional candles while receiving server-calculated RSI, MACD, and AI invalidation theses alongside the chart.
+                We didn&apos;t reinvent candlestick rendering because TradingView already built the best charting library in the industry. TradePilot embeds TradingView directly in the analysis terminal, allowing you to use professional candles while receiving server-calculated RSI, MACD, and AI invalidation theses alongside the chart.
               </p>
               <p className="tp-body">
-                You can also export high-resolution PNG snapshot cards of any TradCopilot analysis to share across your trading channels or archive in your personal notes.
+                You can also export high-resolution PNG snapshot cards of any TradePilot analysis to share across your trading channels or archive in your personal notes.
               </p>
             </div>
           </section>
@@ -201,7 +201,7 @@ export default function TradcopilotVsTradingviewPage() {
 
           {/* ── CTA ── */}
           <section className="tc-terminal p-6 sm:p-10 text-center space-y-4">
-            <h2 className="tp-h2">Try TradCopilot alongside your charts</h2>
+            <h2 className="tp-h2">Try TradePilot alongside your charts</h2>
             <p className="tp-body max-w-xl mx-auto text-[13px] sm:text-[14px]">
               Explore the workspace with 5 free analyses per day and automated trade journaling.
             </p>

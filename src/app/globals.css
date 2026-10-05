@@ -4,37 +4,38 @@
 @custom-variant dark (&:where(.dark,.dark *));
 
 :root {
-  /* TradCopilot visual system — handcrafted market terminal.
-     Deeper base, layered surface tier, ONE cyan interaction accent.
-     Semantic market colors (effort/risk/warn) are kept distinct from the
-     interaction accent so state is never communicated by accent alone. */
-  --background: #05070B;          /* Primary — deepest space black */
-  --background-secondary: #0A0F18;/* Band — alternating section surface */
-  --surface: #0E1420;             /* Surface — card substrate */
-  --foreground: #E8ECF2;          /* Ink — crisp off-white */
-  --card: #0A0F18;                /* Translucent card base (aligns to band) */
-  --card-foreground: #E8ECF2;
-  --muted-foreground: #8A93A3;    /* Muted — cool grey */
-  --border: rgba(255, 255, 255, 0.08); /* Subtle translucent border */
-  --border-active: rgba(var(--accent-rgb), 0.5); /* Cyan active border */
-  --accent: #2FC6E8;              /* Accent — the ONE cyan interaction accent */
-  --accent-rgb: 47 198 232;       /* RGB triple → rgba(var(--accent-rgb), a) */
+  /* TradePilot "Flight Deck" — warm graphite instrument panel.
+     Bone ink on graphite, ONE beacon-lime signal reserved for AI + interaction.
+     Market meaning (gain / loss / caution) never shares a hue with the signal. */
+  --background: #0A0A09;          /* Horizon — warm black */
+  --background-secondary: #0F0F0D;/* Band */
+  --surface: #151512;             /* Panel substrate */
+  --foreground: #EDE9DC;          /* Bone ink */
+  --card: #121210;
+  --card-foreground: #EDE9DC;
+  --muted-foreground: #8A877A;
+  --border: rgba(237, 233, 220, 0.09);
+  --border-active: rgba(var(--accent-rgb), 0.55);
+  --accent: #D7F83C;              /* Beacon — the ONE signal */
+  --accent-rgb: 215 248 60;
 
-  /* Canonical named tokens (spec single-source-of-truth aliases).
-     These mirror the semantic tokens above so both naming systems stay
-     in lockstep; components may use either name. */
   --bg-primary: var(--background);
   --bg-band: var(--background-secondary);
   --ink: var(--foreground);
   --muted: var(--muted-foreground);
-  --green: #2DD4A8;               /* Effort / positive only */
-  --green-rgb: 45 212 168;
-  --red: #FF6B6B;                 /* Risk / negative only */
-  --red-rgb: 255 107 107;
-  --amber: #F5B942;               /* Warnings only */
-  --amber-rgb: 245 185 66;
-  --accent-bright: #5ED7F0;       /* Lighter accent for gradient highlights */
-  --accent-bright-rgb: 94 215 240;
+  --green: #3DDC97;               /* Gain */
+  --green-rgb: 61 220 151;
+  --red: #FF5B48;                 /* Loss */
+  --red-rgb: 255 91 72;
+  --amber: #FFB224;               /* Caution */
+  --amber-rgb: 255 178 36;
+  --accent-bright: #E8FF7A;
+  --accent-bright-rgb: 232 255 122;
+  --on-accent: #10120A;           /* Ink used on top of the beacon */
+  --hairline: rgba(237, 233, 220, 0.07);
+  --panel-1: #121210;
+  --panel-2: #181815;
+  --panel-3: #1F1F1B;
 }
 
 @theme {
@@ -55,25 +56,25 @@
   --color-bg-secondary: var(--card);            /* #0A0F18 — primary card base */
   --color-bg-tertiary: var(--surface);           /* #0E1420 — raised surface */
   --color-bg-elevated: var(--surface);           /* #0E1420 — elevated surface */
-  --color-bg-deepest: var(--background);         /* #05070B — sidebar/topbar chrome */
+  --color-bg-deepest: var(--background);         /* #0A0A09 — sidebar/topbar chrome */
   --color-bg-band: var(--background-secondary);  /* #0A0F18 — alternating section band */
-  --color-bg-hover: rgba(255, 255, 255, 0.05);
+  --color-bg-hover: rgba(237, 233, 220, 0.055);
   --color-bg-active: rgba(var(--accent-rgb), 0.10);
 
   --color-border-default: var(--border);
-  --color-border-subtle: rgba(255, 255, 255, 0.05);
-  --color-border-strong: rgba(255, 255, 255, 0.12);
+  --color-border-subtle: rgba(237, 233, 220, 0.06);
+  --color-border-strong: rgba(237, 233, 220, 0.16);
   --color-border-accent: var(--accent);
 
   --color-text-primary: var(--foreground);
-  --color-text-secondary: #b9bdc9;
+  --color-text-secondary: #BEB9AB;
   --color-text-tertiary: var(--muted-foreground);
-  --color-text-quaternary: #5f6573;
+  --color-text-quaternary: #666459;
   --color-text-accent: var(--accent);
 
   /* Cyan interaction accent — the ONE accent (futuristic terminal identity) */
   --color-accent-primary: var(--accent);
-  --color-accent-primary-hover: #2BB4D1;             /* deeper cyan for hover */
+  --color-accent-primary-hover: #C3E52F;             /* deeper beacon for hover */
   --color-accent-primary-muted: rgba(var(--accent-rgb), 0.12);
   --color-accent-primary-subtle: rgba(var(--accent-rgb), 0.06);
 
@@ -95,29 +96,67 @@
   --color-red: var(--red);
   --color-amber: var(--amber);
 
+  /* ── Palette retarget ─────────────────────────────────────────────────────
+     Any stock Tailwind colour utility (text-zinc-400, bg-emerald-500/10, …)
+     resolves to the Flight Deck system instead of the default palette:
+     neutrals → warm graphite, green/red/amber → market meaning,
+     blue/violet/cyan family → the single beacon signal. */
+  --color-zinc-50: #F5F2E8;  --color-zinc-100: #E8E4D6; --color-zinc-200: #D3CFC0;
+  --color-zinc-300: #B8B4A6; --color-zinc-400: #8F8C7F; --color-zinc-500: #6E6C61;
+  --color-zinc-600: #55544C; --color-zinc-700: #3B3A34; --color-zinc-800: #272722;
+  --color-zinc-900: #181815; --color-zinc-950: #0F0F0D;
+  --color-slate-50: var(--color-zinc-50);   --color-slate-100: var(--color-zinc-100); --color-slate-200: var(--color-zinc-200);
+  --color-slate-300: var(--color-zinc-300); --color-slate-400: var(--color-zinc-400); --color-slate-500: var(--color-zinc-500);
+  --color-slate-600: var(--color-zinc-600); --color-slate-700: var(--color-zinc-700); --color-slate-800: var(--color-zinc-800);
+  --color-slate-900: var(--color-zinc-900); --color-slate-950: var(--color-zinc-950);
+  --color-gray-50: var(--color-zinc-50);    --color-gray-100: var(--color-zinc-100);  --color-gray-200: var(--color-zinc-200);
+  --color-gray-300: var(--color-zinc-300);  --color-gray-400: var(--color-zinc-400);  --color-gray-500: var(--color-zinc-500);
+  --color-gray-600: var(--color-zinc-600);  --color-gray-700: var(--color-zinc-700);  --color-gray-800: var(--color-zinc-800);
+  --color-gray-900: var(--color-zinc-900);  --color-gray-950: var(--color-zinc-950);
+  --color-neutral-50: var(--color-zinc-50);   --color-neutral-100: var(--color-zinc-100); --color-neutral-200: var(--color-zinc-200);
+  --color-neutral-300: var(--color-zinc-300); --color-neutral-400: var(--color-zinc-400); --color-neutral-500: var(--color-zinc-500);
+  --color-neutral-600: var(--color-zinc-600); --color-neutral-700: var(--color-zinc-700); --color-neutral-800: var(--color-zinc-800);
+  --color-neutral-900: var(--color-zinc-900); --color-neutral-950: var(--color-zinc-950);
+
+  --color-emerald-300: #7BE8BB; --color-emerald-400: #3DDC97; --color-emerald-500: #2FBF86; --color-emerald-600: #25a174;
+  --color-green-300: #7BE8BB;   --color-green-400: #3DDC97;   --color-green-500: #2FBF86;   --color-green-600: #25a174;
+  --color-red-300: #FF9A8E;     --color-red-400: #FF5B48;      --color-red-500: #F0402D;     --color-red-600: #D6301F;
+  --color-rose-300: #FF9A8E;    --color-rose-400: #FF5B48;     --color-rose-500: #F0402D;    --color-rose-600: #D6301F;
+  --color-amber-300: #FFD070;   --color-amber-400: #FFB224;    --color-amber-500: #E69A00;   --color-amber-600: #C27F00;
+  --color-yellow-300: #FFD070;  --color-yellow-400: #FFB224;   --color-yellow-500: #E69A00;
+  --color-orange-400: #FFB224;  --color-orange-500: #E69A00;
+
+  --color-blue-300: #E8FF7A;   --color-blue-400: #D7F83C;   --color-blue-500: #BFE02A;   --color-blue-600: #A5C41F;
+  --color-violet-300: #E8FF7A; --color-violet-400: #D7F83C; --color-violet-500: #BFE02A; --color-violet-600: #A5C41F;
+  --color-purple-300: #E8FF7A; --color-purple-400: #D7F83C; --color-purple-500: #BFE02A; --color-purple-600: #A5C41F;
+  --color-indigo-300: #E8FF7A; --color-indigo-400: #D7F83C; --color-indigo-500: #BFE02A; --color-indigo-600: #A5C41F;
+  --color-sky-300: #E8FF7A;    --color-sky-400: #D7F83C;    --color-sky-500: #BFE02A;
+  --color-cyan-300: #E8FF7A;   --color-cyan-400: #D7F83C;   --color-cyan-500: #BFE02A;    --color-cyan-600: #A5C41F;
+  --color-white: #F7F4EA;
+
   /* ── Typography ──
      --font-inter / --font-display / --font-jetbrains are injected at <html> by
      next/font/google in src/app/layout.tsx. Fall back to system stacks if the
      variable is absent (e.g. before hydration / in isolation tests). */
-  --font-sans: var(--font-inter, "Inter"), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-display-font, "Space Grotesk"), var(--font-inter, "Inter"), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-serif-font, "Newsreader"), Georgia, "Times New Roman", serif;
-  --font-mono: var(--font-jetbrains, "JetBrains Mono"), ui-monospace, "Cascadia Code", monospace;
+  --font-sans: var(--font-geist, "Geist"), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-geist, "Geist"), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-serif-font, "Instrument Serif"), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-geist-mono, "Geist Mono"), ui-monospace, "Cascadia Code", monospace;
 
   /* ── Layout Spacing ── */
-  --spacing-sidebar: 220px;
-  --spacing-sidebar-collapsed: 64px;
-  --spacing-topbar: 48px;
+  --spacing-sidebar: 76px;
+  --spacing-sidebar-collapsed: 76px;
+  --spacing-topbar: 56px;
   --spacing-demo-banner: 0px; /* height of the DemoBanner; 0 when absent. DemoBanner
                                 sets this on :root so Topbar `top` and main `paddingTop`
                                 shift down in lockstep, keeping the chrome reachable. */
 
   /* ── Radii (4px increments) ── */
-  --radius-sm: 4px;
+  --radius-sm: 3px;
   --radius-md: 6px;
   --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
+  --radius-xl: 10px;
+  --radius-2xl: 14px;
   --radius-full: 9999px;
 
   /* ── Shadows (3-tier elevation) ── */
@@ -194,9 +233,11 @@ body {
      the bottom. All very low opacity: readable under trading data. */
   background-color: var(--background);
   background-image:
-    radial-gradient(64rem 64rem at 12% -8%, rgba(var(--accent-rgb), 0.05), transparent 55%),
-    radial-gradient(56rem 56rem at 105% -6%, rgba(var(--green-rgb), 0.03), transparent 50%),
-    radial-gradient(90rem 90rem at 50% 118%, rgba(var(--accent-rgb), 0.03), transparent 60%);
+    radial-gradient(70rem 28rem at 50% -14rem, rgba(var(--accent-rgb), 0.045), transparent 70%),
+    linear-gradient(rgba(237, 233, 220, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(237, 233, 220, 0.018) 1px, transparent 1px);
+  background-size: auto, 56px 56px, 56px 56px;
+  background-position: center top, -1px -1px, -1px -1px;
   background-attachment: fixed;
   background-repeat: no-repeat;
   color: var(--foreground);
@@ -233,10 +274,9 @@ body {
 }
 
 .surface-raised {
-  background-color: var(--color-bg-secondary);
+  background-color: var(--panel-2);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
 }
 
 .surface-floating {
@@ -253,83 +293,43 @@ body {
 .card {
   position: relative;
   isolation: isolate;
-  /* Translucent surface so the body atmosphere reads through subtly — depth
-     without per-card backdrop-filter (blur is reserved for .glass overlays to
-     keep scroll performance high). Top sheen gives a "lit from above" feel. */
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0) 50%),
-    rgba(11, 15, 25, 0.72);
-  border: 1px solid var(--color-border-default);
+  background: var(--panel-1);
+  border: 1px solid var(--hairline);
   border-radius: var(--radius-xl);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.02),
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 8px 24px -14px rgba(0, 0, 0, 0.5);
-  transition:
-    border-color var(--duration-fast) ease,
-    box-shadow var(--duration-fast) ease,
-    transform var(--duration-fast) ease,
-    background-color var(--duration-fast) ease;
+  transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-out-expo);
 }
 
-/* Edge lighting — a 1px ring composited via mask. Deliberately NEUTRAL: a
-   soft white top highlight fading down, no cyan. The cyan edge was the "AI
-   glow" tell; the card now reads as a disciplined premium surface (closer to
-   the marketing .tc-card / .tc-terminal language). Constant opacity — no
-   hover flare on ambient cards; interactive cards brighten subtly as an
-   affordance. Cheap: a static gradient with an opacity transition. */
+/* Registration tick — a tiny corner mark gives every panel an instrument feel
+   without borders-on-borders. Pure CSS, no layout impact. */
 .card::before {
   content: "";
   position: absolute;
-  inset: 0;
-  z-index: 1;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02) 62%);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
+  top: -1px;
+  left: 14px;
+  width: 18px;
+  height: 2px;
+  background: var(--color-border-strong);
+  border-radius: 0 0 2px 2px;
+  transition: background-color var(--duration-normal) ease, width var(--duration-normal) var(--ease-out-expo);
   pointer-events: none;
-  opacity: 0.5;
-  transition: opacity var(--duration-normal) ease;
 }
 
-.card:hover {
-  border-color: var(--color-border-strong);
-}
+.card:hover { border-color: var(--color-border-strong); }
+.card:hover::before { background: var(--accent); width: 28px; }
 
-.card-interactive {
-  cursor: pointer;
-}
-
-.card-interactive:hover {
-  border-color: var(--color-border-strong);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 12px 32px -14px rgba(0, 0, 0, 0.6);
-  transform: translateY(-1px);
-}
-
-.card-interactive:hover::before {
-  opacity: 0.8;
-}
-
-.card-interactive:active {
-  transform: translateY(0) scale(0.995);
-}
+.card-interactive { cursor: pointer; }
+.card-interactive:hover { background: var(--panel-2); transform: translateY(-1px); }
+.card-interactive:active { transform: translateY(0) scale(0.995); }
 
 /* ═══════════════════════════════════════════════════════════
    GLASSMORPHISM
    ═══════════════════════════════════════════════════════════ */
 
 .glass {
-  background: rgba(11, 15, 25, 0.72);
+  background: rgba(10, 10, 9, 0.78);
   backdrop-filter: blur(16px) saturate(150%);
   -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--hairline);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -398,19 +398,59 @@ body {
 }
 
 .tp-display-sm {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.6rem);
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2rem, 1.5rem + 1.6vw, 2.9rem);
   letter-spacing: -0.02em;
-  line-height: 1.1;
+  line-height: 1.02;
   color: var(--color-text-primary);
+}
+
+/* In-app page titles share one voice: serif display, tight, unbolded. Scoped to
+   .app-main so marketing/legal pages keep their own typography. */
+.app-main h1 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(2rem, 1.5rem + 1.6vw, 2.9rem);
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+/* Form controls inside the app share one instrument-panel look. Lives in the
+   base layer so any utility class or inline style on a control still wins. */
+@layer base {
+  .app-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  .app-main select,
+  .app-main textarea {
+    background-color: var(--panel-2);
+    border-color: var(--color-border-default);
+    border-radius: 10px;
+    font-variant-numeric: tabular-nums;
+    transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  }
+  .app-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):hover,
+  .app-main select:hover,
+  .app-main textarea:hover {
+    border-color: var(--color-border-strong);
+  }
+  .app-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus-visible,
+  .app-main select:focus-visible,
+  .app-main textarea:focus-visible {
+    outline: none;
+    border-color: rgba(var(--accent-rgb), 0.6);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+  }
+  .app-main input::placeholder,
+  .app-main textarea::placeholder {
+    color: var(--color-text-quaternary);
+  }
 }
 
 /* Eyebrow — crisp metadata label above headings */
 .tp-eyebrow {
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-accent-primary);
@@ -440,10 +480,11 @@ body {
   font-size: 13px;
   font-weight: 600;
   background: var(--accent);
-  color: #05070B;
+  color: var(--on-accent);
   border: none;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  letter-spacing: -0.005em;
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.5), 0 6px 20px -8px rgba(var(--accent-rgb), 0.45);
   transition:
     background-color var(--duration-fast) ease,
     opacity var(--duration-fast) ease,
@@ -454,6 +495,7 @@ body {
 
 .btn-primary:hover {
   background: var(--accent-bright);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.7), 0 8px 26px -8px rgba(var(--accent-rgb), 0.6);
 }
 
 .btn-primary:active {
@@ -572,11 +614,13 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .badge-success {
@@ -907,7 +951,9 @@ body {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    /* "none" (not translateY(0)) so a finished animation leaves no containing
+       block behind — fixed overlays inside animated pages must stay viewport-fixed. */
+    transform: none;
   }
 }
 
@@ -988,7 +1034,7 @@ body {
 /* Message slide-in */
 @keyframes message-slide-in {
   from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 .animate-message-in {
@@ -1019,7 +1065,7 @@ body {
 .surface-panel {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0) 50%),
-    rgba(11, 15, 25, 0.72);
+    rgba(10, 10, 9, 0.72);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-xl);
   box-shadow:

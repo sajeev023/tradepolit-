@@ -119,31 +119,6 @@ function classNames(...args: Array<string | false | null | undefined>): string {
 // Subcomponents
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StatusChip({
-  dot = "green",
-  pulse = false,
-  children,
-}: {
-  dot?: "green" | "red" | "amber" | "accent" | "muted";
-  pulse?: boolean;
-  children: React.ReactNode;
-}) {
-  const dotClass = {
-    green: "bg-[var(--color-profit)] shadow-[0_0_0_3px_rgba(var(--green-rgb),0.16)]",
-    red: "bg-[var(--color-loss)] shadow-[0_0_0_3px_rgba(var(--red-rgb),0.16)]",
-    amber: "bg-[var(--color-warning)] shadow-[0_0_0_3px_rgba(var(--amber-rgb),0.16)]",
-    accent: "bg-[var(--color-accent-primary)] shadow-[0_0_0_3px_rgba(var(--accent-rgb),0.16)]",
-    muted: "bg-[var(--color-text-quaternary)]",
-  }[dot];
-
-  return (
-    <div className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.02em] text-[var(--color-text-tertiary)]">
-      <span className={classNames("w-1.5 h-1.5 rounded-full shrink-0", pulse && "animate-pulse", dotClass)} />
-      <span>{children}</span>
-    </div>
-  );
-}
-
 function Badge({
   variant = "neutral",
   pulse = false,
@@ -239,51 +214,49 @@ function PanelHeader({
       ? { dot: "amber", pulse: true, label: "Reconnecting" }
       : { dot: "red", pulse: false, label: "Market offline" };
 
+  const dotColor = { green: "var(--color-profit)", amber: "var(--color-warning)", red: "var(--color-loss)", accent: "var(--accent)" }[marketStatus.dot];
+
   return (
-    <div className="flex items-center justify-between px-3 border-b shrink-0 h-[38px] border-[var(--color-border-subtle)]">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <div className="relative flex items-center justify-center w-7 h-7 rounded-md bg-[var(--color-accent-primary-muted)] border border-[rgba(var(--accent-rgb),0.12)] shrink-0">
-          <BrainCircuit size={15} className="text-[var(--color-accent-primary)]" />
+    <div className="flex h-[52px] shrink-0 items-center justify-between gap-2 border-b px-3.5" style={{ borderColor: "var(--hairline)" }}>
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "rgba(var(--accent-rgb),0.1)", color: "var(--accent)" }}>
+          <BrainCircuit size={16} />
+          <span
+            className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-[var(--panel-1)] ${marketStatus.pulse ? "animate-pulse" : ""}`}
+            style={{ background: dotColor }}
+            title={marketStatus.label}
+            aria-label={marketStatus.label}
+          />
         </div>
-        <div className="flex flex-col min-w-0">
-          <span className="text-[13px] font-bold tracking-tight text-[var(--color-text-primary)] truncate leading-none">
-            TradCopilot
-          </span>
-          <span className="text-[9px] text-[var(--color-text-quaternary)] truncate leading-tight hidden sm:block">
-            AI Market Intelligence
-          </span>
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-[14px] font-semibold leading-none tracking-[-0.01em] text-[var(--color-text-primary)]">Copilot</span>
+          <span className="mt-1 truncate font-mono text-[9.5px] uppercase leading-none tracking-[0.12em] text-[var(--color-text-quaternary)]">Chart analysis · {marketStatus.label}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
-        <div className="hidden sm:flex items-center mr-1">
-          <StatusChip dot={marketStatus.dot} pulse={marketStatus.pulse}>{marketStatus.label}</StatusChip>
-        </div>
+      <div className="flex shrink-0 items-center gap-0.5">
         <button
           onClick={onOpenSavedAnalyses}
-          className="icon-button text-[var(--color-text-tertiary)] hover:text-[var(--color-warning)]"
+          className="icon-button hover:!text-[var(--color-warning)]"
           title={isPro ? "Saved Analyses" : "Upgrade to PRO to save analyses"}
+          aria-label="Saved analyses"
         >
-          <Bookmark size={13} />
+          <Bookmark size={14} />
         </button>
         <button
           onClick={onOpenChatHistory}
-          className="icon-button text-[var(--color-text-tertiary)] hover:text-[var(--color-accent-primary)]"
+          className="icon-button hover:!text-[var(--accent)]"
           title={isPro ? "Chat History" : "Upgrade to PRO for chat history"}
+          aria-label="Chat history"
         >
-          <Clock size={13} />
+          <Clock size={14} />
         </button>
-        <button
-          onClick={onRunAnalysis}
-          disabled={isPending}
-          className="icon-button text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
-          title="Recalculate analysis"
-        >
-          <RefreshCw size={13} className={isPending ? "animate-spin text-[var(--color-accent-primary)]" : ""} />
+        <button onClick={onRunAnalysis} disabled={isPending} className="icon-button" title="Recalculate analysis" aria-label="Recalculate analysis">
+          <RefreshCw size={14} className={isPending ? "animate-spin" : ""} style={isPending ? { color: "var(--accent)" } : undefined} />
         </button>
         {onClose && (
-          <button onClick={onClose} className="icon-button text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] lg:hidden">
-            <X size={13} />
+          <button onClick={onClose} className="icon-button lg:hidden" aria-label="Close">
+            <X size={14} />
           </button>
         )}
       </div>

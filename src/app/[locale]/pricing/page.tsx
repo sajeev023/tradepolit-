@@ -41,7 +41,7 @@ export default async function LocalePricingPage({ params }: { params: Promise<{ 
             <TrendingUp size={13} color="#09090B" strokeWidth={2.5} />
           </div>
           <span className="text-[13px] font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">
-            TradCopilot
+            TradePilot
           </span>
         </Link>
         <div className="flex items-center gap-1">

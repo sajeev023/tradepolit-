@@ -221,7 +221,7 @@ export function HeroWorkbench() {
               onClick={() => setSymbol(s)}
               className={`px-2 sm:px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-mono font-medium tracking-wide transition-colors ${
                 s === symbol
-                  ? "bg-[rgba(47,198,232,0.12)] text-[var(--accent)] border border-[rgba(47,198,232,0.25)]"
+                  ? "bg-[rgba(215, 248, 60,0.12)] text-[var(--accent)] border border-[rgba(215, 248, 60,0.25)]"
                   : "text-[var(--muted)] hover:text-[var(--ink)] border border-transparent"
               }`}
               aria-pressed={s === symbol}
@@ -558,7 +558,7 @@ function WorkbenchChat({
       {asked ? (
         <div className="space-y-2 mb-2.5 sm:space-y-2.5 sm:mb-3">
           {/* User query */}
-          <div className="rounded-lg bg-[rgba(47,198,232,0.06)] border border-[rgba(47,198,232,0.16)] px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] text-[var(--ink)] font-mono">
+          <div className="rounded-lg bg-[rgba(215, 248, 60,0.06)] border border-[rgba(215, 248, 60,0.16)] px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] text-[var(--ink)] font-mono">
             {asked}
           </div>
 

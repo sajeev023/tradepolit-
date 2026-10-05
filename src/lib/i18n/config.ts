@@ -1,7 +1,7 @@
 /**
  * src/lib/i18n/config.ts
  *
- * Central i18n configuration for TradCopilot's international SEO surface.
+ * Central i18n configuration for TradePilot's international SEO surface.
  *
  * Only PUBLIC marketing/SEO pages are localized. The authenticated app
  * (dashboard, charts, journal, etc.) remains English-only.

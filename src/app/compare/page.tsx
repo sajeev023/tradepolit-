@@ -8,9 +8,9 @@ import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Compare TradCopilot — Honest Alternatives & Companion-Tool Breakdowns",
+  title: "Compare TradePilot — Honest Alternatives & Companion-Tool Breakdowns",
   description:
-    "Factual, side-by-side comparisons of TradCopilot with the tools traders ask about: TradingView and ChatGPT. What each does well, where TradCopilot differs, and how they work together.",
+    "Factual, side-by-side comparisons of TradePilot with the tools traders ask about: TradingView and ChatGPT. What each does well, where TradePilot differs, and how they work together.",
   path: "/compare",
   keywords: [
     "tradcopilot comparisons",
@@ -25,20 +25,20 @@ const BREADCRUMBS = [{ name: "Compare", path: "/compare" }];
 const COMPARISONS = [
   {
     href: "/compare/tradcopilot-vs-tradingview",
-    name: "TradCopilot vs TradingView",
+    name: "TradePilot vs TradingView",
     summary:
-      "Not a replacement — a complement. TradingView remains the charting layer (TradCopilot embeds its widget); TradCopilot adds deterministic AI setup analysis, session journaling, and behavioral guardrails on top.",
+      "Not a replacement — a complement. TradingView remains the charting layer (TradePilot embeds its widget); TradePilot adds deterministic AI setup analysis, session journaling, and behavioral guardrails on top.",
     points: [
       "Charting & Pine Script: TradingView's strengths",
-      "AI analysis, journaling, discipline engine: TradCopilot's",
+      "AI analysis, journaling, discipline engine: TradePilot's",
       "Designed to run side by side",
     ],
   },
   {
     href: "/compare/tradcopilot-vs-chatgpt",
-    name: "TradCopilot vs ChatGPT",
+    name: "TradePilot vs ChatGPT",
     summary:
-      "General-purpose chatbots guess from whatever you paste. TradCopilot computes indicators server-side from live OHLCV candles first, validates every output for internal consistency, and keeps persistent memory of your trades.",
+      "General-purpose chatbots guess from whatever you paste. TradePilot computes indicators server-side from live OHLCV candles first, validates every output for internal consistency, and keeps persistent memory of your trades.",
     points: [
       "Live market data vs pasted screenshots",
       "Deterministic indicator math before any AI writes a word",
@@ -64,11 +64,11 @@ export default function CompareHubPage() {
               <span className="tp-eyebrow-mono">OBJECTIVE COMPARISONS</span>
             </div>
             <h1 className="tp-display-xl text-3xl! sm:text-4xl! lg:text-5xl!">
-              TradCopilot, compared <span className="tp-serif-italic">honestly.</span>
+              TradePilot, compared <span className="tp-serif-italic">honestly.</span>
             </h1>
             <p className="tp-body max-w-2xl text-[15px] sm:text-[16px] leading-relaxed">
               Every comparison below is factual and grounded in what each product actually
-              does today — including what TradCopilot deliberately does not do. Where another
+              does today — including what TradePilot deliberately does not do. Where another
               tool is stronger, we say so.
             </p>
           </header>
@@ -110,7 +110,7 @@ export default function CompareHubPage() {
           <section className="space-y-4 max-w-[65ch]">
             <h2 className="tp-h2">How we approach comparisons</h2>
             <p className="tp-body">
-              TradCopilot is a read-only AI trading copilot: it computes technical
+              TradePilot is a read-only AI trading copilot: it computes technical
               indicators from live candlestick data, explains setups in plain language,
               journals every session, and warns against emotional patterns like revenge
               trading. It does not execute trades, hold funds, or connect to brokers.

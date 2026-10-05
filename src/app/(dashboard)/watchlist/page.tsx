@@ -5,6 +5,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, Plus, Trash2, X, RefreshCw, AlertTriangle, Pencil, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Chip, Delta, EmptyState, Label, Skeleton } from "@/components/fd/primitives";
+import { useBinanceMultiStream } from "@/hooks/useBinanceStream";
+import { BINANCE_WS_SYMBOLS } from "@/lib/market-registry";
+import { formatPrice } from "@/lib/format-price";
 
 const MAX_NAME_LENGTH = 40;
 
@@ -30,6 +34,7 @@ export default function WatchlistPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [filterGroup, setFilterGroup] = useState<string>("All");
+  const livePrices = useBinanceMultiStream(BINANCE_WS_SYMBOLS);
 
   // 1. Fetch watchlists
   const { data: watchlists, isLoading } = useQuery<any[]>({
@@ -155,284 +160,238 @@ const handleToggleAsset = (symbol: string) => {
     ? AVAILABLE_ASSETS
     : AVAILABLE_ASSETS.filter(a => a.group === filterGroup);
 
-return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      <div className="animate-fade-in">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-          Watchlist Manager
+  const openChart = async (symbol: string) => {
+    try {
+      await fetch("/api/v1/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lastSymbol: symbol }),
+      });
+    } catch (_) {}
+    router.push("/charts");
+  };
+
+  const members: string[] = activeWatchlist?.instruments ?? [];
+  const addable = filtered.filter((a) => !members.includes(a.symbol));
+
+  return (
+    <div className="mx-auto flex max-w-[1180px] flex-col gap-6 lg:gap-8">
+      <header>
+        <Label>Watchlists</Label>
+        <h1 className="mt-2 text-[var(--color-text-primary)]">
+          Your markets, <em className="text-[var(--accent)]">at a glance.</em>
         </h1>
-        <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-          Organize tracked assets across Crypto, Forex, Commodities, and Indices.
+        <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-[var(--color-text-tertiary)]">
+          Group Crypto, Forex, Commodities and Indices. Tap any market to open it in the terminal.
         </p>
-      </div>
+      </header>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-40">
-          <RefreshCw className="animate-spin text-[var(--color-accent-primary)] mb-2" size={24} />
-          <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading watchlists...</span>
+        <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-96 w-full" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* -- Left: List management --------------------------------------- */}
-          <div className="lg:col-span-2 space-y-4">
-{/* Create */}
-            <div className="card p-5 space-y-4 animate-fade-in-delay-1">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--color-accent-primary-muted)", color: "var(--color-accent-primary)" }}>
-                  <Plus size={14} />
-                </div>
-                <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-tertiary)" }}>
-                  Create Watchlist
-                </h2>
-              </div>
-              <form onSubmit={(e) => { e.preventDefault(); const name = newWatchlistName.trim(); if (!name) return; if (name.length > MAX_NAME_LENGTH) { toast.error(`Name must be ${MAX_NAME_LENGTH} characters or fewer`); return; } createMutation.mutate(); }} className="flex gap-2">
-                <input
-                  type="text"
-                  value={newWatchlistName}
-                  onChange={e => setNewWatchlistName(e.target.value)}
-                  placeholder="e.g. Crypto Majors"
-                  className="flex-1 px-3 py-2 text-xs rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none text-[var(--color-text-primary)]"
-                />
-                <button
-                  type="submit"
-                  disabled={createMutation.isPending || !newWatchlistName.trim()}
-                  className="btn-primary text-xs px-4 disabled:opacity-40"
-                >
-                  <Plus size={14} /> Create
-                </button>
-              </form>
-            </div>
-
-            {/* Watchlist selector */}
-            <div className="card p-5 animate-fade-in-delay-2">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-tertiary)" }}>
-                  My Watchlists
-                </h2>
-                {watchlists && watchlists.length > 0 && (
-                  <span className="badge badge-neutral">{watchlists.length}</span>
-                )}
-              </div>
+        <div className="grid items-start gap-5 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-6">
+          {/* ── Lists ─────────────────────────────────────────────────────── */}
+          <aside className="flex flex-col gap-4">
+            <section className="card">
+              <header className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--hairline)" }}>
+                <Label>My lists</Label>
+                {watchlists && watchlists.length > 0 && <Chip>{watchlists.length}</Chip>}
+              </header>
 
               {watchlists && watchlists.length > 0 ? (
-                <div className="space-y-1.5">
-                  {watchlists.map(w => {
-                    const isActive = w.id === (activeWatchlist?.id || "");
+                <ul className="p-2">
+                  {watchlists.map((w) => {
+                    const on = w.id === (activeWatchlist?.id || "");
                     const isEditing = editingId === w.id;
                     return (
-                      <div
-                        key={w.id}
-                        onClick={() => { if (!isEditing) setSelectedWatchlistId(w.id); }}
-                        className="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors group"
-                        style={{
-                          backgroundColor: isActive ? "var(--color-bg-hover)" : "transparent",
-                          color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                        }}
-                      >
-                        <div className="flex items-center gap-2 text-xs font-medium flex-1 min-w-0">
-                          <Eye size={14} className={isActive ? "text-[var(--color-accent-primary)] shrink-0" : "text-[var(--color-text-quaternary)] shrink-0"} />
+                      <li key={w.id}>
+                        <div
+                          onClick={() => { if (!isEditing) setSelectedWatchlistId(w.id); }}
+                          className="group relative flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[var(--color-bg-hover)]"
+                          style={on ? { background: "var(--panel-3)" } : undefined}
+                        >
+                          {on && <span className="absolute -left-px bottom-2.5 top-2.5 w-[3px] rounded-r-full" style={{ background: "var(--accent)" }} />}
+                          <Eye size={14} style={{ color: on ? "var(--accent)" : "var(--color-text-quaternary)" }} className="shrink-0" />
                           {isEditing ? (
                             <input
                               autoFocus
-                              className="flex-1 bg-transparent border-b border-[var(--accent)] outline-none text-xs py-0.5"
+                              className="min-w-0 flex-1 border-0 border-b bg-transparent py-0.5 text-[13px]"
+                              style={{ borderColor: "var(--accent)", outline: "none", borderRadius: 0 }}
                               value={editingName}
-                              onClick={e => e.stopPropagation()}
-                              onChange={e => setEditingName(e.target.value)}
-                              onKeyDown={e => {
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onKeyDown={(e) => {
                                 if (e.key === "Enter") commitRename(w.id);
                                 if (e.key === "Escape") setEditingId(null);
                               }}
                             />
                           ) : (
-                            <span className="truncate">{w.name}</span>
+                            <span className={`min-w-0 flex-1 truncate text-[13.5px] font-medium ${on ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-secondary)]"}`}>{w.name}</span>
                           )}
-                          <span className="text-[10px] text-[var(--color-text-quaternary)] shrink-0">({w.instruments?.length || 0})</span>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {isEditing ? (
+                          <span className="shrink-0 font-mono text-[11px] text-[var(--color-text-quaternary)]">{w.instruments?.length || 0}</span>
+                          <span className="flex items-center gap-0.5 lg:opacity-0 lg:transition-opacity lg:group-hover:opacity-100">
+                            {isEditing ? (
+                              <button type="button" aria-label="Save Rename" onClick={(e) => { e.stopPropagation(); commitRename(w.id); }} disabled={renameMutation.isPending} className="icon-button !h-7 !w-7 !text-[var(--accent)] disabled:opacity-40">
+                                {renameMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Check size={13} />}
+                              </button>
+                            ) : (
+                              <button type="button" aria-label="Rename Watchlist" onClick={(e) => { e.stopPropagation(); startRename(w); }} className="icon-button !h-7 !w-7">
+                                <Pencil size={12} />
+                              </button>
+                            )}
                             <button
                               type="button"
-                              aria-label="Save Rename"
-                              onClick={e => { e.stopPropagation(); commitRename(w.id); }}
-                              disabled={renameMutation.isPending}
-                              className="text-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary-hover)] p-1 disabled:opacity-40"
-                            >
-                              {renameMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Check size={12} />}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              aria-label="Rename Watchlist"
-                              onClick={e => { e.stopPropagation(); startRename(w); }}
-                              className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] p-1"
-                            >
-                              <Pencil size={11} />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            aria-label="Delete Watchlist"
-                            onClick={e => {
-                              e.stopPropagation();
-                              if (confirm(`Delete "${w.name}"?`)) deleteMutation.mutate(w.id);
-                            }}
-                            disabled={deleteMutation.isPending}
-                            className="text-[var(--color-loss)] hover:text-[var(--color-loss)] p-1 disabled:opacity-40"
-                          >
-                            {deleteMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-xs text-center py-6" style={{ color: "var(--color-text-tertiary)" }}>
-                  No watchlists yet. Create one above.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* -- Right: Asset picker ------------------------------------------ */}
-          <div className="lg:col-span-3 animate-fade-in-delay-3">
-            <div className="card p-5 min-h-[300px]">
-              {activeWatchlist ? (
-                <div>
-                  <div className="flex items-center justify-between border-b pb-3 mb-5" style={{ borderColor: "var(--color-border-subtle)" }}>
-                    <h3 className="text-sm font-bold text-[var(--color-text-primary)]">{activeWatchlist.name}</h3>
-                    <span className="text-[10px] text-[var(--color-text-quaternary)]">{activeWatchlist.instruments?.length || 0} assets</span>
-                  </div>
-
-                  {/* Group filter tabs */}
-                  <div className="flex gap-1.5 mb-4 flex-wrap">
-                    {["All", ...GROUPS].map(g => (
-                      <button
-                        key={g}
-                        onClick={() => setFilterGroup(g)}
-                        className="px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
-                        style={{
-                          backgroundColor: filterGroup === g ? "var(--color-accent-primary)" : "var(--color-bg-tertiary)",
-                          color: filterGroup === g ? "var(--color-bg-primary)" : "var(--color-text-secondary)",
-                          border: `1px solid ${filterGroup === g ? "var(--color-accent-primary)" : "var(--color-border-subtle)"}`,
-                        }}
-                      >
-                        {g}
-                      </button>
-                    ))}
-                  </div>
-
-{/* Asset grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {filtered.map(({ symbol, group }) => {
-                      const isAdded = activeWatchlist.instruments?.includes(symbol);
-                      return (
-                        <div
-                          key={symbol}
-                          onClick={async () => {
-                            if (isAdded) {
-                              try {
-                                await fetch("/api/v1/settings", {
-                                  method: "PATCH",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ lastSymbol: symbol }),
-                                });
-                              } catch (_) {}
-                              router.push("/charts");
-                            }
-                          }}
-                          className="p-3 rounded-lg border text-xs font-mono font-bold transition-all flex items-center justify-between select-none hover:scale-[1.02] active:scale-[0.98]"
-                          style={{
-                            backgroundColor: isAdded ? "var(--color-accent-primary-subtle)" : "transparent",
-                            borderColor:     isAdded ? "rgba(var(--accent-rgb), 0.28)" : "var(--color-border-subtle)",
-                            color:           isAdded ? "var(--color-accent-primary)" : "var(--color-text-secondary)",
-                            cursor: isAdded ? "pointer" : "default",
-                          }}
-                        >
-                          <div className="flex flex-col items-start gap-0.5 flex-1 text-left">
-                            <span>{symbol}</span>
-                            <span className="text-[9px] font-sans opacity-50">{group}</span>
-                          </div>
-                          {!isAdded && (
-                            <button
-                              type="button"
-                              aria-label={`Add ${symbol} To Watchlist`}
+                              aria-label="Delete Watchlist"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleToggleAsset(symbol);
+                                if (confirm(`Delete "${w.name}"?`)) deleteMutation.mutate(w.id);
                               }}
-                              disabled={updateMutation.isPending}
-                              className="p-1 hover:bg-[var(--color-bg-hover)] rounded transition-colors inline-flex items-center justify-center cursor-pointer disabled:opacity-30"
+                              disabled={deleteMutation.isPending}
+                              className="icon-button !h-7 !w-7 hover:!text-[var(--color-loss)] disabled:opacity-40"
                             >
-                              {updateMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
+                              {deleteMutation.isPending ? <RefreshCw size={12} className="animate-spin" /> : <Trash2 size={12} />}
                             </button>
-                          )}
+                          </span>
                         </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="p-5 text-[13px] text-[var(--color-text-tertiary)]">No watchlists yet. Create your first below.</p>
+              )}
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const name = newWatchlistName.trim();
+                  if (!name) return;
+                  if (name.length > MAX_NAME_LENGTH) { toast.error(`Name must be ${MAX_NAME_LENGTH} characters or fewer`); return; }
+                  createMutation.mutate();
+                }}
+                className="flex gap-2 border-t p-3"
+                style={{ borderColor: "var(--hairline)" }}
+              >
+                <input
+                  type="text"
+                  value={newWatchlistName}
+                  onChange={(e) => setNewWatchlistName(e.target.value)}
+                  placeholder="New list, e.g. Crypto Majors"
+                  className="h-10 min-w-0 flex-1 px-3 text-[13px] text-[var(--color-text-primary)]"
+                />
+                <button type="submit" disabled={createMutation.isPending || !newWatchlistName.trim()} className="btn-primary !h-10 disabled:opacity-40">
+                  <Plus size={14} /> Add
+                </button>
+              </form>
+            </section>
+          </aside>
+
+          {/* ── Board ─────────────────────────────────────────────────────── */}
+          <section className="card min-w-0">
+            {activeWatchlist ? (
+              <>
+                <header className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "var(--hairline)" }}>
+                  <div className="min-w-0">
+                    <h2 className="truncate font-serif text-[26px] leading-none tracking-[-0.01em] text-[var(--color-text-primary)]">{activeWatchlist.name}</h2>
+                    <p className="mt-1.5 flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--color-text-quaternary)]">
+                      <span className="live-dot" style={{ width: 5, height: 5 }} /> {members.length} {members.length === 1 ? "market" : "markets"} · live where available
+                    </p>
+                  </div>
+                </header>
+
+                {/* Members */}
+                {members.length === 0 ? (
+                  <div className="p-6">
+                    <EmptyState icon={<Eye size={18} />} title="This list is empty" body="Add markets below and they appear here with live prices." />
+                  </div>
+                ) : (
+                  <ul>
+                    {members.map((sym) => {
+                      const spec = AVAILABLE_ASSETS.find((a) => a.symbol === sym);
+                      const t = livePrices[sym];
+                      return (
+                        <li key={sym} className="group flex items-center gap-3 border-b px-3 py-1 last:border-b-0 sm:px-5" style={{ borderColor: "var(--hairline)" }}>
+                          <button onClick={() => openChart(sym)} className="grid min-w-0 flex-1 cursor-pointer grid-cols-[1fr_auto] items-center gap-x-4 rounded-lg px-1 py-3 text-left transition-colors hover:bg-[var(--color-bg-hover)] sm:px-2" aria-label={`Open ${sym} in Markets`}>
+                            <span className="min-w-0">
+                              <span className="block truncate font-mono text-[14px] font-semibold text-[var(--color-text-primary)]">{sym}</span>
+                              <Label>{spec?.group ?? "Market"}</Label>
+                            </span>
+                            {t ? (
+                              <span className="text-right">
+                                <span className="block font-mono text-[15px] tabular-nums text-[var(--color-text-primary)]">{formatPrice(sym, t.price)}</span>
+                                <Delta value={t.changePercent24h} className="text-[11.5px]" />
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[12px] text-[var(--color-text-quaternary)]">no live feed</span>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${sym} From Watchlist`}
+                            onClick={() => handleToggleAsset(sym)}
+                            disabled={updateMutation.isPending}
+                            className="icon-button shrink-0 hover:!text-[var(--color-loss)] disabled:opacity-40"
+                          >
+                            {updateMutation.isPending ? <RefreshCw size={13} className="animate-spin" /> : <X size={15} />}
+                          </button>
+                        </li>
                       );
                     })}
-                  </div>
+                  </ul>
+                )}
 
-{/* Active list */}
-                  {activeWatchlist.instruments?.length > 0 && (
-                    <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--color-border-subtle)" }}>
-                      <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                        Active in this watchlist
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {activeWatchlist.instruments.map((s: string) => {
-                          const spec = AVAILABLE_ASSETS.find(a => a.symbol === s);
-                          return (
-                            <span
-                              key={s}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-semibold cursor-pointer transition-colors"
-                              style={{
-                                backgroundColor: "var(--color-accent-primary-subtle)",
-                                color: "var(--color-accent-primary)",
-                                border: "1px solid rgba(var(--accent-rgb), 0.18)",
-                              }}
-                              onClick={async () => {
-                                try {
-                                  await fetch("/api/v1/settings", {
-                                    method: "PATCH",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ lastSymbol: s }),
-                                  });
-                                } catch (_) {}
-                                router.push("/charts");
-                              }}
-                            >
-                              <span>{s}</span>
-                              <span
-                                role="button"
-                                aria-label={`Remove ${s} From Watchlist`}
-                                className="p-0.5 hover:bg-[var(--color-bg-hover)] rounded-full transition-colors inline-flex items-center justify-center ml-0.5 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleToggleAsset(s);
-                                }}
-                              >
-                                {updateMutation.isPending ? <RefreshCw size={9} className="animate-spin" /> : <X size={9} />}
-                              </span>
-                            </span>
-                          );
-                        })}
-                      </div>
+                {/* Add markets */}
+                <div className="border-t p-5" style={{ borderColor: "var(--hairline)", background: "var(--panel-2)" }}>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <Label>Add markets</Label>
+                    <div role="tablist" aria-label="Market group" className="flex flex-wrap gap-1">
+                      {["All", ...GROUPS].map((g) => {
+                        const on = filterGroup === g;
+                        return (
+                          <button
+                            key={g}
+                            role="tab"
+                            aria-selected={on}
+                            onClick={() => setFilterGroup(g)}
+                            className="h-7 cursor-pointer rounded-md px-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] transition-colors"
+                            style={{ background: on ? "var(--accent)" : "transparent", color: on ? "var(--on-accent)" : "var(--color-text-tertiary)", boxShadow: on ? "none" : "inset 0 0 0 1px var(--hairline)" }}
+                          >
+                            {g}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {addable.length === 0 ? (
+                    <p className="text-[13px] text-[var(--color-text-tertiary)]">Everything in this group is already on the list.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {addable.map(({ symbol }) => (
+                        <button
+                          key={symbol}
+                          type="button"
+                          aria-label={`Add ${symbol} To Watchlist`}
+                          onClick={() => handleToggleAsset(symbol)}
+                          disabled={updateMutation.isPending}
+                          className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-3 font-mono text-[12px] font-medium text-[var(--color-text-secondary)] transition-colors hover:border-[rgba(var(--accent-rgb),0.5)] hover:text-[var(--accent)] disabled:opacity-40"
+                          style={{ borderColor: "var(--color-border-default)", background: "var(--panel-1)" }}
+                        >
+                          <Plus size={12} /> {symbol}
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center my-auto">
-                  <AlertTriangle size={24} className="text-[var(--color-warning)] mb-2 animate-bounce" />
-                  <h3 className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
-                    No active watchlist
-                  </h3>
-                  <p className="text-[10px] mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-                    Select or create a watchlist from the left panel.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+              </>
+            ) : (
+              <div className="p-8">
+                <EmptyState icon={<AlertTriangle size={18} />} title="No active watchlist" body="Select or create a list on the left to start building your board." />
+              </div>
+            )}
+          </section>
         </div>
       )}
     </div>

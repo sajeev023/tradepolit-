@@ -10,9 +10,12 @@ import { SavedAnalysesPanel } from "@/components/charts/SavedAnalysesPanel";
 import { DemoConversionModal } from "@/components/DemoConversionModal";
 import { analytics } from "@/lib/analytics";
 import { useBinanceMultiStream, useBinanceStreamStatus, getLatestWebSocketPrice } from "@/hooks/useBinanceStream";
-import { LivePriceCard } from "@/components/charts/LivePriceCard";
-import { LivePriceTag } from "@/components/charts/LivePriceTag";
 import { TradCopilotPanel } from "@/components/charts/TradCopilotPanel";
+import { WatchlistRail } from "@/components/terminal/watchlist-rail";
+import { SymbolBar } from "@/components/terminal/symbol-bar";
+import { IndicatorStrip } from "@/components/terminal/indicator-strip";
+import { Sheet } from "@/components/fd/sheet";
+import { Label } from "@/components/fd/primitives";
 import { PerformanceOverlay } from "@/components/performance/PerformanceOverlay";
 import { profiler } from "@/lib/performance-profiler";
 import {
@@ -28,6 +31,7 @@ import {
   Camera,
   MoreHorizontal,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getInstantFallbackAnalysis } from "@/lib/fallback-analysis";
@@ -947,76 +951,178 @@ Timestamp: ${new Date().toISOString()}
     }
   };
 
+  // ─── Shared pieces ────────────────────────────────────────────────────────────
+  const isPro = subscriptionStatus === "PRO_ACTIVE";
+
+  const renderWatchlist = (onSelect: (s: string) => void, comfortable = false) => (
+    <WatchlistRail
+      groups={SYMBOLS}
+      selected={selectedSymbol}
+      onSelect={onSelect}
+      prices={watchlistPrices}
+      overview={marketOverview}
+      comfortable={comfortable}
+    />
+  );
+
+  // One Copilot panel, rendered in the desktop column OR the mobile sheet.
+  const renderCopilot = (onClose: () => void) => (
+            <TradCopilotPanel
+              symbol={selectedSymbol}
+              timeframe={selectedTimeframe}
+              priceData={priceData || null}
+              liveIndicators={liveIndicators}
+              wsStatus={wsStatus}
+              isWebSocketSymbol={isWebSocketSymbol}
+              analysisData={analysisData}
+              analysisError={analysisError}
+              isPending={isPending}
+              analysisPhase={analysisPhase}
+              messages={messages}
+              inputText={inputText}
+              setInputText={setInputText}
+              onSendChat={handleSendMessage}
+              onRunAnalysis={(opts) => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe, bypassCache: opts?.bypassCache })}
+              onDismissError={() => setAnalysisError(null)}
+              onOpenSavedAnalyses={() => setShowSavedAnalyses(true)}
+              onOpenChatHistory={() => setShowHistorySidebar(true)}
+              onClose={onClose}
+              subscriptionStatus={subscriptionStatus}
+              analysisLimit={analysisLimit}
+              analysesCountToday={analysesCountToday}
+              isDemoMode={isDemoMode}
+              showFollowUps={showFollowUps}
+              chatMutationPending={chatMutation.isPending}
+              isMobile={isMobile}
+              copiedId={copiedId}
+              bookmarkedIds={bookmarkedIds}
+              expandedMessages={expandedMessages}
+              onCopy={handleCopy}
+              onToggleExpand={toggleExpand}
+              onSaveThesis={async () => {
+                if (!analysisData || thesisSaving || thesisSaved) return;
+                setThesisSaving(true);
+                try {
+                  const res = await fetch("/api/v1/theses", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      symbol: selectedSymbol,
+                      timeframe: selectedTimeframe,
+                      analysis: {
+                        bias: analysisData.bias || "NEUTRAL",
+                        setupQuality: analysisData.setupQuality,
+                        confidence: analysisData.confidence,
+                        entryIdeas: analysisData.entryIdeas,
+                        stopLossIdea: analysisData.stopLossIdea,
+                        takeProfitIdea: analysisData.takeProfitIdea,
+                        whyItMatters: analysisData.whyItMatters,
+                        support: analysisData.support,
+                        resistance: analysisData.resistance,
+                        invalidationLevel: analysisData.invalidationLevel,
+                      },
+                      telemetry: {
+                        currentPrice: analysisData.currentPrice || liveIndicators?.currentPrice,
+                        support: analysisData.support || liveIndicators?.support,
+                        resistance: analysisData.resistance || liveIndicators?.resistance,
+                        invalidationLevel: analysisData.invalidationLevel,
+                        rsi: analysisData.indicators?.rsi,
+                        macdValue: analysisData.indicators?.macd?.macd,
+                        macdSignal: analysisData.indicators?.macd?.signal,
+                        macdHistogram: analysisData.indicators?.macd?.macd != null && analysisData.indicators?.macd?.signal != null
+                          ? analysisData.indicators.macd.macd - analysisData.indicators.macd.signal
+                          : undefined,
+                        trend: analysisData.marketRegime || liveIndicators?.trend,
+                        bias: analysisData.bias,
+                      },
+                      aiSummary: analysisData.whyItMatters || analysisData.shortTermScenario || "Tracked thesis from chart analysis.",
+                      // V2.5: deterministic evidence captured at analysis time —
+                      // the structured "why" that powers later attribution.
+                      evidenceFor: Array.isArray(analysisData.evidence?.for)
+                        ? analysisData.evidence.for.slice(0, 10).map((e: string) => String(e).slice(0, 300))
+                        : undefined,
+                      evidenceAgainst: Array.isArray(analysisData.evidence?.against)
+                        ? analysisData.evidence.against.slice(0, 10).map((e: string) => String(e).slice(0, 300))
+                        : undefined,
+                    }),
+                  });
+                  const body = await res.json();
+                  if (!res.ok) throw new Error(body.error?.message || "Failed to save thesis");
+                  if (body.data?.demoLocked) {
+                    toast.info(body.data.message);
+                    return;
+                  }
+                  setThesisSaved(true);
+                  toast.success("Thesis saved — we'll monitor it and notify you when it resolves.");
+                  // NOTE: no client analytics emission here. The POST handler
+                  // writes the authoritative `thesis_created` event server-side;
+                  // emitting from both double-counts the funnel (verified in the
+                  // V2 state audit).
+                } catch (err: any) {
+                  toast.error(err?.message || "Failed to save thesis");
+                } finally {
+                  setThesisSaving(false);
+                }
+              }}
+              thesisSaving={thesisSaving}
+              thesisSaved={thesisSaved}
+              onBookmarkMessage={async (msg, msgId) => {
+                if (bookmarkedIds.has(msgId) || !analysisData) return;
+                try {
+                  const res = await fetch("/api/v1/ai/saved-analyses", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      symbol: selectedSymbol,
+                      timeframe: selectedTimeframe,
+                      bias: analysisData.bias || "RESTORED",
+                      confidence: analysisData.confidence || "MEDIUM",
+                      support: String(analysisData.support || "N/A"),
+                      resistance: String(analysisData.resistance || "N/A"),
+                      aiSummary: msg.content.slice(0, 500),
+                    }),
+                  });
+                  if (res.ok) {
+                    setBookmarkedIds(prev => new Set([...prev, msgId]));
+                    toast.success("Analysis bookmarked!");
+                  }
+                } catch {
+                  toast.error("Failed to bookmark analysis");
+                }
+              }}
+              onQuickAction={handleQuickAction}
+            />
+  );
+
+  const runAnalysis = () => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe });
+
+
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
     <Profiler id="ChartsPage" onRender={(id, phase, actualDuration) => profiler.recordComponentRender(id, actualDuration)}>
-    <div className="flex flex-col gap-2 lg:gap-3 animate-fade-in min-h-0 overflow-hidden"
-      style={{
-        height: "calc(100dvh - var(--spacing-topbar) - 3rem)",
-        maxWidth: "1600px",
-        marginLeft: "auto",
-        marginRight: "auto",
-      }}>
+    <div className="flex min-h-0 flex-col gap-3 pb-16 lg:pb-0 lg:h-[calc(100dvh-var(--spacing-topbar)-var(--spacing-demo-banner)-4.5rem)]">
       {/* WebSocket Disconnection Banner */}
       {isWebSocketSymbol && isWsDisconnected && (
-        <div className="flex items-center justify-between p-3.5 rounded-xl border border-amber-500/20 bg-[var(--color-warning-bg)] text-xs text-[var(--color-text-primary)] animate-message-in shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-            </span>
-            <span>Live market data is temporarily unavailable. Reconnecting...</span>
-          </div>
+        <div role="status" className="flex shrink-0 items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-[12px] animate-message-in" style={{ borderColor: "rgba(var(--amber-rgb),0.3)", background: "var(--color-warning-bg)", color: "var(--color-text-primary)" }}>
+          <span className="h-2 w-2 shrink-0 animate-pulse rounded-full" style={{ background: "var(--color-warning)" }} />
+          Live market data is temporarily unavailable. Reconnecting…
         </div>
       )}
 
       {/* Welcome Back Banner */}
       {welcomeBack && (
-        <div className="flex items-center justify-between p-3.5 rounded-xl border border-[rgba(var(--accent-rgb),0.2)] bg-[var(--color-accent-primary-subtle)] text-xs text-[var(--color-text-primary)] animate-message-in shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent)] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--accent)]"></span>
-            </span>
-            <span>{welcomeBack}</span>
-          </div>
-          <button
-            onClick={() => setWelcomeBack(null)}
-            className="text-[var(--color-text-quaternary)] hover:text-[var(--color-text-secondary)] transition-colors p-1"
-          >
-            <X size={14} />
-          </button>
+        <div className="flex shrink-0 items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5 text-[12px] animate-message-in" style={{ borderColor: "rgba(var(--accent-rgb),0.3)", background: "rgba(var(--accent-rgb),0.06)", color: "var(--color-text-primary)" }}>
+          <span className="flex items-center gap-2.5"><span className="live-dot" />{welcomeBack}</span>
+          <button onClick={() => setWelcomeBack(null)} className="icon-button" aria-label="Dismiss"><X size={14} /></button>
         </div>
       )}
 
-      {/* ── Header & Live Price Bar ────────────────────────────────────────────── */}
-      <div className="flex flex-row items-center justify-between gap-2 shrink-0">
-        <div className="flex items-center gap-2">
-          <h1 className="text-[13px] font-bold tracking-tight hidden lg:block" style={{ color: "var(--color-text-primary)" }}>
-            Live Market Center
-          </h1>
-          <p className="text-[10px] hidden lg:block text-[var(--color-text-tertiary)] leading-none">
-            Real-time interactive charting and context-aware AI day-trading copilot.
-          </p>
-        </div>
-
-        <LivePriceCard
-          symbol={selectedSymbol}
-          initialPriceData={priceData || null}
-          refetchPrice={refetchPrice}
-          priceFetching={priceFetching}
-        />
-      </div>
-
-      {/* ── Simulated-data honesty banner ────────────────────────────────────────
-          When every upstream provider fails, the market layer falls back to a
-          labeled random-walk (source: "SIMULATED"). The AI gate refuses to
-          analyze it server-side; this banner ensures the user also always
-          knows they are looking at illustrative prices, never silently
-          presented as live. */}
+      {/* Simulated-data honesty banner — when every provider fails the market layer
+          serves a labeled random walk; the AI gate refuses it server-side and we
+          never present it as live. */}
       {priceData?.source === "SIMULATED" && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-500/30 bg-[var(--color-warning-bg)] text-[11px] text-[var(--color-text-primary)] shrink-0">
-          <AlertTriangle size={13} className="text-amber-400 shrink-0" />
+        <div role="alert" className="flex shrink-0 items-start gap-2.5 rounded-lg border px-3.5 py-2.5 text-[12px]" style={{ borderColor: "rgba(var(--amber-rgb),0.35)", background: "var(--color-warning-bg)", color: "var(--color-text-primary)" }}>
+          <AlertTriangle size={14} className="mt-0.5 shrink-0" style={{ color: "var(--color-warning)" }} />
           <span>
             <strong>Simulated prices.</strong> Live data for {selectedSymbol} is temporarily unavailable from all
             providers. AI analysis is paused until the feed recovers — do not trade on these values.
@@ -1024,446 +1130,82 @@ Timestamp: ${new Date().toISOString()}
         </div>
       )}
 
-      {/* ── Mobile tab switcher ───────────────────────────────────────────────── */}
-      <div className="flex lg:hidden bg-[var(--color-bg-tertiary)] p-1 rounded-lg border border-[var(--color-border-default)] gap-1 w-full shrink-0">
-        {(["watchlist", "chart", "copilot"] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => {
-              if (tab === "copilot" && !aiPanelOpen) {
-                setAiPanelOpen(true);
-              }
-              setMobileTab(tab);
-            }}
-            className={`flex-1 py-2 text-center text-xs font-semibold rounded-md transition-all capitalize ${
-              mobileTab === tab
-                ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-[rgba(var(--accent-rgb),0.2)]"
-                : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
-            }`}
-          >
-            {tab === "copilot" ? "AI Copilot" : tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Main Grid ─────────────────────────────────────────────────────────── */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 gap-4 items-stretch pb-4"
-        style={{
-          gridTemplateColumns: isMobile
-            ? "1fr"
-            : aiPanelOpen
-              ? "minmax(140px,170px) 1fr minmax(270px,335px)"
-              : "minmax(140px,170px) 1fr",
-        }}>
-        <div id="watchlist-panel" className={`flex flex-col gap-4 overflow-y-auto pr-1 custom-scrollbar ${mobileTab === "watchlist" ? "flex" : "hidden lg:flex"}`}>
-          <div className="card p-2.5 flex-1 flex flex-col min-h-[200px]">
-            <h2 className="text-[9px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-              <Eye size={10} className="text-[var(--color-accent-primary)]" /> Watchlist
-            </h2>
-            <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
-              {SYMBOLS.map(group => (
-                <div key={group.group} className="space-y-0.5">
-                  <h3 className="text-[8px] font-bold tracking-widest uppercase text-[var(--color-text-quaternary)] select-none">{group.group}</h3>
-                  <div className="flex flex-col gap-0.5">
-                    {group.items.map(item => {
-                      const active = item === selectedSymbol;
-                      const info = watchlistPrices[item];
-                      const ovr = marketOverview[item];
-                      const isBull = ovr?.bias?.includes("BUY") || ovr?.bias?.includes("LONG");
-                      const isBear = ovr?.bias?.includes("SELL") || ovr?.bias?.includes("SHORT");
-                      return (
-                        <button
-                          key={item}
-                          onClick={() => { setSelectedSymbol(item); setMobileTab("chart"); }}
-                          disabled={false}
-                          className={`flex flex-col px-2 py-1.5 rounded-lg text-xs transition-all text-left font-mono border border-transparent w-full hover:bg-[var(--color-bg-hover)] cursor-pointer`}
-                          style={{
-                            backgroundColor: active ? "var(--color-bg-hover)" : "transparent",
-                            color: active ? "var(--color-accent-primary)" : "var(--color-text-secondary)",
-                          }}
-                        >
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-1">
-                              {ovr && (
-                                <span
-                                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                                  style={{
-                                    backgroundColor: isBull ? "var(--color-profit)" : isBear ? "var(--color-loss)" : "var(--color-warning)",
-                                    boxShadow: isBull ? "0 0 4px rgba(45, 212, 168, 0.4)" : isBear ? "0 0 4px rgba(255, 107, 107, 0.4)" : "none",
-                                  }}
-                                />
-                              )}
-                              <span className="font-semibold truncate text-[var(--color-text-primary)] min-w-0">{item}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              {info && (
-                                <span className="font-medium text-right text-[var(--color-text-secondary)] tabular-nums text-[10px]">
-                                  {formatPrice(item, info.price)}
-                                </span>
-                              )}
-                              {info && (
-                                <span className={`text-[10px] font-mono select-none shrink-0 ${info.changePercent24h >= 0 ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
-                                  {info.changePercent24h >= 0 ? "+" : ""}{info.changePercent24h.toFixed(2)}%
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {/* Market overview one-liner */}
-                          {ovr?.oneLiner && (
-                            <p className="text-[9px] leading-relaxed mt-1 text-[var(--color-text-quaternary)] font-sans font-normal line-clamp-2 whitespace-normal">
-                              {ovr.oneLiner}
-                            </p>
-                          )}
-                        </button>
-                      );
-                    })}
-
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* ── Terminal grid: watchlist · chart · copilot ─────────────────────────── */}
+      <div className={`grid min-h-0 flex-1 gap-4 ${aiPanelOpen ? "lg:grid-cols-[236px_minmax(0,1fr)_380px] 2xl:grid-cols-[260px_minmax(0,1fr)_420px]" : "lg:grid-cols-[236px_minmax(0,1fr)] 2xl:grid-cols-[260px_minmax(0,1fr)]"}`}>
+        {/* Watchlist — desktop rail (mobile uses the symbol sheet) */}
+        <aside id="watchlist-panel" className="card hidden min-h-0 flex-col overflow-hidden lg:flex">
+          <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--hairline)" }}>
+            <Label>Watchlist</Label>
+            <Eye size={13} className="text-[var(--color-text-quaternary)]" />
           </div>
-        </div>
+          <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-2">{renderWatchlist(setSelectedSymbol)}</div>
+        </aside>
 
-        {/* TradingView Chart */}
-        <div 
-          id="tradingview-chart" 
-          className={`flex flex-col overflow-hidden transition-all duration-300 ${
-            isChartMaximized 
-              ? "fixed z-[9999] bg-[var(--background)] p-0 m-0 border-0 rounded-none shadow-none" 
-              : `card border border-[var(--color-border-default)] h-full min-w-0 ${mobileTab === "chart" ? "flex" : "hidden lg:flex"}`
-          }`}
-          style={isChartMaximized ? { top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", margin: 0, borderRadius: 0 } : undefined}
+        {/* Chart */}
+        <section
+          id="tradingview-chart"
+          className={isChartMaximized ? "fixed inset-0 z-[9999] flex flex-col" : "card flex min-h-0 min-w-0 flex-col overflow-hidden"}
+          style={isChartMaximized ? { background: "var(--background)" } : undefined}
         >
-          {/* Chart header */}
-          <div className="flex flex-wrap items-center justify-between px-3 py-1.5 border-b shrink-0 bg-[var(--color-bg-secondary)] border-[var(--color-border-subtle)] gap-2" style={{ minHeight: "40px" }}>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded bg-[var(--color-accent-primary-muted)] flex items-center justify-center border border-[rgba(var(--accent-rgb),0.2)]">
-                  <TrendingUp size={14} style={{ color: "var(--color-accent-primary)" }} />
-                </div>
-                <span className="text-xs font-semibold text-[var(--color-text-primary)]">{selectedSymbol}</span>
-                {/* MARKET → EXCHANGE → INSTRUMENT hierarchy (registry-driven, no hardcoding) */}
-                {SYMBOL_REGISTRY[selectedSymbol]?.assetClass && (
-                  <span className="text-[9px] font-bold text-[var(--color-text-quaternary)] uppercase tracking-wider bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] px-1.5 py-0.5 rounded font-mono select-none">
-                    {SYMBOL_REGISTRY[selectedSymbol].assetClass}
-                  </span>
-                )}
-                <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] px-1.5 py-0.5 rounded font-mono select-none">
-                  {getExchangeName(selectedSymbol)}
-                </span>
-              </div>
-
-              <LivePriceTag
-                symbol={selectedSymbol}
-                initialPriceData={priceData || null}
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5 ml-auto">
-              {/* Desktop timeframe selector */}
-              <div className="hidden lg:flex bg-[var(--color-bg-tertiary)] p-0.5 rounded-lg border border-[var(--color-border-default)] gap-0.5 overflow-x-auto max-w-full scrollbar-none flex-nowrap shrink-0">
-                {(["1m", "5m", "15m", "1h", "4h", "1d", "1W"] as const).map(tf => (
-                  <button
-                    key={tf}
-                    onClick={() => setSelectedTimeframe(tf)}
-                    className={`h-7 px-2 rounded-md text-[10px] font-semibold font-mono transition-all cursor-pointer flex items-center justify-center press-scale ${
-                      selectedTimeframe === tf
-                        ? "bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] shadow-sm font-bold border border-[rgba(var(--accent-rgb),0.2)]"
-                        : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
-                    }`}
-                  >
-                    {tf}
-                  </button>
-                ))}
-              </div>
-              {/* Mobile compressed timeframe */}
-              <div className="flex lg:hidden bg-[var(--color-bg-tertiary)] p-0.5 rounded-lg border border-[var(--color-border-default)] gap-1 overflow-x-auto scrollbar-none flex-nowrap timeframe-scroll-row">
-                {(["1m", "5m", "15m", "1h", "4h", "1d"] as const).map(tf => (
-                  <button
-                    key={tf}
-                    onClick={() => setSelectedTimeframe(tf)}
-                    style={{ minWidth: "44px", minHeight: "44px" }}
-                    className={`rounded-md text-[13px] font-semibold font-mono transition-all cursor-pointer flex items-center justify-center timeframe-pill ${
-                      selectedTimeframe === tf
-                        ? "bg-[var(--color-bg-hover)] text-[var(--color-accent-primary)] shadow-sm font-bold border border-[rgba(var(--accent-rgb),0.2)]"
-                        : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
-                    }`}
-                  >
-                    {tf}
-                  </button>
-                ))}
-              </div>
-              {/* Desktop action buttons */}
-              <div className="hidden lg:flex items-center gap-2">
-                <button
-                  onClick={handleCaptureSnapshot}
-                  disabled={isExportingSnapshot}
-                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-[rgba(var(--accent-rgb),0.3)] shrink-0 select-none cursor-pointer active:scale-95 transition-all"
-                  style={{ padding: 0 }}
-                  title="Export Setup PNG"
-                >
-                  <Camera size={15} style={{ color: "var(--color-accent-primary)" }} />
-                </button>
-                <button
-                  onClick={() => setIsChartMaximized(v => !v)}
-                  className="btn-secondary h-8 w-8 flex items-center justify-center rounded-md border-[var(--color-border-default)] hover:border-[rgba(var(--accent-rgb),0.3)] shrink-0 select-none cursor-pointer active:scale-95 transition-all"
-                  style={{ padding: 0 }}
-                  title={isChartMaximized ? "Exit Fullscreen" : "Maximize Chart"}
-                >
-                  {isChartMaximized ? <Minimize2 size={15} style={{ color: "var(--color-accent-primary)" }} /> : <Maximize2 size={15} style={{ color: "var(--color-accent-primary)" }} />}
-                </button>
-                <button
-                  onClick={() => setAiPanelOpen(v => !v)}
-                  className="btn-secondary h-8 text-[10px] px-3 flex items-center gap-1.5 rounded-md border-[var(--color-border-default)] hover:border-[rgba(var(--accent-rgb),0.3)] shrink-0 select-none cursor-pointer active:scale-95 transition-all"
-                >
-                  <Bot size={12} style={{ color: "var(--color-accent-primary)" }} />
-                  <span>{aiPanelOpen ? "Close AI" : "Open AI"}</span>
-                </button>
-              </div>
-              {/* Mobile three-dot menu */}
-              <div className="flex lg:hidden">
-                <div className="relative">
-                  <button
-                    onClick={() => setMobileChartMenuOpen((v) => !v)}
-                    className="flex items-center justify-center w-11 h-11 rounded-lg hover:bg-[var(--color-bg-hover)] cursor-pointer"
-                    aria-label="Chart options"
-                    aria-expanded={mobileChartMenuOpen}
-                  >
-                    <MoreHorizontal size={18} style={{ color: "var(--color-text-tertiary)" }} />
-                  </button>
-                  {mobileChartMenuOpen && (
-                    <div
-                      className="absolute right-0 top-full mt-1 z-50 min-w-[150px] rounded-lg border shadow-xl overflow-hidden"
-                      style={{
-                        backgroundColor: "var(--color-bg-elevated, var(--color-bg-secondary))",
-                        borderColor: "var(--color-border-subtle)",
-                      }}
-                    >
-                      <button
-                        onClick={() => { setMobileChartMenuOpen(false); handleCaptureSnapshot(); }}
-                        className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
-                        <Camera size={14} /> Export PNG
-                      </button>
-                      <button
-                        onClick={() => { setMobileChartMenuOpen(false); setIsChartMaximized(v => !v); }}
-                        className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
-                        <Maximize2 size={14} /> {isChartMaximized ? "Exit Fullscreen" : "Fullscreen"}
-                      </button>
-                      <button
-                        onClick={() => { setMobileChartMenuOpen(false); setAiPanelOpen(v => !v); }}
-                        className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
-                        <Bot size={14} /> {aiPanelOpen ? "Close AI" : "Open AI"}
-                      </button>
-                      {subscriptionStatus !== "PRO_ACTIVE" && (
-                        <button
-                          onClick={() => { setMobileChartMenuOpen(false); router.push("/pricing"); }}
-                          className="flex items-center gap-2 w-full px-3 py-2.5 text-xs font-medium transition-colors cursor-pointer hover:bg-[var(--color-bg-hover)]"
-                          style={{ color: "var(--color-accent-primary)" }}
-                        >
-                          <Zap size={14} /> Upgrade to Pro
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Chart canvas */}
-          <div className={`flex-1 w-full relative bg-[var(--color-bg-primary)] ${isChartMaximized ? "min-h-0" : "min-h-[250px] lg:min-h-[400px]"}`}>
+          <SymbolBar
+            symbol={selectedSymbol}
+            priceData={priceData || null}
+            refetchPrice={refetchPrice}
+            priceFetching={priceFetching}
+            timeframe={selectedTimeframe}
+            onTimeframe={setSelectedTimeframe}
+            isMaximized={isChartMaximized}
+            onToggleMaximize={() => setIsChartMaximized((v) => !v)}
+            onSnapshot={handleCaptureSnapshot}
+            snapshotBusy={isExportingSnapshot}
+            aiOpen={aiPanelOpen}
+            onToggleAi={() => setAiPanelOpen((v) => !v)}
+            onOpenSymbols={() => setMobileTab("watchlist")}
+          />
+          <div className={`relative w-full flex-1 ${isChartMaximized ? "min-h-0" : "h-[50dvh] min-h-[300px] lg:h-auto lg:min-h-[400px]"}`} style={{ background: "var(--background)" }}>
             <TradingViewChart symbol={selectedSymbol} timeframe={selectedTimeframe} isMaximized={isChartMaximized} />
           </div>
+          {liveIndicators && <IndicatorStrip data={liveIndicators} isPro={isPro} />}
+        </section>
 
-          {/* Indicator strip */}
-          {liveIndicators && (
-            <div id="indicator-panel" className="h-[28px] min-h-[28px] border-t shrink-0 flex items-center justify-between px-2 xl:px-3 bg-[var(--color-bg-secondary)] border-[var(--color-border-subtle)] text-[10px] font-mono text-[var(--color-text-secondary)] select-none">
-              <div className="flex items-center gap-3 xl:gap-4 min-w-0 overflow-x-auto scrollbar-none">
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[var(--color-text-tertiary)] uppercase font-sans text-[9px]">RSI(14):</span>
-                  <span className={`text-[11px] font-bold ${typeof liveIndicators.rsi === "number" && liveIndicators.rsi >= 70 ? "text-[var(--color-loss)]" : typeof liveIndicators.rsi === "number" && liveIndicators.rsi <= 30 ? "text-[var(--color-profit)]" : "text-[var(--color-text-primary)]"}`}>
-                    {typeof liveIndicators.rsi === "number" ? liveIndicators.rsi.toFixed(2) : "—"}
-                  </span>
-                </div>
-                <span className="shrink-0 text-[var(--color-border-default)] text-[10px]">|</span>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[var(--color-text-tertiary)] uppercase font-sans text-[9px]">MACD:</span>
-                  <span className="text-[var(--color-text-primary)] text-[11px]">
-                    {typeof liveIndicators.macdValue === "number" ? liveIndicators.macdValue.toFixed(2) : "—"} / {typeof liveIndicators.macdSignal === "number" ? liveIndicators.macdSignal.toFixed(2) : "—"}
-                  </span>
-                </div>
-                <span className="shrink-0 text-[var(--color-border-default)] text-[10px]">|</span>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[var(--color-text-tertiary)] uppercase font-sans text-[9px]">EMA 9/21:</span>
-                  {subscriptionStatus === "PRO_ACTIVE" ? (
-                    <span className={`text-[11px] font-bold ${liveIndicators.emaCrossover === "BULLISH" ? "text-[var(--color-profit)]" : liveIndicators.emaCrossover === "BEARISH" ? "text-[var(--color-loss)]" : "text-[var(--color-text-primary)]"}`}>
-                      {liveIndicators.emaCrossover || "Aligned"}
-                    </span>
-                  ) : (
-                    <span className="text-[var(--color-text-quaternary)] text-[11px] font-bold">PRO</span>
-                  )}
-                </div>
-                <span className="shrink-0 text-[var(--color-border-default)] text-[10px]">|</span>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[var(--color-text-tertiary)] uppercase font-sans text-[9px]">ATR(14):</span>
-                  {subscriptionStatus === "PRO_ACTIVE" ? (
-                    <span className="text-[var(--color-text-primary)] text-[11px]">{typeof liveIndicators.atr === "number" ? liveIndicators.atr.toFixed(2) : "—"}</span>
-                  ) : (
-                    <span className="text-[var(--color-text-quaternary)] text-[11px] font-bold">PRO</span>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0 ml-auto pl-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-profit)] animate-pulse" />
-                <span className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-sans">Live</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── AI Copilot Panel ───────────────────────────────────────────────── */}
-        {aiPanelOpen && (
-          <TradCopilotPanel
-            symbol={selectedSymbol}
-            timeframe={selectedTimeframe}
-            priceData={priceData || null}
-            liveIndicators={liveIndicators}
-            wsStatus={wsStatus}
-            isWebSocketSymbol={isWebSocketSymbol}
-            analysisData={analysisData}
-            analysisError={analysisError}
-            isPending={isPending}
-            analysisPhase={analysisPhase}
-            messages={messages}
-            inputText={inputText}
-            setInputText={setInputText}
-            onSendChat={handleSendMessage}
-            onRunAnalysis={(opts) => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe, bypassCache: opts?.bypassCache })}
-            onDismissError={() => setAnalysisError(null)}
-            onOpenSavedAnalyses={() => setShowSavedAnalyses(true)}
-            onOpenChatHistory={() => setShowHistorySidebar(true)}
-            onClose={() => setAiPanelOpen(false)}
-            subscriptionStatus={subscriptionStatus}
-            analysisLimit={analysisLimit}
-            analysesCountToday={analysesCountToday}
-            isDemoMode={isDemoMode}
-            showFollowUps={showFollowUps}
-            chatMutationPending={chatMutation.isPending}
-            isMobile={isMobile}
-            copiedId={copiedId}
-            bookmarkedIds={bookmarkedIds}
-            expandedMessages={expandedMessages}
-            onCopy={handleCopy}
-            onToggleExpand={toggleExpand}
-            onSaveThesis={async () => {
-              if (!analysisData || thesisSaving || thesisSaved) return;
-              setThesisSaving(true);
-              try {
-                const res = await fetch("/api/v1/theses", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    symbol: selectedSymbol,
-                    timeframe: selectedTimeframe,
-                    analysis: {
-                      bias: analysisData.bias || "NEUTRAL",
-                      setupQuality: analysisData.setupQuality,
-                      confidence: analysisData.confidence,
-                      entryIdeas: analysisData.entryIdeas,
-                      stopLossIdea: analysisData.stopLossIdea,
-                      takeProfitIdea: analysisData.takeProfitIdea,
-                      whyItMatters: analysisData.whyItMatters,
-                      support: analysisData.support,
-                      resistance: analysisData.resistance,
-                      invalidationLevel: analysisData.invalidationLevel,
-                    },
-                    telemetry: {
-                      currentPrice: analysisData.currentPrice || liveIndicators?.currentPrice,
-                      support: analysisData.support || liveIndicators?.support,
-                      resistance: analysisData.resistance || liveIndicators?.resistance,
-                      invalidationLevel: analysisData.invalidationLevel,
-                      rsi: analysisData.indicators?.rsi,
-                      macdValue: analysisData.indicators?.macd?.macd,
-                      macdSignal: analysisData.indicators?.macd?.signal,
-                      macdHistogram: analysisData.indicators?.macd?.macd != null && analysisData.indicators?.macd?.signal != null
-                        ? analysisData.indicators.macd.macd - analysisData.indicators.macd.signal
-                        : undefined,
-                      trend: analysisData.marketRegime || liveIndicators?.trend,
-                      bias: analysisData.bias,
-                    },
-                    aiSummary: analysisData.whyItMatters || analysisData.shortTermScenario || "Tracked thesis from chart analysis.",
-                    // V2.5: deterministic evidence captured at analysis time —
-                    // the structured "why" that powers later attribution.
-                    evidenceFor: Array.isArray(analysisData.evidence?.for)
-                      ? analysisData.evidence.for.slice(0, 10).map((e: string) => String(e).slice(0, 300))
-                      : undefined,
-                    evidenceAgainst: Array.isArray(analysisData.evidence?.against)
-                      ? analysisData.evidence.against.slice(0, 10).map((e: string) => String(e).slice(0, 300))
-                      : undefined,
-                  }),
-                });
-                const body = await res.json();
-                if (!res.ok) throw new Error(body.error?.message || "Failed to save thesis");
-                if (body.data?.demoLocked) {
-                  toast.info(body.data.message);
-                  return;
-                }
-                setThesisSaved(true);
-                toast.success("Thesis saved — we'll monitor it and notify you when it resolves.");
-                // NOTE: no client analytics emission here. The POST handler
-                // writes the authoritative `thesis_created` event server-side;
-                // emitting from both double-counts the funnel (verified in the
-                // V2 state audit).
-              } catch (err: any) {
-                toast.error(err?.message || "Failed to save thesis");
-              } finally {
-                setThesisSaving(false);
-              }
-            }}
-            thesisSaving={thesisSaving}
-            thesisSaved={thesisSaved}
-            onBookmarkMessage={async (msg, msgId) => {
-              if (bookmarkedIds.has(msgId) || !analysisData) return;
-              try {
-                const res = await fetch("/api/v1/ai/saved-analyses", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    symbol: selectedSymbol,
-                    timeframe: selectedTimeframe,
-                    bias: analysisData.bias || "RESTORED",
-                    confidence: analysisData.confidence || "MEDIUM",
-                    support: String(analysisData.support || "N/A"),
-                    resistance: String(analysisData.resistance || "N/A"),
-                    aiSummary: msg.content.slice(0, 500),
-                  }),
-                });
-                if (res.ok) {
-                  setBookmarkedIds(prev => new Set([...prev, msgId]));
-                  toast.success("Analysis bookmarked!");
-                }
-              } catch {
-                toast.error("Failed to bookmark analysis");
-              }
-            }}
-            onQuickAction={handleQuickAction}
-          />
-        )}
+        {/* Copilot — desktop column */}
+        {aiPanelOpen && <div className="hidden min-h-0 lg:block">{renderCopilot(() => setAiPanelOpen(false))}</div>}
       </div>
 
-      {/* Mobile sticky chat composer — above bottom nav */}
-      {analysisData && mobileTab === "copilot" && (
-        <div className="lg:hidden fixed left-0 right-0 z-40 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-secondary)]" style={{ bottom: "calc(56px + env(safe-area-inset-bottom, 0px))" }}>
-          <div className="p-3">
-            {subscriptionStatus !== "PRO_ACTIVE" && analysisLimit !== null && (
-              <div className="flex items-center justify-between px-1 pb-1.5 text-[9px] uppercase font-bold tracking-widest text-[var(--color-text-tertiary)] font-mono select-none">
+      {/* ── Mobile: one-thumb analyze bar ──────────────────────────────────────── */}
+      {isMobile && mobileTab === "chart" && !isChartMaximized && (
+        <div className="fixed inset-x-3 z-[39] lg:hidden" style={{ bottom: "calc(84px + env(safe-area-inset-bottom, 0px))" }}>
+          <button
+            onClick={() => {
+              if (!analysisData && !isPending) runAnalysis();
+              setMobileTab("copilot");
+            }}
+            className="flex h-12 w-full cursor-pointer items-center justify-between rounded-2xl border px-4 text-left transition-transform active:scale-[0.98]"
+            style={{ background: "rgba(18,18,16,0.92)", borderColor: "rgba(var(--accent-rgb),0.45)", backdropFilter: "blur(16px)", boxShadow: "0 12px 30px -10px rgba(0,0,0,0.8)" }}
+          >
+            <span className="flex items-center gap-2.5">
+              <Sparkles size={16} style={{ color: "var(--accent)" }} />
+              <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">
+                {analysisData ? "Open Copilot analysis" : isPending ? "Copilot is analyzing…" : `Analyze ${selectedSymbol}`}
+              </span>
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--color-text-quaternary)]">{selectedTimeframe}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Mobile symbol sheet */}
+      <Sheet open={isMobile && mobileTab === "watchlist"} onClose={() => setMobileTab("chart")} title="Markets">
+        {renderWatchlist((s) => { setSelectedSymbol(s); setMobileTab("chart"); }, true)}
+      </Sheet>
+
+      {/* Mobile Copilot sheet — panel + composer */}
+      <Sheet open={isMobile && mobileTab === "copilot"} onClose={() => setMobileTab("chart")} title="Copilot" size="tall" flush>
+        <div className="min-h-0 flex-1 px-2">{renderCopilot(() => setMobileTab("chart"))}</div>
+        {analysisData && (
+          <div className="shrink-0 border-t p-3" style={{ borderColor: "var(--hairline)" }}>
+            {!isPro && analysisLimit !== null && (
+              <div className="flex items-center justify-between px-1 pb-1.5 font-mono text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-tertiary)] select-none">
                 <span>{isDemoMode ? "Demo" : "Daily"} limit</span>
                 <span className={analysesCountToday >= analysisLimit ? "text-[var(--color-loss)]" : "text-[var(--color-warning)]"}>
                   {Math.max(0, analysisLimit - analysesCountToday)} / {analysisLimit} left
@@ -1475,28 +1217,26 @@ Timestamp: ${new Date().toISOString()}
                 ref={chatInputRef}
                 type="text"
                 value={inputText}
-                onChange={e => setInputText(e.target.value)}
-                placeholder="Ask TradCopilot about this chart..."
-                className="flex-grow bg-[var(--color-bg-tertiary)] border border-[var(--color-border-default)] rounded-lg px-4 py-2.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-quaternary)] outline-none focus:border-[rgba(var(--accent-rgb),0.4)] transition-colors"
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Ask Copilot about this chart…"
+                className="h-11 flex-grow rounded-xl border px-4 text-[14px] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-quaternary)] focus:border-[rgba(var(--accent-rgb),0.5)]"
+                style={{ background: "var(--panel-2)", borderColor: "var(--color-border-default)", outline: "none" }}
                 disabled={chatMutation.isPending}
               />
               <button
                 type="submit"
                 disabled={!inputText.trim() || chatMutation.isPending}
-                className="btn-no-full-width flex items-center justify-center w-11 h-11 rounded-lg text-[var(--color-bg-deepest)] disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer active:scale-95 shrink-0"
-                style={{ backgroundColor: "var(--color-accent-primary)" }}
+                className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-all active:scale-90 disabled:cursor-not-allowed disabled:opacity-30"
+                style={{ background: "var(--accent)", color: "var(--on-accent)" }}
                 aria-label="Send message"
               >
-                {chatMutation.isPending ? (
-                  <div className="w-4 h-4 border-2 border-[var(--color-bg-deepest)] border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Send size={16} fill="currentColor" />
-                )}
+                {chatMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Send size={16} fill="currentColor" />}
               </button>
             </form>
           </div>
-        </div>
-      )}
+        )}
+      </Sheet>
+
 
       {/* Chat History Sidebar */}
       <ChatHistorySidebar
@@ -1556,23 +1296,6 @@ Timestamp: ${new Date().toISOString()}
           lastAnalyzedTimeframeRef.current = null;
         }}
       />
-
-      {/* Mobile Floating Analyze Button */}
-      {!analysisData && !isPending && mobileTab === "chart" && (
-        <div className="lg:hidden fixed right-4 z-40" style={{ bottom: "calc(72px + env(safe-area-inset-bottom, 0px))" }}>
-          <button
-            onClick={() => analyzeMutation.mutate({ symbol: selectedSymbol, timeframe: selectedTimeframe })}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-md cursor-pointer press-scale"
-            style={{
-              background: "var(--color-accent-primary)",
-              color: "var(--background)",
-            }}
-          >
-            <Activity size={16} strokeWidth={2.5} />
-            <span className="text-xs font-bold">Analyze</span>
-          </button>
-        </div>
-      )}
 
       {/* Saved Analyses Panel */}
       <SavedAnalysesPanel

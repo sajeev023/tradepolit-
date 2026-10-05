@@ -171,7 +171,7 @@ export default function PositionSizingGuidePage() {
             </div>
             <h2 className="tp-h2">Automate your sizing math in seconds</h2>
             <p className="tp-body max-w-xl mx-auto text-[13px] sm:text-[14px]">
-              TradCopilot includes an institutional risk calculator that computes crypto contracts, forex lots, margin requirements, and R-multiples directly alongside your charts.
+              TradePilot includes an institutional risk calculator that computes crypto contracts, forex lots, margin requirements, and R-multiples directly alongside your charts.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
               <Link href="/risk-management" className="btn-primary btn-lg">

@@ -10,7 +10,7 @@ import { buildMetadata, breadcrumbJsonLd, faqPageJsonLd, type FaqItem } from "@/
 export const metadata: Metadata = buildMetadata({
   title: "AI Crypto Market Analysis — Live BTC, ETH & SOL Chart Analysis",
   description:
-    "How TradCopilot analyzes crypto markets: real-time Binance candle data for BTC, ETH and SOL, RSI/MACD/EMA/ATR/VWAP computed server-side, funding rates, Fear & Greed, and sharp-move alerts.",
+    "How TradePilot analyzes crypto markets: real-time Binance candle data for BTC, ETH and SOL, RSI/MACD/EMA/ATR/VWAP computed server-side, funding rates, Fear & Greed, and sharp-move alerts.",
   path: "/crypto-market-analysis",
   keywords: [
     "crypto market analysis",
@@ -25,14 +25,14 @@ const BREADCRUMBS = [{ name: "Crypto Market Analysis", path: "/crypto-market-ana
 
 const CRYPTO_FAQS: FaqItem[] = [
   {
-    question: "Which crypto instruments does TradCopilot analyze?",
+    question: "Which crypto instruments does TradePilot analyze?",
     answer:
       "BTC/USD, ETH/USD, and SOL/USD today. Prices stream in real time from public Binance WebSocket feeds, and every analysis states the exact price and timestamp it used.",
   },
   {
-    question: "Does TradCopilot need my exchange API keys?",
+    question: "Does TradePilot need my exchange API keys?",
     answer:
-      "No. Crypto candles come from public market-data streams that require no authentication. TradCopilot never connects to your exchange account, cannot place orders, and holds no funds.",
+      "No. Crypto candles come from public market-data streams that require no authentication. TradePilot never connects to your exchange account, cannot place orders, and holds no funds.",
   },
   {
     question: "How fast are the AI analyses?",
@@ -65,7 +65,7 @@ export default function CryptoMarketAnalysisPage() {
             </h1>
             <p className="tp-body max-w-2xl text-[15px] sm:text-[16px] leading-relaxed">
               Crypto never closes, so your analysis shouldn&rsquo;t run on stale snapshots.
-              TradCopilot computes its full technical read from real-time BTC, ETH, and SOL
+              TradePilot computes its full technical read from real-time BTC, ETH, and SOL
               candle streams — then explains the setup in plain language, journals the
               session, and guards your risk rules around the clock.
             </p>
@@ -164,10 +164,10 @@ export default function CryptoMarketAnalysisPage() {
             <span className="tp-eyebrow-mono block">04 · SAFETY</span>
             <h2 className="tp-h2">Read-only, by design</h2>
             <p className="tp-body">
-              TradCopilot does not execute trades, hold funds, or connect to exchanges or
+              TradePilot does not execute trades, hold funds, or connect to exchanges or
               brokers. There are no API keys to deposit permissions into, nothing to hack into
               an order ticket, and no automation to misfire at 3 a.m. You keep your exchange,
-              your keys, and every decision — TradCopilot makes them better informed.
+              your keys, and every decision — TradePilot makes them better informed.
             </p>
             <p className="tp-body text-[13px] text-[var(--muted)]">
               Educational analysis only, not financial advice. Trading involves substantial

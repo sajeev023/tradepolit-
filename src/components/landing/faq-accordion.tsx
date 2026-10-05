@@ -5,8 +5,8 @@ import { ChevronDown } from "lucide-react";
 
 const faqs = [
   {
-    q: "How does TradCopilot analyze market data?",
-    a: "TradCopilot computes technical indicators directly from real-time exchange feeds (Binance & OANDA) and evaluates RSI, MACD divergence, EMA trend alignment, and structural support/resistance levels. Responses are grounded in your session history and calculated risk metrics.",
+    q: "How does TradePilot analyze market data?",
+    a: "TradePilot computes technical indicators directly from real-time exchange feeds (Binance & OANDA) and evaluates RSI, MACD divergence, EMA trend alignment, and structural support/resistance levels. Responses are grounded in your session history and calculated risk metrics.",
   },
   {
     q: "How does the behavioral discipline engine work?",
@@ -14,11 +14,11 @@ const faqs = [
   },
   {
     q: "Do I need to connect broker credentials or custody funds?",
-    a: "No. TradCopilot is strictly read-only. We do not connect to your exchange accounts, do not custody funds, and cannot execute orders. Your assets and keys remain solely under your control.",
+    a: "No. TradePilot is strictly read-only. We do not connect to your exchange accounts, do not custody funds, and cannot execute orders. Your assets and keys remain solely under your control.",
   },
   {
     q: "Which markets and asset classes are supported?",
-    a: "Major crypto pairs (BTC, ETH, SOL), major forex pairs (EUR/USD, GBP/USD), and global indices. You can use your primary broker or charting software alongside TradCopilot.",
+    a: "Major crypto pairs (BTC, ETH, SOL), major forex pairs (EUR/USD, GBP/USD), and global indices. You can use your primary broker or charting software alongside TradePilot.",
   },
   {
     q: "How does the 7-day Pro trial and cancellation work?",

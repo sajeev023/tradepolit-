@@ -6,6 +6,58 @@ import { Check, Zap } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+interface FeatureGroup {
+  title: string;
+  items: string[];
+}
+
+const FREE_FEATURES: FeatureGroup[] = [
+  { title: "Technical analysis", items: ["5 chart scans / day", "OHLCV candle telemetry"] },
+  { title: "Journal & alerts", items: ["Last 20 trades session memory", "3 proactive alerts"] },
+];
+
+const PRO_FEATURES: FeatureGroup[] = [
+  { title: "Technical analysis", items: ["Unlimited scans (<3s race pipeline)", "Full indicator matrix (RSI, MACD, EMA, ATR)"] },
+  { title: "Discipline & journal", items: ["Real-time revenge & sizing anomaly guardrails", "Persistent full history trade journal & weekly audit"] },
+];
+
+function Features({ groups, strong }: { groups: FeatureGroup[]; strong?: boolean }) {
+  return (
+    <div className="space-y-5">
+      {groups.map((g) => (
+        <div key={g.title}>
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-quaternary)]">{g.title}</span>
+          <ul className="mt-2.5 space-y-2.5">
+            {g.items.map((it) => (
+              <li key={it} className={`flex items-start gap-2.5 text-[13px] leading-snug ${strong ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-secondary)]"}`}>
+                <Check size={14} className="mt-[2px] shrink-0" style={{ color: "var(--accent)" }} />
+                <span>{it}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CardSkeleton() {
+  return (
+    <div className="mx-auto grid max-w-3xl gap-4 md:grid-cols-2 sm:gap-6">
+      {[1, 2].map((i) => (
+        <div key={i} className="card space-y-5 p-7">
+          <div className="skeleton h-4 w-24 rounded" />
+          <div className="skeleton h-12 w-28 rounded" />
+          <div className="skeleton h-11 w-full rounded-lg" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((j) => <div key={j} className="skeleton h-4 w-full rounded" />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function PricingCardsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,164 +108,60 @@ function PricingCardsContent() {
     else router.push("/charts");
   };
 
-  if (profileLoading) {
-    return (
-      <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-        {[1, 2].map((i) => (
-          <div key={i} className="card p-7 space-y-5 animate-pulse">
-            <div className="h-4 w-24 bg-[var(--color-bg-tertiary)] rounded" />
-            <div className="h-10 w-20 bg-[var(--color-bg-tertiary)] rounded" />
-            <div className="h-10 w-full bg-[var(--color-bg-tertiary)] rounded" />
-            <div className="h-px bg-[var(--color-border-subtle)]" />
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((j) => (
-                <div key={j} className="h-4 w-full bg-[var(--color-bg-tertiary)] rounded" />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  if (profileLoading) return <CardSkeleton />;
 
   return (
-    <div className="grid md:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto animate-enter-delay-1 items-stretch">
+    <div className="mx-auto grid max-w-3xl items-stretch gap-4 md:grid-cols-2 sm:gap-6">
       {/* Free */}
-      <div className="card p-4 sm:p-6 lg:p-7 flex flex-col justify-between order-2 md:order-1 border-[var(--color-border-subtle)] bg-[var(--surface)]">
-        <div className="space-y-3.5 sm:space-y-5">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-[var(--accent)] tracking-wider">STARTER</span>
-            <span className="text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg-band)] border border-[var(--color-border-subtle)] text-[var(--color-text-tertiary)]">FREE</span>
-          </div>
-
-          <div>
-            <h3 className="text-[17px] sm:text-[18px] font-bold text-[var(--color-text-primary)]">Free</h3>
-            <p className="text-[11px] sm:text-[12px] text-[var(--color-text-tertiary)] mt-0.5 sm:mt-1">Core day-trading telemetry and basic chart scans.</p>
-          </div>
-
-          <div className="flex items-baseline">
-            <span className="text-[28px] sm:text-[36px] font-bold tracking-tight font-mono text-[var(--color-text-primary)]">$0</span>
-            <span className="ml-1.5 text-[11px] sm:text-[12px] text-[var(--color-text-quaternary)] font-mono">/ forever</span>
-          </div>
-
-          <button
-            onClick={handleFreeClick}
-            className="btn-secondary w-full justify-center text-[13px] font-semibold cursor-pointer h-10 sm:h-[42px]"
-          >
-            {profile ? "Back to Terminal" : "Start Free"}
-          </button>
-
-          <div className="h-px bg-[var(--color-border-subtle)]" />
-
-          <div className="space-y-3 sm:space-y-4 text-left">
-            <div className="space-y-1 sm:space-y-1.5">
-              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-quaternary)]">Technical Analysis</span>
-              <ul className="space-y-1 sm:space-y-1.5">
-                <li className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--color-text-secondary)]">
-                  <Check size={12} className="text-[var(--color-accent-primary)] shrink-0" />
-                  <span>5 chart scans / day</span>
-                </li>
-                <li className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--color-text-secondary)]">
-                  <Check size={12} className="text-[var(--color-accent-primary)] shrink-0" />
-                  <span>OHLCV candle telemetry</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-1 sm:space-y-1.5">
-              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-quaternary)]">Journal &amp; Alerts</span>
-              <ul className="space-y-1 sm:space-y-1.5">
-                <li className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--color-text-secondary)]">
-                  <Check size={12} className="text-[var(--color-accent-primary)] shrink-0" />
-                  <span>Last 20 trades session memory</span>
-                </li>
-                <li className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--color-text-secondary)]">
-                  <Check size={12} className="text-[var(--color-accent-primary)] shrink-0" />
-                  <span>3 proactive alerts</span>
-                </li>
-              </ul>
-            </div>
-          </div>
+      <div className="card order-2 flex flex-col gap-6 p-6 sm:p-7 md:order-1">
+        <div>
+          <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-tertiary)]">Starter</span>
+          <h3 className="mt-3 font-serif text-[30px] leading-none tracking-[-0.01em] text-[var(--color-text-primary)]">Free</h3>
+          <p className="mt-2 text-[13px] text-[var(--color-text-tertiary)]">Core day-trading telemetry and basic chart scans.</p>
         </div>
+        <p className="flex items-baseline">
+          <span className="font-mono text-[44px] font-medium leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">$0</span>
+          <span className="ml-2 font-mono text-[12px] text-[var(--color-text-quaternary)]">/ forever</span>
+        </p>
+        <button onClick={handleFreeClick} className="btn-secondary btn-lg btn-block cursor-pointer">
+          {profile ? "Back to terminal" : "Start free"}
+        </button>
+        <div className="h-px" style={{ background: "var(--hairline)" }} />
+        <Features groups={FREE_FEATURES} />
       </div>
 
       {/* Pro */}
-      <div
-        className="card p-4 sm:p-6 lg:p-7 flex flex-col justify-between relative order-1 md:order-2 border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(var(--accent-rgb),0.02)]"
-      >
-        <div className="space-y-3.5 sm:space-y-5">
+      <div className="card relative order-1 flex flex-col gap-6 overflow-hidden p-6 sm:p-7 md:order-2" style={{ borderColor: "rgba(var(--accent-rgb),0.4)", background: "linear-gradient(180deg, rgba(var(--accent-rgb),0.06), var(--panel-1) 38%)" }}>
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, var(--accent), transparent)" }} />
+        <div>
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-[var(--accent)] tracking-wider">INSTITUTIONAL</span>
-            <span className="text-[9px] sm:text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[rgba(var(--accent-rgb),0.12)] text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.25)]">
-              7-DAY TRIAL
-            </span>
+            <span className="font-mono text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--accent)" }}>Institutional</span>
+            <span className="rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em]" style={{ background: "rgba(var(--accent-rgb),0.12)", color: "var(--accent)" }}>7-day trial</span>
           </div>
-
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-[17px] sm:text-[18px] font-bold text-[var(--color-text-primary)]">Pro Terminal</h3>
-              <Zap size={13} className="text-[var(--color-accent-primary)] fill-[var(--color-accent-primary)]" />
-            </div>
-            <p className="text-[11px] sm:text-[12px] text-[var(--color-text-tertiary)] mt-0.5 sm:mt-1">Full terminal capacity, sub-3s multi-model scans, and behavioral guardrails.</p>
-          </div>
-
-          <div className="flex items-baseline">
-            <span className="text-[28px] sm:text-[36px] font-bold tracking-tight font-mono text-[var(--color-text-primary)]">$7.49</span>
-            <span className="ml-1.5 text-[11px] sm:text-[12px] text-[var(--color-text-quaternary)] font-mono">/ month</span>
-          </div>
-
-          <div>
-            <button
-              onClick={handleProClick}
-              disabled={loadingCheckout}
-              className="btn-primary w-full justify-center text-[13px] font-semibold disabled:opacity-50 flex items-center gap-1.5 cursor-pointer h-10 sm:h-[42px]"
-            >
-              {loadingCheckout ? (
-                <div className="w-3.5 h-3.5 border-2 border-[var(--color-bg-primary)] border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Zap size={13} className="fill-[var(--color-bg-primary)]" />
-                  {profile?.plan === "PRO" ? "Manage Subscription" : "Start 7-Day Free Trial"}
-                </>
-              )}
-            </button>
-            <p className="text-center text-[10px] sm:text-[11px] text-[var(--color-text-quaternary)] mt-1.5 sm:mt-2 font-mono">
-              Cancel anytime in 1 click
-            </p>
-          </div>
-
-          <div className="h-px bg-[var(--color-border-subtle)]" />
-
-          <div className="space-y-3 sm:space-y-4 text-left">
-            <div className="space-y-1 sm:space-y-1.5">
-              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--color-accent-primary)]">Technical Analysis</span>
-              <ul className="space-y-1 sm:space-y-1.5">
-                <li className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--color-text-primary)]">
-                  <Check size={12} className="text-[var(--color-accent-primary)] shrink-0" />
-                  <span>Unlimited scans (<span className="font-mono text-[11px] text-[var(--color-accent-primary)]">&lt;3s</span> race pipeline)</span>
-                </li>
-                <li className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--color-text-primary)]">
-                  <Check size={12} className="text-[var(--color-accent-primary)] shrink-0" />
-                  <span>Full indicator matrix (RSI, MACD, EMA, ATR)</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-1 sm:space-y-1.5">
-              <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--color-accent-primary)]">Discipline &amp; Journal</span>
-              <ul className="space-y-1 sm:space-y-1.5">
-                <li className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--color-text-primary)]">
-                  <Check size={12} className="text-[var(--color-accent-primary)] shrink-0" />
-                  <span>Real-time revenge &amp; sizing anomaly guardrails</span>
-                </li>
-                <li className="flex items-center gap-2 text-[11px] sm:text-[12px] text-[var(--color-text-primary)]">
-                  <Check size={12} className="text-[var(--color-accent-primary)] shrink-0" />
-                  <span>Persistent full history trade journal &amp; weekly audit</span>
-                </li>
-              </ul>
-            </div>
-          </div>
+          <h3 className="mt-3 flex items-center gap-2 font-serif text-[30px] leading-none tracking-[-0.01em] text-[var(--color-text-primary)]">
+            Pro Terminal <Zap size={16} style={{ color: "var(--accent)", fill: "var(--accent)" }} />
+          </h3>
+          <p className="mt-2 text-[13px] text-[var(--color-text-tertiary)]">Full terminal capacity, sub-3s multi-model scans, and behavioral guardrails.</p>
         </div>
+        <p className="flex items-baseline">
+          <span className="font-mono text-[44px] font-medium leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">$7.49</span>
+          <span className="ml-2 font-mono text-[12px] text-[var(--color-text-quaternary)]">/ month</span>
+        </p>
+        <div>
+          <button onClick={handleProClick} disabled={loadingCheckout} className="btn-primary btn-lg btn-block cursor-pointer disabled:opacity-50">
+            {loadingCheckout ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : (
+              <>
+                <Zap size={14} />
+                {profile?.plan === "PRO" ? "Manage subscription" : "Start 7-day free trial"}
+              </>
+            )}
+          </button>
+          <p className="mt-2 text-center font-mono text-[11px] text-[var(--color-text-quaternary)]">Cancel anytime in 1 click</p>
+        </div>
+        <div className="h-px" style={{ background: "var(--hairline)" }} />
+        <Features groups={PRO_FEATURES} strong />
       </div>
     </div>
   );

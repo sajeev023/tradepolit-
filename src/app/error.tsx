@@ -32,7 +32,7 @@ export default function ErrorPage({
             System Error Occurred
           </h1>
           <p className="text-xs text-[var(--color-text-secondary)] font-medium leading-relaxed max-w-[320px] mx-auto">
-            TradCopilot encountered a critical internal disruption. Our monitoring system has flagged the event.
+            TradePilot encountered a critical internal disruption. Our monitoring system has flagged the event.
           </p>
         </div>
 

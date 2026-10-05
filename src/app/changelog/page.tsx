@@ -8,7 +8,7 @@ import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 export const metadata = buildMetadata({
   title: "Changelog — Shipped Updates",
   description:
-    "Every shipped TradCopilot update: live market data feeds, the multi-model AI analysis engine, behavioral guardrails, journal memory architecture, and read-only safety design.",
+    "Every shipped TradePilot update: live market data feeds, the multi-model AI analysis engine, behavioral guardrails, journal memory architecture, and read-only safety design.",
   path: "/changelog",
 });
 
@@ -87,7 +87,7 @@ export default function ChangelogPage() {
             <span className="tp-eyebrow-mono">Product Updates</span>
             <h1 className="tp-display-xl !text-2xl sm:!text-3xl lg:!text-4xl">Changelog</h1>
             <p className="tp-body max-w-xl text-[13px] sm:text-[14px]">
-              Real shipped updates and verifiable improvements to TradCopilot. We ship weekly to improve analysis speed, guardrail precision, and memory capabilities.
+              Real shipped updates and verifiable improvements to TradePilot. We ship weekly to improve analysis speed, guardrail precision, and memory capabilities.
             </p>
           </div>
         </div>

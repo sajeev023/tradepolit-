@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useUIStore } from "@/lib/stores/ui-store";
-import { Search, X, BookOpen, FlaskConical, Newspaper, LineChart, Loader2 } from "lucide-react";
+import { Search, X, BookOpen, FlaskConical, Newspaper, LineChart, Loader2, Settings, Sparkles, type LucideIcon } from "lucide-react";
+import { ALL_NAV } from "@/components/shell/nav-config";
 import { useRouter } from "next/navigation";
 
 type SelectableItem = {
@@ -10,7 +11,9 @@ type SelectableItem = {
   group: string;
   label: string;
   hint?: string;
-  icon: "asset" | "trade" | "strategy" | "news";
+  icon: "asset" | "trade" | "strategy" | "news" | "page";
+  /** Specific glyph for page/action rows. */
+  Icon?: LucideIcon;
   href?: string;
   external?: boolean;
   onSelect: () => void;
@@ -18,7 +21,7 @@ type SelectableItem = {
 
 export function SearchCommandPalette() {
   const router = useRouter();
-  const { commandPaletteOpen, setCommandPaletteOpen } = useUIStore();
+  const { commandPaletteOpen, setCommandPaletteOpen, askCopilot } = useUIStore();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any>({ trades: [], strategies: [], news: [], assets: [] });
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +66,36 @@ export function SearchCommandPalette() {
   // Build a flat, ordered list of selectable result rows.
   const flatItems: SelectableItem[] = useMemo(() => {
     const items: SelectableItem[] = [];
+    // Launcher rows first: every page plus an Ask Copilot action. These are local,
+    // so they appear instantly, before (and independent of) the debounced search.
+    const q = query.trim().toLowerCase();
+    const pages = [...ALL_NAV.map((n) => ({ label: n.label, href: n.href, Icon: n.icon })), { label: "Settings", href: "/settings", Icon: Settings }];
+    pages
+      .filter((pg) => !q || pg.label.toLowerCase().includes(q))
+      .forEach((pg) =>
+        items.push({
+          id: `page-${pg.href}`,
+          group: "Go to",
+          label: pg.label,
+          icon: "page",
+          Icon: pg.Icon,
+          onSelect: () => {
+            setCommandPaletteOpen(false);
+            router.push(pg.href);
+          },
+        }),
+      );
+    items.push({
+      id: "action-copilot",
+      group: "Ask",
+      label: q ? `Ask Copilot: ${query.trim()}` : "Ask Copilot…",
+      icon: "page",
+      Icon: Sparkles,
+      onSelect: () => {
+        setCommandPaletteOpen(false);
+        askCopilot(q ? query.trim() : undefined);
+      },
+    });
     (results.assets || []).forEach((asset: any, idx: number) =>
       items.push({
         id: `asset-${idx}`,
@@ -114,7 +147,7 @@ export function SearchCommandPalette() {
       }),
     );
     return items;
-  }, [results, router, setCommandPaletteOpen]);
+  }, [results, query, router, setCommandPaletteOpen, askCopilot]);
 
   // Reset the active row whenever the result set changes.
   useEffect(() => {
@@ -193,8 +226,9 @@ export function SearchCommandPalette() {
 
   if (!commandPaletteOpen) return null;
 
-  const iconFor = (icon: SelectableItem["icon"]) => {
-    const cls = "shrink-0 text-[var(--color-accent-primary)]";
+  const iconFor = (icon: SelectableItem["icon"], Icon?: LucideIcon) => {
+    const cls = "shrink-0 text-[var(--color-text-tertiary)]";
+    if (Icon) return <Icon size={14} className={cls} />;
     if (icon === "asset") return <LineChart size={14} className={cls} />;
     if (icon === "trade") return <BookOpen size={14} className={cls} />;
     if (icon === "strategy") return <FlaskConical size={14} className={cls} />;
@@ -212,25 +246,26 @@ export function SearchCommandPalette() {
         aria-modal="true"
         aria-label="Command palette — search trades, assets, strategies and news"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-xl border glass-elevated overflow-hidden shadow-2xl"
-        style={{ borderColor: "var(--color-border-subtle)" }}
+        className="w-full max-w-xl animate-enter overflow-hidden rounded-2xl border"
+        style={{ borderColor: "var(--color-border-strong)", background: "var(--panel-1)", boxShadow: "0 40px 80px -20px rgba(0,0,0,0.8)" }}
       >
         {/* Input area */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor: "var(--color-border-subtle)", backgroundColor: "var(--color-bg-secondary)" }}>
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b" style={{ borderColor: "var(--hairline)", backgroundColor: "var(--panel-1)" }}>
           <Search size={18} style={{ color: "var(--color-text-tertiary)" }} />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search trades, assets, strategies..."
+            placeholder="Jump to a page, or search trades and assets…"
             aria-label="Search query"
+            style={{ outline: "none" }}
             aria-controls="command-palette-results"
             aria-expanded={hasResults}
             aria-activedescendant={hasResults ? flatItems[activeIndex]?.id : undefined}
             className="flex-1 text-sm bg-transparent outline-none border-none text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)]"
           />
-          {isLoading && <Loader2 size={16} className="animate-spin text-[var(--color-accent-primary)]" />}
+          {isLoading && <Loader2 size={16} className="animate-spin" style={{ color: "var(--accent)" }} />}
           <button
             onClick={close}
             aria-label="Close command palette"
@@ -246,13 +281,9 @@ export function SearchCommandPalette() {
           role="listbox"
           aria-label="Search results"
           className="max-h-96 overflow-y-auto p-2 space-y-4"
-          style={{ backgroundColor: "var(--color-bg-primary)" }}
+          style={{ backgroundColor: "var(--panel-1)" }}
         >
-          {!query.trim() ? (
-            <div className="text-center py-8 text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-              Type your search query to seek matching system assets and logs.
-            </div>
-          ) : !hasResults && !isLoading ? (
+          {!hasResults && !isLoading ? (
             <div className="text-center py-8 text-xs" style={{ color: "var(--color-text-tertiary)" }}>
               No matches found for &quot;{query}&quot;
             </div>
@@ -272,7 +303,7 @@ export function SearchCommandPalette() {
                 });
                 return groups.map((g) => (
                   <div key={g.group}>
-                    <div className="text-[10px] font-bold uppercase tracking-wider px-3 mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
+                    <div className="mb-1.5 px-3 font-mono text-[10px] font-medium uppercase tracking-[0.14em]" style={{ color: "var(--color-text-quaternary)" }}>
                       {g.group}
                     </div>
                     {g.items.map(({ item, index }) => {
@@ -284,7 +315,7 @@ export function SearchCommandPalette() {
                         },
                         onMouseEnter: () => setActiveIndex(index),
                         className: `flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer text-xs font-semibold w-full text-left transition-colors ${
-                          isActive ? "bg-[var(--color-bg-hover)]" : "hover:bg-[var(--color-bg-hover)]"
+                          isActive ? "bg-[var(--panel-3)] text-[var(--color-text-primary)]" : "hover:bg-[var(--color-bg-hover)]"
                         }`,
                         style: { color: "var(--color-text-secondary)" },
                       };
@@ -299,7 +330,7 @@ export function SearchCommandPalette() {
                           role="option"
                           aria-selected={isActive}
                         >
-                          {iconFor(item.icon)}
+                          {iconFor(item.icon, item.Icon)}
                           <span className="truncate">{item.label}</span>
                         </a>
                       ) : (
@@ -311,7 +342,7 @@ export function SearchCommandPalette() {
                           aria-selected={isActive}
                           onClick={item.onSelect}
                         >
-                          {iconFor(item.icon)}
+                          {iconFor(item.icon, item.Icon)}
                           <span className="truncate">{item.label}</span>
                           {item.hint && (
                             <span className="ml-auto font-mono text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>

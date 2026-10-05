@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { TrendingUp, Mail } from "lucide-react";
+import { Mark } from "@/components/shell/mark";
+import { Mail } from "lucide-react";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 export function SiteFooter() {
@@ -12,13 +13,8 @@ export function SiteFooter() {
           {/* Brand Column */}
           <div className="col-span-2 space-y-3.5 pr-4">
             <Link href="/" className="flex items-center gap-2 text-[var(--ink)] font-semibold text-sm">
-              <div
-                className="flex items-center justify-center rounded-md w-6 h-6"
-                style={{ background: "linear-gradient(135deg, var(--accent-bright), var(--accent))" }}
-              >
-                <TrendingUp size={13} color="#05070B" strokeWidth={2.5} />
-              </div>
-              <span>TradCopilot</span>
+              <Mark size={26} />
+              <span>TradePilot</span>
             </Link>
             <p className="text-[12px] leading-relaxed text-[var(--muted)] max-w-sm">
               Read-only AI trading copilot for crypto and forex day traders: live technical chart analysis, automated session journaling, and behavioral risk guardrails.

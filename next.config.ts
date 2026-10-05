@@ -7,6 +7,8 @@ const nextConfig = (phase: string): NextConfig => {
   return {
     // Don't advertise the framework/version via the X-Powered-By header.
     poweredByHeader: false,
+    // Dev-only: lets the logged-out cookie jar at 127.0.0.1 hydrate alongside localhost.
+    allowedDevOrigins: ["127.0.0.1"],
   experimental: {
     instantNavigationDevToolsToggle: true,
   },

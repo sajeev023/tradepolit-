@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, ToggleRight, Trash2, Plus, RefreshCw, Volume2 } from "lucide-react";
-import { CRYPTO_SYMBOLS, FOREX_SYMBOLS, COMMODITY_SYMBOLS } from "@/lib/market-registry";
+import { Chip, EmptyState, Label, Skeleton } from "@/components/fd/primitives";
+import { useBinanceMultiStream } from "@/hooks/useBinanceStream";
+import { formatPrice } from "@/lib/format-price";
+import { CRYPTO_SYMBOLS, FOREX_SYMBOLS, COMMODITY_SYMBOLS, BINANCE_WS_SYMBOLS } from "@/lib/market-registry";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
 
@@ -120,232 +123,179 @@ export default function AlertsPage() {
 
   const activeAlertsList = alerts?.filter((a) => a.isActive) || [];
 
+  const live = useBinanceMultiStream(BINANCE_WS_SYMBOLS);
+  const selectedLive = live[selectedAsset];
+  const target = Number(triggerPrice);
+  const awayPct = selectedLive && target > 0 ? ((target - selectedLive.price) / selectedLive.price) * 100 : null;
+
+  const runEvaluate = async () => {
+    setEvaluating(true);
+    try {
+      const res = await fetch("/api/cron/evaluate-alerts");
+      const body = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success(`Evaluated active alerts. Triggered ${body.data?.triggered || 0} setups.`);
+    } catch {
+      toast.error("Evaluation failed. Please try again.");
+    } finally {
+      setEvaluating(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="animate-fade-in">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-          Price & Indicator Alerts
+    <div className="mx-auto flex max-w-[1180px] flex-col gap-6 lg:gap-8">
+      <header>
+        <Label>Alerts</Label>
+        <h1 className="mt-2 text-[var(--color-text-primary)]">
+          Know the moment a level <em className="text-[var(--accent)]">breaks.</em>
         </h1>
-        <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-          Set thresholds and receive visual in-app triggers when levels cross.
+        <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-[var(--color-text-tertiary)]">
+          Set a price threshold and get an in-app trigger the moment it crosses.
         </p>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left column: Create alert form */}
-        <div className="lg:col-span-2 space-y-4 animate-fade-in-delay-1">
-          <div className="card p-5 space-y-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--color-accent-primary-muted)", color: "var(--color-accent-primary)" }}>
-                <Bell size={14} />
-              </div>
-              <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-tertiary)" }}>
-                New Price Alert
-              </h2>
-            </div>
-
-            <form onSubmit={handleCreateAlert} className="space-y-4">
+      <div className="grid items-start gap-5 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-6">
+        {/* ── Create ────────────────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-4">
+          <form onSubmit={handleCreateAlert} className="card">
+            <header className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
+              <Label>New price alert</Label>
+              <Bell size={14} className="text-[var(--color-text-quaternary)]" />
+            </header>
+            <div className="space-y-5 p-5">
               <div>
-                <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                  Instrument Asset
-                </label>
-                <select
-                  value={selectedAsset}
-                  onChange={(e) => setSelectedAsset(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none"
-                  style={{ color: "var(--color-text-primary)" }}
-                >
-                  {/* Alertable assets — crypto, forex, commodities from the registry. */}
-                  {[...CRYPTO_SYMBOLS, ...FOREX_SYMBOLS, ...COMMODITY_SYMBOLS].map((item) => (
-                    <option key={item} value={item}>{item}</option>
-                  ))}
+                <p className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--accent)]">Alert me when</p>
+                <select value={selectedAsset} onChange={(e) => setSelectedAsset(e.target.value)} className="h-11 w-full px-3 font-mono text-[14px] text-[var(--color-text-primary)]">
+                  {[...CRYPTO_SYMBOLS, ...FOREX_SYMBOLS, ...COMMODITY_SYMBOLS].map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
+                <p className="mt-2 flex items-center gap-2 font-mono text-[11.5px] text-[var(--color-text-tertiary)]">
+                  {selectedLive ? (
+                    <>
+                      <span className="live-dot" style={{ width: 5, height: 5 }} /> now {formatPrice(selectedAsset, selectedLive.price)}
+                    </>
+                  ) : (
+                    "no live feed for this market"
+                  )}
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-[1fr_1.2fr] gap-3">
                 <div>
-                  <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                    Condition
-                  </label>
-                  <select
-                    value={operator}
-                    onChange={(e) => setOperator(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none"
-                    style={{ color: "var(--color-text-primary)" }}
-                  >
-                    <option value="gt">Greater Than (&gt;)</option>
-                    <option value="lt">Less Than (&lt;)</option>
+                  <Label className="mb-2 block">Is</Label>
+                  <select value={operator} onChange={(e) => setOperator(e.target.value)} className="h-11 w-full px-3 text-[14px] text-[var(--color-text-primary)]">
+                    <option value="gt">Above ▲</option>
+                    <option value="lt">Below ▼</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                    Target Price ($)
-                  </label>
-                  <FormInput
-                    type="number"
-                    step="any"
-                    value={triggerPrice}
-                    onChange={(e) => setTriggerPrice(e.target.value)}
-                    placeholder="68500"
-                  />
+                  <Label className="mb-2 block">Price ($)</Label>
+                  <FormInput type="number" step="any" value={triggerPrice} onChange={(e) => setTriggerPrice(e.target.value)} placeholder="68500" />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={createAlertMutation.isPending}
-                className="btn-primary w-full text-xs"
-              >
-                <Plus size={14} /> Set Active Alert
-              </button>
-            </form>
-          </div>
-
-          {/* Trigger Alert Test Engine */}
-          <div className="card p-4 space-y-2">
-            <div className="flex items-center gap-2">
-              <Volume2 size={16} className="text-[var(--color-accent-primary)] shrink-0" />
-              <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                Alert Evaluation Engine
-              </span>
-            </div>
-            <p className="text-[10px]" style={{ color: "var(--color-text-tertiary)" }}>
-              The cron scheduler runs in the background. You can trigger an instant evaluation to trigger any crosses:
-            </p>
-            <button
-              onClick={async () => {
-                setEvaluating(true);
-                try {
-                  const res = await fetch("/api/cron/evaluate-alerts");
-                  const body = await res.json();
-                  queryClient.invalidateQueries({ queryKey: ["alerts"] });
-                  queryClient.invalidateQueries({ queryKey: ["notifications"] });
-                  toast.success(`Evaluated active alerts. Triggered ${body.data?.triggered || 0} setups.`);
-                } catch {
-                  toast.error("Evaluation failed. Please try again.");
-                } finally {
-                  setEvaluating(false);
-                }
-              }}
-              disabled={evaluating}
-              className="btn-secondary btn-sm w-full"
-            >
-              {evaluating ? (
-                <>
-                  <RefreshCw size={12} className="animate-spin" />
-                  Evaluating...
-                </>
-              ) : (
-                "Force Evaluate Trigger Crosses"
+              {awayPct !== null && (
+                <p className="rounded-lg border px-3.5 py-2.5 font-mono text-[12px]" style={{ borderColor: "var(--hairline)", background: "var(--panel-2)", color: "var(--color-text-secondary)" }}>
+                  That level is <span style={{ color: awayPct >= 0 ? "var(--color-profit)" : "var(--color-loss)" }}>{Math.abs(awayPct).toFixed(2)}% {awayPct >= 0 ? "above" : "below"}</span> the current price.
+                </p>
               )}
+
+              <button type="submit" disabled={createAlertMutation.isPending || !triggerPrice} className="btn-primary btn-lg btn-block disabled:opacity-40">
+                <Plus size={15} /> Set alert
+              </button>
+            </div>
+          </form>
+
+          <section className="card p-5">
+            <h3 className="flex items-center gap-2 text-[13.5px] font-semibold text-[var(--color-text-primary)]"><Volume2 size={15} style={{ color: "var(--accent)" }} /> Evaluation engine</h3>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-[var(--color-text-tertiary)]">
+              A scheduler evaluates alerts in the background. Run it now to check every active level against the latest price.
+            </p>
+            <button onClick={runEvaluate} disabled={evaluating} className="btn-secondary btn-sm btn-block mt-4">
+              {evaluating ? <><RefreshCw size={12} className="animate-spin" /> Evaluating…</> : "Evaluate now"}
             </button>
-          </div>
+          </section>
         </div>
 
-        {/* Right column: Alerts and trigger list */}
-        <div className="lg:col-span-3 space-y-6 animate-fade-in-delay-2">
-          {/* Active Alerts */}
-          <div className="card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-tertiary)" }}>
-                Active Monitor List
-              </h2>
-              <span className="badge badge-info">{activeAlertsList.length} active</span>
-            </div>
-
+        {/* ── Monitors + triggers ───────────────────────────────────────────── */}
+        <div className="flex min-w-0 flex-col gap-4">
+          <section className="card">
+            <header className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
+              <Label>Active monitors</Label>
+              <Chip tone="signal" dot>{activeAlertsList.length} active</Chip>
+            </header>
             {alertsLoading ? (
-              <div className="flex justify-center py-6">
-                <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={18} />
-              </div>
+              <div className="space-y-3 p-5">{[0, 1].map((i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
             ) : activeAlertsList.length === 0 ? (
-              <div className="text-xs text-center py-8" style={{ color: "var(--color-text-tertiary)" }}>
-                No active price level monitors.
+              <div className="p-6">
+                <EmptyState icon={<Bell size={18} />} title="No active monitors" body="Create an alert on the left and it will watch the level for you." />
               </div>
             ) : (
-              <div className="divide-y space-y-2" style={{ borderColor: "var(--color-border-subtle)" }}>
+              <ul>
                 {activeAlertsList.map((alert) => {
                   const cond = alert.condition as any;
+                  const price = live[alert.instrument]?.price;
+                  const away = price ? ((cond.value - price) / price) * 100 : null;
                   return (
-                    <div key={alert.id} className="flex items-center justify-between py-2 text-xs">
-                      <div>
-                        <span className="font-bold text-[var(--color-text-primary)] mr-2">{alert.instrument}</span>
-                        <span style={{ color: "var(--color-text-tertiary)" }}>
-                          Price is {cond.operator === "gt" ? "above" : "below"} ${cond.value.toLocaleString()}
-                        </span>
+                    <li key={alert.id} className="flex items-center justify-between gap-3 border-b px-5 py-3.5 last:border-b-0" style={{ borderColor: "var(--hairline)" }}>
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2.5">
+                          <span className="font-mono text-[14px] font-semibold text-[var(--color-text-primary)]">{alert.instrument}</span>
+                          <Chip tone={cond.operator === "gt" ? "gain" : "loss"}>{cond.operator === "gt" ? "▲ above" : "▼ below"}</Chip>
+                        </p>
+                        <p className="mt-1 font-mono text-[12px] text-[var(--color-text-tertiary)]">
+                          ${Number(cond.value).toLocaleString()}
+                          {away !== null && <span className="ml-2 text-[var(--color-text-quaternary)]">{Math.abs(away).toFixed(2)}% {away >= 0 ? "above" : "below"} now</span>}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          aria-label="Pause Alert"
-                          aria-pressed={true}
-                          onClick={() => toggleAlertMutation.mutate({ id: alert.id, isActive: false })}
-                          className="text-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary-hover)]"
-                        >
-                          <ToggleRight size={20} />
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button type="button" aria-label="Pause Alert" aria-pressed={true} onClick={() => toggleAlertMutation.mutate({ id: alert.id, isActive: false })} className="icon-button !text-[var(--accent)]">
+                          <ToggleRight size={22} />
                         </button>
-                        <button
-                          type="button"
-                          aria-label="Delete Alert"
-                          onClick={() => deleteAlertMutation.mutate(alert.id)}
-                          className="text-[var(--color-loss)] hover:text-[var(--color-loss)] p-1"
-                        >
-                          <Trash2 size={12} />
+                        <button type="button" aria-label="Delete Alert" onClick={() => deleteAlertMutation.mutate(alert.id)} className="icon-button hover:!text-[var(--color-loss)]">
+                          <Trash2 size={14} />
                         </button>
                       </div>
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             )}
-          </div>
+          </section>
 
-          {/* Alert History / Trigger Notifications */}
-          <div className="card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-tertiary)" }}>
-                Trigger Notifications
-              </h2>
-              {notifications && notifications.length > 0 && (
-                <span className="badge badge-neutral">{notifications.length}</span>
-              )}
-            </div>
-
+          <section className="card">
+            <header className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
+              <Label>Triggers</Label>
+              {notifications && notifications.length > 0 && <Chip>{notifications.length}</Chip>}
+            </header>
             {notificationsLoading ? (
-              <div className="flex justify-center py-6">
-                <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={18} />
-              </div>
+              <div className="space-y-3 p-5">{[0, 1].map((i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
             ) : !notifications || notifications.length === 0 ? (
-              <div className="text-xs text-center py-8" style={{ color: "var(--color-text-tertiary)" }}>
-                No notifications received.
-              </div>
+              <p className="p-6 text-[13px] text-[var(--color-text-tertiary)]">Nothing has triggered yet.</p>
             ) : (
-              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+              <ul className="custom-scrollbar max-h-[320px] overflow-y-auto" data-lenis-prevent>
                 {notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    onClick={() => !n.isRead && markReadMutation.mutate(n.id)}
-                    className="p-3 rounded-lg border text-xs cursor-pointer transition-colors flex items-start justify-between"
-                    style={{
-                      backgroundColor: n.isRead ? "transparent" : "var(--color-accent-primary-muted)",
-                      borderColor: "var(--color-border-subtle)",
-                    }}
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <Bell size={12} className={n.isRead ? "text-[var(--color-text-quaternary)]" : "text-[var(--color-accent-primary)] animate-bounce"} />
-                        <span className="font-bold text-[var(--color-text-primary)]">{n.title}</span>
-                      </div>
-                      <p style={{ color: "var(--color-text-secondary)" }}>{n.body}</p>
-                    </div>
-                    <span className="text-[9px]" style={{ color: "var(--color-text-tertiary)" }}>
-                      {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
+                  <li key={n.id}>
+                    <button
+                      type="button"
+                      onClick={() => !n.isRead && markReadMutation.mutate(n.id)}
+                      className="flex w-full cursor-pointer items-start justify-between gap-4 border-b px-5 py-3.5 text-left transition-colors last:border-b-0 hover:bg-[var(--color-bg-hover)]"
+                      style={{ borderColor: "var(--hairline)" }}
+                    >
+                      <span className="flex min-w-0 gap-3">
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ background: n.isRead ? "var(--color-border-strong)" : "var(--accent)" }} />
+                        <span className="min-w-0">
+                          <span className={`block text-[13.5px] font-medium ${n.isRead ? "text-[var(--color-text-secondary)]" : "text-[var(--color-text-primary)]"}`}>{n.title}</span>
+                          <span className="mt-0.5 block text-[12.5px] leading-snug text-[var(--color-text-tertiary)]">{n.body}</span>
+                        </span>
+                      </span>
+                      <span className="shrink-0 font-mono text-[11px] text-[var(--color-text-quaternary)]">{new Date(n.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
-          </div>
+          </section>
         </div>
       </div>
     </div>

@@ -8,9 +8,9 @@ import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata, breadcrumbJsonLd, ENTITY_DEFINITION } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "About TradCopilot — Mission, Philosophy & Technical Architecture",
+  title: "About TradePilot — Mission, Philosophy & Technical Architecture",
   description:
-    "TradCopilot is a read-only AI trading copilot built on deterministic indicator calculations, multi-model AI validation, session journaling, and behavioral discipline.",
+    "TradePilot is a read-only AI trading copilot built on deterministic indicator calculations, multi-model AI validation, session journaling, and behavioral discipline.",
   path: "/about",
   keywords: [
     "about tradcopilot",
@@ -46,7 +46,7 @@ const PILLARS = [
     icon: Lock,
     title: "Strictly Read-Only & Non-Custodial",
     description:
-      "TradCopilot cannot execute trades, hold custody of funds, or connect to your broker. You maintain complete sovereignty over your trading capital and order execution at all times.",
+      "TradePilot cannot execute trades, hold custody of funds, or connect to your broker. You maintain complete sovereignty over your trading capital and order execution at all times.",
   },
 ];
 
@@ -76,7 +76,7 @@ export default function AboutPage() {
           {/* ── Philosophy Section ── */}
           <section className="space-y-6">
             <span className="tp-eyebrow-mono block">01 · THE PROBLEM</span>
-            <h2 className="tp-h2">Why we built TradCopilot</h2>
+            <h2 className="tp-h2">Why we built TradePilot</h2>
             <div className="space-y-4 max-w-[65ch]">
               <p className="tp-body">
                 The retail trading software landscape is crowded with black-box &ldquo;magic signal&rdquo; bots that promise impossible win rates, or generic chat wrappers that hallucinate prices and give inconsistent advice.
@@ -126,7 +126,7 @@ export default function AboutPage() {
                   <ShieldCheck size={14} /> INFORMATIONAL &amp; EDUCATIONAL WORKSTATION
                 </div>
                 <p className="text-[var(--muted)] leading-relaxed">
-                  TradCopilot is not a registered investment advisor or broker-dealer. We provide educational analysis and decision-support tools. All execution decisions and financial risk remain entirely with the trader.
+                  TradePilot is not a registered investment advisor or broker-dealer. We provide educational analysis and decision-support tools. All execution decisions and financial risk remain entirely with the trader.
                 </p>
               </div>
             </div>

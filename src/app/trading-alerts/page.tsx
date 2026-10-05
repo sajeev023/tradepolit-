@@ -147,14 +147,14 @@ export default function TradingAlertsPage() {
             <h2 className="tp-h2">How alert triggers are calculated</h2>
             <div className="space-y-4 max-w-[65ch]">
               <p className="tp-body">
-                Alert triggers are evaluated against server-side candlestick feeds (Binance WebSocket for crypto, TwelveData for forex, gold, and indices). Because TradCopilot uses deterministic calculation engines, alerts fire strictly when mathematical conditions are met — never from speculative predictive guessing.
+                Alert triggers are evaluated against server-side candlestick feeds (Binance WebSocket for crypto, TwelveData for forex, gold, and indices). Because TradePilot uses deterministic calculation engines, alerts fire strictly when mathematical conditions are met — never from speculative predictive guessing.
               </p>
               <div className="tc-terminal p-4 sm:p-5 space-y-2 text-xs">
                 <div className="flex items-center gap-2 text-[var(--accent)] font-mono font-semibold">
                   <ShieldCheck size={14} /> NO BROKERAGE CONNECTION REQUIRED
                 </div>
                 <p className="text-[var(--muted)] leading-relaxed">
-                  TradCopilot alerts are purely informational notifications. The system does not custody funds, place orders, or connect to your execution broker. You remain 100% in control of order placement on your preferred exchange.
+                  TradePilot alerts are purely informational notifications. The system does not custody funds, place orders, or connect to your execution broker. You remain 100% in control of order placement on your preferred exchange.
                 </p>
               </div>
             </div>

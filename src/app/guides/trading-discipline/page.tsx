@@ -153,7 +153,7 @@ export default function TradingDisciplineGuidePage() {
             <span className="tp-eyebrow-mono block">BUILT-IN BEHAVIORAL GUARDRAILS</span>
             <h2 className="tp-h2">Put behavioral guardrails on your desk</h2>
             <p className="tp-body max-w-xl mx-auto text-[13px] sm:text-[14px]">
-              TradCopilot monitors your last 20 logged trades and actively warns you when revenge trading, overtrading, or sizing spikes occur.
+              TradePilot monitors your last 20 logged trades and actively warns you when revenge trading, overtrading, or sizing spikes occur.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
               <Link href="/trading-journal" className="btn-primary btn-lg">

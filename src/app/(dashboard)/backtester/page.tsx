@@ -2,29 +2,84 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FlaskConical, Play, XCircle, RefreshCw, Info } from "lucide-react";
+import { FlaskConical, Play, XCircle, RefreshCw, Info, Plus } from "lucide-react";
+import { Chip, Label, Skeleton, Stat } from "@/components/fd/primitives";
 import { CRYPTO_SYMBOLS, FOREX_SYMBOLS, COMMODITY_SYMBOLS } from "@/lib/market-registry";
 import { EquityCurveChart } from "@/components/ui/equity-curve-chart";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
 
-/* ─── Demo Backtest Result (pre-seeded sample data) ─── */
+/* ─── Shared results view (real runs + the labelled demo) ─── */
+interface ResultMetrics {
+  totalTrades?: number;
+  winRate?: number;
+  lossRate?: number;
+  netProfit?: number;
+  profitFactor?: number;
+  maxDrawdown?: number;
+}
+
+function ResultsView({ title, badge, metrics, equity, trades }: { title: string; badge: React.ReactNode; metrics: ResultMetrics; equity: any[]; trades: any[] }) {
+  const net = metrics.netProfit || 0;
+  return (
+    <div>
+      <header className="flex items-start justify-between gap-3 border-b px-5 py-4" style={{ borderColor: "var(--hairline)" }}>
+        <div className="min-w-0">
+          <Label>Historical backtest</Label>
+          <h2 className="mt-1 truncate text-[15px] font-semibold text-[var(--color-text-primary)]">{title}</h2>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">{badge}</div>
+      </header>
+
+      <div className="space-y-6 p-5">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
+          <div className="col-span-2 sm:col-span-3">
+            <Stat size="lg" label="Net return" value={`${net >= 0 ? "+" : "-"}$${Math.abs(net).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} tone={net >= 0 ? "gain" : "loss"} />
+          </div>
+          <Stat label="Total trades" value={String(metrics.totalTrades || 0)} />
+          <Stat label="Win rate" value={`${((metrics.winRate || 0) * 100).toFixed(1)}%`} tone="gain" />
+          <Stat label="Loss rate" value={`${((metrics.lossRate || 0) * 100).toFixed(1)}%`} tone="loss" />
+          <Stat label="Profit factor" value={(metrics.profitFactor || 0).toFixed(2)} />
+          <Stat label="Max drawdown" value={`${(Math.abs(metrics.maxDrawdown || 0) * 100).toFixed(2)}%`} tone="loss" />
+        </div>
+
+        {equity.length > 0 && (
+          <div>
+            <Label className="mb-2 block">Equity path</Label>
+            <EquityCurveChart data={equity} dataKey="equity" height={190} color={net >= 0 ? "var(--green)" : "var(--red)"} />
+          </div>
+        )}
+
+        {trades.length > 0 && (
+          <div>
+            <Label className="mb-2 block">Simulated trades ({trades.length})</Label>
+            <ul className="custom-scrollbar max-h-[260px] overflow-y-auto rounded-lg border" style={{ borderColor: "var(--hairline)", background: "var(--panel-2)" }} data-lenis-prevent>
+              {trades.map((t: any, idx: number) => (
+                <li key={idx} className="flex items-center justify-between gap-3 border-b px-3.5 py-2.5 last:border-b-0" style={{ borderColor: "var(--hairline)" }}>
+                  <span className="flex min-w-0 items-center gap-3">
+                    <Chip tone={t.direction === "SHORT" ? "loss" : "gain"}>{t.direction || "LONG"}</Chip>
+                    <span className="truncate font-mono text-[11.5px] text-[var(--color-text-tertiary)]">{t.entryDate} → {t.exitDate}</span>
+                  </span>
+                  <span className="font-mono text-[13px] tabular-nums" style={{ color: t.pnlPercent >= 0 ? "var(--color-profit)" : "var(--color-loss)" }}>
+                    {t.pnlPercent >= 0 ? "+" : ""}{t.pnlPercent.toFixed(2)}%
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Demo Backtest Result (pre-seeded sample data, clearly labelled) ─── */
 function BacktestDemoResult() {
-  const demoMetrics = {
-    totalTrades: 47,
-    winRate: 0.617,
-    lossRate: 0.383,
-    netProfit: 2347.82,
-    profitFactor: 1.84,
-    maxDrawdown: -0.124,
-  };
+  const demoMetrics = { totalTrades: 47, winRate: 0.617, lossRate: 0.383, netProfit: 2347.82, profitFactor: 1.84, maxDrawdown: -0.124 };
   const demoEquityCurve = [
-    { date: "Jan", equity: 10000 }, { date: "Feb", equity: 10230 },
-    { date: "Mar", equity: 10150 }, { date: "Apr", equity: 10480 },
-    { date: "May", equity: 10610 }, { date: "Jun", equity: 10890 },
-    { date: "Jul", equity: 11240 }, { date: "Aug", equity: 11520 },
-    { date: "Sep", equity: 11810 }, { date: "Oct", equity: 11640 },
-    { date: "Nov", equity: 12080 }, { date: "Dec", equity: 12347.82 },
+    { date: "Jan", equity: 10000 }, { date: "Feb", equity: 10230 }, { date: "Mar", equity: 10150 }, { date: "Apr", equity: 10480 },
+    { date: "May", equity: 10610 }, { date: "Jun", equity: 10890 }, { date: "Jul", equity: 11240 }, { date: "Aug", equity: 11520 },
+    { date: "Sep", equity: 11810 }, { date: "Oct", equity: 11640 }, { date: "Nov", equity: 12080 }, { date: "Dec", equity: 12347.82 },
   ];
   const demoTrades = [
     { direction: "LONG", entryDate: "2025-01-12", exitDate: "2025-01-18", pnlPercent: 3.21 },
@@ -37,62 +92,13 @@ function BacktestDemoResult() {
     { direction: "LONG", entryDate: "2025-05-10", exitDate: "2025-05-19", pnlPercent: 1.56 },
   ];
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "var(--color-border-subtle)" }}>
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-xs font-semibold" style={{ color: "var(--color-text-tertiary)" }}>Historical Backtest Results</h3>
-            <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-[var(--color-warning-bg)] text-[var(--color-warning)] border border-amber-500/20">Demo</span>
-          </div>
-          <p className="text-sm font-bold text-[var(--color-text-primary)]">EMA Crossover Trend on BTC/USD</p>
-        </div>
-        <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[var(--color-profit-bg)] text-[var(--color-profit)] border border-[rgba(var(--green-rgb),0.2)]">Complete</span>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-          <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Total Trades</span>
-          <span className="text-lg font-bold font-mono text-[var(--color-accent-primary)]">{demoMetrics.totalTrades}</span>
-        </div>
-        <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-          <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Win Rate</span>
-          <span className="text-lg font-bold font-mono text-[var(--color-accent-primary)]">{(demoMetrics.winRate * 100).toFixed(1)}%</span>
-        </div>
-        <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-          <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Loss Rate</span>
-          <span className="text-lg font-bold font-mono text-[var(--color-accent-primary)]">{(demoMetrics.lossRate * 100).toFixed(1)}%</span>
-        </div>
-        <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-          <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Net Return</span>
-          <span className="text-lg font-bold font-mono text-[var(--color-profit)]">${demoMetrics.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-        </div>
-        <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-          <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Profit Factor</span>
-          <span className="text-lg font-bold font-mono text-[var(--color-accent-primary)]">{demoMetrics.profitFactor.toFixed(2)}</span>
-        </div>
-        <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-          <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>Max Drawdown</span>
-          <span className="text-lg font-bold font-mono text-[var(--color-loss)]">{(Math.abs(demoMetrics.maxDrawdown) * 100).toFixed(2)}%</span>
-        </div>
-      </div>
-      <div>
-        <h4 className="text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: "var(--color-text-tertiary)" }}>Backtested Equity Path</h4>
-        <EquityCurveChart data={demoEquityCurve} dataKey="equity" height={150} />
-      </div>
-      <div className="space-y-2">
-        <h4 className="text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: "var(--color-text-tertiary)" }}>Demo Trades ({demoTrades.length})</h4>
-        <div className="max-h-[120px] overflow-y-auto space-y-1.5 pr-1">
-          {demoTrades.map((t, idx) => (
-            <div key={idx} className="bg-[var(--color-bg-tertiary)] p-2 rounded border border-[var(--color-border-subtle)] flex items-center justify-between text-xs font-mono">
-              <div>
-                <span className={`font-bold mr-2 ${t.direction === 'SHORT' ? 'text-[var(--color-loss)]' : 'text-[var(--color-accent-primary)]'}`}>{t.direction}</span>
-                <span style={{ color: "var(--color-text-tertiary)" }}>{t.entryDate} → {t.exitDate}</span>
-              </div>
-              <div className={t.pnlPercent >= 0 ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}>{t.pnlPercent >= 0 ? "+" : ""}{t.pnlPercent.toFixed(2)}%</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <ResultsView
+      title="EMA Crossover Trend on BTC/USD"
+      badge={<><Chip tone="warn">Sample data</Chip><Chip tone="gain" dot>Complete</Chip></>}
+      metrics={demoMetrics}
+      equity={demoEquityCurve}
+      trades={demoTrades}
+    />
   );
 }
 
@@ -250,394 +256,175 @@ export default function BacktesterPage() {
   const trades = results.trades || [];
   const equityCurve = results.equityCurve || [];
 
-  return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>
-          Strategy Backtester
-        </h1>
-        <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-          Test quantitative crossover rules against historical OHLCV candles securely.
-        </p>
+  const OPERATORS = [
+    { v: "CROSSES_ABOVE", l: "crosses above" },
+    { v: "CROSSES_BELOW", l: "crosses below" },
+    { v: "GREATER_THAN", l: "is greater than" },
+    { v: "LESS_THAN", l: "is less than" },
+  ];
+  const INDS = [
+    { v: "EMA20", l: "EMA 20" },
+    { v: "EMA50", l: "EMA 50" },
+    { v: "PRICE", l: "Price" },
+  ];
+  const inline = "h-9 rounded-lg px-2.5 font-mono text-[12.5px] text-[var(--color-text-primary)]";
+  const isRunning = activeBacktest?.status === "PENDING" || activeBacktest?.status === "RUNNING";
+
+  const RuleSentence = ({ verb, tone, a, op, b, setA, setOp, setB }: { verb: string; tone: string; a: string; op: string; b: string; setA: (v: string) => void; setOp: (v: string) => void; setB: (v: string) => void }) => (
+    <div>
+      <p className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em]" style={{ color: tone }}>{verb} when</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <select value={a} onChange={(e) => setA(e.target.value)} className={inline}>{INDS.map((i) => <option key={i.v} value={i.v}>{i.l}</option>)}</select>
+        <select value={op} onChange={(e) => setOp(e.target.value)} className={inline}>{OPERATORS.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}</select>
+        <select value={b} onChange={(e) => setB(e.target.value)} className={inline}>{INDS.map((i) => <option key={i.v} value={i.v}>{i.l}</option>)}</select>
       </div>
+    </div>
+  );
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Left column: Setup controls */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="card p-5 space-y-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-              Backtest Configuration
-            </h2>
+  return (
+    <div className="mx-auto flex max-w-[1180px] flex-col gap-6 lg:gap-8">
+      <header>
+        <Label>Backtester</Label>
+        <h1 className="mt-2 text-[var(--color-text-primary)]">
+          Test the rule <em className="text-[var(--accent)]">before</em> you trust it.
+        </h1>
+        <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-[var(--color-text-tertiary)]">
+          Run crossover rules against historical OHLCV candles and see what they would have done.
+        </p>
+      </header>
 
-            {/* Select strategy */}
+      <div className="grid items-start gap-5 lg:grid-cols-[400px_minmax(0,1fr)] lg:gap-6">
+        {/* ── Setup ─────────────────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-4">
+          <section className="card">
+            <header className="flex items-center gap-3 border-b px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
+              <span className="font-mono text-[11px] tracking-[0.14em]" style={{ color: "var(--accent)" }}>01</span>
+              <h2 className="text-[14px] font-semibold text-[var(--color-text-primary)]">{isCreatingStrategy ? "New ruleset" : "Strategy"}</h2>
+            </header>
+
             {isCreatingStrategy ? (
-              <form onSubmit={handleCreateStrategy} className="space-y-4 pt-2 border-t" style={{ borderColor: "var(--color-border-subtle)" }}>
-                <h3 className="text-xs font-bold text-[var(--color-accent-primary)]">New Strategy Details</h3>
+              <form onSubmit={handleCreateStrategy} className="space-y-5 p-5">
                 <div>
-                  <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                    Strategy Name
-                  </label>
+                  <Label className="mb-2 block">Name</Label>
                   <FormInput value={newStratName} onChange={(e) => setNewStratName(e.target.value)} placeholder="EMA Crossover Trend" />
                 </div>
                 <div>
-                  <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                    Description
-                  </label>
-                  <textarea
-                    value={newStratDesc}
-                    onChange={(e) => setNewStratDesc(e.target.value)}
-                    className="w-full text-xs px-3 py-2 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none min-h-[50px]"
-                    style={{ color: "var(--color-text-primary)" }}
-                    placeholder="Enter details..."
-                  />
+                  <Label className="mb-2 block">Description</Label>
+                  <textarea value={newStratDesc} onChange={(e) => setNewStratDesc(e.target.value)} className="min-h-[64px] w-full px-3 py-2 text-[13px] text-[var(--color-text-primary)]" placeholder="What is this rule trying to catch?" />
                 </div>
-
-                {/* Entry parameters */}
-                <div className="space-y-2">
-                  <span className="block text-[10px] uppercase font-bold text-[var(--color-accent-primary)]">Entry Buy Signal</span>
-                  <div className="grid grid-cols-3 gap-1 text-[11px]">
-                    <select value={entryIndA} onChange={(e) => setEntryIndA(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
-                      <option value="EMA20">EMA 20</option>
-                      <option value="EMA50">EMA 50</option>
-                      <option value="PRICE">Price</option>
-                    </select>
-                    <select value={entryOp} onChange={(e) => setEntryOp(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
-                      <option value="CROSSES_ABOVE">Crosses Above</option>
-                      <option value="CROSSES_BELOW">Crosses Below</option>
-                      <option value="GREATER_THAN">Greater Than</option>
-                      <option value="LESS_THAN">Less Than</option>
-                    </select>
-                    <select value={entryIndB} onChange={(e) => setEntryIndB(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
-                      <option value="EMA50">EMA 50</option>
-                      <option value="EMA20">EMA 20</option>
-                      <option value="PRICE">Price</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Exit parameters */}
-                <div className="space-y-2">
-                  <span className="block text-[10px] uppercase font-bold text-[var(--color-loss)]">Exit Sell Signal</span>
-                  <div className="grid grid-cols-3 gap-1 text-[11px]">
-                    <select value={exitIndA} onChange={(e) => setExitIndA(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
-                      <option value="EMA20">EMA 20</option>
-                      <option value="EMA50">EMA 50</option>
-                      <option value="PRICE">Price</option>
-                    </select>
-                    <select value={exitOp} onChange={(e) => setExitOp(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
-                      <option value="CROSSES_BELOW">Crosses Below</option>
-                      <option value="CROSSES_ABOVE">Crosses Above</option>
-                      <option value="GREATER_THAN">Greater Than</option>
-                      <option value="LESS_THAN">Less Than</option>
-                    </select>
-                    <select value={exitIndB} onChange={(e) => setExitIndB(e.target.value)} className="bg-[var(--color-bg-tertiary)] p-1.5 rounded border border-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
-                      <option value="EMA50">EMA 50</option>
-                      <option value="EMA20">EMA 20</option>
-                      <option value="PRICE">Price</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="submit"
-                    className="flex-1 py-2 rounded text-xs font-semibold bg-[var(--accent)] text-[var(--color-bg-deepest)] hover:bg-[var(--accent-bright)] transition-colors"
-                  >
-                    Save Ruleset
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsCreatingStrategy(false)}
-                    className="px-3 py-2 rounded text-xs font-semibold border border-[var(--color-border-subtle)]"
-                  >
-                    Cancel
-                  </button>
+                <RuleSentence verb="Buy" tone="var(--color-profit)" a={entryIndA} op={entryOp} b={entryIndB} setA={setEntryIndA} setOp={setEntryOp} setB={setEntryIndB} />
+                <RuleSentence verb="Sell" tone="var(--color-loss)" a={exitIndA} op={exitOp} b={exitIndB} setA={setExitIndA} setOp={setExitOp} setB={setExitIndB} />
+                <div className="flex gap-2 pt-1">
+                  <button type="submit" disabled={createStrategyMutation.isPending} className="btn-primary flex-1">Save ruleset</button>
+                  <button type="button" onClick={() => setIsCreatingStrategy(false)} className="btn-secondary">Cancel</button>
                 </div>
               </form>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-5 p-5">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                    Select Strategy Ruleset
-                  </label>
+                  <Label className="mb-2 block">Ruleset</Label>
                   {stratLoading ? (
-                    <div className="flex justify-center p-4">
-                      <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={16} />
-                    </div>
+                    <Skeleton className="h-11 w-full" />
                   ) : strategies && strategies.length > 0 ? (
-                    <select
-                      value={selectedStrategyId}
-                      onChange={(e) => setSelectedStrategyId(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none"
-                      style={{ color: "var(--color-text-primary)" }}
-                    >
-                      <option value="">-- Choose Strategy --</option>
-                      {strategies.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
+                    <select value={selectedStrategyId} onChange={(e) => setSelectedStrategyId(e.target.value)} className="h-11 w-full px-3 text-[14px] text-[var(--color-text-primary)]">
+                      <option value="">Choose a strategy…</option>
+                      {strategies.map((st) => <option key={st.id} value={st.id}>{st.name}</option>)}
                     </select>
                   ) : (
-                    <p className="text-xs text-[var(--color-loss)]">No strategy rulesets defined yet.</p>
+                    <p className="text-[13px] text-[var(--color-text-tertiary)]">No rulesets yet — define your first one.</p>
                   )}
-                  <button
-                    onClick={() => setIsCreatingStrategy(true)}
-                    className="mt-2.5 text-xs font-semibold text-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary-hover)] transition-colors block"
-                  >
-                    + Define New Crossover Ruleset
+                  <button onClick={() => setIsCreatingStrategy(true)} className="mt-2.5 flex cursor-pointer items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[var(--accent)] transition-opacity hover:opacity-70">
+                    <Plus size={12} /> Define a crossover ruleset
                   </button>
                 </div>
-
-                {/* Instrument */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                    Asset Target
-                  </label>
-                  <select
-                    value={selectedAsset}
-                    onChange={(e) => setSelectedAsset(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none"
-                    style={{ color: "var(--color-text-primary)" }}
-                  >
-                    {/* Backtestable assets — crypto, forex, commodities from the registry. */}
-                    {[...CRYPTO_SYMBOLS, ...FOREX_SYMBOLS, ...COMMODITY_SYMBOLS].map((item) => (
-                      <option key={item} value={item}>{item}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Timeframe */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                    Timeframe
-                  </label>
-                  <select
-                    value={selectedTimeframe}
-                    onChange={(e) => setSelectedTimeframe(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none"
-                    style={{ color: "var(--color-text-primary)" }}
-                  >
-                    <option value="15m">15 Minutes (15m)</option>
-                    <option value="1h">1 Hour (1h)</option>
-                    <option value="4h">4 Hours (4h)</option>
-                    <option value="1d">1 Day (1d)</option>
-                  </select>
-                </div>
-
-                {/* Starting Balance */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                    Starting Balance ($)
-                  </label>
-                  <FormInput
-                    type="number"
-                    value={startBalance}
-                    onChange={(e) => setStartBalance(Number(e.target.value))}
-                    placeholder="10000"
-                  />
-                </div>
-
-                {/* Date Selection */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                      Date From
-                    </label>
-                    <FormInput
-                      type="date"
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                      Date To
-                    </label>
-                    <FormInput
-                      type="date"
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleRunBacktest}
-                  disabled={runBacktestMutation.isPending || isPollingBacktest}
-                  className="w-full flex items-center justify-center gap-1.5 py-3 rounded-lg text-xs font-semibold transition-all"
-                  style={{ backgroundColor: "var(--color-accent-primary)", color: "var(--background)" }}
-                >
-                  <Play size={14} fill="var(--background)" /> Run Historical Backtest
-                </button>
               </div>
             )}
-          </div>
+          </section>
 
-          <div className="card p-4 flex gap-3">
-            <Info size={16} className="text-[var(--color-accent-primary)] shrink-0 mt-0.5" />
-            <p className="text-[11px] leading-relaxed" style={{ color: "var(--color-text-tertiary)" }}>
-              Backtests run using daily OHLCV data with EMA crossover signals. <strong className="text-[var(--color-warning)]">Note:</strong> Results assume zero transaction costs, perfect fill prices, and no slippage. Simulated past performance does not predict future results.
-            </p>
-          </div>
-        </div>
-
-        {/* Right column: Results dashboard */}
-        <div className="lg:col-span-3">
-          <div className="card p-5 min-h-[400px] flex flex-col justify-between">
-            {!demoMode && (!activeBacktestId || !activeBacktest) ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center my-auto">
-                <FlaskConical size={36} style={{ color: "var(--color-text-tertiary)" }} className="mb-2" />
-                <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-secondary)" }}>
-                  No backtest results
-                </h3>
-                <p className="text-xs mt-1 max-w-[220px]" style={{ color: "var(--color-text-tertiary)" }}>
-                  Configure your crossover rules on the left to simulate past performance.
-                </p>
-                <button
-                  onClick={() => setDemoMode(true)}
-                  className="mt-4 px-4 py-2 rounded-lg text-xs font-semibold border transition-all hover:bg-[var(--color-bg-hover)]"
-                  style={{ borderColor: "var(--color-border-subtle)", color: "var(--color-text-secondary)" }}
-                >
-                  Show Demo Result
+          {!isCreatingStrategy && (
+            <section className="card">
+              <header className="flex items-center gap-3 border-b px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
+                <span className="font-mono text-[11px] tracking-[0.14em]" style={{ color: "var(--accent)" }}>02</span>
+                <h2 className="text-[14px] font-semibold text-[var(--color-text-primary)]">Market & range</h2>
+              </header>
+              <div className="space-y-5 p-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="mb-2 block">Asset</Label>
+                    <select value={selectedAsset} onChange={(e) => setSelectedAsset(e.target.value)} className="h-11 w-full px-3 font-mono text-[13px] text-[var(--color-text-primary)]">
+                      {[...CRYPTO_SYMBOLS, ...FOREX_SYMBOLS, ...COMMODITY_SYMBOLS].map((item) => <option key={item} value={item}>{item}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="mb-2 block">Timeframe</Label>
+                    <select value={selectedTimeframe} onChange={(e) => setSelectedTimeframe(e.target.value)} className="h-11 w-full px-3 font-mono text-[13px] text-[var(--color-text-primary)]">
+                      <option value="15m">15m</option>
+                      <option value="1h">1h</option>
+                      <option value="4h">4h</option>
+                      <option value="1d">1d</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <Label className="mb-2 block">Starting balance ($)</Label>
+                  <FormInput type="number" value={startBalance} onChange={(e) => setStartBalance(Number(e.target.value))} placeholder="10000" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="mb-2 block">From</Label>
+                    <FormInput type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="mb-2 block">To</Label>
+                    <FormInput type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+                  </div>
+                </div>
+                <button onClick={handleRunBacktest} disabled={runBacktestMutation.isPending || isPollingBacktest} className="btn-primary btn-lg btn-block !h-12">
+                  {runBacktestMutation.isPending || isRunning ? <RefreshCw size={14} className="animate-spin" /> : <Play size={14} fill="currentColor" />} Run historical backtest
                 </button>
               </div>
-            ) : demoMode ? (
-              <BacktestDemoResult />
-            ) : activeBacktest?.status === "PENDING" || activeBacktest?.status === "RUNNING" ? (
-              <div className="flex flex-col items-center justify-center py-28 text-center my-auto">
-                <RefreshCw className="animate-spin text-[var(--color-accent-primary)] mb-2" size={24} />
-                <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-secondary)" }}>
-                  Backtest Execution is Running
-                </h3>
-                <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-                  Ingesting candlestick aggregates and computing signal markers...
-                </p>
-              </div>
-            ) : activeBacktest?.status === "FAILED" ? (
-              <div className="flex flex-col items-center justify-center py-28 text-center my-auto">
-                <XCircle size={32} className="text-[var(--color-loss)] mb-2" />
-                <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-secondary)" }}>
-                  Backtest Execution Failed
-                </h3>
-                <p className="text-xs mt-1 text-[var(--color-loss)] max-w-[220px]">
-                  {results.error || "Historical quote rates depleted from upstream integrations."}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Header info */}
-                <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "var(--color-border-subtle)" }}>
-                  <div>
-                    <h3 className="text-xs font-semibold" style={{ color: "var(--color-text-tertiary)" }}>
-                      Historical Backtest Results
-                    </h3>
-                    <p className="text-sm font-bold text-[var(--color-text-primary)]">
-                      {activeBacktest.strategy?.name || "Deleted Strategy"} on {activeBacktest.instrument}
-                    </p>
-                  </div>
-                  <span
-                    className="text-[10px] uppercase font-mono px-2 py-0.5 rounded"
-                    style={{
-                      backgroundColor: "var(--color-profit-bg)",
-                      color: "var(--color-profit)",
-                      border: "1px solid color-mix(in srgb, var(--color-profit) 20%, transparent)",
-                    }}
-                  >
-                    Complete
-                  </span>
-                </div>
+            </section>
+          )}
 
-                {/* Mini metrics bar */}
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-                    <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
-                      Total Trades
-                    </span>
-                    <span className="text-lg font-bold font-mono text-[var(--color-accent-primary)]">
-                      {metrics.totalTrades || 0}
-                    </span>
-                  </div>
-                  <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-                    <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
-                      Win Rate
-                    </span>
-                    <span className="text-lg font-bold font-mono text-[var(--color-accent-primary)]">
-                      {((metrics.winRate || 0) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-                    <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
-                      Loss Rate
-                    </span>
-                    <span className="text-lg font-bold font-mono text-[var(--color-accent-primary)]">
-                      {((metrics.lossRate || 0) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-                    <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
-                      Net Return
-                    </span>
-                    <span className={`text-lg font-bold font-mono ${(metrics.netProfit || 0) >= 0 ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}`}>
-                      ${(metrics.netProfit || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-                    <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
-                      Profit Factor
-                    </span>
-                    <span className="text-lg font-bold font-mono text-[var(--color-accent-primary)]">
-                      {(metrics.profitFactor || 0).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="bg-[var(--color-bg-tertiary)] p-3 rounded border border-[var(--color-border-subtle)]">
-                    <span className="text-[10px] uppercase tracking-wider block" style={{ color: "var(--color-text-tertiary)" }}>
-                      Max Drawdown
-                    </span>
-                    <span className="text-lg font-bold font-mono text-[var(--color-loss)]">
-                      {((metrics.maxDrawdown || 0) * 100).toFixed(2)}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* Backtester Chart */}
-                {equityCurve.length > 0 && (
-                  <div>
-                    <h4 className="text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: "var(--color-text-tertiary)" }}>
-                      Backtested Equity Path
-                    </h4>
-                    <EquityCurveChart data={equityCurve} dataKey="equity" height={150} />
-                  </div>
-                )}
-
-                {/* Backtest trades list */}
-                {trades.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: "var(--color-text-tertiary)" }}>
-                      Simulated Executed Trades ({trades.length})
-                    </h4>
-                    <div className="max-h-[120px] overflow-y-auto space-y-1.5 pr-1">
-                      {trades.map((t: any, idx: number) => (
-                        <div key={idx} className="bg-[var(--color-bg-tertiary)] p-2 rounded border border-[var(--color-border-subtle)] flex items-center justify-between text-xs font-mono">
-                          <div>
-                            <span className={`font-bold mr-2 ${t.direction === 'SHORT' ? 'text-[var(--color-loss)]' : 'text-[var(--color-accent-primary)]'}`}>
-                              {t.direction || 'LONG'}
-                            </span>
-                            <span style={{ color: "var(--color-text-tertiary)" }}>
-                              {t.entryDate} → {t.exitDate}
-                            </span>
-                          </div>
-                          <div className={t.pnlPercent >= 0 ? "text-[var(--color-profit)]" : "text-[var(--color-loss)]"}>
-                            {t.pnlPercent >= 0 ? "+" : ""}{t.pnlPercent.toFixed(2)}%
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <p className="flex items-start gap-2.5 px-1 text-[11.5px] leading-relaxed text-[var(--color-text-quaternary)]">
+            <Info size={15} className="mt-0.5 shrink-0" style={{ color: "var(--color-warning)" }} />
+            Results assume zero transaction costs, perfect fills and no slippage. Simulated past performance does not predict future results.
+          </p>
         </div>
+
+        {/* ── Results ───────────────────────────────────────────────────────── */}
+        <section className="card min-h-[420px] min-w-0">
+          {demoMode ? (
+            <BacktestDemoResult />
+          ) : !activeBacktestId || !activeBacktest ? (
+            <div className="flex min-h-[420px] flex-col items-center justify-center px-6 py-16 text-center">
+              <FlaskConical size={30} style={{ color: "var(--color-text-quaternary)" }} />
+              <h3 className="mt-4 font-serif text-[26px] leading-none tracking-[-0.01em] text-[var(--color-text-primary)]">No results yet</h3>
+              <p className="mt-2 max-w-[280px] text-[13px] leading-relaxed text-[var(--color-text-tertiary)]">Pick a ruleset on the left and run it to see how it would have performed.</p>
+              <button onClick={() => setDemoMode(true)} className="btn-secondary btn-sm mt-5">Preview with sample data</button>
+            </div>
+          ) : isRunning ? (
+            <div className="flex min-h-[420px] flex-col items-center justify-center px-6 py-16 text-center">
+              <RefreshCw className="animate-spin" size={24} style={{ color: "var(--accent)" }} />
+              <h3 className="mt-4 text-[15px] font-semibold text-[var(--color-text-primary)]">Backtest is running</h3>
+              <p className="mt-1 text-[13px] text-[var(--color-text-tertiary)]">Ingesting candles and computing signals…</p>
+            </div>
+          ) : activeBacktest?.status === "FAILED" ? (
+            <div className="flex min-h-[420px] flex-col items-center justify-center px-6 py-16 text-center">
+              <XCircle size={30} className="text-[var(--color-loss)]" />
+              <h3 className="mt-4 text-[15px] font-semibold text-[var(--color-text-primary)]">Backtest failed</h3>
+              <p className="mt-1 max-w-[280px] text-[13px] text-[var(--color-loss)]">{results.error || "Historical quote rates depleted from upstream integrations."}</p>
+            </div>
+          ) : (
+            <ResultsView
+              title={`${activeBacktest.strategy?.name || "Deleted strategy"} on ${activeBacktest.instrument}`}
+              badge={<Chip tone="gain" dot>Complete</Chip>}
+              metrics={metrics}
+              equity={equityCurve}
+              trades={trades}
+            />
+          )}
+        </section>
       </div>
     </div>
   );

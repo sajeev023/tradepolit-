@@ -8,9 +8,9 @@ import { JsonLd } from "@/components/JsonLd";
 import { buildMetadata, breadcrumbJsonLd, faqPageJsonLd, type FaqItem } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "TradCopilot vs ChatGPT for Trading Analysis — Factual Breakdown",
+  title: "TradePilot vs ChatGPT for Trading Analysis — Factual Breakdown",
   description:
-    "Why general chatbots hallucinate on market data, and how TradCopilot uses deterministic server-side indicator calculations, live OHLCV feeds, and consistency gates.",
+    "Why general chatbots hallucinate on market data, and how TradePilot uses deterministic server-side indicator calculations, live OHLCV feeds, and consistency gates.",
   path: "/compare/tradcopilot-vs-chatgpt",
   keywords: [
     "tradcopilot vs chatgpt",
@@ -23,7 +23,7 @@ export const metadata: Metadata = buildMetadata({
 
 const BREADCRUMBS = [
   { name: "Compare", path: "/compare" },
-  { name: "TradCopilot vs ChatGPT", path: "/compare/tradcopilot-vs-chatgpt" },
+  { name: "TradePilot vs ChatGPT", path: "/compare/tradcopilot-vs-chatgpt" },
 ];
 
 const COMPARISON_FAQS: FaqItem[] = [
@@ -33,12 +33,12 @@ const COMPARISON_FAQS: FaqItem[] = [
       "Large language models are general-purpose text predictors. When you upload a screenshot or paste price numbers into ChatGPT, it attempts to visually or textually estimate indicator values and support/resistance zones. Because it lacks a deterministic math engine, it frequently invents numbers and proposes inconsistent stops and targets.",
   },
   {
-    question: "How does TradCopilot prevent mathematical hallucinations?",
+    question: "How does TradePilot prevent mathematical hallucinations?",
     answer:
-      "TradCopilot computes RSI(14), MACD(12,26,9), EMA alignment (9/21/50), ATR, VWAP, and swing levels using deterministic server-side mathematical code from live Binance and TwelveData OHLCV feeds BEFORE any AI model receives the data. The AI explains the calculated numbers; it never guesses them.",
+      "TradePilot computes RSI(14), MACD(12,26,9), EMA alignment (9/21/50), ATR, VWAP, and swing levels using deterministic server-side mathematical code from live Binance and TwelveData OHLCV feeds BEFORE any AI model receives the data. The AI explains the calculated numbers; it never guesses them.",
   },
   {
-    question: "Does TradCopilot validate AI responses before showing them?",
+    question: "Does TradePilot validate AI responses before showing them?",
     answer:
       "Yes. Every response passes an automated consistency validator. If an AI proposes a Bullish bias but places a stop-loss above the entry price, or proposes a reward-to-risk under 1.5, the output is rejected and discarded during the multi-model race.",
   },
@@ -96,7 +96,7 @@ export default function TradcopilotVsChatgptPage() {
             <Breadcrumbs items={BREADCRUMBS} />
             <span className="tp-eyebrow-mono block pt-2">AI ARCHITECTURE COMPARISON</span>
             <h1 className="tp-display-xl text-3xl! sm:text-4xl! lg:text-5xl!">
-              TradCopilot vs ChatGPT: <span className="tp-serif-italic">Math first vs guessing first.</span>
+              TradePilot vs ChatGPT: <span className="tp-serif-italic">Math first vs guessing first.</span>
             </h1>
             <p className="tp-body max-w-2xl text-[15px] sm:text-[16px] leading-relaxed">
               Asking a general-purpose LLM to read a chart is like asking a poet to do accounting from a blurry photo. Here is why purpose-built deterministic infrastructure is essential for trading analysis.
@@ -119,11 +119,11 @@ export default function TradcopilotVsChatgptPage() {
 
             <div className="tc-card space-y-3 border-[rgba(var(--accent-rgb),0.3)] bg-[rgba(var(--accent-rgb),0.02)]">
               <div className="flex items-center gap-2 text-[var(--accent)] font-mono text-xs font-semibold uppercase tracking-wider">
-                <CheckCircle2 size={15} /> TradCopilot Pipeline
+                <CheckCircle2 size={15} /> TradePilot Pipeline
               </div>
               <h2 className="tp-h3 !text-[17px]">Deterministic server computation</h2>
               <p className="text-[13px] text-[var(--muted)] leading-relaxed">
-                TradCopilot computes every RSI, MACD, ATR, EMA alignment, and swing high/low from raw OHLCV candle numbers. The AI models receive already-computed figures and simply synthesize the technical narrative.
+                TradePilot computes every RSI, MACD, ATR, EMA alignment, and swing high/low from raw OHLCV candle numbers. The AI models receive already-computed figures and simply synthesize the technical narrative.
               </p>
             </div>
           </section>
@@ -138,7 +138,7 @@ export default function TradcopilotVsChatgptPage() {
                   <tr className="border-b border-[var(--color-border-strong)]">
                     <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">Dimension</th>
                     <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[var(--muted)]">ChatGPT / General Chat</th>
-                    <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[var(--accent)] font-semibold">TradCopilot</th>
+                    <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider text-[var(--accent)] font-semibold">TradePilot</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -161,7 +161,7 @@ export default function TradcopilotVsChatgptPage() {
             <span className="tp-eyebrow-mono block">TELEMETRY TRANSPARENCY</span>
             <h2 className="tp-h2">Every reading stamped with exact inputs</h2>
             <p className="tp-body max-w-[65ch]">
-              Every TradCopilot analysis carries a transparent telemetry block with the exact asset price, timestamp, and candle interval analyzed. If market feeds go offline, the system informs you rather than making up numbers to keep a conversation going.
+              Every TradePilot analysis carries a transparent telemetry block with the exact asset price, timestamp, and candle interval analyzed. If market feeds go offline, the system informs you rather than making up numbers to keep a conversation going.
             </p>
           </section>
 

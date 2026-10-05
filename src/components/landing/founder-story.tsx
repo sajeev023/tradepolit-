@@ -33,7 +33,7 @@ export function FounderStory() {
           Built for disciplined execution
         </h2>
         <p className="tp-body max-w-xl mx-auto">
-          TradCopilot was built to automate chart routines and protect active traders from emotional mistakes during high-volatility sessions.
+          TradePilot was built to automate chart routines and protect active traders from emotional mistakes during high-volatility sessions.
         </p>
       </Reveal>
 

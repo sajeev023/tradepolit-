@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { Chip, EmptyState, Label, Skeleton } from "@/components/fd/primitives";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -276,241 +277,197 @@ function JournalPageContent() {
     setValue("mistakeTags", next);
   };
 
+  const renderActions = (trade: any) =>
+    deleteConfirmId === trade.id ? (
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--color-loss)]">Delete?</span>
+        <button
+          onClick={() => {
+            deleteMutation.mutate(trade.id);
+            setDeleteConfirmId(null);
+          }}
+          className="h-7 cursor-pointer rounded-md border px-2.5 text-[11px] font-semibold text-[var(--color-loss)]"
+          style={{ borderColor: "rgba(var(--red-rgb),0.5)", background: "var(--color-loss-bg)" }}
+        >
+          Yes
+        </button>
+        <button onClick={() => setDeleteConfirmId(null)} className="h-7 cursor-pointer rounded-md border px-2.5 text-[11px] font-semibold text-[var(--color-text-tertiary)]" style={{ borderColor: "var(--color-border-default)" }}>
+          No
+        </button>
+      </div>
+    ) : (
+      <div className="flex gap-0.5">
+        <button type="button" aria-label="Edit Trade" onClick={() => handleEditClick(trade)} className="icon-button">
+          <Edit2 size={14} />
+        </button>
+        <button type="button" aria-label="Delete Trade" onClick={() => setDeleteConfirmId(trade.id)} className="icon-button hover:!text-[var(--color-loss)]">
+          <Trash2 size={14} />
+        </button>
+      </div>
+    );
+
+  const pnlOf = (trade: any) => {
+    const n = trade.pnl ? Number(trade.pnl) : null;
+    return { n, color: n && n > 0 ? "var(--color-profit)" : n && n < 0 ? "var(--color-loss)" : "var(--color-text-primary)", text: n ? `${n > 0 ? "+" : ""}${n.toFixed(2)}` : "—" };
+  };
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex max-w-[1180px] flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>
-            Trade Journal
+          <Label>Trade memory</Label>
+          <h1 className="mt-2 text-[var(--color-text-primary)]">
+            Every trade, <em className="text-[var(--accent)]">remembered.</em>
           </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-            Log, filter, and reflect on your trading history.
+          <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-[var(--color-text-tertiary)]">
+            Log, filter, and reflect on your trading history. Copilot learns your patterns from what you record here.
           </p>
         </div>
-
         <button
           onClick={() => {
             reset();
             setIsCreateOpen(true);
           }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold self-start md:self-auto transition-all"
-          style={{
-            backgroundColor: "var(--color-accent-primary)",
-            color: "#0A0A0B",
-            cursor: "pointer",
-          }}
+          className="btn-primary btn-lg self-start md:self-auto"
         >
-          <Plus size={16} /> Log a Trade
+          <Plus size={16} /> Log a trade
         </button>
       </div>
 
-      {/* Filters Bar */}
-      <div className="card p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
-          {/* Status buttons */}
-          <div className="flex items-center rounded-lg bg-[var(--color-bg-tertiary)] p-1 border border-[var(--color-border-subtle)]">
-            {["ALL", "OPEN", "CLOSED"].map((status) => (
-              <button
-                key={status}
-                onClick={() => {
-                  setFilterStatus(status);
-                  setPage(1);
-                }}
-                className="px-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors"
-                style={{
-                  backgroundColor: filterStatus === status ? "var(--color-bg-hover)" : "transparent",
-                  color: filterStatus === status ? "var(--color-text-primary)" : "var(--color-text-tertiary)",
-                }}
-              >
-                {status}
-              </button>
-            ))}
+      {/* Filters */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <div role="tablist" aria-label="Status" className="flex items-center gap-0.5 rounded-lg border p-0.5" style={{ background: "var(--panel-2)", borderColor: "var(--hairline)" }}>
+            {["ALL", "OPEN", "CLOSED"].map((status) => {
+              const on = filterStatus === status;
+              return (
+                <button
+                  key={status}
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => {
+                    setFilterStatus(status);
+                    setPage(1);
+                  }}
+                  className="h-8 cursor-pointer rounded-md px-3.5 font-mono text-[11px] font-medium uppercase tracking-[0.1em] transition-colors"
+                  style={{ background: on ? "var(--accent)" : "transparent", color: on ? "var(--on-accent)" : "var(--color-text-tertiary)" }}
+                >
+                  {status}
+                </button>
+              );
+            })}
           </div>
-
-          {/* Symbol input search */}
-          <div className="relative">
-            <FormInput
-              placeholder="Search symbol..."
-              value={filterSymbol}
-              onChange={(e) => {
-                setFilterSymbol(e.target.value);
-                setPage(1);
-              }}
-              className="py-2 pl-3 text-xs w-48"
-            />
-          </div>
+          <FormInput
+            placeholder="Search symbol…"
+            value={filterSymbol}
+            onChange={(e) => {
+              setFilterSymbol(e.target.value);
+              setPage(1);
+            }}
+            className="w-44 py-2 pl-3 text-[13px]"
+          />
         </div>
-
-        <div className="text-xs font-medium" style={{ color: "var(--color-text-tertiary)" }}>
+        <Label>
           Showing {trades.length} of {pagination.total} trades
-        </div>
+        </Label>
       </div>
 
-      {/* Trades List Table */}
+      {/* Trades */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="animate-spin text-[var(--color-accent-primary)] mb-2" size={24} />
-          <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading trades...</span>
+        <div className="card divide-y divide-[var(--hairline)]">
+          {[0, 1, 2, 3].map((i) => <div key={i} className="p-5"><Skeleton className="h-10 w-full" /></div>)}
         </div>
       ) : trades.length === 0 ? (
-        <div className="card p-12 flex flex-col items-center justify-center text-center">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
-            style={{ backgroundColor: "var(--color-accent-primary-muted)" }}
-          >
-            <BookOpen size={20} style={{ color: "var(--color-accent-primary)" }} />
-          </div>
-          <p className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
-            No trades found
-          </p>
-          <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-            Try adjusting your search filters or log a new trade to get started.
-          </p>
+        <div className="card p-8 sm:p-12">
+          <EmptyState
+            icon={<BookOpen size={18} />}
+            title="No trades found"
+            body="Try adjusting your filters, or log a trade to start building the memory Copilot learns from."
+            action={<button onClick={() => { reset(); setIsCreateOpen(true); }} className="btn-secondary btn-sm"><Plus size={13} /> Log a trade</button>}
+          />
         </div>
       ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b text-xs font-semibold uppercase tracking-wider" style={{ borderColor: "var(--color-border-subtle)", color: "var(--color-text-tertiary)" }}>
-                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Instrument</th>
-                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Type</th>
-                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Dir</th>
-                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Entry</th>
-                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Exit</th>
-                  <th className="px-3.5 py-3 sm:px-6 sm:py-4 text-right">PnL</th>
-                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">R-Mult</th>
-                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Date</th>
-                  <th className="px-3.5 py-3 sm:px-6 sm:py-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y text-sm font-medium" style={{ borderColor: "var(--color-border-subtle)" }}>
-                {trades.map((trade: any) => {
-                  const isLong = trade.direction === "LONG";
-                  const pnlNum = trade.pnl ? Number(trade.pnl) : null;
-                  const isWin = pnlNum && pnlNum > 0;
-                  const isLoss = pnlNum && pnlNum < 0;
-
-                  let pnlColor = "var(--color-text-primary)";
-                  if (isWin) pnlColor = "var(--color-profit)";
-                  if (isLoss) pnlColor = "var(--color-loss)";
-
-                  return (
-                    <tr
-                      key={trade.id}
-                      onClick={() => setViewingTrade(trade)}
-                      className="cursor-pointer transition-colors"
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--color-bg-hover)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                    >
-                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono font-bold" style={{ color: "var(--color-text-primary)" }}>
-                        {trade.instrument}
-                      </td>
-                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 text-xs font-bold tracking-wider">
-                        <span className="px-2 py-0.5 rounded" style={{ backgroundColor: "var(--color-bg-tertiary)", color: "var(--color-text-secondary)" }}>
-                          {trade.assetClass}
-                        </span>
-                      </td>
-                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 text-xs font-bold">
-                        <span className={`px-2 py-0.5 rounded ${isLong ? "text-[var(--color-profit)] bg-[var(--color-profit-bg)]" : "text-[var(--color-loss)] bg-[var(--color-loss-bg)]"}`}>
-                          {trade.direction}
-                        </span>
-                      </td>
-                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono tabular-nums">
-                        {Number(trade.entryPrice).toLocaleString()}
-                      </td>
-                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono tabular-nums">
-                        {trade.exitPrice ? Number(trade.exitPrice).toLocaleString() : "—"}
-                      </td>
-                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono text-right tabular-nums font-bold" style={{ color: pnlColor }}>
-                        {pnlNum ? `${isWin ? "+" : ""}${pnlNum.toFixed(2)}` : "—"}
-                      </td>
-                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 font-mono tabular-nums">
-                        {trade.rMultiple ? `${Number(trade.rMultiple).toFixed(2)}R` : "—"}
-                      </td>
-                      <td className="px-3.5 py-3 sm:px-6 sm:py-4 text-xs text-secondary" style={{ color: "var(--color-text-secondary)" }}>
-                        {new Date(trade.openedAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-3.5 py-3 sm:px-6 sm:py-4" onClick={(e) => e.stopPropagation()}>
-                        {deleteConfirmId === trade.id ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-[var(--color-loss)] font-semibold">Sure?</span>
-                            <button
-                              onClick={() => {
-                                deleteMutation.mutate(trade.id);
-                                setDeleteConfirmId(null);
-                              }}
-                              className="px-2 py-1 rounded bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-[rgba(var(--red-rgb),0.5)] text-xs font-semibold hover:bg-[var(--color-loss-bg)]"
-                            >
-                              Yes
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirmId(null)}
-                              className="px-2 py-1 rounded bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] border border-[var(--color-border-default)] text-xs font-semibold hover:bg-[var(--color-bg-hover)]"
-                            >
-                              No
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              aria-label="Edit Trade"
-                              onClick={() => handleEditClick(trade)}
-                              className="p-1.5 rounded transition-colors"
-                              style={{ color: "var(--color-text-secondary)" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-text-primary)")}
-                              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--color-text-secondary)")}
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              aria-label="Delete Trade"
-                              onClick={() => setDeleteConfirmId(trade.id)}
-                              className="p-1.5 rounded transition-colors"
-                              style={{ color: "var(--color-text-tertiary)" }}
-                              onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-loss)")}
-                              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--color-text-tertiary)")}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <>
+          {/* Desktop table */}
+          <div className="card hidden overflow-hidden md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="border-b" style={{ borderColor: "var(--hairline)" }}>
+                    {["Instrument", "Dir", "Entry", "Exit", "P&L", "R", "Date", ""].map((h, i) => (
+                      <th key={i} className={`px-5 py-3 ${h === "P&L" ? "text-right" : ""}`}><Label>{h}</Label></th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {trades.map((trade: any) => {
+                    const pnl = pnlOf(trade);
+                    return (
+                      <tr key={trade.id} onClick={() => setViewingTrade(trade)} className="group cursor-pointer border-b transition-colors last:border-b-0 hover:bg-[var(--color-bg-hover)]" style={{ borderColor: "var(--hairline)" }}>
+                        <td className="px-5 py-3.5">
+                          <p className="font-mono text-[13.5px] font-semibold text-[var(--color-text-primary)]">{trade.instrument}</p>
+                          <Label>{trade.assetClass}</Label>
+                        </td>
+                        <td className="px-5 py-3.5"><Chip tone={trade.direction === "LONG" ? "gain" : "loss"}>{trade.direction}</Chip></td>
+                        <td className="px-5 py-3.5 font-mono text-[13px] tabular-nums text-[var(--color-text-secondary)]">{Number(trade.entryPrice).toLocaleString()}</td>
+                        <td className="px-5 py-3.5 font-mono text-[13px] tabular-nums text-[var(--color-text-secondary)]">{trade.exitPrice ? Number(trade.exitPrice).toLocaleString() : "—"}</td>
+                        <td className="px-5 py-3.5 text-right font-mono text-[14px] font-medium tabular-nums" style={{ color: pnl.color }}>{pnl.text}</td>
+                        <td className="px-5 py-3.5 font-mono text-[13px] tabular-nums text-[var(--color-text-secondary)]">{trade.rMultiple ? `${Number(trade.rMultiple).toFixed(2)}R` : "—"}</td>
+                        <td className="px-5 py-3.5 font-mono text-[12px] text-[var(--color-text-tertiary)]">{new Date(trade.openedAt).toLocaleDateString()}</td>
+                        <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>{renderActions(trade)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Pagination Footer */}
+          {/* Mobile cards */}
+          <ul className="flex flex-col gap-2.5 md:hidden">
+            {trades.map((trade: any) => {
+              const pnl = pnlOf(trade);
+              return (
+                <li key={trade.id}>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setViewingTrade(trade)}
+                    onKeyDown={(e) => e.key === "Enter" && setViewingTrade(trade)}
+                    className="card cursor-pointer p-4 transition-transform active:scale-[0.99]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-2">
+                          <span className="font-mono text-[15px] font-semibold text-[var(--color-text-primary)]">{trade.instrument}</span>
+                          <Chip tone={trade.direction === "LONG" ? "gain" : "loss"}>{trade.direction}</Chip>
+                        </p>
+                        <p className="mt-1 font-mono text-[11.5px] text-[var(--color-text-quaternary)]">{new Date(trade.openedAt).toLocaleDateString()} · {trade.assetClass}</p>
+                      </div>
+                      <p className="font-mono text-[20px] font-medium tabular-nums tracking-[-0.02em]" style={{ color: pnl.color }}>{pnl.text}</p>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t pt-3" style={{ borderColor: "var(--hairline)" }} onClick={(e) => e.stopPropagation()}>
+                      <p className="font-mono text-[12px] tabular-nums text-[var(--color-text-tertiary)]">
+                        {Number(trade.entryPrice).toLocaleString()} <span className="text-[var(--color-text-quaternary)]">→</span> {trade.exitPrice ? Number(trade.exitPrice).toLocaleString() : "open"}
+                        {trade.rMultiple ? <span className="ml-3 text-[var(--color-text-secondary)]">{Number(trade.rMultiple).toFixed(2)}R</span> : null}
+                      </p>
+                      {renderActions(trade)}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
           {totalPages > 1 && (
-            <div className="px-6 py-4 border-t flex items-center justify-between" style={{ borderColor: "var(--color-border-subtle)" }}>
-              <button
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-semibold border transition-opacity disabled:opacity-50"
-                style={{ borderColor: "var(--color-border-default)", color: "var(--color-text-primary)" }}
-              >
-                <ChevronLeft size={14} /> Previous
-              </button>
-              <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-                Page {page} of {totalPages}
-              </span>
-              <button
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-semibold border transition-opacity disabled:opacity-50"
-                style={{ borderColor: "var(--color-border-default)", color: "var(--color-text-primary)" }}
-              >
-                Next <ChevronRight size={14} />
-              </button>
+            <div className="flex items-center justify-between">
+              <button disabled={page === 1} onClick={() => setPage(page - 1)} className="btn-secondary btn-sm"><ChevronLeft size={14} /> Previous</button>
+              <Label>Page {page} of {totalPages}</Label>
+              <button disabled={page === totalPages} onClick={() => setPage(page + 1)} className="btn-secondary btn-sm">Next <ChevronRight size={14} /></button>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Log Trade Form Modal (Create / Edit) */}

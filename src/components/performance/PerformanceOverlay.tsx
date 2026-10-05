@@ -35,7 +35,8 @@ export function PerformanceOverlay() {
     };
   }, []);
 
-  if (!stats) return null;
+  // Developer telemetry — never shown to customers.
+  if (process.env.NODE_ENV === "production" || !stats) return null;
 
   const renderColor = (val: number, good: number, bad: number) => {
     if (val <= good) return "text-[var(--color-profit)]";

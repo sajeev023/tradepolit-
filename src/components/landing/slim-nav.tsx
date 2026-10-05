@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { TrendingUp, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { Mark } from "@/components/shell/mark";
+import { BRAND } from "@/lib/brand";
 import { MobileMenu } from "./mobile-menu";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
@@ -52,15 +54,10 @@ export function SlimNav({ items }: SlimNavProps = {}) {
     >
       <div className="h-[60px] flex items-center justify-between px-4 sm:px-6 lg:px-10 max-w-[1200px] mx-auto w-full select-none">
         {/* Wordmark */}
-        <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="TradCopilot Home">
-          <div
-            className="flex items-center justify-center rounded-md w-7 h-7"
-            style={{ background: "linear-gradient(135deg, var(--accent-bright), var(--accent))" }}
-          >
-            <TrendingUp size={14} color="#05070B" strokeWidth={2.5} />
-          </div>
-          <span className="hidden min-[380px]:inline text-[14px] sm:text-[15px] font-semibold tracking-[-0.01em] text-[var(--ink)]">
-            TradCopilot
+        <Link href="/" className="flex items-center gap-2.5 shrink-0" aria-label={`${BRAND.name} Home`}>
+          <Mark size={30} />
+          <span className="hidden min-[380px]:inline text-[15px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
+            {BRAND.name}
           </span>
         </Link>
 
@@ -88,7 +85,7 @@ export function SlimNav({ items }: SlimNavProps = {}) {
           </Link>
           <Link
             href="/signup"
-            className="group h-8 px-3.5 inline-flex items-center gap-1.5 rounded-md text-[12px] font-semibold text-[var(--bg-primary)] transition-transform active:scale-[0.98]"
+            className="group h-8 px-3.5 inline-flex items-center gap-1.5 rounded-lg text-[12px] font-semibold text-[var(--on-accent)] transition-transform active:scale-[0.98]"
             style={{ background: "var(--accent)" }}
           >
             Start Free
@@ -101,7 +98,7 @@ export function SlimNav({ items }: SlimNavProps = {}) {
           <LanguageSwitcher variant="nav" compact />
           <Link
             href="/signup"
-            className="h-8 px-3 inline-flex items-center rounded-md text-[12px] font-semibold text-[var(--bg-primary)]"
+            className="h-8 px-3 inline-flex items-center rounded-lg text-[12px] font-semibold text-[var(--on-accent)]"
             style={{ background: "var(--accent)" }}
           >
             Start Free

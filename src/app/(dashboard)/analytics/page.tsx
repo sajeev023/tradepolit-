@@ -1,54 +1,19 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  TrendingUp,
-  BarChart3,
-  RefreshCw,
-  Award,
-  AlertTriangle,
-  Target,
-  Flame,
-  Clock,
-  ArrowUpRight,
-} from "lucide-react";
+import { BarChart3, RefreshCw, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { Chip, EmptyState, Label, Panel, Skeleton, Stat } from "@/components/fd/primitives";
 import { EquityCurveChart } from "@/components/ui/equity-curve-chart";
 import type { PerformanceMetrics } from "@/lib/types";
 import { toast } from "sonner";
 import Link from "next/link";
 
-/* ─── Loading Skeletons ─── */
-function StatSkeleton() {
+/* ─── Ledger row ─── */
+function MetricRow({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div className="card p-3.5 sm:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[130px]">
-      <div>
-        <div className="skeleton h-3 w-16 sm:w-20 mb-2 sm:mb-3" />
-        <div className="skeleton h-6 sm:h-7 w-20 sm:w-28" />
-      </div>
-      <div className="skeleton h-2.5 sm:h-3 w-28 sm:w-36 mt-1.5 sm:mt-3" />
-    </div>
-  );
-}
-
-/* ─── Custom Tooltip ─── */
-/* ─── Metric Row ─── */
-function MetricRow({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between py-2.5 border-b last:border-b-0" style={{ borderColor: "var(--color-border-subtle)" }}>
-      <span className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
-        {label}
-      </span>
-      <span className="font-mono font-bold text-sm" style={{ color: color || "var(--color-text-primary)" }}>
-        {value}
-      </span>
+    <div className="flex items-center justify-between border-b py-3 last:border-b-0" style={{ borderColor: "var(--hairline)" }}>
+      <span className="text-[13px] text-[var(--color-text-tertiary)]">{label}</span>
+      <span className="font-mono text-[14px] font-medium tabular-nums" style={{ color: color || "var(--color-text-primary)" }}>{value}</span>
     </div>
   );
 }
@@ -103,246 +68,106 @@ export default function AnalyticsPage() {
   const equityCurveData = performanceResponse?.equityCurve || [];
   const isProfit = metrics.totalPnL >= 0;
 
-  // Render error state — show explicit error card instead of falling through
-  // to zeroed metrics, which previously masked fetch failures from the user.
+  const Heading = ({ sub }: { sub: string }) => (
+    <header>
+      <Label>Analytics</Label>
+      <h1 className="mt-2 text-[var(--color-text-primary)]">
+        Your performance, <em className="text-[var(--accent)]">in numbers.</em>
+      </h1>
+      <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-[var(--color-text-tertiary)]">{sub}</p>
+    </header>
+  );
+
   if (isError) {
     return (
-      <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>Performance Analytics</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-            We couldn&apos;t load your performance data.
-          </p>
-        </div>
-        <div className="card p-6 flex flex-col items-start gap-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-loss)]">
-            Loading failed
-          </span>
-          <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            {error instanceof Error ? error.message : "Unknown error"}
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="px-3 py-1.5 rounded text-xs font-semibold bg-[var(--color-accent-primary-muted)] text-[var(--color-accent-primary)] border border-[rgba(var(--accent-rgb),0.2)] hover:bg-[rgba(var(--accent-rgb),0.2)] transition"
-          >
-            Retry
-          </button>
+      <div className="mx-auto flex max-w-[1080px] flex-col gap-6">
+        <Heading sub="We couldn't load your performance data." />
+        <div className="card flex flex-col items-start gap-3 p-6">
+          <Chip tone="loss" dot>Loading failed</Chip>
+          <p className="text-[13px] text-[var(--color-text-secondary)]">{error instanceof Error ? error.message : "Unknown error"}</p>
+          <button onClick={() => refetch()} className="btn-secondary btn-sm"><RefreshCw size={13} /> Retry</button>
         </div>
       </div>
     );
   }
 
-  // Render loading state
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-        <div className="animate-fade-in">
-          <div className="skeleton h-7 w-52 mb-2" />
-          <div className="skeleton h-4 w-72" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => <StatSkeleton key={i} />)}
-        </div>
-        <div className="card p-5 min-h-[380px]">
-          <div className="skeleton h-5 w-44 mb-4" />
-          <div className="skeleton h-64 w-full rounded-lg" />
-        </div>
+      <div className="mx-auto flex max-w-[1080px] flex-col gap-6">
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-[360px] w-full" />
+        <div className="grid gap-4 md:grid-cols-2"><Skeleton className="h-56 w-full" /><Skeleton className="h-56 w-full" /></div>
       </div>
     );
   }
 
-  // Render empty state
   if (metrics.totalTrades === 0) {
     return (
-      <div className="flex flex-col gap-6 max-w-5xl mx-auto animate-fade-in">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-            Performance Analytics
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-            Aggregated metrics, equity progression, and behavior summaries.
-          </p>
-        </div>
-
-        <div className="card p-12 flex flex-col items-center justify-center text-center">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{
-              background: "linear-gradient(135deg, var(--color-accent-primary-muted), var(--color-bg-tertiary))",
-              border: "1px dashed var(--color-border-default)",
-            }}
-          >
-            <BarChart3 size={22} style={{ color: "var(--color-accent-primary)" }} />
-          </div>
-          <p className="text-sm font-semibold" style={{ color: "var(--color-text-secondary)" }}>
-            No trade history logged yet
-          </p>
-          <p className="text-xs mt-1.5 max-w-sm" style={{ color: "var(--color-text-tertiary)" }}>
-            Log and close at least one trade in your Trade Journal to render performance metrics and equity curves.
-          </p>
-          <Link href="/journal" className="btn-primary mt-6 text-xs">
-            Log Your First Trade <ArrowUpRight size={14} />
-          </Link>
+      <div className="mx-auto flex max-w-[1080px] flex-col gap-6">
+        <Heading sub="Aggregated metrics, equity progression and behavior summaries." />
+        <div className="card p-8 sm:p-12">
+          <EmptyState
+            icon={<BarChart3 size={18} />}
+            title="No trade history logged yet"
+            body="Log and close at least one trade in your journal to render performance metrics and the equity curve."
+            action={<Link href="/journal" className="btn-primary btn-sm">Log your first trade <ArrowUpRight size={14} /></Link>}
+          />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-            Performance Analytics
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-            Metrics computed from {metrics.totalTrades} closed trade logs.
-          </p>
-        </div>
+  const peak = Math.max(...equityCurveData.map((d: any) => d.pnl), 0);
 
-        <button
-          onClick={() => recomputeMutation.mutate()}
-          disabled={recomputeMutation.isPending || isFetching}
-          className="btn-secondary text-xs"
-        >
-          <RefreshCw size={14} className={recomputeMutation.isPending || isFetching ? "animate-spin" : ""} />
-          Recalculate Stats
+  return (
+    <div className="mx-auto flex max-w-[1080px] flex-col gap-6 lg:gap-8">
+      <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <Heading sub={`Computed from ${metrics.totalTrades} closed trades.`} />
+        <button onClick={() => recomputeMutation.mutate()} disabled={recomputeMutation.isPending || isFetching} className="btn-secondary self-start md:self-auto">
+          <RefreshCw size={14} className={recomputeMutation.isPending || isFetching ? "animate-spin" : ""} /> Recalculate
         </button>
       </div>
 
-      {/* Warning if under 5 trades */}
       {metrics.totalTrades < 5 && (
-        <div className="p-3.5 rounded-lg flex items-center gap-3 border border-yellow-500/20 bg-[var(--color-warning-bg)] animate-fade-in-delay-1">
-          <AlertTriangle size={18} className="text-[var(--color-warning)] shrink-0" />
-          <p className="text-xs leading-relaxed text-yellow-300">
-            <strong>Sample Size Alert:</strong> You only have {metrics.totalTrades} closed trades. A minimum of 15-20 trades is recommended for statistically meaningful Sharpe ratio and expectancy metrics.
+        <div role="note" className="flex items-start gap-3 rounded-xl border p-4" style={{ borderColor: "rgba(var(--amber-rgb),0.3)", background: "var(--color-warning-bg)" }}>
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" style={{ color: "var(--color-warning)" }} />
+          <p className="text-[12.5px] leading-relaxed text-[var(--color-text-primary)]">
+            <strong>Small sample.</strong> You have {metrics.totalTrades} closed {metrics.totalTrades === 1 ? "trade" : "trades"}. Around 15–20 are needed for a meaningful Sharpe ratio and expectancy.
           </p>
         </div>
       )}
 
-      {/* Primary KPI Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {[
-          {
-            label: "Net P/L",
-            value: `$${metrics.totalPnL.toFixed(2)}`,
-            trend: isProfit,
-            sub: "All time net profit",
-            icon: <TrendingUp size={14} />,
-          },
-          {
-            label: "Win Rate",
-            value: `${(metrics.winRate * 100).toFixed(1)}%`,
-            trend: metrics.winRate >= 0.5,
-            sub: `${winsCount(metrics)} wins / ${lossesCount(metrics)} losses`,
-            icon: <Target size={14} />,
-          },
-          {
-            label: "Profit Factor",
-            value: metrics.profitFactor.toFixed(2),
-            trend: metrics.profitFactor >= 1.0,
-            sub: "Gross Wins / Losses",
-            icon: <Award size={14} />,
-          },
-          {
-            label: "Sharpe Ratio",
-            value: metrics.sharpeRatio.toFixed(2),
-            trend: metrics.sharpeRatio >= 1.0,
-            sub: "Risk-adjusted score",
-            icon: <Flame size={14} />,
-          },
-        ].map((stat, idx) => (
-          <div key={idx} className={`card p-3.5 sm:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[130px] animate-fade-in-delay-${idx + 1}`}>
-            <div>
-              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
-                <div
-                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0"
-                  style={{
-                    backgroundColor: stat.trend ? "var(--color-profit-bg)" : "var(--color-loss-bg)",
-                    color: stat.trend ? "var(--color-profit)" : "var(--color-loss)",
-                  }}
-                >
-                  {stat.icon}
-                </div>
-                <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-semibold truncate" style={{ color: "var(--color-text-tertiary)" }}>
-                  {stat.label}
-                </p>
-              </div>
-              <p className="text-xl sm:text-2xl font-bold font-mono tabular-nums mt-0.5 sm:mt-1" style={{ color: stat.trend ? "var(--color-profit)" : "var(--color-loss)" }}>
-                {stat.value}
-              </p>
-            </div>
-            <p className="text-[10px] sm:text-[11px] mt-1.5 sm:mt-3 truncate" style={{ color: "var(--color-text-tertiary)" }}>
-              {stat.sub}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Equity Curve Panel */}
-      <div className="card p-5 min-h-[380px] flex flex-col justify-between animate-fade-in-delay-3">
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                Cumulative Equity Curve
-              </h2>
-              <p className="text-[10px] mt-0.5" style={{ color: "var(--color-text-tertiary)" }}>
-                Visualize your P/L trajectory across all closed trades
-              </p>
-            </div>
-            <span className="badge badge-info">
-              Peak ${Math.max(...equityCurveData.map((d: any) => d.pnl), 0).toFixed(0)}
-            </span>
-          </div>
-
-          <EquityCurveChart data={equityCurveData} height={260} strokeWidth={2.5} />
-        </div>
-      </div>
-
-      {/* Analytics Sub-grids */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-delay-4">
-        {/* Trade Sizing and Expectations */}
-        <div className="card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--color-info-bg)", color: "var(--color-info)" }}>
-              <BarChart3 size={14} />
-            </div>
-            <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Trade Sizing & Expectations
-            </h2>
-          </div>
-          <div>
-            <MetricRow label="Expectancy (per trade)" value={`$${metrics.expectancy.toFixed(2)}`} color={metrics.expectancy >= 0 ? "var(--color-profit)" : "var(--color-loss)"} />
-            <MetricRow label="Average Win" value={`$${metrics.averageWin.toFixed(2)}`} color="var(--color-profit)" />
-            <MetricRow label="Average Loss" value={`-$${metrics.averageLoss.toFixed(2)}`} color="var(--color-loss)" />
-            <MetricRow label="Average R-Multiple" value={`${metrics.averageRR.toFixed(2)}R`} color="var(--color-accent-primary)" />
-            <MetricRow label="Max Drawdown" value={`-$${metrics.maxDrawdown.toFixed(2)}`} color="var(--color-loss)" />
+      {/* Scorecard: hero P/L + ratios, then the curve */}
+      <section className="card overflow-hidden">
+        <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+          <Stat size="lg" label="Net P/L · all time" value={`${isProfit ? "+" : "-"}$${Math.abs(metrics.totalPnL).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} tone={isProfit ? "gain" : "loss"} note={`Peak $${peak.toFixed(0)}`} />
+          <div className="grid grid-cols-3 gap-6">
+            <Stat label="Win rate" value={`${(metrics.winRate * 100).toFixed(1)}%`} tone={metrics.winRate >= 0.5 ? "gain" : "loss"} note={`${winsCount(metrics)}W · ${lossesCount(metrics)}L`} />
+            <Stat label="Profit factor" value={metrics.profitFactor.toFixed(2)} tone={metrics.profitFactor >= 1 ? "gain" : "loss"} note="Gross win / loss" />
+            <Stat label="Sharpe" value={metrics.sharpeRatio.toFixed(2)} tone={metrics.sharpeRatio >= 1 ? "gain" : "loss"} note="Risk-adjusted" />
           </div>
         </div>
-
-        {/* Assets & Streaks */}
-        <div className="card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--color-warning-bg)", color: "var(--color-warning)" }}>
-              <Clock size={14} />
-            </div>
-            <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Streaks & Assets
-            </h2>
-          </div>
-          <div>
-            <MetricRow label="Best Traded Asset" value={metrics.bestAsset || "—"} color="var(--color-accent-primary)" />
-            <MetricRow label="Worst Traded Asset" value={metrics.worstAsset || "—"} color="var(--color-loss)" />
-            <MetricRow label="Longest Win Streak" value={`${metrics.longestWinStreak} wins`} color="var(--color-profit)" />
-            <MetricRow label="Longest Lose Streak" value={`${metrics.longestLoseStreak} losses`} color="var(--color-loss)" />
-            <MetricRow
-              label="Avg Trade Duration"
-              value={metrics.averageTradeDuration ? formatDuration(metrics.averageTradeDuration) : "—"}
-            />
-          </div>
+        <div className="border-t px-2 pb-3 pt-4 sm:px-4" style={{ borderColor: "var(--hairline)" }}>
+          <EquityCurveChart data={equityCurveData} height={280} strokeWidth={2.5} color={isProfit ? "var(--green)" : "var(--red)"} />
         </div>
+      </section>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:gap-6">
+        <Panel label="Edge" title="Sizing & expectancy">
+          <MetricRow label="Expectancy (per trade)" value={`${metrics.expectancy >= 0 ? "+" : "-"}$${Math.abs(metrics.expectancy).toFixed(2)}`} color={metrics.expectancy >= 0 ? "var(--color-profit)" : "var(--color-loss)"} />
+          <MetricRow label="Average win" value={`$${metrics.averageWin.toFixed(2)}`} color="var(--color-profit)" />
+          <MetricRow label="Average loss" value={`-$${metrics.averageLoss.toFixed(2)}`} color="var(--color-loss)" />
+          <MetricRow label="Average R-multiple" value={`${metrics.averageRR.toFixed(2)}R`} color="var(--accent)" />
+          <MetricRow label="Max drawdown" value={`-$${metrics.maxDrawdown.toFixed(2)}`} color="var(--color-loss)" />
+        </Panel>
+
+        <Panel label="Habits" title="Streaks & assets">
+          <MetricRow label="Best traded asset" value={metrics.bestAsset || "—"} color="var(--accent)" />
+          <MetricRow label="Worst traded asset" value={metrics.worstAsset || "—"} color="var(--color-loss)" />
+          <MetricRow label="Longest win streak" value={`${metrics.longestWinStreak} wins`} color="var(--color-profit)" />
+          <MetricRow label="Longest losing streak" value={`${metrics.longestLoseStreak} losses`} color="var(--color-loss)" />
+          <MetricRow label="Avg trade duration" value={metrics.averageTradeDuration ? formatDuration(metrics.averageTradeDuration) : "—"} />
+        </Panel>
       </div>
     </div>
   );

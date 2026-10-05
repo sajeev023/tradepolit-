@@ -28,7 +28,7 @@ export function SharedCta({ symbol }: { symbol: string }) {
       <div>
         <h2 className="text-white font-semibold">Want this for your own chart?</h2>
         <p className="text-sm text-zinc-400 mt-1">
-          TradCopilot analyzes any chart with validated trade logic — every entry, stop, and target is checked for
+          TradePilot analyzes any chart with validated trade logic — every entry, stop, and target is checked for
           mathematical consistency before it reaches you. 5 free analyses a day.
         </p>
       </div>

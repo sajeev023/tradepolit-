@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { Viewport } from "next";
 import { Suspense } from "react";
-import { Inter, Space_Grotesk, JetBrains_Mono, Newsreader } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SmoothScrollProvider } from "@/components/ui/smooth-scroll-provider";
@@ -17,7 +17,7 @@ import {
 } from "@/lib/seo";
 
 const siteUrl = "https://tradcopilot.com";
-const siteName = "TradCopilot";
+const siteName = "TradePilot";
 
 /* Self-hosted variable fonts (next/font) — no external requests at runtime.
    Inter = body/UI sans, Space Grotesk = technical display (eyebrows/labels),
@@ -25,36 +25,31 @@ const siteName = "TradCopilot";
    JetBrains Mono = eyebrows/badges/data values (the "data" layer). CSS
    variables are consumed by --font-sans / --font-display / --font-serif /
    --font-mono in globals.css. */
-const inter = Inter({
+const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-geist",
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-display-font",
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
-const newsreader = Newsreader({
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
+  weight: "400",
   variable: "--font-serif-font",
   display: "swap",
   style: ["normal", "italic"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
-    template: "%s | TradCopilot",
+    default: "TradePilot | AI Trading Copilot for Crypto & Forex Analysis",
+    template: "%s | TradePilot",
   },
   description:
     "Read-only AI trading copilot: live technical chart analysis (RSI, MACD, EMA, ATR), automated session journaling, behavioral guardrails, and risk tools for crypto & forex day traders.",
@@ -72,7 +67,7 @@ export const metadata: Metadata = {
   // via buildMetadata() in lib/seo.ts — a root-level canonical used to collapse
   // every subpage onto the homepage for search engines.
   openGraph: {
-    title: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
+    title: "TradePilot | AI Trading Copilot for Crypto & Forex Analysis",
     description:
       "Live technical chart analysis, session trade journaling, behavioral guardrails, and risk tools for active crypto & forex traders.",
     siteName,
@@ -82,7 +77,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
+    title: "TradePilot | AI Trading Copilot for Crypto & Forex Analysis",
     description:
       "Live technical chart analysis, trade journaling, and behavioral discipline guardrails for crypto & forex traders.",
   },
@@ -100,7 +95,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#05070B",
+  themeColor: "#0A0A09",
 };
 
 export default function RootLayout({
@@ -109,7 +104,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable} ${newsreader.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`dark ${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
       <head>
         {/* Entity-level structured data: Organization + WebSite on every page.
             Page-specific schemas (SoftwareApplication, FAQPage, BreadcrumbList,

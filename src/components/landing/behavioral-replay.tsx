@@ -121,7 +121,7 @@ export function BehavioralReplay() {
             Automated guardrails against emotional trading
           </h2>
           <p className="tp-body max-w-md">
-            Rapid re-entries, overtrading days, and cutting-winners patterns are flagged inside the workspace before capital is deployed — based on your declared rules and your last 20 logged trades. It warns; it never blocks, because TradCopilot is read-only.
+            Rapid re-entries, overtrading days, and cutting-winners patterns are flagged inside the workspace before capital is deployed — based on your declared rules and your last 20 logged trades. It warns; it never blocks, because TradePilot is read-only.
           </p>
           <div className="flex items-center gap-2.5 sm:gap-3 pt-1 sm:pt-2">
             <button

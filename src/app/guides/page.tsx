@@ -42,14 +42,14 @@ const GUIDES = [
     href: "/guides/support-and-resistance",
     name: "Support & Resistance That Holds Up",
     summary:
-      "How to map levels objectively from swing highs and lows instead of eyeballing them — the same swing-based method TradCopilot computes automatically on live candles.",
+      "How to map levels objectively from swing highs and lows instead of eyeballing them — the same swing-based method TradePilot computes automatically on live candles.",
     tag: "MARKET STRUCTURE",
   },
   {
     href: "/guides/technical-indicators",
     name: "RSI, MACD, EMA, ATR & VWAP Explained",
     summary:
-      "What each indicator measures, how it is calculated, where it misleads, and how they fit together in one structured read of a chart — using the exact parameters TradCopilot computes.",
+      "What each indicator measures, how it is calculated, where it misleads, and how they fit together in one structured read of a chart — using the exact parameters TradePilot computes.",
     tag: "INDICATORS",
   },
   {
@@ -81,7 +81,7 @@ export default function GuidesHubPage() {
               Trading guides that respect <span className="tp-serif-italic">the math.</span>
             </h1>
             <p className="tp-body max-w-2xl text-[15px] sm:text-[16px] leading-relaxed">
-              Short, practical, and grounded in the same calculations TradCopilot runs on
+              Short, practical, and grounded in the same calculations TradePilot runs on
               live candles. Educational content only — not financial advice.
             </p>
           </header>
@@ -113,7 +113,7 @@ export default function GuidesHubPage() {
           <section className="tc-terminal p-6 sm:p-10 text-center space-y-4">
             <h2 className="tp-h2">Practice every concept on live charts</h2>
             <p className="tp-body max-w-xl mx-auto text-[13px] sm:text-[14px]">
-              TradCopilot computes these same indicators from real-time crypto and forex
+              TradePilot computes these same indicators from real-time crypto and forex
               data — then journals the session and guards your risk rules. Free plan included.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">

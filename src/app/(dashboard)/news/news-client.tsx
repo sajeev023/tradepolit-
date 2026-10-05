@@ -2,19 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { 
-  Newspaper, 
-  ChevronRight, 
-  Flame, 
-  RefreshCw, 
-  TrendingUp, 
-  TrendingDown, 
-  Minus, 
-  Clock, 
-  Globe, 
-  ExternalLink,
-  Layers
-} from "lucide-react";
+import { Newspaper, ChevronRight, RefreshCw, Clock, Globe, ExternalLink } from "lucide-react";
+import { Chip, EmptyState, Label, Skeleton } from "@/components/fd/primitives";
 import type { NewsStory } from "@/lib/news";
 import { SYMBOLS } from "@/lib/market-registry";
 
@@ -109,311 +98,173 @@ export default function NewsPage() {
     setPage((p) => p + 1);
   };
 
-  const getSentimentBadge = (label: string = "Neutral", confidence: number = 0.5) => {
+  const sentimentChip = (label: string = "Neutral", confidence: number = 0.5) => {
     const pct = (confidence * 100).toFixed(0);
-    if (label === "Bullish") {
-      return (
-        <span className="badge badge-success">
-          <TrendingUp size={10} /> Bullish ({pct}%)
-        </span>
-      );
-    }
-    if (label === "Bearish") {
-      return (
-        <span className="badge badge-danger">
-          <TrendingDown size={10} /> Bearish ({pct}%)
-        </span>
-      );
-    }
-    return (
-      <span className="badge badge-neutral">
-        <Minus size={10} /> Neutral
-      </span>
-    );
+    if (label === "Bullish") return <Chip tone="gain">▲ Bullish {pct}%</Chip>;
+    if (label === "Bearish") return <Chip tone="loss">▼ Bearish {pct}%</Chip>;
+    return <Chip>Neutral</Chip>;
   };
 
-  const getImpactBadge = (impact: string = "Low") => {
-    if (impact === "High") {
-      return (
-        <span className="badge badge-warning animate-pulse">
-          <Flame size={10} /> High Impact
-        </span>
-      );
-    }
-    if (impact === "Medium") {
-      return (
-        <span className="badge badge-info">
-          Medium Impact
-        </span>
-      );
-    }
-    return (
-      <span className="badge badge-neutral">
-        Low Impact
-      </span>
-    );
+  const impactChip = (impact: string = "Low") => {
+    if (impact === "High") return <Chip tone="warn" dot>High impact</Chip>;
+    if (impact === "Medium") return <Chip tone="signal">Medium impact</Chip>;
+    return <Chip>Low impact</Chip>;
   };
 
   const formatPublishTime = (dateStr: string, now: number) => {
     try {
       const date = new Date(dateStr);
       if (!now) return date.toLocaleDateString([], { month: "short", day: "numeric" });
-      const diffMs = now - date.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      
+      const diffMins = Math.floor((now - date.getTime()) / 60000);
       if (diffMins < 1) return "Just now";
       if (diffMins < 60) return `${diffMins}m ago`;
-      
       const diffHours = Math.floor(diffMins / 60);
       if (diffHours < 24) return `${diffHours}h ago`;
-      
       return date.toLocaleDateString([], { month: "short", day: "numeric" });
     } catch (_) {
       return "Recently";
     }
   };
 
+  const Meta = ({ story }: { story: NewsStory }) => (
+    <div className="flex items-center justify-between gap-3 text-[11px] text-[var(--color-text-tertiary)]">
+      <span className="flex min-w-0 items-center gap-1.5">
+        {story.sourceLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={story.sourceLogo} alt={story.publisher} className="h-3.5 w-3.5 rounded-sm object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+        ) : (
+          <Globe size={11} className="text-[var(--color-text-quaternary)]" />
+        )}
+        <span className="truncate font-mono uppercase tracking-[0.1em] text-[var(--color-text-secondary)]">{story.publisher}</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1 font-mono"><Clock size={10} />{formatPublishTime(story.publishedAt, renderTime)}</span>
+    </div>
+  );
+
+  const Tags = ({ story }: { story: NewsStory }) => (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {sentimentChip(story.sentimentLabel, story.sentimentConfidence)}
+      {impactChip(story.impactScore)}
+      {story.isCached && <Chip>Offline DB</Chip>}
+      {story.affectedAssets.map((asset) => (
+        <button key={asset} onClick={() => handleAssetChange(asset)} className="cursor-pointer rounded px-1.5 py-[3px] font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--color-text-tertiary)] transition-colors hover:text-[var(--accent)]" style={{ boxShadow: "inset 0 0 0 1px var(--hairline)" }}>
+          {asset}
+        </button>
+      ))}
+    </div>
+  );
+
+  const [lead, ...rest] = stories;
+
   return (
-    <div className="flex flex-col gap-6 max-w-6xl mx-auto p-4 md:p-6">
-      {/* Bloomberg Terminal Style Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-5 border-[var(--color-border-subtle)]">
+    <div className="mx-auto flex max-w-[1080px] flex-col gap-6 lg:gap-8">
+      <header className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="live-dot live-dot--green" />
-            <span className="text-[10px] uppercase font-bold tracking-widest pos">Live Wire Feed</span>
-          </div>
-          <h1 className="text-2xl font-black tracking-tight mt-1" style={{ color: "var(--color-text-primary)" }}>
-            Market Intelligence Terminal
+          <p className="flex items-center gap-2"><span className="live-dot" style={{ width: 5, height: 5 }} /><Label>Live wire · refreshes in {countdown}s</Label></p>
+          <h1 className="mt-2 text-[var(--color-text-primary)]">
+            The wire, <em className="text-[var(--accent)]">in context.</em>
           </h1>
-          <p className="text-xs mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-            Aggregated institutional wire feed matching exact charts telemetry. Auto-updates in <span className="font-mono pos font-semibold">{countdown}s</span>.
+          <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-[var(--color-text-tertiary)]">
+            Aggregated headlines mapped to the markets on your charts, with sentiment and impact.
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          {page > 1 && (
-            <span className="text-xs text-[var(--color-text-tertiary)] mr-2 font-mono">
-              Page {page}
-            </span>
-          )}
-          <button
-            onClick={handleManualRefresh}
-            disabled={isLoading || isFetching}
-            className="btn-secondary text-xs flex items-center gap-2 px-4 py-2 border rounded-lg transition-all"
-            style={{
-              backgroundColor: "var(--color-bg-secondary)",
-              borderColor: "var(--color-border-subtle)",
-              color: "var(--color-text-secondary)"
-            }}
-          >
-            <RefreshCw size={12} className={isFetching ? "animate-spin text-[var(--color-profit)]" : ""} />
-            Sync Wire
+        <div className="flex items-center gap-3">
+          {page > 1 && <Label>Page {page}</Label>}
+          <button onClick={handleManualRefresh} disabled={isLoading || isFetching} className="btn-secondary">
+            <RefreshCw size={13} className={isFetching ? "animate-spin" : ""} /> Sync wire
           </button>
         </div>
+      </header>
+
+      <div role="tablist" aria-label="Market filter" className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0 [&::-webkit-scrollbar]:hidden">
+        {FILTER_ASSETS.map((asset) => {
+          const on = selectedAsset === asset;
+          return (
+            <button
+              key={asset}
+              role="tab"
+              aria-selected={on}
+              onClick={() => handleAssetChange(asset)}
+              className="h-8 shrink-0 cursor-pointer rounded-lg px-3.5 font-mono text-[11px] font-medium uppercase tracking-[0.08em] transition-colors"
+              style={{ background: on ? "var(--accent)" : "transparent", color: on ? "var(--on-accent)" : "var(--color-text-tertiary)", boxShadow: on ? "none" : "inset 0 0 0 1px var(--hairline)" }}
+            >
+              {asset === "ALL" ? "All wire" : asset}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Asset filter tags */}
-      <div className="flex flex-wrap gap-2 items-center">
-        {FILTER_ASSETS.map((asset) => (
-          <button
-            key={asset}
-            onClick={() => handleAssetChange(asset)}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all border"
-            style={{
-              backgroundColor: selectedAsset === asset ? "var(--color-accent-primary-muted)" : "var(--color-bg-secondary)",
-              borderColor: selectedAsset === asset ? "var(--color-accent-primary)" : "var(--color-border-subtle)",
-              color: selectedAsset === asset ? "var(--color-accent-primary)" : "var(--color-text-secondary)",
-            }}
-            onMouseEnter={(e) => {
-              if (selectedAsset !== asset) e.currentTarget.style.borderColor = "var(--color-border-default)";
-            }}
-            onMouseLeave={(e) => {
-              if (selectedAsset !== asset) e.currentTarget.style.borderColor = "var(--color-border-subtle)";
-            }}
-          >
-            {asset === "ALL" ? "All Wire" : asset}
-          </button>
-        ))}
-      </div>
-
-      {/* Error State */}
       {error && (
-        <div className="card p-6 text-center flex flex-col items-center justify-center rounded-xl" style={{ borderColor: "rgba(255, 107, 107, 0.22)", backgroundColor: "var(--color-loss-bg)" }}>
-          <p className="text-sm font-bold" style={{ color: "var(--color-loss)" }}>Unable to load market news</p>
-          <p className="text-xs mt-1 text-[var(--color-text-tertiary)]">Please try again shortly.</p>
-          <button
-            onClick={() => refetch()}
-            className="btn-secondary btn-sm mt-4"
-          >
-            Retry
-          </button>
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4" style={{ borderColor: "rgba(var(--red-rgb),0.3)", background: "var(--color-loss-bg)" }}>
+          <p className="text-[13px] text-[var(--color-loss)]">Unable to load market news. Please try again shortly.</p>
+          <button onClick={() => refetch()} className="btn-secondary btn-sm">Retry</button>
         </div>
       )}
 
-      {/* Loading Skeletal state */}
       {isLoading && stories.length === 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="card p-5 border border-[var(--color-border-subtle)] rounded-xl animate-pulse space-y-4">
-              <div className="flex justify-between items-center">
-                <div className="h-4 w-20 bg-[var(--color-bg-tertiary)] rounded" />
-                <div className="h-4 w-12 bg-[var(--color-bg-tertiary)] rounded" />
-              </div>
-              <div className="h-10 bg-[var(--color-bg-tertiary)] rounded w-full" />
-              <div className="h-16 bg-[var(--color-bg-tertiary)] rounded w-full" />
-              <div className="h-4 bg-[var(--color-bg-tertiary)] rounded w-1/3" />
-            </div>
-          ))}
+        <div className="space-y-4">
+          <Skeleton className="h-[300px] w-full" />
+          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-[110px] w-full" />)}
         </div>
       ) : stories.length === 0 ? (
-        /* Empty State */
-        <div className="card py-20 text-center flex flex-col items-center justify-center rounded-xl border border-[var(--color-border-subtle)]">
-          <Newspaper size={40} className="text-[var(--color-text-quaternary)] mb-3" />
-          <p className="text-sm font-bold" style={{ color: "var(--color-text-secondary)" }}>
-            Unable to load market news. Please try again shortly.
-          </p>
-          <p className="text-xs mt-1 max-w-sm mx-auto" style={{ color: "var(--color-text-tertiary)" }}>
-            No news available for {selectedAsset === "ALL" ? "any asset" : selectedAsset} from verified providers.
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 px-4 py-1.5 bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] border border-[var(--color-border-default)] text-xs font-bold rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors"
-          >
-            Retry
-          </button>
+        <div className="card p-8 sm:p-12">
+          <EmptyState
+            icon={<Newspaper size={18} />}
+            title="Nothing on the wire"
+            body={`No news available for ${selectedAsset === "ALL" ? "any market" : selectedAsset} from verified providers right now.`}
+            action={<button onClick={() => refetch()} className="btn-secondary btn-sm">Retry</button>}
+          />
         </div>
       ) : (
-        /* News Feed Grid */
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {stories.map((story) => (
-              <div 
-                key={story.id} 
-                className="card border rounded-xl overflow-hidden flex flex-col justify-between hover:border-[var(--color-border-default)] transition-all bg-[var(--color-bg-secondary)]"
-                style={{ borderColor: "var(--color-border-subtle)" }}
-              >
-                {/* News Image Header */}
-                {story.image && (
-                  <div className="h-40 w-full relative overflow-hidden bg-[var(--color-bg-deepest)] border-b border-[var(--color-border-subtle)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={story.image}
-                      alt={story.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover opacity-85 hover:opacity-100 hover:scale-105 transition-all duration-300"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  </div>
-                )}
-
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div>
-                    {/* Source and Time */}
-                    <div className="flex items-center justify-between text-[11px] text-[var(--color-text-tertiary)]">
-                      <div className="flex items-center gap-1.5">
-                        {story.sourceLogo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={story.sourceLogo}
-                            alt={story.publisher} 
-                            className="w-3.5 h-3.5 rounded-sm object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        ) : (
-                          <Globe size={11} className="text-[var(--color-text-quaternary)]" />
-                        )}
-                        <span className="font-bold uppercase tracking-wider text-[var(--color-text-secondary)]">
-                          {story.publisher}
-                        </span>
-                      </div>
-                      <span className="flex items-center gap-1 font-mono">
-                        <Clock size={10} />
-                        {formatPublishTime(story.publishedAt, renderTime)}
-                      </span>
-                    </div>
-
-                    {/* Headline */}
-                    <h2 className="text-sm font-bold leading-snug mt-3 line-clamp-2 group-hover:text-[var(--color-accent-primary)] transition-colors" style={{ color: "var(--color-text-primary)" }}>
-                      {story.title}
-                    </h2>
-
-                    {/* Summary */}
-                    <p className="text-xs mt-2 line-clamp-3 leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-                      {story.summary}
-                    </p>
-                  </div>
-
-                  {/* Badges & Actions footer */}
-                  <div className="pt-3 border-t border-[var(--color-border-subtle)] flex items-center justify-between">
-                    <div className="flex flex-wrap gap-1.5 items-center">
-                      {getSentimentBadge(story.sentimentLabel, story.sentimentConfidence)}
-                      {getImpactBadge(story.impactScore)}
-                      {story.isCached && (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-[var(--color-bg-deepest)] text-[var(--color-text-quaternary)] border border-[var(--color-border-subtle)]">
-                          Offline DB
-                        </span>
-                      )}
-                    </div>
-
-                    <a
-                      href={story.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[11px] font-bold inline-flex items-center gap-1 text-[var(--color-accent-primary)] hover:text-[var(--color-accent-primary-hover)] transition-colors"
-                    >
-                      Read <ExternalLink size={10} />
-                    </a>
-                  </div>
-
-                  {/* Affected asset tags (strict isolated tags) */}
-                  {story.affectedAssets.length > 0 && (
-                    <div className="flex flex-wrap gap-1 pt-1.5">
-                      <span className="text-[9px] text-[var(--color-text-tertiary)] flex items-center gap-0.5">
-                        <Layers size={9} /> Mapped:
-                      </span>
-                      {story.affectedAssets.map((asset) => (
-                        <button
-                          key={asset}
-                          onClick={() => handleAssetChange(asset)}
-                          className="text-[9px] font-mono font-bold px-1.5 py-0.2 bg-[var(--color-bg-deepest)] text-[var(--color-text-tertiary)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-default)] rounded transition-colors"
-                        >
-                          {asset}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+        <div className="space-y-4 lg:space-y-5">
+          {lead && (
+            <article className="card overflow-hidden md:grid md:grid-cols-[1.1fr_1fr]">
+              {lead.image && (
+                <div className="relative h-52 overflow-hidden md:h-auto" style={{ background: "var(--panel-2)" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={lead.image} alt={lead.title} loading="lazy" className="h-full w-full object-cover opacity-90 transition-transform duration-500 hover:scale-[1.03]" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                </div>
+              )}
+              <div className={`flex flex-col justify-between gap-5 p-5 sm:p-7 ${lead.image ? "" : "md:col-span-2"}`}>
+                <div>
+                  <Meta story={lead} />
+                  <h2 className="mt-4 font-serif text-[28px] leading-[1.08] tracking-[-0.01em] text-[var(--color-text-primary)] sm:text-[34px]">{lead.title}</h2>
+                  <p className="mt-3 line-clamp-4 text-[14px] leading-relaxed text-[var(--color-text-secondary)]">{lead.summary}</p>
+                </div>
+                <div className="space-y-4">
+                  <Tags story={lead} />
+                  <a href={lead.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[var(--accent)] transition-opacity hover:opacity-70">
+                    Read the story <ExternalLink size={11} />
+                  </a>
                 </div>
               </div>
-            ))}
-          </div>
+            </article>
+          )}
 
-          {/* Load More Pagination Trigger */}
-          <div className="flex justify-center pt-8 pb-12">
-            <button
-              onClick={handleLoadMore}
-              disabled={isLoading || isFetching}
-              className="px-6 py-2.5 rounded-lg text-xs font-bold border hover:bg-[var(--color-bg-tertiary)] transition-all flex items-center gap-2"
-              style={{
-                backgroundColor: "var(--color-bg-secondary)",
-                borderColor: "var(--color-border-subtle)",
-                color: "var(--color-text-secondary)"
-              }}
-            >
-              {isFetching ? (
-                <>
-                  <RefreshCw size={12} className="animate-spin text-[var(--color-profit)]" />
-                  Loading wire segment...
-                </>
-              ) : (
-                <>
-                  Load Next segment
-                  <ChevronRight size={12} />
-                </>
-              )}
+          <ul className="card divide-y divide-[var(--hairline)]">
+            {rest.map((story) => (
+              <li key={story.id}>
+                <article className="grid gap-4 p-5 transition-colors hover:bg-[var(--color-bg-hover)] sm:grid-cols-[1fr_auto] sm:p-6">
+                  <div className="min-w-0 space-y-3">
+                    <Meta story={story} />
+                    <a href={story.url} target="_blank" rel="noreferrer" className="group block">
+                      <h2 className="line-clamp-2 text-[16px] font-semibold leading-snug tracking-[-0.01em] text-[var(--color-text-primary)] transition-colors group-hover:text-[var(--accent)]">{story.title}</h2>
+                      <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-[var(--color-text-tertiary)]">{story.summary}</p>
+                    </a>
+                    <Tags story={story} />
+                  </div>
+                  {story.image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={story.image} alt="" loading="lazy" className="hidden h-24 w-36 rounded-lg object-cover opacity-85 sm:block" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                  )}
+                </article>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex justify-center pb-6 pt-2">
+            <button onClick={handleLoadMore} disabled={isLoading || isFetching} className="btn-secondary btn-lg">
+              {isFetching ? <><RefreshCw size={13} className="animate-spin" /> Loading…</> : <>Load next segment <ChevronRight size={13} /></>}
             </button>
           </div>
         </div>

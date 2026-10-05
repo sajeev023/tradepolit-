@@ -1,7 +1,7 @@
 /**
  * src/lib/i18n/dictionaries/pt-br.ts
  *
- * Brazilian Portuguese content dictionary for TradCopilot's SEO surface.
+ * Brazilian Portuguese content dictionary for TradePilot's SEO surface.
  *
  * IMPORTANT: This is NOT a machine translation. Content is written for
  * native Brazilian Portuguese search intent based on keyword research:
@@ -13,7 +13,7 @@
  *  - "indicadores técnicos"
  *  - "suporte e resistência"
  *
- * Product terminology (TradCopilot, RSI, MACD, EMA, ATR, VWAP) is
+ * Product terminology (TradePilot, RSI, MACD, EMA, ATR, VWAP) is
  * preserved verbatim — traders use these English abbreviations globally.
  */
 
@@ -21,7 +21,7 @@ import type { Dictionary } from "./en";
 
 export const dictionary: Dictionary = {
   common: {
-    siteName: "TradCopilot",
+    siteName: "TradePilot",
     siteTagline: "Copiloto de Trading com IA para Análise de Cripto & Forex",
     startFree: "Criar Conta Gratuita",
     startFreeNoCard: "Comece grátis — sem cartão de crédito",
@@ -54,7 +54,7 @@ export const dictionary: Dictionary = {
   home: {
     meta: {
       title:
-        "TradCopilot | Copiloto de Trading com IA para Análise de Cripto & Forex",
+        "TradePilot | Copiloto de Trading com IA para Análise de Cripto & Forex",
       description:
         "Copiloto de trading com IA para day traders de cripto e forex: análise técnica ao vivo com RSI, MACD, EMA e ATR, diário de sessão automatizado, proteções comportamentais e ferramentas de risco. Plano gratuito disponível.",
       keywords: [
@@ -78,7 +78,7 @@ export const dictionary: Dictionary = {
       title:
         "O Que É um Copiloto de Trading com IA? Definição, Capacidades e Limites",
       description:
-        "Um copiloto de trading com IA é um software que usa inteligência artificial para ajudar você a analisar mercados e melhorar suas decisões — sem operar por você. Como a categoria funciona, o que pode e não pode fazer, e como o TradCopilot implementa isso.",
+        "Um copiloto de trading com IA é um software que usa inteligência artificial para ajudar você a analisar mercados e melhorar suas decisões — sem operar por você. Como a categoria funciona, o que pode e não pode fazer, e como o TradePilot implementa isso.",
       keywords: [
         "o que é copiloto de trading IA",
         "copiloto de trading com IA",
@@ -101,7 +101,7 @@ export const dictionary: Dictionary = {
       {
         question: "Um copiloto de trading com IA executa ordens?",
         answer:
-          "Um copiloto, por definição, não deveria. Ele analisa, explica, registra e alerta enquanto você mantém o controle total da execução. O TradCopilot em particular não possui nenhuma funcionalidade de execução de ordens, não custodia fundos e nunca se conecta a corretoras ou exchanges.",
+          "Um copiloto, por definição, não deveria. Ele analisa, explica, registra e alerta enquanto você mantém o controle total da execução. O TradePilot em particular não possui nenhuma funcionalidade de execução de ordens, não custodia fundos e nunca se conecta a corretoras ou exchanges.",
       },
       {
         question:
@@ -151,7 +151,7 @@ export const dictionary: Dictionary = {
       title:
         "Análise de Mercado Cripto com IA — Análise ao Vivo de BTC, ETH & SOL",
       description:
-        "Como o TradCopilot analisa mercados cripto: dados de candles da Binance em tempo real para BTC, ETH e SOL, RSI/MACD/EMA/ATR/VWAP calculados no servidor, taxas de funding, Fear & Greed e alertas de movimentos bruscos.",
+        "Como o TradePilot analisa mercados cripto: dados de candles da Binance em tempo real para BTC, ETH e SOL, RSI/MACD/EMA/ATR/VWAP calculados no servidor, taxas de funding, Fear & Greed e alertas de movimentos bruscos.",
       keywords: [
         "análise de mercado cripto",
         "análise de criptomoedas com IA",
@@ -164,7 +164,7 @@ export const dictionary: Dictionary = {
     h1: "Análise de mercado cripto com IA em",
     h1Italic: "candles ao vivo.",
     intro:
-      "O mercado cripto nunca fecha, então sua análise não deveria rodar com dados desatualizados. O TradCopilot calcula toda a leitura técnica a partir de streams de candles em tempo real de BTC, ETH e SOL — depois explica o setup em linguagem simples, registra a sessão e protege suas regras de risco 24 horas por dia.",
+      "O mercado cripto nunca fecha, então sua análise não deveria rodar com dados desatualizados. O TradePilot calcula toda a leitura técnica a partir de streams de candles em tempo real de BTC, ETH e SOL — depois explica o setup em linguagem simples, registra a sessão e protege suas regras de risco 24 horas por dia.",
     liveDataHeading: "Feeds em tempo real, não capturas de tela",
     analysisHeading: "De indicadores a um setup escrito",
     sentimentHeading: "Camadas de sentimento feitas para este mercado",
@@ -172,15 +172,15 @@ export const dictionary: Dictionary = {
     faqHeading: "Perguntas sobre análise cripto",
     faqs: [
       {
-        question: "Quais instrumentos cripto o TradCopilot analisa?",
+        question: "Quais instrumentos cripto o TradePilot analisa?",
         answer:
           "BTC/USD, ETH/USD e SOL/USD atualmente. Preços são transmitidos em tempo real dos feeds públicos de WebSocket da Binance, e cada análise informa o preço e timestamp exatos utilizados.",
       },
       {
         question:
-          "O TradCopilot precisa das minhas chaves de API da exchange?",
+          "O TradePilot precisa das minhas chaves de API da exchange?",
         answer:
-          "Não. Os candles cripto vêm de streams de dados de mercado públicos que não exigem autenticação. O TradCopilot nunca se conecta à sua conta de exchange, não pode executar ordens e não custodia fundos.",
+          "Não. Os candles cripto vêm de streams de dados de mercado públicos que não exigem autenticação. O TradePilot nunca se conecta à sua conta de exchange, não pode executar ordens e não custodia fundos.",
       },
       {
         question: "Quão rápidas são as análises com IA?",
@@ -196,7 +196,7 @@ export const dictionary: Dictionary = {
       title:
         "Análise de Mercado Forex com IA — Setups de EUR/USD, GBP/USD & USD/JPY",
       description:
-        "Como o TradCopilot analisa forex: candles do TwelveData para pares principais, ouro e índices, análise por sessão, dimensionamento de posição preciso em lotes, e setups de IA explicados em linguagem simples.",
+        "Como o TradePilot analisa forex: candles do TwelveData para pares principais, ouro e índices, análise por sessão, dimensionamento de posição preciso em lotes, e setups de IA explicados em linguagem simples.",
       keywords: [
         "análise de mercado forex",
         "análise de forex com IA",
@@ -209,7 +209,7 @@ export const dictionary: Dictionary = {
     h1: "Análise de mercado forex com IA,",
     h1Italic: "sessão por sessão.",
     intro:
-      "Forex se move por sessões, não apenas por candles. O TradCopilot calcula toda a leitura técnica dos pares principais a partir de dados de candles ao vivo, sabe se Ásia, Londres ou Nova York está em jogo, dimensiona suas posições até o lote — e explica cada setup em linguagem que você pode usar ou descartar.",
+      "Forex se move por sessões, não apenas por candles. O TradePilot calcula toda a leitura técnica dos pares principais a partir de dados de candles ao vivo, sabe se Ásia, Londres ou Nova York está em jogo, dimensiona suas posições até o lote — e explica cada setup em linguagem que você pode usar ou descartar.",
     coverageHeading: "Pares principais, ouro e índices em um espaço de trabalho",
     analysisHeading: "Setups estruturados, não comentários vagos",
     riskMathHeading: "Dimensionamento de posição preciso em lotes",
@@ -217,15 +217,15 @@ export const dictionary: Dictionary = {
     faqHeading: "Perguntas sobre análise forex",
     faqs: [
       {
-        question: "Quais instrumentos forex o TradCopilot analisa?",
+        question: "Quais instrumentos forex o TradePilot analisa?",
         answer:
           "EUR/USD, GBP/USD e USD/JPY atualmente, além de ouro (XAU/USD), NASDAQ e S&P 500 — servidos via TwelveData.",
       },
       {
         question:
-          "O TradCopilot se conecta à minha corretora de forex?",
+          "O TradePilot se conecta à minha corretora de forex?",
         answer:
-          "Não. O TradCopilot é estritamente somente leitura: nunca se conecta a uma corretora, não pode executar ordens e não custodia fundos.",
+          "Não. O TradePilot é estritamente somente leitura: nunca se conecta a uma corretora, não pode executar ordens e não custodia fundos.",
       },
       {
         question:
@@ -299,7 +299,7 @@ export const dictionary: Dictionary = {
     meta: {
       title: "Recursos — Capacidades Completas do Terminal de Trading com IA",
       description:
-        "Todas as capacidades do TradCopilot: análise gráfica com IA, diário de trading, proteções comportamentais, dimensionamento de posição, backtesting, alertas, pulso de mercado e notícias.",
+        "Todas as capacidades do TradePilot: análise gráfica com IA, diário de trading, proteções comportamentais, dimensionamento de posição, backtesting, alertas, pulso de mercado e notícias.",
       keywords: [
         "recursos de trading com IA",
         "recursos do terminal de trading",
@@ -328,9 +328,9 @@ export const dictionary: Dictionary = {
   faq: {
     meta: {
       title:
-        "Perguntas Frequentes — FAQ do Terminal TradCopilot & Arquitetura",
+        "Perguntas Frequentes — FAQ do Terminal TradePilot & Arquitetura",
       description:
-        "Respostas completas sobre a análise gráfica com IA do TradCopilot, matemática de indicadores, diário de sessão, proteções de risco, preços e modelo de segurança somente leitura.",
+        "Respostas completas sobre a análise gráfica com IA do TradePilot, matemática de indicadores, diário de sessão, proteções de risco, preços e modelo de segurança somente leitura.",
       keywords: [
         "tradcopilot faq",
         "perguntas sobre trading IA",
@@ -340,27 +340,27 @@ export const dictionary: Dictionary = {
     h1: "Perguntas",
     h1Italic: "Frequentes.",
     subtitle:
-      "Respostas claras e transparentes sobre como o TradCopilot funciona, nossa corrida multi-modelo de IA, cálculos de indicadores, segurança e cobrança.",
+      "Respostas claras e transparentes sobre como o TradePilot funciona, nossa corrida multi-modelo de IA, cálculos de indicadores, segurança e cobrança.",
     faqs: [
       {
-        question: "Como o TradCopilot analisa dados de mercado?",
+        question: "Como o TradePilot analisa dados de mercado?",
         answer:
-          "O TradCopilot calcula indicadores técnicos diretamente de dados de candlestick ao vivo — feeds em tempo real da Binance para BTC, ETH e SOL, e TwelveData para pares forex, ouro e índices.",
+          "O TradePilot calcula indicadores técnicos diretamente de dados de candlestick ao vivo — feeds em tempo real da Binance para BTC, ETH e SOL, e TwelveData para pares forex, ouro e índices.",
       },
       {
         question:
           "Preciso conectar minha corretora ou compartilhar chaves de exchange?",
         answer:
-          "Não. O TradCopilot é estritamente somente leitura: não se conecta à sua corretora ou contas de exchange, não custodia fundos e não pode executar ordens.",
+          "Não. O TradePilot é estritamente somente leitura: não se conecta à sua corretora ou contas de exchange, não custodia fundos e não pode executar ordens.",
       },
       {
-        question: "Quanto custa o TradCopilot?",
+        question: "Quanto custa o TradePilot?",
         answer:
           "O plano Free custa $0 para sempre e inclui 5 análises gráficas com IA por dia. O Pro Terminal custa $7,49 por mês com análises e alertas ilimitados.",
       },
       {
         question:
-          "O TradCopilot executa operações ou dá aconselhamento financeiro?",
+          "O TradePilot executa operações ou dá aconselhamento financeiro?",
         answer:
           "Não em nenhum dos dois casos. Não há execução de ordens em nenhum lugar do produto — é uma estação analítica apenas, e sua saída é informação educacional, não aconselhamento de investimento.",
       },
@@ -384,7 +384,7 @@ export const dictionary: Dictionary = {
     h1: "Guias de trading que respeitam",
     h1Italic: "a matemática.",
     subtitle:
-      "Curtos, práticos e baseados nos mesmos cálculos que o TradCopilot executa em candles ao vivo. Conteúdo educacional apenas — não constitui aconselhamento financeiro.",
+      "Curtos, práticos e baseados nos mesmos cálculos que o TradePilot executa em candles ao vivo. Conteúdo educacional apenas — não constitui aconselhamento financeiro.",
     entries: [
       {
         name: "O Guia Completo de Dimensionamento de Posição",
@@ -401,7 +401,7 @@ export const dictionary: Dictionary = {
       {
         name: "Suporte & Resistência Que Funciona",
         summary:
-          "Como mapear níveis objetivamente a partir de máximas e mínimas de swing em vez de traçar a olho — o mesmo método baseado em swing que o TradCopilot calcula automaticamente em candles ao vivo.",
+          "Como mapear níveis objetivamente a partir de máximas e mínimas de swing em vez de traçar a olho — o mesmo método baseado em swing que o TradePilot calcula automaticamente em candles ao vivo.",
         tag: "ESTRUTURA DE MERCADO",
       },
       {
@@ -419,6 +419,6 @@ export const dictionary: Dictionary = {
     ],
     ctaHeading: "Pratique cada conceito em gráficos ao vivo",
     ctaBody:
-      "O TradCopilot calcula esses mesmos indicadores de dados de cripto e forex em tempo real — depois registra a sessão e protege suas regras de risco. Plano gratuito disponível.",
+      "O TradePilot calcula esses mesmos indicadores de dados de cripto e forex em tempo real — depois registra a sessão e protege suas regras de risco. Plano gratuito disponível.",
   },
 };

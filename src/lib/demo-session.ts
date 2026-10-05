@@ -99,9 +99,15 @@ async function makeToken(demoUserId: string, email: string, issuedAt: number): P
 }
 
 async function verifyToken(token: string): Promise<{ demoUserId: string; email: string; issuedAt: number } | null> {
+  // The email segment contains dots (e.g. demo-ab12@tradcopilot.local), so a
+  // fixed 4-way split never matches. Read id from the front and issuedAt/sig
+  // from the back; everything in between is the email.
   const parts = token.split(".");
-  if (parts.length !== 4) return null;
-  const [demoUserId, email, issuedAtStr, sig] = parts;
+  if (parts.length < 4) return null;
+  const sig = parts[parts.length - 1];
+  const issuedAtStr = parts[parts.length - 2];
+  const demoUserId = parts[0];
+  const email = parts.slice(1, -2).join(".");
   const payload = `${demoUserId}.${email}.${issuedAtStr}`;
   const expectedSig = await sign(payload);
   if (!timingSafeEqualHex(sig, expectedSig)) return null;

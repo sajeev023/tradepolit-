@@ -37,10 +37,10 @@ const JOURNAL_FAQS: FaqItem[] = [
   {
     question: "Do I have to manually enter every trade?",
     answer:
-      "You log your executed trade details (symbol, entry price, exit price, size, stop loss, and tags) in a streamlined interface designed for rapid entry in under 15 seconds. TradCopilot is read-only and deliberately does not connect to your exchange keys, ensuring complete security.",
+      "You log your executed trade details (symbol, entry price, exit price, size, stop loss, and tags) in a streamlined interface designed for rapid entry in under 15 seconds. TradePilot is read-only and deliberately does not connect to your exchange keys, ensuring complete security.",
   },
   {
-    question: "What emotion and mistake tags does TradCopilot track?",
+    question: "What emotion and mistake tags does TradePilot track?",
     answer:
       "Emotion tags include Confident, Fearful, Greedy, Revenge, FOMO, Disciplined, and Neutral. Mistake tags include FOMO Entry, Overleveraging, Moving Stop Loss, Early Exit, Revenge Trade, No Plan, and Poor Sizing.",
   },
@@ -107,7 +107,7 @@ export default function TradingJournalPage() {
               An AI trading journal that remembers <span className="tp-serif-italic">how you behave.</span>
             </h1>
             <p className="tp-body max-w-2xl text-[15px] sm:text-[16px] leading-relaxed">
-              Most trading journals are passive spreadsheets that you fill out and never revisit. TradCopilot turns your journal into an active behavioral guardrail — logging emotions, mistakes, and R-multiples to protect your capital during emotional extremes.
+              Most trading journals are passive spreadsheets that you fill out and never revisit. TradePilot turns your journal into an active behavioral guardrail — logging emotions, mistakes, and R-multiples to protect your capital during emotional extremes.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link href="/signup" className="btn-primary btn-lg">
@@ -130,7 +130,7 @@ export default function TradingJournalPage() {
                 Retail drawdown rarely happens because a trader lacks a technical chart indicator. It happens because after two consecutive stop-outs, emotional fatigue takes over: sizing increases to &ldquo;make it back,&rdquo; setups are forced on lower timeframes, and risk rules are abandoned.
               </p>
               <p className="tp-body">
-                TradCopilot bridges your past executions with your next chart analysis. When you analyze a setup, the engine checks your last 20 logged trades. If it detects a streak of losses tagged with <span className="text-[var(--red)] font-medium">Revenge</span> or <span className="text-[var(--amber)] font-medium">FOMO</span>, the terminal warns you directly before you risk capital.
+                TradePilot bridges your past executions with your next chart analysis. When you analyze a setup, the engine checks your last 20 logged trades. If it detects a streak of losses tagged with <span className="text-[var(--red)] font-medium">Revenge</span> or <span className="text-[var(--amber)] font-medium">FOMO</span>, the terminal warns you directly before you risk capital.
               </p>
             </div>
           </section>
@@ -166,7 +166,7 @@ export default function TradingJournalPage() {
             <span className="tp-eyebrow-mono block">03 · TAXONOMY</span>
             <h2 className="tp-h2">Structured emotion and mistake taxonomy</h2>
             <p className="tp-body max-w-[65ch]">
-              Numbers show what happened; tags explain why it happened. TradCopilot standardizes post-trade reviews with two structured dimensions:
+              Numbers show what happened; tags explain why it happened. TradePilot standardizes post-trade reviews with two structured dimensions:
             </p>
 
             <div className="grid gap-4 sm:grid-cols-2">

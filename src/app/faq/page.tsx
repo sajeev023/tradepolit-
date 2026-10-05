@@ -9,9 +9,9 @@ import { buildMetadata, breadcrumbJsonLd, faqPageJsonLd } from "@/lib/seo";
 import { FAQS } from "@/lib/faq-data";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Frequently Asked Questions — TradCopilot Terminal & Architecture FAQ",
+  title: "Frequently Asked Questions — TradePilot Terminal & Architecture FAQ",
   description:
-    "Comprehensive answers regarding TradCopilot's AI chart analysis, indicator math, session journaling, risk guardrails, pricing, and read-only security model.",
+    "Comprehensive answers regarding TradePilot's AI chart analysis, indicator math, session journaling, risk guardrails, pricing, and read-only security model.",
   path: "/faq",
   keywords: [
     "tradcopilot faq",
@@ -49,7 +49,7 @@ export default function FaqPage() {
               Frequently Asked <span className="tp-serif-italic">Questions.</span>
             </h1>
             <p className="tp-body max-w-2xl text-[15px] sm:text-[16px] leading-relaxed">
-              Clear, transparent answers about how TradCopilot works, our multi-model AI race, indicator calculations, security, and billing.
+              Clear, transparent answers about how TradePilot works, our multi-model AI race, indicator calculations, security, and billing.
             </p>
           </header>
 

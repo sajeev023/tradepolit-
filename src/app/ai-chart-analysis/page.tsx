@@ -22,9 +22,9 @@ export const metadata = buildMetadata({
 
 /** The three FAQ entries rendered on this page — kept in sync with the visible accordion below. */
 const PAGE_FAQ_QUESTIONS = [
-  "How does TradCopilot analyze market data?",
+  "How does TradePilot analyze market data?",
   "How is this different from asking ChatGPT about a chart?",
-  "Does TradCopilot execute trades or give financial advice?",
+  "Does TradePilot execute trades or give financial advice?",
 ];
 
 const PAGE_FAQS = PAGE_FAQ_QUESTIONS.map((question) =>
@@ -176,7 +176,7 @@ export default function AiChartAnalysisPage() {
               at a screenshot or a raw price feed and guesses the numbers behind it.
             </p>
             <p className="tp-body">
-              TradCopilot runs the opposite direction. Every indicator is computed
+              TradePilot runs the opposite direction. Every indicator is computed
               deterministically by server-side code from live OHLCV candles{" "}
               <em className="tp-serif-italic">before</em> any model writes a word. The AI&apos;s
               job is explanation, not measurement: it turns fixed readings into a structured
@@ -276,7 +276,7 @@ export default function AiChartAnalysisPage() {
             <h2 className="tp-h2">How the multi-model pipeline works</h2>
             <p className="tp-body max-w-[65ch]">
               Most &ldquo;AI analysis&rdquo; products are a single model call with no audit trail.
-              TradCopilot treats the model as one stage in a pipeline that ends with validation —
+              TradePilot treats the model as one stage in a pipeline that ends with validation —
               here is every stage:
             </p>
 
@@ -354,7 +354,7 @@ export default function AiChartAnalysisPage() {
                 trading journal
               </Link>{" "}
               so future analyses are grounded in what actually happened, not what you remember.
-              TradCopilot provides educational market analysis, not financial advice — see the{" "}
+              TradePilot provides educational market analysis, not financial advice — see the{" "}
               <Link href="/disclaimer" className="text-[var(--accent)] hover:underline underline-offset-2">
                 full disclaimer
               </Link>

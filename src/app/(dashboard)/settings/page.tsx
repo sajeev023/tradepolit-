@@ -4,7 +4,9 @@ export const dynamic = "force-dynamic";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Bell, RefreshCw, Key, Lock, AlertTriangle, Loader2, User, Palette, CreditCard, Zap } from "lucide-react";
+import { Bell, RefreshCw, AlertTriangle, Loader2, User, Palette, CreditCard, Zap } from "lucide-react";
+import { Chip, Label, Skeleton } from "@/components/fd/primitives";
+import { BRAND } from "@/lib/brand";
 import { SYMBOLS } from "@/lib/market-registry";
 import { FormInput } from "@/components/ui/form-input";
 import { toast } from "sonner";
@@ -265,512 +267,305 @@ export default function SettingsPage() {
     return fullName.slice(0, 2).toUpperCase();
   };
 
+  const isPro = profileData?.subscriptionStatus === "PRO_ACTIVE";
+  const TABS = [
+    { id: "profile", label: "Profile", icon: User, note: "Name and sign-in" },
+    { id: "settings", label: "Account", icon: Bell, note: "Alerts, keys, security" },
+    { id: "preferences", label: "Preferences", icon: Palette, note: "Terminal defaults" },
+    { id: "billing", label: "Billing", icon: CreditCard, note: "Plan and usage" },
+  ] as const;
+
   return (
-    <div className="flex flex-col gap-6 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="animate-fade-in flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-            Settings & Profile
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-            Manage personal credentials, default trading configurations, and account options.
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto flex max-w-[1080px] flex-col gap-6 lg:gap-8">
+      <header>
+        <Label>Settings</Label>
+        <h1 className="mt-2 text-[var(--color-text-primary)]">
+          Make it <em className="text-[var(--accent)]">yours.</em>
+        </h1>
+        <p className="mt-3 max-w-lg text-[14px] leading-relaxed text-[var(--color-text-tertiary)]">
+          Manage your profile, alerts, terminal defaults and plan.
+        </p>
+      </header>
 
-      {/* Navigation tabs */}
-      <div className="flex border-b border-[var(--color-border-default)] gap-4 mb-2 animate-fade-in">
-        {(["profile", "settings", "preferences", "billing"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-3 text-xs font-semibold uppercase tracking-wider transition-all relative cursor-pointer ${
-              activeTab === tab
-                ? "text-[var(--color-accent-primary)] font-bold"
-                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-            }`}
-          >
-            {tab}
-            {activeTab === tab && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-accent-primary)] rounded-full" />
-            )}
-          </button>
-        ))}
-      </div>
+      <div className="grid items-start gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
+        {/* Section nav: vertical rail on desktop, scrolling tabs on mobile */}
+        <nav aria-label="Settings sections" className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] lg:sticky lg:top-[calc(var(--spacing-topbar)+var(--spacing-demo-banner)+1.5rem)] lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden">
+          {TABS.map(({ id, label, icon: Icon, note }) => {
+            const on = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                aria-current={on ? "page" : undefined}
+                className="group relative flex shrink-0 cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-left transition-colors lg:py-3"
+                style={{ background: on ? "var(--panel-2)" : "transparent", boxShadow: on ? "inset 0 0 0 1px var(--color-border-strong)" : "none" }}
+              >
+                {on && <span className="absolute -left-px bottom-2.5 top-2.5 hidden w-[3px] rounded-r-full lg:block" style={{ background: "var(--accent)" }} />}
+                <Icon size={16} strokeWidth={on ? 2.2 : 1.7} style={{ color: on ? "var(--accent)" : "var(--color-text-tertiary)" }} />
+                <span className="min-w-0">
+                  <span className={`block text-[13.5px] font-medium ${on ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]"}`}>{label}</span>
+                  <span className="hidden text-[11.5px] text-[var(--color-text-quaternary)] lg:block">{note}</span>
+                </span>
+              </button>
+            );
+          })}
+        </nav>
 
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-40">
-          <RefreshCw className="animate-spin text-[var(--color-accent-primary)] mb-2" size={24} />
-          <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>Loading settings...</span>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* PROFILE TAB */}
-          {activeTab === "profile" && (
-            <div className="animate-fade-in space-y-6">
-              <form onSubmit={handleUpdateProfile} className="card p-5 space-y-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <User size={16} className="text-[var(--color-accent-primary)]" />
-                  <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                    Personal Profile Details
-                  </h2>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-6 pb-2 border-b border-[var(--color-border-default)]">
-                  <div className="w-16 h-16 rounded-full bg-[var(--color-bg-tertiary)] border-2 border-[var(--accent)] flex items-center justify-center text-xl font-bold font-mono text-[var(--color-accent-primary)] tracking-wider">
-                    {getInitials()}
-                  </div>
-                  <div className="text-center sm:text-left space-y-0.5">
-                    <span className="text-sm font-semibold block text-[var(--color-text-primary)]">{fullName}</span>
-                    <span className="text-xs font-mono" style={{ color: "var(--color-text-tertiary)" }}>{email}</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                      Full Name
-                    </label>
-                    <FormInput
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Enter your name..."
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                      Email Address (Read-only)
-                    </label>
-                    <FormInput
-                      type="email"
-                      value={email}
-                      disabled
-                      placeholder="your.email@domain.com"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="submit"
-                    disabled={profileUpdating}
-                    className="btn-primary text-xs"
-                  >
-                    {profileUpdating && <RefreshCw className="animate-spin" size={14} />}
-                    Update Profile Name
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* SETTINGS TAB */}
-          {activeTab === "settings" && (
-            <div className="animate-fade-in space-y-6">
-              <form onSubmit={handleSaveSettings} className="space-y-6">
-                {/* Notifications Panel */}
-                <div className="card p-5 space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Bell size={16} className="text-[var(--color-accent-primary)]" />
-                    <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                      Notification Preferences
-                    </h2>
-                  </div>
-
-                  <div className="space-y-3.5 text-xs">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifyEmail}
-                        onChange={(e) => setNotifyEmail(e.target.checked)}
-                        className="rounded border-[var(--color-border-strong)] bg-[var(--color-bg-tertiary)] text-[var(--color-accent-primary)] focus:ring-0 w-4 h-4"
-                      />
-                      <div className="space-y-0.5">
-                        <span className="font-semibold block text-[var(--color-text-primary)]">Email Alerts</span>
-                        <span style={{ color: "var(--color-text-tertiary)" }}>Receive triggered alerts in your email inbox</span>
+        <div className="min-w-0">
+          {isLoading ? (
+            <div className="space-y-4">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-40 w-full" />)}</div>
+          ) : (
+            <div className="space-y-4 animate-enter" key={activeTab}>
+              {/* ── PROFILE ─────────────────────────────────────────────── */}
+              {activeTab === "profile" && (
+                <form onSubmit={handleUpdateProfile}>
+                  <SettingsCard title="Profile" desc="How you appear across the terminal.">
+                    <div className="flex items-center gap-5 pb-5">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border font-mono text-[20px] font-medium tracking-wider" style={{ background: "var(--panel-3)", borderColor: "rgba(var(--accent-rgb),0.5)", color: "var(--accent)" }}>
+                        {getInitials()}
                       </div>
-                    </label>
-
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifyInApp}
-                        onChange={(e) => setNotifyInApp(e.target.checked)}
-                        className="rounded border-[var(--color-border-strong)] bg-[var(--color-bg-tertiary)] text-[var(--color-accent-primary)] focus:ring-0 w-4 h-4"
-                      />
-                      <div className="space-y-0.5">
-                        <span className="font-semibold block text-[var(--color-text-primary)]">In-App Notifications</span>
-                        <span style={{ color: "var(--color-text-tertiary)" }}>Show real-time triggers in the dashboard navbar</span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[15px] font-semibold text-[var(--color-text-primary)]">{fullName || "Trader"}</p>
+                        <p className="truncate font-mono text-[12px] text-[var(--color-text-tertiary)]">{email}</p>
                       </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Credentials Panel */}
-                <div className="card p-5 space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Key size={16} className="text-[var(--color-accent-primary)]" />
-                    <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                      API Keys (Encrypted at Rest)
-                    </h2>
-                  </div>
-
-                  <p className="text-[10px] leading-relaxed mb-4" style={{ color: "var(--color-text-tertiary)" }}>
-                    Add personal API keys to increase request rate limits. Values are symmetric-encrypted at rest and decrypted only in-memory.
-                  </p>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                        TwelveData API Key
-                      </label>
-                      <FormInput
-                        type="password"
-                        value={tdKey}
-                        onChange={(e) => setTdKey(e.target.value)}
-                        placeholder="Paste TwelveData key..."
-                      />
                     </div>
-
-                    <div>
-                      <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                        CoinMarketCap API Key
-                      </label>
-                      <FormInput
-                        type="password"
-                        value={cmcKey}
-                        onChange={(e) => setCmcKey(e.target.value)}
-                        placeholder="Paste CoinMarketCap key..."
-                      />
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <LabeledField label="Full name">
+                        <FormInput type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter your name…" required />
+                      </LabeledField>
+                      <LabeledField label="Email (read-only)">
+                        <FormInput type="email" value={email} disabled placeholder="your.email@domain.com" />
+                      </LabeledField>
                     </div>
-                  </div>
-                </div>
+                    <FormFooter>
+                      <button type="submit" disabled={profileUpdating} className="btn-primary">
+                        {profileUpdating && <RefreshCw className="animate-spin" size={14} />} Update profile
+                      </button>
+                    </FormFooter>
+                  </SettingsCard>
+                </form>
+              )}
 
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={saveMutation.isPending}
-                    className="btn-primary text-xs"
-                  >
-                    {saveMutation.isPending && <RefreshCw className="animate-spin" size={14} />}
-                    Save All Settings
-                  </button>
-                </div>
-              </form>
+              {/* ── ACCOUNT ─────────────────────────────────────────────── */}
+              {activeTab === "settings" && (
+                <>
+                  <form onSubmit={handleSaveSettings} className="space-y-4">
+                    <SettingsCard title="Notifications" desc="Where triggered alerts reach you.">
+                      <ToggleRow label="Email alerts" desc="Receive triggered alerts in your inbox." checked={notifyEmail} onChange={setNotifyEmail} />
+                      <ToggleRow label="In-app notifications" desc="Show real-time triggers in the top bar." checked={notifyInApp} onChange={setNotifyInApp} last />
+                    </SettingsCard>
 
-              {/* Change Password Panel */}
-              <form onSubmit={handleUpdatePassword} className="card p-5 space-y-4 border border-[var(--color-border-default)]">
-                <div className="flex items-center gap-2 mb-2">
-                  <Lock size={16} className="text-[var(--color-accent-primary)]" />
-                  <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                    Change Password
-                  </h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                      New Password
-                    </label>
-                    <FormInput
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="At least 8 characters..."
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                      Confirm New Password
-                    </label>
-                    <FormInput
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Repeat new password..."
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="submit"
-                    disabled={passwordUpdating}
-                    className="px-6 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border border-[var(--color-border-default)] bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-primary)]"
-                  >
-                    {passwordUpdating && <RefreshCw className="animate-spin" size={14} />}
-                    Update Password
-                  </button>
-                </div>
-              </form>
-
-              {/* Danger Zone */}
-              <div className="card p-5 space-y-4 border border-[rgba(var(--red-rgb),0.3)] bg-[rgba(var(--red-rgb),0.04)]">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle size={16} className="text-[var(--color-loss)]" />
-                  <h2 className="text-sm font-semibold text-[var(--color-loss)]">
-                    Danger Zone (GDPR Compliance)
-                  </h2>
-                </div>
-
-                <p className="text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                  Deleting your account is permanent. It will instantly erase your profile, settings, alert thresholds, strategy setups, backtest records, RAG-grounded AI history, and all logged trade performance charts. **This action cannot be undone.**
-                </p>
-
-                <div className="space-y-4 pt-2">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={deleteConfirmed}
-                      onChange={(e) => setDeleteConfirmed(e.target.checked)}
-                      className="rounded border-[rgba(var(--red-rgb),0.6)] bg-[var(--color-bg-tertiary)] text-[var(--color-loss)] focus:ring-0 w-4 h-4 mt-0.5"
-                    />
-                    <span className="text-xs font-semibold text-[var(--color-text-secondary)] select-none">
-                      I understand that this will permanently destroy all TradCopilot data.
-                    </span>
-                  </label>
-
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleDeleteAccount}
-                      disabled={!deleteConfirmed || deletingAccount}
-                      className="px-6 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-[var(--color-loss-bg)] text-[var(--color-loss)] border border-[rgba(var(--red-rgb),0.4)] hover:bg-[var(--color-loss-bg)] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {deletingAccount && <Loader2 className="animate-spin" size={14} />}
-                      Permanently Delete My Account
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TRADING PREFERENCES TAB */}
-          {activeTab === "preferences" && (
-            <div className="animate-fade-in space-y-6">
-              <form onSubmit={handleSavePreferences} className="card p-5 space-y-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Palette size={16} className="text-[var(--color-accent-primary)]" />
-                  <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-                    Trading & Terminal Preferences
-                  </h2>
-                </div>
-
-                <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-                  Configure your default dashboard defaults, AI Copilot behavior, and preferred charting settings. Saved preferences persist locally in this browser.
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                  {/* Default timeframe selector */}
-                  <div>
-                    <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-                      Default Timeframe
-                    </label>
-                    <select
-                      value={defaultTimeframe}
-                      onChange={(e) => setDefaultTimeframe(e.target.value as any)}
-                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-accent"
-                    >
-                      {["1m", "5m", "15m", "1h", "4h", "1d", "1W"].map((tf) => (
-                        <option key={tf} value={tf}>{tf}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Default market symbol selector */}
-                  <div>
-                    <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-                      Default Market / Symbol
-                    </label>
-                    <select
-                      value={defaultSymbol}
-                      onChange={(e) => setDefaultSymbol(e.target.value)}
-                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-accent"
-                    >
-                      {/* Default symbol dropdown — driven by the market registry. */}
-                      {SYMBOLS.map((sym) => (
-                        <option key={sym} value={sym}>{sym}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* AI Copilot Behavior Mode */}
-                  <div>
-                    <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-                      AI Copilot Behavior
-                    </label>
-                    <select
-                      value={aiBehavior}
-                      onChange={(e) => setAiBehavior(e.target.value as any)}
-                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-accent"
-                    >
-                      <option value="balanced">Balanced / Disciplined Coach (Default)</option>
-                      <option value="aggressive">Aggressive Market Scan (Maximum Opportunities)</option>
-                      <option value="risk-shield">Risk-Shield Coach (Preservation Mode)</option>
-                    </select>
-                  </div>
-
-                  {/* Default Chart Type */}
-                  <div>
-                    <label className="block text-[10px] uppercase font-semibold mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-                      Default Chart Type
-                    </label>
-                    <select
-                      value={defaultChartType}
-                      onChange={(e) => setDefaultChartType(e.target.value as any)}
-                      className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-accent"
-                    >
-                      <option value="candlestick">Standard Candlestick</option>
-                      <option value="line">Solid Line Chart</option>
-                      <option value="heikin-ashi">Heikin-Ashi (Smoothed Trend)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="submit"
-                    className="btn-primary text-xs cursor-pointer"
-                  >
-                    Save Preferences
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* BILLING TAB */}
-          {activeTab === "billing" && (
-            <div className="animate-fade-in space-y-6">
-              <div className="card p-6 border-[var(--color-border-subtle)] bg-[var(--color-bg-deepest)]/40 space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border-subtle)]">
-                  <div className="flex items-center gap-2.5">
-                    <CreditCard size={18} className="text-[var(--color-accent-primary)]" />
-                    <div>
-                      <h2 className="text-sm font-bold text-[var(--color-text-primary)]">Subscription & Billing</h2>
-                      <p className="text-[11px] text-[var(--color-text-tertiary)]">Manage plan memberships, usage limits, and invoices.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
-                      <span className="text-[10px] uppercase font-bold tracking-widest bg-[var(--color-profit-bg)] border border-[rgba(var(--green-rgb),0.2)] text-[var(--color-profit)] px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <Zap size={10} className="fill-[var(--color-profit)] text-[var(--color-profit)]" /> PRO Tier
-                      </span>
-                    ) : (
-                      <span className="text-[10px] uppercase font-bold tracking-widest bg-[var(--color-bg-tertiary)] border border-[var(--color-border-strong)] text-[var(--color-text-secondary)] px-2.5 py-1 rounded-full">
-                        FREE Tier
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Plan Details & Limits */}
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">Plan Usage Metrics</h3>
-                    <div className="space-y-3 font-sans">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-[var(--color-text-secondary)]">AI Chart Analyses</span>
-                        {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
-                          <span className="font-bold text-[var(--color-profit)]">Unlimited</span>
-                        ) : (
-                          <span className="font-mono text-[var(--color-text-secondary)] font-semibold">
-                            {profileData?.dailyAnalysisCount ?? 0} / 5 used today
-                          </span>
-                        )}
+                    <SettingsCard title="Data provider keys" desc="Optional personal keys to raise rate limits. Encrypted at rest and decrypted only in memory.">
+                      <div className="grid gap-4">
+                        <LabeledField label="TwelveData API key">
+                          <FormInput type="password" value={tdKey} onChange={(e) => setTdKey(e.target.value)} placeholder="Paste TwelveData key…" />
+                        </LabeledField>
+                        <LabeledField label="CoinMarketCap API key">
+                          <FormInput type="password" value={cmcKey} onChange={(e) => setCmcKey(e.target.value)} placeholder="Paste CoinMarketCap key…" />
+                        </LabeledField>
                       </div>
-                      {profileData?.subscriptionStatus !== "PRO_ACTIVE" && (
-                        <div className="w-full bg-[var(--color-bg-tertiary)] rounded-full h-1.5 overflow-hidden border border-[var(--color-border-subtle)]">
-                          <div
-                            className="bg-[var(--accent)] h-1.5 rounded-full"
-                            style={{ width: `${Math.min(100, ((profileData?.dailyAnalysisCount ?? 0) / 5) * 100)}%` }}
-                          />
-                        </div>
-                      )}
+                      <FormFooter>
+                        <button type="submit" disabled={saveMutation.isPending} className="btn-primary">
+                          {saveMutation.isPending && <RefreshCw className="animate-spin" size={14} />} Save settings
+                        </button>
+                      </FormFooter>
+                    </SettingsCard>
+                  </form>
 
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-[var(--color-text-secondary)]">Proactive Tech Alerts</span>
-                        {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
-                          <span className="font-bold text-[var(--color-profit)]">Unlimited</span>
-                        ) : (
-                          <span className="font-mono text-[var(--color-text-secondary)] font-semibold">
-                            {profileData?.dailyAlertCount ?? 0} / 3 used today
-                          </span>
-                        )}
+                  <form onSubmit={handleUpdatePassword}>
+                    <SettingsCard title="Password" desc="Use at least 8 characters.">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <LabeledField label="New password">
+                          <FormInput type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters…" />
+                        </LabeledField>
+                        <LabeledField label="Confirm new password">
+                          <FormInput type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat new password…" />
+                        </LabeledField>
                       </div>
-                      {profileData?.subscriptionStatus !== "PRO_ACTIVE" && (
-                        <div className="w-full bg-[var(--color-bg-tertiary)] rounded-full h-1.5 overflow-hidden border border-[var(--color-border-subtle)]">
-                          <div
-                            className="bg-[var(--accent)] h-1.5 rounded-full"
-                            style={{ width: `${Math.min(100, ((profileData?.dailyAlertCount ?? 0) / 3) * 100)}%` }}
-                          />
-                        </div>
-                      )}
-                    </div>
+                      <FormFooter>
+                        <button type="submit" disabled={passwordUpdating} className="btn-secondary">
+                          {passwordUpdating && <RefreshCw className="animate-spin" size={14} />} Update password
+                        </button>
+                      </FormFooter>
+                    </SettingsCard>
+                  </form>
 
-                    <div className="p-4 rounded-xl bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] text-[11px] leading-relaxed text-[var(--color-text-tertiary)] space-y-2">
-                      <p className="font-bold text-[var(--color-text-secondary)]">Free limits resets daily at UTC midnight.</p>
-                      <p>Upgrade to Pro to unlock weekly AI reports, saved analyses compare views, unlimited alert channels, and behavioral coaching modules.</p>
-                    </div>
-                  </div>
-
-                  {/* Pricing Tiers & Action Cards */}
-                  <div className="flex flex-col justify-between p-5 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-tertiary)] relative overflow-hidden group">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--color-accent-primary)] font-mono">Premium Access</span>
-                      <h4 className="text-lg font-black text-[var(--color-text-primary)] mt-1">TradCopilot Pro</h4>
-                      <p className="text-xs text-[var(--color-text-tertiary)] mt-2 leading-relaxed">
-                        Become an institutional-grade day trader with complete contextual AI scanning, full journal persistence, and alerts.
+                  <section className="card overflow-hidden" style={{ borderColor: "rgba(var(--red-rgb),0.35)", background: "linear-gradient(180deg, rgba(var(--red-rgb),0.05), var(--panel-1) 60%)" }}>
+                    <div className="p-5 sm:p-6">
+                      <h2 className="flex items-center gap-2 text-[15px] font-semibold text-[var(--color-loss)]"><AlertTriangle size={16} /> Danger zone</h2>
+                      <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
+                        Deleting your account is permanent. It erases your profile, settings, alerts, strategies, backtests, AI history and every logged trade. This cannot be undone.
                       </p>
-                      <div className="mt-4 flex items-baseline gap-1">
-                        <span className="text-2xl font-black text-[var(--color-text-primary)] font-mono">$7.49</span>
-                        <span className="text-xs text-[var(--color-text-tertiary)]">/ month</span>
+                      <label className="mt-5 flex cursor-pointer items-start gap-3">
+                        <input type="checkbox" checked={deleteConfirmed} onChange={(e) => setDeleteConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--color-loss)]" />
+                        <span className="select-none text-[13px] text-[var(--color-text-secondary)]">I understand this will permanently destroy all {BRAND.name} data.</span>
+                      </label>
+                      <div className="mt-5 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleDeleteAccount}
+                          disabled={!deleteConfirmed || deletingAccount}
+                          className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border px-5 text-[13px] font-semibold text-[var(--color-loss)] transition-colors hover:bg-[var(--color-loss-bg)] disabled:cursor-not-allowed disabled:opacity-40"
+                          style={{ borderColor: "rgba(var(--red-rgb),0.5)" }}
+                        >
+                          {deletingAccount && <Loader2 className="animate-spin" size={14} />} Permanently delete my account
+                        </button>
                       </div>
                     </div>
+                  </section>
+                </>
+              )}
 
-                    <div className="mt-6 pt-4 border-t border-[var(--color-border-default)]">
-                      {profileData?.subscriptionStatus === "PRO_ACTIVE" ? (
-                        <button
-                          onClick={handlePortal}
-                          disabled={stripeLoading}
-                          className="w-full btn-secondary text-xs font-semibold py-2.5 flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          {stripeLoading ? (
-                            <RefreshCw className="animate-spin text-[var(--color-accent-primary)]" size={14} />
-                          ) : (
-                            "Manage Billing & Invoices"
-                          )}
+              {/* ── PREFERENCES ─────────────────────────────────────────── */}
+              {activeTab === "preferences" && (
+                <form onSubmit={handleSavePreferences}>
+                  <SettingsCard title="Terminal defaults" desc="Saved in this browser. Applied the next time you open Markets.">
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <LabeledField label="Default timeframe">
+                        <select value={defaultTimeframe} onChange={(e) => setDefaultTimeframe(e.target.value as any)} className="h-11 w-full px-3 font-mono text-[13px] text-[var(--color-text-primary)]">
+                          {["1m", "5m", "15m", "1h", "4h", "1d", "1W"].map((tf) => <option key={tf} value={tf}>{tf}</option>)}
+                        </select>
+                      </LabeledField>
+                      <LabeledField label="Default market">
+                        <select value={defaultSymbol} onChange={(e) => setDefaultSymbol(e.target.value)} className="h-11 w-full px-3 font-mono text-[13px] text-[var(--color-text-primary)]">
+                          {SYMBOLS.map((sym) => <option key={sym} value={sym}>{sym}</option>)}
+                        </select>
+                      </LabeledField>
+                      <LabeledField label="Copilot behavior">
+                        <select value={aiBehavior} onChange={(e) => setAiBehavior(e.target.value as any)} className="h-11 w-full px-3 text-[13px] text-[var(--color-text-primary)]">
+                          <option value="balanced">Balanced — disciplined coach (default)</option>
+                          <option value="aggressive">Aggressive — maximum opportunities</option>
+                          <option value="risk-shield">Risk-shield — capital preservation</option>
+                        </select>
+                      </LabeledField>
+                      <LabeledField label="Default chart type">
+                        <select value={defaultChartType} onChange={(e) => setDefaultChartType(e.target.value as any)} className="h-11 w-full px-3 text-[13px] text-[var(--color-text-primary)]">
+                          <option value="candlestick">Standard candlestick</option>
+                          <option value="line">Solid line</option>
+                          <option value="heikin-ashi">Heikin-Ashi (smoothed trend)</option>
+                        </select>
+                      </LabeledField>
+                    </div>
+                    <FormFooter>
+                      <button type="submit" className="btn-primary">Save preferences</button>
+                    </FormFooter>
+                  </SettingsCard>
+                </form>
+              )}
+
+              {/* ── BILLING ─────────────────────────────────────────────── */}
+              {activeTab === "billing" && (
+                <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                  <SettingsCard
+                    title="Plan & usage"
+                    desc="Free limits reset daily at UTC midnight."
+                    right={isPro ? <Chip tone="gain" dot>Pro</Chip> : <Chip>Free</Chip>}
+                  >
+                    <div className="space-y-6">
+                      <Meter label="AI chart analyses" unlimited={isPro} used={profileData?.dailyAnalysisCount ?? 0} cap={5} />
+                      <Meter label="Proactive tech alerts" unlimited={isPro} used={profileData?.dailyAlertCount ?? 0} cap={3} />
+                    </div>
+                    {!isPro && (
+                      <p className="mt-6 rounded-lg border p-3.5 text-[12.5px] leading-relaxed text-[var(--color-text-tertiary)]" style={{ borderColor: "var(--hairline)", background: "var(--panel-2)" }}>
+                        Pro unlocks weekly AI reports, saved-analysis compare views, unlimited alert channels and behavioral coaching.
+                      </p>
+                    )}
+                  </SettingsCard>
+
+                  <section className="card relative flex flex-col justify-between overflow-hidden p-5 sm:p-6" style={{ borderColor: "rgba(var(--accent-rgb),0.35)", background: "linear-gradient(180deg, rgba(var(--accent-rgb),0.06), var(--panel-1) 45%)" }}>
+                    <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, var(--accent), transparent)" }} />
+                    <div>
+                      <Label>Premium access</Label>
+                      <h3 className="mt-2 font-serif text-[28px] leading-none tracking-[-0.01em] text-[var(--color-text-primary)]">{BRAND.name} Pro</h3>
+                      <p className="mt-3 text-[13px] leading-relaxed text-[var(--color-text-tertiary)]">Complete contextual AI scanning, full journal persistence and alerts.</p>
+                      <p className="mt-5 flex items-baseline gap-1.5">
+                        <span className="font-mono text-[34px] font-medium leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">$7.49</span>
+                        <span className="font-mono text-[12px] text-[var(--color-text-quaternary)]">/ month</span>
+                      </p>
+                    </div>
+                    <div className="mt-6">
+                      {isPro ? (
+                        <button onClick={handlePortal} disabled={stripeLoading} className="btn-secondary btn-block cursor-pointer">
+                          {stripeLoading ? <RefreshCw className="animate-spin" size={14} /> : "Manage billing & invoices"}
                         </button>
                       ) : (
-                        <button
-                          onClick={handleCheckout}
-                          disabled={stripeLoading}
-                          className="w-full btn-primary text-xs font-semibold py-2.5 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
-                        >
-                          {stripeLoading ? (
-                            <RefreshCw className="animate-spin text-[var(--color-bg-deepest)]" size={14} />
-                          ) : (
-                            <>
-                              <Zap size={12} className="fill-[var(--color-bg-deepest)] text-[var(--color-bg-deepest)]" />
-                              Upgrade to Pro ($7.49)
-                            </>
-                          )}
+                        <button onClick={handleCheckout} disabled={stripeLoading} className="btn-primary btn-lg btn-block cursor-pointer">
+                          {stripeLoading ? <RefreshCw className="animate-spin" size={14} /> : <><Zap size={14} /> Upgrade to Pro</>}
                         </button>
                       )}
                     </div>
-                  </div>
+                  </section>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
-      )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Local layout helpers ─────────────────────────────────────────────────── */
+
+function SettingsCard({ title, desc, right, children }: { title: string; desc?: string; right?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="card">
+      <header className="flex items-start justify-between gap-4 border-b px-5 py-4 sm:px-6" style={{ borderColor: "var(--hairline)" }}>
+        <div>
+          <h2 className="text-[15px] font-semibold text-[var(--color-text-primary)]">{title}</h2>
+          {desc && <p className="mt-1 max-w-lg text-[12.5px] leading-relaxed text-[var(--color-text-tertiary)]">{desc}</p>}
+        </div>
+        {right}
+      </header>
+      <div className="p-5 sm:p-6">{children}</div>
+    </section>
+  );
+}
+
+function LabeledField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <Label className="mb-2 block">{label}</Label>
+      {children}
+    </label>
+  );
+}
+
+function FormFooter({ children }: { children: React.ReactNode }) {
+  return <div className="mt-6 flex justify-end border-t pt-5" style={{ borderColor: "var(--hairline)" }}>{children}</div>;
+}
+
+function ToggleRow({ label, desc, checked, onChange, last }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void; last?: boolean }) {
+  return (
+    <label className={`flex cursor-pointer items-center justify-between gap-6 py-4 ${last ? "pb-0" : "border-b"}`} style={{ borderColor: "var(--hairline)" }}>
+      <span className="min-w-0">
+        <span className="block text-[14px] font-medium text-[var(--color-text-primary)]">{label}</span>
+        <span className="mt-0.5 block text-[12.5px] text-[var(--color-text-tertiary)]">{desc}</span>
+      </span>
+      <span className="relative shrink-0">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" />
+        <span className="block h-6 w-11 rounded-full border transition-colors peer-checked:[background:var(--accent)] peer-focus-visible:ring-2 peer-focus-visible:ring-[rgba(var(--accent-rgb),0.4)]" style={{ background: "var(--panel-3)", borderColor: "var(--color-border-strong)" }} />
+        <span className="pointer-events-none absolute left-[3px] top-[3px] h-[18px] w-[18px] rounded-full bg-[var(--color-text-tertiary)] transition-all peer-checked:translate-x-5 peer-checked:bg-[var(--on-accent)]" />
+      </span>
+    </label>
+  );
+}
+
+function Meter({ label, used, cap, unlimited }: { label: string; used: number; cap: number; unlimited: boolean }) {
+  const pct = Math.min(100, (used / cap) * 100);
+  return (
+    <div>
+      <div className="flex items-baseline justify-between">
+        <span className="text-[13.5px] text-[var(--color-text-secondary)]">{label}</span>
+        {unlimited ? (
+          <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-[var(--color-profit)]">Unlimited</span>
+        ) : (
+          <span className="font-mono text-[12.5px] tabular-nums text-[var(--color-text-secondary)]">{used} / {cap} today</span>
+        )}
+      </div>
+      <div className="mt-2.5 h-1.5 overflow-hidden rounded-full" style={{ background: "var(--panel-3)" }}>
+        <div className="h-full rounded-full transition-[width] duration-700" style={{ width: unlimited ? "100%" : `${pct}%`, background: unlimited ? "var(--color-profit)" : pct >= 100 ? "var(--color-loss)" : "var(--accent)", opacity: unlimited ? 0.35 : 1 }} />
+      </div>
     </div>
   );
 }

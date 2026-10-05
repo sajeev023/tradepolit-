@@ -11,17 +11,17 @@ import { trackClarityEvent } from "@/lib/clarity";
 // hesitant visitors see "no credit card" before they bounce. Both buttons
 // use the token system; the primary is the cyan accent (the one place cyan
 // is "loud"), matching the nav, pricing, and final-CTA primaries.
-export function HeroCTA() {
+export function HeroCTA({ centered = false }: { centered?: boolean }) {
   const { isLoading, handleDemo } = useDemoLogin();
   return (
-    <div data-onpage-cta className="flex flex-col gap-2.5 sm:gap-3 w-full sm:w-auto">
+    <div data-onpage-cta className={`flex flex-col gap-2.5 sm:gap-3 w-full sm:w-auto ${centered ? "items-center" : ""}`}>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
         {/* Primary: account creation. This is the conversion action. */}
         <Link
           href="/signup"
           onClick={() => trackClarityEvent("hero_start_free_click")}
-          className="group w-full sm:w-auto h-10 sm:h-11 px-5 sm:px-6 rounded-md text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150 text-[var(--bg-primary)] shadow-sm"
-          style={{ background: "var(--accent)" }}
+          className="group w-full sm:w-auto h-10 sm:h-11 px-5 sm:px-6 rounded-lg text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150 text-[var(--on-accent)]"
+          style={{ background: "var(--accent)", boxShadow: "0 0 0 1px rgba(var(--accent-rgb),0.5), 0 10px 30px -10px rgba(var(--accent-rgb),0.55)" }}
           aria-label="Start free account"
         >
           <span>Get Started Free</span>
@@ -35,7 +35,7 @@ export function HeroCTA() {
             handleDemo();
           }}
           disabled={isLoading}
-          className="group w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 rounded-md bg-transparent hover:bg-[var(--color-bg-hover)] border border-[var(--color-border-strong)] hover:border-[var(--accent)] text-[var(--ink)] text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150"
+          className="group w-full sm:w-auto h-10 sm:h-11 px-4 sm:px-5 rounded-lg bg-transparent hover:bg-[var(--color-bg-hover)] border border-[var(--color-border-strong)] hover:border-[var(--accent)] text-[var(--ink)] text-[13px] font-semibold inline-flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all duration-150"
           aria-label="Try 2 free scans"
         >
           {isLoading ? (
@@ -48,8 +48,8 @@ export function HeroCTA() {
       </div>
 
       {/* Risk reversal + Truthful proof microline */}
-      <div className="space-y-1 select-none pt-0.5">
-        <div className="flex flex-wrap items-center gap-x-2.5 sm:gap-x-3 gap-y-0.5 text-[10px] sm:text-[11px] text-[var(--muted)] font-medium">
+      <div className={`space-y-1 select-none pt-0.5 ${centered ? "text-center" : ""}`}>
+        <div className={`flex flex-wrap items-center gap-x-2.5 sm:gap-x-3 gap-y-0.5 text-[10px] sm:text-[11px] text-[var(--muted)] font-medium ${centered ? "justify-center" : ""}`}>
           <span>Free tier included</span>
           <span className="w-1 h-1 rounded-full bg-[var(--color-border-strong)]" />
           <span>No credit card required</span>

@@ -170,12 +170,12 @@ export default function MultiTimeframeAnalysisGuidePage() {
 
           <hr className="tc-rule" />
 
-          {/* How TradCopilot helps */}
+          {/* How TradePilot helps */}
           <section className="space-y-5 max-w-[65ch]">
             <span className="tp-eyebrow-mono block">05 · IN PRACTICE</span>
-            <h2 className="tp-h2">How TradCopilot supports this workflow</h2>
+            <h2 className="tp-h2">How TradePilot supports this workflow</h2>
             <p className="tp-body">
-              TradCopilot lets you run AI analyses across selectable timeframes from 1 minute
+              TradePilot lets you run AI analyses across selectable timeframes from 1 minute
               to 1 week on nine instruments — BTC, ETH, SOL, EUR/USD, GBP/USD, USD/JPY, gold,
               NASDAQ, S&P 500 — with RSI, MACD, EMA alignment, ATR, VWAP, and swing levels
               recomputed per timeframe from live candles. The structured output states its bias

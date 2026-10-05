@@ -123,7 +123,7 @@ export default function SupportAndResistanceGuidePage() {
             <span className="tp-eyebrow-mono block">AUTOMATED LEVEL DETECTION</span>
             <h2 className="tp-h2">Get automated swing level analysis</h2>
             <p className="tp-body max-w-xl mx-auto text-[13px] sm:text-[14px]">
-              TradCopilot calculates 50-bar swing highs, lows, and invalidation points automatically from live candlestick feeds on BTC, ETH, SOL, EUR/USD, and gold.
+              TradePilot calculates 50-bar swing highs, lows, and invalidation points automatically from live candlestick feeds on BTC, ETH, SOL, EUR/USD, and gold.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
               <Link href="/ai-chart-analysis" className="btn-primary btn-lg">

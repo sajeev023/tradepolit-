@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { TrendingUp, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
+import { Mark } from "@/components/shell/mark";
+import { CapabilityStrip } from "@/components/landing/capability-strip";
+import { BRAND } from "@/lib/brand";
 
 import { SlimNav } from "@/components/landing/slim-nav";
 import { HeroCTA } from "@/components/landing/hero-cta";
@@ -24,7 +27,7 @@ import { HOME_FAQS } from "@/lib/faq-data";
 
 export const metadata = buildMetadata({
   titleAbsolute: true,
-  title: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
+  title: "TradePilot | AI Trading Copilot for Crypto & Forex Analysis",
   description:
     "Read-only AI trading copilot for crypto & forex day traders: live chart analysis with RSI, MACD, EMA & ATR, automated session journaling, behavioral guardrails, and risk tools. Free plan included.",
   path: "/",
@@ -57,64 +60,49 @@ export default function LandingPage() {
         ]}
       />
 
-      {/* ━━━ 2 · HERO — editorial masthead + full-width live desk ━━━ */}
-      <header className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 pt-[80px] sm:pt-[130px] lg:pt-[160px] pb-8 sm:pb-14 lg:pb-20">
-        {/* Editorial masthead — a publication-style dateline carrying one live
-            datum (BTC, public Binance WS). Replaces the generic "who's it for"
-            status chip with something that reads as a real desk. */}
-        <div className="tp-masthead mb-5 sm:mb-8 lg:mb-12">
-          <span>Vol. 01</span>
-          <span className="tp-masthead__sep" />
-          <span>The Trader&apos;s Copilot</span>
-          <span className="tp-masthead__sep" />
-          <Suspense
-            fallback={
-              <span className="tp-masthead__live inline-flex items-center gap-1.5">
-                BTC · live
-                <span
-                  className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse shadow-[0_0_6px_rgba(var(--accent-rgb),0.6)]"
-                  style={{ animationDuration: "1.2s" }}
-                />
-              </span>
-            }
-          >
-            <MastheadPrice />
-          </Suspense>
-          <span className="tp-masthead__sep" />
-          <span>For active crypto &amp; forex day traders</span>
-        </div>
+      {/* ━━━ HERO — one promise, then the live product ━━━━━━━━━━━━━━━━━━━━━━━ */}
+      <header className="relative">
+        {/* horizon: a single lit line the page sits on — identity, not a gradient blob */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-[420px] h-px sm:top-[470px]" style={{ background: "linear-gradient(90deg, transparent, rgba(var(--accent-rgb),0.55) 25%, rgba(var(--accent-rgb),0.55) 75%, transparent)" }} />
+        <div aria-hidden className="pointer-events-none absolute left-1/2 top-[300px] h-[260px] w-[min(900px,92%)] -translate-x-1/2 rounded-full opacity-[0.08] blur-[90px]" style={{ background: "var(--accent)" }} />
 
-        {/* Headline block — serif voice, left-aligned, room to breathe.
-            The italic accent word replaces the old cyan gradient phrase:
-            emphasis comes from the serif italic, not from color.
-            NOT wrapped in <Reveal>: the H1 is the LCP element and used to be
-            invisible until hydration flipped the reveal class, deferring LCP
-            to JS time and blanking the page without it. Below-fold sections
-            keep their scroll reveals. */}
-        <div className="max-w-[920px] space-y-4 sm:space-y-6">
-          <h1 className="tp-display-xl">
-            Execute your trading plan with <span className="tp-serif-italic">institutional discipline.</span>
-          </h1>
+        <div className="relative mx-auto max-w-[1200px] px-4 pb-8 pt-[96px] sm:px-6 sm:pt-[132px] lg:px-10 lg:pt-[152px]">
+          <div className="mx-auto flex max-w-[980px] flex-col items-center text-center">
+            <div className="tp-masthead mb-6 sm:mb-8">
+              <span>{BRAND.name}</span>
+              <span className="tp-masthead__sep" />
+              <Suspense fallback={<span className="tp-masthead__live">BTC · live</span>}>
+                <MastheadPrice />
+              </Suspense>
+              <span className="tp-masthead__sep hidden sm:inline-block" />
+              <span className="hidden sm:inline">Crypto &amp; forex day traders</span>
+            </div>
 
-          <p className="tp-body max-w-[560px]">
-            Real-time chart telemetry, persistent session trade journaling, and automated risk guardrails in one focused workspace.
-          </p>
+            {/* H1 is the LCP element — intentionally not wrapped in Reveal. */}
+            <h1 className="tp-display-xl">
+              The copilot that <span className="tp-serif-italic">remembers</span> how you trade.
+            </h1>
 
-          <div className="pt-1">
-            <HeroCTA />
+            <p className="tp-body mt-5 max-w-[600px] sm:mt-6">
+              {BRAND.name} reads the chart, learns from your journal, and flags the habits that quietly cost you money.
+              Read-only — it never touches your funds.
+            </p>
+
+            <div className="mt-7 w-full sm:mt-9 sm:w-auto">
+              <HeroCTA centered />
+            </div>
           </div>
-        </div>
 
-        {/* Live-data workbench — full-width "live desk" below the masthead.
-            REAL candles, indicators, WS price; no fabricated AI. A subtle,
-            scroll-scrubbed parallax (GSAP ScrollTrigger, reduced-motion off)
-            gives the live desk a sense of depth as it passes the viewport. */}
-        <div className="mt-6 sm:mt-10 lg:mt-12">
-          <Suspense fallback={<div className="h-[320px] sm:h-[420px] tc-skeleton rounded-2xl" />}>
-            <ScrollParallax distance={14}>
-              <HeroWorkbench />
-            </ScrollParallax>
-          </Suspense>
+          {/* The real product — live candles, live indicators, live price. */}
+          <div className="mt-12 sm:mt-16">
+            <Suspense fallback={<div className="tc-skeleton h-[320px] rounded-2xl sm:h-[420px]" />}>
+              <ScrollParallax distance={14}>
+                <HeroWorkbench />
+              </ScrollParallax>
+            </Suspense>
+          </div>
+
+          <CapabilityStrip />
         </div>
       </header>
 
@@ -173,13 +161,8 @@ export default function LandingPage() {
         <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-10 space-y-6 sm:space-y-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
             <div className="flex items-center gap-2.5">
-              <div
-                className="flex items-center justify-center rounded-md w-6 h-6"
-                style={{ background: "linear-gradient(135deg, var(--accent-bright), var(--accent))" }}
-              >
-                <TrendingUp size={13} color="#05070B" strokeWidth={2.5} />
-              </div>
-              <span className="text-sm font-semibold tracking-tight text-[var(--ink)]">TradCopilot</span>
+              <Mark size={26} />
+              <span className="text-sm font-semibold tracking-tight text-[var(--ink)]">{BRAND.name}</span>
               <span className="text-[10px] font-mono text-[var(--muted)] border border-[var(--color-border-default)] rounded px-1.5 py-0.5 ml-1">
                 Read-only · No broker access
               </span>
@@ -191,7 +174,7 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 hover:text-[var(--ink)] transition-colors"
-                aria-label="TradCopilot on X"
+                aria-label="TradePilot on X"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -204,7 +187,7 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 hover:text-[var(--ink)] transition-colors"
-                aria-label="TradCopilot on LinkedIn"
+                aria-label="TradePilot on LinkedIn"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76c.97 0 1.75-.79 1.75-1.76s-.78-1.75-1.75-1.75a1.75 1.75 0 0 0 0 3.51m1.39 9.74v-8.37H5.07v8.37h2.78z" />
@@ -223,7 +206,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-[11px] text-[var(--muted)] max-w-2xl leading-relaxed">
-            TradCopilot is a read-only{" "}
+            TradePilot is a read-only{" "}
             <Link href="/ai-trading-copilot" className="underline decoration-[var(--color-border-subtle)] underline-offset-2 hover:text-[var(--ink)]">
               AI trading copilot
             </Link>{" "}

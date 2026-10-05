@@ -45,7 +45,7 @@ describe("International SEO — Config & Helpers", () => {
 describe("International SEO — Dictionaries", () => {
   it("loads English dictionary with complete structure", async () => {
     const dict = await getDictionary("en");
-    expect(dict.common.siteName).toBe("TradCopilot");
+    expect(dict.common.siteName).toBe("TradePilot");
     expect(dict.home.h1).toBeDefined();
     expect(dict.aiTradingCopilot.faqs.length).toBeGreaterThan(0);
     expect(dict.guides.entries.length).toBe(5);
@@ -53,7 +53,7 @@ describe("International SEO — Dictionaries", () => {
 
   it("loads Portuguese dictionary with localized content and native terminology", async () => {
     const dict = await getDictionary("pt-br");
-    expect(dict.common.siteName).toBe("TradCopilot");
+    expect(dict.common.siteName).toBe("TradePilot");
     expect(dict.common.startFree).toContain("Conta Gratuita");
     expect(dict.home.meta.description).toContain("cripto");
     expect(dict.guides.entries.length).toBe(5);
@@ -62,7 +62,7 @@ describe("International SEO — Dictionaries", () => {
 
   it("loads Spanish dictionary with localized content", async () => {
     const dict = await getDictionary("es");
-    expect(dict.common.siteName).toBe("TradCopilot");
+    expect(dict.common.siteName).toBe("TradePilot");
     expect(dict.common.startFree).toContain("Cuenta Gratuita");
     expect(dict.home.meta.description).toContain("cripto");
     expect(dict.guides.entries.length).toBe(5);

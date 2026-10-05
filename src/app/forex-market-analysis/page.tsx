@@ -10,7 +10,7 @@ import { buildMetadata, breadcrumbJsonLd, faqPageJsonLd, type FaqItem } from "@/
 export const metadata: Metadata = buildMetadata({
   title: "AI Forex Market Analysis — EUR/USD, GBP/USD & USD/JPY Setups",
   description:
-    "How TradCopilot analyzes forex: TwelveData candles for major pairs, gold and indices, session-aware analysis, lot-precise position sizing, and AI setups explained in plain language.",
+    "How TradePilot analyzes forex: TwelveData candles for major pairs, gold and indices, session-aware analysis, lot-precise position sizing, and AI setups explained in plain language.",
   path: "/forex-market-analysis",
   keywords: [
     "forex market analysis",
@@ -25,14 +25,14 @@ const BREADCRUMBS = [{ name: "Forex Market Analysis", path: "/forex-market-analy
 
 const FOREX_FAQS: FaqItem[] = [
   {
-    question: "Which forex instruments does TradCopilot analyze?",
+    question: "Which forex instruments does TradePilot analyze?",
     answer:
       "EUR/USD, GBP/USD, and USD/JPY today, plus gold (XAU/USD), NASDAQ, and S&P 500 — served through TwelveData market data. Crypto pairs (BTC, ETH, SOL) stream separately in real time from Binance.",
   },
   {
-    question: "Does TradCopilot connect to my forex broker?",
+    question: "Does TradePilot connect to my forex broker?",
     answer:
-      "No. TradCopilot is strictly read-only: it never connects to a brokerage, cannot place orders, and holds no funds. You keep using your existing broker or platform alongside it.",
+      "No. TradePilot is strictly read-only: it never connects to a brokerage, cannot place orders, and holds no funds. You keep using your existing broker or platform alongside it.",
   },
   {
     question: "Can it calculate position size in lots?",
@@ -63,7 +63,7 @@ export default function ForexMarketAnalysisPage() {
               AI forex market analysis, <span className="tp-serif-italic">session by session.</span>
             </h1>
             <p className="tp-body max-w-2xl text-[15px] sm:text-[16px] leading-relaxed">
-              Forex moves on sessions, not just candles. TradCopilot computes the full
+              Forex moves on sessions, not just candles. TradePilot computes the full
               technical read for the majors from live candle data, knows whether Asia,
               London, or New York is in play, sizes your positions to the lot — and explains
               every setup in language you can act on or discard.
@@ -158,7 +158,7 @@ export default function ForexMarketAnalysisPage() {
             <span className="tp-eyebrow-mono block">04 · SAFETY</span>
             <h2 className="tp-h2">No broker connections. Ever.</h2>
             <p className="tp-body">
-              TradCopilot cannot execute trades, hold funds, or touch your brokerage account.
+              TradePilot cannot execute trades, hold funds, or touch your brokerage account.
               It is an analytical workstation — educational information only, not investment
               advice, and not a registered investment advisor or broker-dealer. Trading
               involves substantial risk of loss; see the{" "}

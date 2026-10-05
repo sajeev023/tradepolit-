@@ -1,7 +1,7 @@
 /**
  * src/lib/seo.ts
  *
- * Central SEO layer for TradCopilot's public marketing surface.
+ * Central SEO layer for TradePilot's public marketing surface.
  *
  * Responsibilities:
  *  - Canonical site constants (single source of truth alongside lib/site-url.ts).
@@ -37,7 +37,7 @@ import {
 
 /** Canonical production origin. Never localhost — see lib/site-url.ts for env-aware dev fallbacks. */
 export const SITE_URL = "https://tradcopilot.com";
-export const SITE_NAME = "TradCopilot";
+export const SITE_NAME = "TradePilot";
 /** Public support address shown in the landing footer (mailto link on "/"). */
 export const SUPPORT_EMAIL = "hello@tradcopilot.com";
 /** Public social profiles linked from the landing footer. Used for Organization.sameAs. */
@@ -49,17 +49,17 @@ export const SOCIAL_PROFILES = [
 /**
  * One-line entity definition used consistently across metadata, JSON-LD and
  * page copy so search engines and answer engines see a single description of
- * what TradCopilot is.
+ * what TradePilot is.
  */
 export const ENTITY_DEFINITION =
-  "TradCopilot is a web-based, read-only AI trading copilot for crypto and forex day traders: it computes technical indicators from live candlestick data, explains setups in plain language, journals every session, and warns against emotional patterns like revenge trading and overtrading.";
+  "TradePilot is a web-based, read-only AI trading copilot for crypto and forex day traders: it computes technical indicators from live candlestick data, explains setups in plain language, journals every session, and warns against emotional patterns like revenge trading and overtrading.";
 
 // ---------------------------------------------------------------------------
 // Page metadata
 // ---------------------------------------------------------------------------
 
 export interface PageMetaInput {
-  /** Page title. Rendered through the root "%s | TradCopilot" template unless absolute. */
+  /** Page title. Rendered through the root "%s | TradePilot" template unless absolute. */
   title: string;
   /** Unique meta description (150–165 chars recommended). */
   description: string;
@@ -170,7 +170,7 @@ export interface FaqItem {
   answer: string;
 }
 
-/** Organization entity — establishes who is behind TradCopilot. */
+/** Organization entity — establishes who is behind TradePilot. */
 export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
@@ -180,7 +180,7 @@ export function organizationJsonLd() {
     url: SITE_URL,
     logo: `${SITE_URL}/icon.svg`,
     description:
-      "Maker of TradCopilot, a read-only AI trading copilot that analyzes crypto and forex charts, journals sessions, and coaches trading discipline.",
+      "Maker of TradePilot, a read-only AI trading copilot that analyzes crypto and forex charts, journals sessions, and coaches trading discipline.",
     email: SUPPORT_EMAIL,
     sameAs: SOCIAL_PROFILES,
   };

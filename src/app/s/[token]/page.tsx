@@ -19,8 +19,8 @@ import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Trade Thesis — TradCopilot",
-  description: "A validated trade thesis tracked by TradCopilot.",
+  title: "Trade Thesis — TradePilot",
+  description: "A validated trade thesis tracked by TradePilot.",
   robots: { index: false }, // shares are private-by-link
 };
 
@@ -158,7 +158,7 @@ export default async function SharedThesisPage({ params }: { params: Promise<{ t
         <SharedCta symbol={snap.symbol} />
 
         <div className="text-center text-xs text-zinc-600 pt-2">
-          Shared via <Link href="/" className="text-zinc-400 hover:text-zinc-200 underline underline-offset-2">TradCopilot</Link> —
+          Shared via <Link href="/" className="text-zinc-400 hover:text-zinc-200 underline underline-offset-2">TradePilot</Link> —
           AI chart analysis with validated trade logic
         </div>
       </div>

@@ -15,7 +15,7 @@ import {
 export const metadata: Metadata = buildMetadata({
   title: "What Is an AI Trading Copilot? Definition, Capabilities & Limits",
   description:
-    "An AI trading copilot is software that uses AI to help you analyze markets and improve your own decisions — not to trade for you. How the category works, what it can and cannot do, and how TradCopilot implements it.",
+    "An AI trading copilot is software that uses AI to help you analyze markets and improve your own decisions — not to trade for you. How the category works, what it can and cannot do, and how TradePilot implements it.",
   path: "/ai-trading-copilot",
   keywords: [
     "what is an ai trading copilot",
@@ -32,7 +32,7 @@ const COPILOT_FAQS: FaqItem[] = [
   {
     question: "Does an AI trading copilot execute trades?",
     answer:
-      "A copilot, by definition, should not. It analyzes, explains, journals, and warns while you keep full control of execution. TradCopilot in particular has no order placement anywhere in the product, holds no funds, and never connects to a brokerage or exchange account.",
+      "A copilot, by definition, should not. It analyzes, explains, journals, and warns while you keep full control of execution. TradePilot in particular has no order placement anywhere in the product, holds no funds, and never connects to a brokerage or exchange account.",
   },
   {
     question: "How is an AI trading copilot different from a trading bot?",
@@ -163,12 +163,12 @@ export default function AiTradingCopilotPage() {
 
           <hr className="tc-rule" />
 
-          {/* ── How TradCopilot implements it ── */}
+          {/* ── How TradePilot implements it ── */}
           <section className="space-y-5 max-w-[65ch]">
             <span className="tp-eyebrow-mono block">03 · IMPLEMENTATION</span>
-            <h2 className="tp-h2">How TradCopilot builds this category</h2>
+            <h2 className="tp-h2">How TradePilot builds this category</h2>
             <p className="tp-body">
-              TradCopilot is a web-based, read-only AI trading copilot for crypto and forex
+              TradePilot is a web-based, read-only AI trading copilot for crypto and forex
               day traders. Its pipeline makes one thing non-negotiable:{" "}
               <strong className="text-[var(--ink)]">deterministic code computes the market first; the AI only explains it.</strong>
             </p>
@@ -220,7 +220,7 @@ export default function AiTradingCopilotPage() {
                 "Predict the future. No model knows where price goes next; anyone claiming certainty is selling something.",
                 "Replace risk management. Position sizing and stop discipline remain the trader's job — tools can only compute and warn.",
                 "Act without you. In a read-only copilot there is deliberately no path from analysis to order.",
-                "Substitute financial advice. Output is educational analysis; TradCopilot is not a registered investment advisor or broker-dealer.",
+                "Substitute financial advice. Output is educational analysis; TradePilot is not a registered investment advisor or broker-dealer.",
               ].map((item) => (
                 <li
                   key={item}
@@ -272,7 +272,7 @@ export default function AiTradingCopilotPage() {
               <Link href="/faq" className="text-[var(--accent)] hover:underline">full FAQ</Link>.
               Curious how the analysis differs from asking ChatGPT? See the{" "}
               <Link href="/compare/tradcopilot-vs-chatgpt" className="text-[var(--accent)] hover:underline">
-                TradCopilot vs ChatGPT comparison
+                TradePilot vs ChatGPT comparison
               </Link>.
             </p>
           </section>

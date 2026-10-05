@@ -31,7 +31,7 @@ const RISK_FAQS = FAQS.filter((faq) =>
   [
     "How does the behavioral discipline engine work?",
     "Do I need to connect my broker or share exchange keys?",
-    "Does TradCopilot execute trades or give financial advice?",
+    "Does TradePilot execute trades or give financial advice?",
   ].includes(faq.question),
 );
 
@@ -95,7 +95,7 @@ export default function RiskManagementPage() {
               frustration or take your sixth trade of the day out of restlessness. Most
               tools cover one half.{" "}
               <Link href="/features" className="text-[var(--accent)] hover:underline">
-                TradCopilot
+                TradePilot
               </Link>{" "}
               covers both — a precision{" "}
               <Link
@@ -192,7 +192,7 @@ export default function RiskManagementPage() {
             <h2 className="tp-h2">Behavioral guardrails — warnings, not walls</h2>
             <p className="tp-body">
               Sizing formulas fail quietly when the person entering the numbers is not
-              calm. So alongside the calculator, TradCopilot watches how you trade — not
+              calm. So alongside the calculator, TradePilot watches how you trade — not
               what to trade — using the record kept in your{" "}
               <Link href="/trading-journal" className="text-[var(--accent)] hover:underline">
                 trade journal
@@ -230,7 +230,7 @@ export default function RiskManagementPage() {
                 the engine warns — it never blocks a trade, forces a pause, or locks you
                 out.
               </span>{" "}
-              TradCopilot is read-only by architecture: it has no connection to your
+              TradePilot is read-only by architecture: it has no connection to your
               broker, cannot place or refuse an order, and never takes control of the
               account. You get the observation while the decision — and the
               responsibility — stays entirely yours.
@@ -259,7 +259,7 @@ export default function RiskManagementPage() {
               the tenth trade of the day is rarely your best idea, it is just your latest.
               Worse, rapid-fire positions in one session are often the same view expressed
               several times, so the “diversified” day is really one concentrated bet,
-              compounded. TradCopilot’s answer to both patterns is the same: make the
+              compounded. TradePilot’s answer to both patterns is the same: make the
               pattern visible before the next click. This page is education, not
               financial advice — see our{" "}
               <Link href="/disclaimer" className="text-[var(--accent)] hover:underline">

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { calculate, validateInputs, type RiskEngineResult, type CalculationMode } from "@/lib/risk-engine";
 import { toast } from "sonner";
 import { trackClarityEvent } from "@/lib/clarity";
+import { Chip, Label, Stat } from "@/components/fd/primitives";
+import { TradeLadder } from "@/components/tools/trade-ladder";
 import {
   CRYPTO_SYMBOLS,
   FOREX_SYMBOLS,
@@ -172,422 +174,251 @@ export default function RiskCalculatorPage() {
     router.push(`/journal?${params.toString()}`);
   };
 
-  // -- Reusable field style --------------------------------------------------
-  const inputCls = (field: string) =>
-    `w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors ${
-      getError(field)
-        ? "bg-[var(--color-loss-bg)] border border-[rgba(var(--red-rgb),0.5)]"
-        : "bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)]"
-    }`;
+  const entryNum = parseFloat(form.entryPrice);
+  const stopNum = parseFloat(form.stopLoss);
+  const tpNum = form.takeProfit ? parseFloat(form.takeProfit) : undefined;
+  const ladderReady = Number.isFinite(entryNum) && entryNum > 0 && Number.isFinite(stopNum) && stopNum > 0 && entryNum !== stopNum;
 
-  const selectCls = "w-full px-3 py-2.5 rounded-lg text-sm bg-[var(--color-bg-tertiary)] border border-[var(--color-border-subtle)] outline-none";
+  const control = (field: string) =>
+    `h-11 w-full px-3 font-mono text-[14px] text-[var(--color-text-primary)] ${getError(field) ? "!border-[rgba(var(--red-rgb),0.6)] !bg-[var(--color-loss-bg)]" : ""}`;
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl mx-auto">
-      <div className="animate-fade-in">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-          Risk &amp; Position Sizing Calculator
+    <div className="mx-auto flex max-w-[1180px] flex-col gap-6 lg:gap-8">
+      <header>
+        <Label>Position sizing</Label>
+        <h1 className="mt-2 text-[var(--color-text-primary)]">
+          Size the trade <em className="text-[var(--accent)]">before</em> you take it.
         </h1>
-        <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
-          Institutional-grade math — powered by decimal.js precision arithmetic. Zero floating-point errors.
+        <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--color-text-tertiary)]">
+          Risk-defined position sizing with decimal.js precision. Calculated in your browser — set your stop first, then let the math pick the size.
         </p>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
-        {/* -- LEFT: Inputs --------------------------------------------------- */}
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-6">
+        {/* ── Inputs: three stations ─────────────────────────────────────────── */}
         <form
-          className="lg:col-span-3 card p-4 sm:p-6 space-y-4 sm:space-y-5 animate-fade-in-delay-1"
+          className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
             if (isFormReady()) handleCalculate();
           }}
         >
-
-          {/* -- Mode Selector ---------------------------------------------- */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-              Calculation Mode
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(["STANDARD", "MAX", "MIN"] as CalculationMode[]).map(m => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => update("mode", m)}
-                  className="py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
-                  style={{
-                    backgroundColor: form.mode === m ? "var(--color-accent-primary)" : "var(--color-bg-tertiary)",
-                    color: form.mode === m ? "var(--background)" : "var(--color-text-secondary)",
-                    border: `1px solid ${form.mode === m ? "var(--color-accent-primary)" : "var(--color-border-subtle)"}`,
-                  }}
-                >
-                  {m === "STANDARD" && <Calculator size={11} />}
-                  {m === "MAX" && <Maximize2 size={11} />}
-                  {m === "MIN" && <Minimize2 size={11} />}
-                  {m}
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] mt-1.5" style={{ color: "var(--color-text-tertiary)" }}>
-              {form.mode === "STANDARD" && "Risk-defined position — uses stop distance and risk % to size the trade."}
-              {form.mode === "MAX"      && "Maximum position — uses full buying power (balance — leverage) at entry price."}
-              {form.mode === "MIN"      && "Minimum position — returns the smallest tradable unit for this instrument."}
-            </p>
-          </div>
-
-          {/* -- Asset / Symbol --------------------------------------------- */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                Asset Class
-              </label>
-              <select
-                className={selectCls}
-                style={{ color: "var(--color-text-primary)" }}
-                value={form.assetClass}
-                onChange={e => update("assetClass", e.target.value)}
-              >
-                <option value="CRYPTO">Crypto</option>
-                <option value="FOREX">Forex</option>
-                <option value="COMMODITY">Commodity (Gold)</option>
-                <option value="INDEX">Index (S&P 500)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                Symbol
-              </label>
-              <select
-                className={selectCls}
-                style={{ color: "var(--color-text-primary)" }}
-                value={form.symbol}
-                onChange={e => update("symbol", e.target.value)}
-              >
-                {SYMBOL_MAP[form.assetClass].map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* -- Account / Leverage ----------------------------------------- */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                Account Balance ($)
-              </label>
-              <input
-                type="number" min="0" step="any" placeholder="10000"
-                className={inputCls("balance")}
-                style={{ color: "var(--color-text-primary)" }}
-                value={form.balance}
-                onChange={e => update("balance", e.target.value)}
-              />
-              {getError("balance") && (
-                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
-                  <AlertTriangle size={10} /> {getError("balance")}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                Leverage
-              </label>
-              <input
-                type="number" min="0" step="1" placeholder="1"
-                className={inputCls("leverage")}
-                style={{ color: "var(--color-text-primary)" }}
-                value={form.leverage}
-                onChange={e => update("leverage", e.target.value)}
-              />
-              <p className="text-[10px] mt-1" style={{ color: "var(--color-text-tertiary)" }}>0 = spot (1×)</p>
-            </div>
-          </div>
-
-          {/* -- Risk ------------------------------------------------------- */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                Risk Type
-              </label>
-              <select
-                className={selectCls}
-                style={{ color: "var(--color-text-primary)" }}
-                value={form.riskType}
-                onChange={e => update("riskType", e.target.value as RiskType)}
-              >
-                <option value="PERCENT">Percent (%)</option>
-                <option value="FIXED">Fixed ($)</option>
-              </select>
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                {form.riskType === "PERCENT" ? "Risk %" : "Risk Amount ($)"}
-              </label>
-              <input
-                type="number" min="0" step="any"
-                placeholder={form.riskType === "PERCENT" ? "1" : "100"}
-                className={inputCls("riskPercent")}
-                style={{ color: "var(--color-text-primary)" }}
-                value={form.riskValue}
-                onChange={e => update("riskValue", e.target.value)}
-              />
-              {getError("riskPercent") && (
-                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
-                  <AlertTriangle size={10} /> {getError("riskPercent")}
-                </p>
-              )}
-              {getError("riskAmount") && (
-                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
-                  <AlertTriangle size={10} /> {getError("riskAmount")}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* -- Direction / Entry ------------------------------------------- */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                Direction
-              </label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {(["LONG", "SHORT"] as Direction[]).map(d => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => update("direction", d)}
-                    className="py-2 rounded-lg text-xs font-bold transition-all"
-                    style={{
-                      backgroundColor: form.direction === d
-                        ? d === "LONG"
-                          ? "color-mix(in srgb, var(--color-profit) 18%, transparent)"
-                          : "color-mix(in srgb, var(--color-loss) 18%, transparent)"
-                        : "var(--color-bg-tertiary)",
-                      color: form.direction === d
-                        ? d === "LONG" ? "var(--color-profit)" : "var(--color-loss)"
-                        : "var(--color-text-secondary)",
-                      border: `1px solid ${form.direction === d
-                        ? d === "LONG" ? "var(--color-profit)" : "var(--color-loss)"
-                        : "var(--color-border-subtle)"}`,
-                    }}
-                  >
-                    {d === "LONG" ? "↑ LONG" : "↓ SHORT"}
-                  </button>
-                ))}
+          <Station n="01" title="Market">
+            <Field label="Calculation mode" hint={
+              form.mode === "STANDARD" ? "Risk-defined — stop distance and risk % size the trade."
+              : form.mode === "MAX" ? "Maximum — full buying power (balance × leverage) at entry."
+              : "Minimum — the smallest tradable unit for this instrument."
+            }>
+              <div className="grid grid-cols-3 gap-1.5 rounded-xl border p-1" style={{ background: "var(--panel-2)", borderColor: "var(--hairline)" }}>
+                {(["STANDARD", "MAX", "MIN"] as CalculationMode[]).map((m) => {
+                  const on = form.mode === m;
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => update("mode", m)}
+                      aria-pressed={on}
+                      className="flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg font-mono text-[11px] font-medium uppercase tracking-[0.08em] transition-colors"
+                      style={{ background: on ? "var(--accent)" : "transparent", color: on ? "var(--on-accent)" : "var(--color-text-tertiary)" }}
+                    >
+                      {m === "STANDARD" && <Calculator size={12} />}
+                      {m === "MAX" && <Maximize2 size={12} />}
+                      {m === "MIN" && <Minimize2 size={12} />}
+                      {m}
+                    </button>
+                  );
+                })}
               </div>
+            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Asset class">
+                <select className="h-11 w-full px-3 text-[14px] text-[var(--color-text-primary)]" value={form.assetClass} onChange={(e) => update("assetClass", e.target.value)}>
+                  <option value="CRYPTO">Crypto</option>
+                  <option value="FOREX">Forex</option>
+                  <option value="COMMODITY">Commodity (Gold)</option>
+                  <option value="INDEX">Index (S&amp;P 500)</option>
+                </select>
+              </Field>
+              <Field label="Symbol">
+                <select className="h-11 w-full px-3 font-mono text-[14px] text-[var(--color-text-primary)]" value={form.symbol} onChange={(e) => update("symbol", e.target.value)}>
+                  {SYMBOL_MAP[form.assetClass].map((sym) => <option key={sym} value={sym}>{sym}</option>)}
+                </select>
+              </Field>
             </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                Entry Price
-              </label>
-              <input
-                type="number" min="0" step="any" placeholder="62000"
-                className={inputCls("entryPrice")}
-                style={{ color: "var(--color-text-primary)" }}
-                value={form.entryPrice}
-                onChange={e => update("entryPrice", e.target.value)}
-              />
-              {getError("entryPrice") && (
-                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
-                  <AlertTriangle size={10} /> {getError("entryPrice")}
-                </p>
-              )}
-            </div>
-          </div>
+          </Station>
 
-          {/* -- Stop / Take Profit ------------------------------------------ */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                Stop Loss
-                <span className="ml-1 font-normal text-[10px]">
-                  ({form.direction === "LONG" ? "below entry" : "above entry"})
-                </span>
-              </label>
-              <input
-                type="number" min="0" step="any"
-                placeholder={form.direction === "LONG" ? "61000" : "63000"}
-                className={inputCls("stopLoss")}
-                style={{ color: "var(--color-text-primary)" }}
-                value={form.stopLoss}
-                onChange={e => update("stopLoss", e.target.value)}
-              />
-              {getError("stopLoss") && (
-                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
-                  <AlertTriangle size={10} /> {getError("stopLoss")}
-                </p>
-              )}
+          <Station n="02" title="Risk">
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Account balance ($)" error={getError("balance")}>
+                <input type="number" min="0" step="any" placeholder="10000" className={control("balance")} value={form.balance} onChange={(e) => update("balance", e.target.value)} />
+              </Field>
+              <Field label="Leverage" hint="0 = spot (1×)" error={getError("leverage")}>
+                <input type="number" min="0" step="1" placeholder="1" className={control("leverage")} value={form.leverage} onChange={(e) => update("leverage", e.target.value)} />
+              </Field>
             </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--color-text-tertiary)" }}>
-                Take Profit <span className="font-normal">(optional)</span>
-              </label>
-              <input
-                type="number" min="0" step="any"
-                placeholder={form.direction === "LONG" ? "65000" : "59000"}
-                className={inputCls("takeProfit")}
-                style={{ color: "var(--color-text-primary)" }}
-                value={form.takeProfit}
-                onChange={e => update("takeProfit", e.target.value)}
-              />
-              {getError("takeProfit") && (
-                <p className="text-[11px] mt-1 text-[var(--color-loss)] flex items-center gap-1">
-                  <AlertTriangle size={10} /> {getError("takeProfit")}
-                </p>
-              )}
+            <div className="grid grid-cols-[130px_1fr] gap-4">
+              <Field label="Risk type">
+                <select className="h-11 w-full px-3 text-[14px] text-[var(--color-text-primary)]" value={form.riskType} onChange={(e) => update("riskType", e.target.value as RiskType)}>
+                  <option value="PERCENT">Percent (%)</option>
+                  <option value="FIXED">Fixed ($)</option>
+                </select>
+              </Field>
+              <Field label={form.riskType === "PERCENT" ? "Risk per trade (%)" : "Risk amount ($)"} error={getError("riskPercent") || getError("riskAmount")}>
+                <input type="number" min="0" step="any" placeholder={form.riskType === "PERCENT" ? "1" : "100"} className={control("riskPercent")} value={form.riskValue} onChange={(e) => update("riskValue", e.target.value)} />
+              </Field>
             </div>
-          </div>
+          </Station>
 
-          {/* -- Calculate Button -------------------------------------------- */}
-          <button
-            type="submit"
-            disabled={!isFormReady()}
-            className="w-full py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: isFormReady() ? "var(--color-accent-primary)" : "var(--color-bg-tertiary)",
-              color: isFormReady() ? "var(--background)" : "var(--color-text-tertiary)",
-            }}
-          >
-            <Zap size={15} />
-            Calculate Position Size
-          </button>
+          <Station n="03" title="Levels">
+            <Field label="Direction">
+              <div className="grid grid-cols-2 gap-1.5 rounded-xl border p-1" style={{ background: "var(--panel-2)", borderColor: "var(--hairline)" }}>
+                {(["LONG", "SHORT"] as Direction[]).map((d) => {
+                  const on = form.direction === d;
+                  const tone = d === "LONG" ? "var(--color-profit)" : "var(--color-loss)";
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => update("direction", d)}
+                      aria-pressed={on}
+                      className="h-9 cursor-pointer rounded-lg font-mono text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors"
+                      style={{ background: on ? `color-mix(in srgb, ${tone} 16%, transparent)` : "transparent", color: on ? tone : "var(--color-text-tertiary)", boxShadow: on ? `inset 0 0 0 1px ${tone}` : "none" }}
+                    >
+                      {d === "LONG" ? "↑ Long" : "↓ Short"}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Entry" error={getError("entryPrice")}>
+                <input type="number" min="0" step="any" placeholder="62000" className={control("entryPrice")} value={form.entryPrice} onChange={(e) => update("entryPrice", e.target.value)} />
+              </Field>
+              <Field label="Stop loss" hint={form.direction === "LONG" ? "Below entry" : "Above entry"} error={getError("stopLoss")}>
+                <input type="number" min="0" step="any" placeholder={form.direction === "LONG" ? "61000" : "63000"} className={control("stopLoss")} value={form.stopLoss} onChange={(e) => update("stopLoss", e.target.value)} />
+              </Field>
+              <Field label="Take profit" hint="Optional" error={getError("takeProfit")}>
+                <input type="number" min="0" step="any" placeholder={form.direction === "LONG" ? "65000" : "59000"} className={control("takeProfit")} value={form.takeProfit} onChange={(e) => update("takeProfit", e.target.value)} />
+              </Field>
+            </div>
+          </Station>
 
           {fieldErrors.length > 0 && (
-            <div
-              className="rounded-lg p-3"
-              style={{ border: "1px solid color-mix(in srgb, var(--color-loss) 30%, transparent)", backgroundColor: "var(--color-loss-bg)" }}
-            >
-              <p className="text-xs font-semibold text-[var(--color-loss)] mb-1 flex items-center gap-1.5">
-                <AlertTriangle size={12} /> Fix the following errors:
-              </p>
+            <div role="alert" className="rounded-xl border p-3.5" style={{ borderColor: "rgba(var(--red-rgb),0.3)", background: "var(--color-loss-bg)" }}>
+              <p className="mb-1 flex items-center gap-1.5 text-[12px] font-semibold text-[var(--color-loss)]"><AlertTriangle size={13} /> Fix the following:</p>
               <ul className="space-y-0.5">
-                {fieldErrors.map((e, i) => (
-                  <li key={i} className="text-[11px] text-[var(--color-loss)] opacity-80">— {e.message}</li>
-                ))}
+                {fieldErrors.map((e, i) => <li key={i} className="text-[12px] text-[var(--color-loss)] opacity-80">— {e.message}</li>)}
               </ul>
             </div>
           )}
+
+          <button type="submit" disabled={!isFormReady()} className="btn-primary btn-lg btn-block !h-12 text-[14px] disabled:!shadow-none">
+            <Zap size={15} /> Calculate position size
+          </button>
         </form>
 
-        {/* -- RIGHT: Results ------------------------------------------------- */}
-        <div className="lg:col-span-2 flex flex-col gap-4 animate-fade-in-delay-2">
-          <div className="card p-5 flex-1 flex flex-col justify-between">
-            <div>
-              <h2 className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--color-text-tertiary)" }}>
-                Sizing Results
-              </h2>
+        {/* ── Readout ────────────────────────────────────────────────────────── */}
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-[calc(var(--spacing-topbar)+var(--spacing-demo-banner)+1.5rem)]">
+          <section className="card overflow-hidden">
+            <div className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
+              <Label>Readout</Label>
+              {results && <Chip tone="signal" dot>{results.mode}</Chip>}
+            </div>
 
-              {!results ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Calculator size={36} style={{ color: "var(--color-text-tertiary)" }} className="mb-2 animate-pulse" />
-                  <p className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
-                    Ready to calculate
-                  </p>
-                  <p className="text-xs mt-1 max-w-[180px]" style={{ color: "var(--color-text-tertiary)" }}>
-                    Fill all fields and press Calculate.
-                  </p>
-                </div>
+            <div className="p-5">
+              {ladderReady ? (
+                <TradeLadder
+                  direction={form.direction}
+                  entry={entryNum}
+                  stop={stopNum}
+                  target={tpNum !== undefined && Number.isFinite(tpNum) && tpNum > 0 ? tpNum : undefined}
+                  riskLabel={results ? fmtUSD(results.dollarRisk) : undefined}
+                  rewardLabel={results && results.rewardAmount !== null ? fmtUSD(results.rewardAmount) : undefined}
+                />
               ) : (
-                <div className="space-y-4">
-                  {/* Warnings */}
+                <div className="flex h-[150px] flex-col items-start justify-center gap-2">
+                  <Calculator size={20} style={{ color: "var(--color-text-quaternary)" }} />
+                  <p className="text-[13px] leading-relaxed text-[var(--color-text-tertiary)]">Enter your entry and stop and the trade draws itself here, to scale.</p>
+                </div>
+              )}
+
+              {results && (
+                <div className="mt-5 space-y-5 border-t pt-5" style={{ borderColor: "var(--hairline)" }}>
                   {results.warnings.length > 0 && (
-                    <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3 space-y-1">
+                    <div className="space-y-1 rounded-lg border p-3" style={{ borderColor: "rgba(var(--amber-rgb),0.3)", background: "var(--color-warning-bg)" }}>
                       {results.warnings.map((w, i) => (
-                        <p key={i} className="text-[11px] text-[var(--color-warning)] flex items-start gap-1.5">
-                          <AlertTriangle size={10} className="mt-0.5 shrink-0" /> {w}
-                        </p>
+                        <p key={i} className="flex items-start gap-1.5 text-[11.5px] text-[var(--color-warning)]"><AlertTriangle size={11} className="mt-0.5 shrink-0" /> {w}</p>
                       ))}
                     </div>
                   )}
 
-                  {/* Primary result */}
-                  <div className="bg-[var(--color-bg-tertiary)] p-4 rounded-lg border border-[var(--color-border-subtle)]">
-                    <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--color-text-tertiary)" }}>
-                      Position Size ({results.mode})
-                    </p>
-                    <p className="text-3xl font-extrabold font-mono text-[var(--color-accent-primary)] tabular-nums">
-                      {results.standardLots !== null
-                        ? fmt(results.standardLots, 4)
-                        : fmt(results.positionSize, 5)}
-                    </p>
-                    <p className="text-[10px] mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-                      {results.lotSizeOrQty}
-                    </p>
-                  </div>
+                  <Stat
+                    size="lg"
+                    tone="signal"
+                    label="Position size"
+                    value={results.standardLots !== null ? fmt(results.standardLots, 4) : fmt(results.positionSize, 5)}
+                    note={results.lotSizeOrQty}
+                  />
 
-                  {/* Metrics grid */}
-                  <div className="space-y-2.5 text-sm font-medium border-t border-[var(--color-border-subtle)] pt-3">
-                    {[
-                      { label: "Dollar Risk",       val: fmtUSD(results.dollarRisk),    cls: "text-[var(--color-loss)]" },
-                      { label: "Stop Distance",      val: fmt(results.stopDistance, 5),  cls: "" },
-                      { label: "Pip Value / Tick",   val: fmtUSD(results.pipValue, 4),   cls: "text-[var(--color-accent-primary)]" },
-                      { label: "Margin Required",    val: fmtUSD(results.marginRequired), cls: "" },
-                    ].map(({ label, val, cls }) => (
-                      <div key={label} className="flex justify-between">
-                        <span style={{ color: "var(--color-text-tertiary)" }}>{label}</span>
-                        <span className={`font-mono ${cls}`}>{val}</span>
-                      </div>
-                    ))}
+                  <dl className="grid grid-cols-2 gap-x-5 gap-y-4">
+                    <Stat label="Dollar risk" value={fmtUSD(results.dollarRisk)} tone="loss" />
+                    <Stat label="R : R" value={results.rMultiple ? `${fmt(results.rMultiple, 2)} : 1` : "—"} />
+                    <Stat label="Stop distance" value={fmt(results.stopDistance, 5)} />
+                    <Stat label="Margin required" value={fmtUSD(results.marginRequired)} />
+                    <Stat label="Pip value / tick" value={fmtUSD(results.pipValue, 4)} />
+                    {results.rewardAmount !== null && <Stat label="Potential profit" value={fmtUSD(results.rewardAmount)} tone="gain" />}
+                  </dl>
 
-                    {/* Forex lot breakdown */}
-                    {results.standardLots !== null && (
-                      <>
-                        <div className="border-t border-[var(--color-border-subtle)] pt-2 mt-2">
-                          <p className="text-[10px] uppercase tracking-wider mb-1.5" style={{ color: "var(--color-text-tertiary)" }}>Forex Lot Breakdown</p>
-                        </div>
-                        {[
-                          { label: "Standard Lots (100k)", val: fmt(results.standardLots, 4) },
-                          { label: "Mini Lots (10k)",      val: fmt(results.miniLots, 4) },
-                          { label: "Micro Lots (1k)",      val: fmt(results.microLots, 4) },
-                        ].map(({ label, val }) => (
-                          <div key={label} className="flex justify-between">
-                            <span style={{ color: "var(--color-text-tertiary)" }}>{label}</span>
-                            <span className="font-mono">{val}</span>
-                          </div>
-                        ))}
-                      </>
-                    )}
-
-                    {/* R:R */}
-                    <div className="flex justify-between">
-                      <span style={{ color: "var(--color-text-tertiary)" }}>R:R Ratio</span>
-                      <span className="font-mono text-[var(--color-accent-primary)]">
-                        {results.rMultiple ? `${fmt(results.rMultiple, 2)}:1` : "—"}
-                      </span>
+                  {results.standardLots !== null && (
+                    <div className="grid grid-cols-3 gap-3 rounded-lg border p-3" style={{ borderColor: "var(--hairline)", background: "var(--panel-2)" }}>
+                      <Stat label="Standard" value={fmt(results.standardLots, 3)} />
+                      <Stat label="Mini" value={fmt(results.miniLots, 3)} />
+                      <Stat label="Micro" value={fmt(results.microLots, 3)} />
                     </div>
-                    {results.rewardAmount !== null && (
-                      <div className="flex justify-between">
-                        <span style={{ color: "var(--color-text-tertiary)" }}>Potential Profit</span>
-                        <span className="font-mono text-[var(--color-profit)]">{fmtUSD(results.rewardAmount)}</span>
-                      </div>
-                    )}
-                  </div>
+                  )}
+
+                  <button onClick={handleSendToJournal} className="btn-secondary btn-block">
+                    Log sized setup in journal <ArrowRight size={14} />
+                  </button>
                 </div>
               )}
             </div>
+          </section>
 
-            {results && (
-              <button
-                onClick={handleSendToJournal}
-                className="w-full mt-6 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                style={{ backgroundColor: "var(--color-accent-primary-muted)", color: "var(--color-accent-primary)" }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = "var(--color-accent-primary)")}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "var(--color-accent-primary-muted)")}
-              >
-                Log Sized Setup in Journal <ArrowRight size={14} />
-              </button>
-            )}
-          </div>
-
-          <div className="card p-4 flex items-center gap-3">
-            <ShieldCheck size={20} className="text-[var(--color-accent-primary)] shrink-0" />
-            <p className="text-[11px] leading-relaxed" style={{ color: "var(--color-text-tertiary)" }}>
-              Calculations use decimal.js precision arithmetic. Always verify contract specifications on your broker terminal before executing.
-            </p>
-          </div>
-        </div>
+          <p className="flex items-start gap-2.5 px-1 text-[11.5px] leading-relaxed text-[var(--color-text-quaternary)]">
+            <ShieldCheck size={15} className="mt-0.5 shrink-0" style={{ color: "var(--accent)" }} />
+            Verify contract specifications on your broker terminal before executing. Educational tool — not financial advice.
+          </p>
+        </aside>
       </div>
     </div>
+  );
+}
+
+/* ── Local layout helpers ─────────────────────────────────────────────────── */
+
+function Station({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
+  return (
+    <section className="card">
+      <header className="flex items-center gap-3 border-b px-5 py-3" style={{ borderColor: "var(--hairline)" }}>
+        <span className="font-mono text-[11px] tracking-[0.14em]" style={{ color: "var(--accent)" }}>{n}</span>
+        <h2 className="text-[14px] font-semibold text-[var(--color-text-primary)]">{title}</h2>
+      </header>
+      <div className="flex flex-col gap-4 p-5">{children}</div>
+    </section>
+  );
+}
+
+function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <Label className="mb-2 block">{label}</Label>
+      {children}
+      {error ? (
+        <p className="mt-1.5 flex items-center gap-1 text-[11.5px] text-[var(--color-loss)]"><AlertTriangle size={11} /> {error}</p>
+      ) : hint ? (
+        <p className="mt-1.5 text-[11.5px] text-[var(--color-text-quaternary)]">{hint}</p>
+      ) : null}
+    </label>
   );
 }

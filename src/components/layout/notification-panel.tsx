@@ -89,7 +89,7 @@ export function NotificationPanel() {
       data-notification-scope
       className="fixed right-0 top-0 h-screen w-80 z-50 flex flex-col justify-between border-l glass shadow-2xl animate-fade-in"
       style={{
-        backgroundColor: "rgba(10, 15, 24, 0.9)",
+        backgroundColor: "rgba(10, 10, 9, 0.9)",
         borderColor: "var(--color-border-subtle)",
       }}
     >
@@ -134,7 +134,7 @@ export function NotificationPanel() {
                 className="p-3 rounded-lg border text-xs cursor-pointer transition-all duration-200 select-none hover:border-[var(--color-border-default)]"
                 style={{
                   backgroundColor: n.isRead ? "rgba(255, 255, 255, 0.01)" : "var(--color-profit-bg)",
-                  borderColor: n.isRead ? "var(--color-border-subtle)" : "rgba(45, 212, 168, 0.22)",
+                  borderColor: n.isRead ? "var(--color-border-subtle)" : "rgba(61, 220, 151, 0.22)",
                 }}
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">

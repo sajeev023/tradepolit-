@@ -50,7 +50,7 @@ export async function generateMetadata({
   if (!entry) return {};
 
   return buildMetadata({
-    title: `${entry.name} — TradCopilot`,
+    title: `${entry.name} — TradePilot`,
     description: entry.summary,
     path: `/guides/${slug}`,
     locale,
@@ -131,14 +131,14 @@ export default async function LocaleGuideDetailPage({
               </h2>
               <p>
                 {locale === "pt-br"
-                  ? "A gestão profissional de operações exige regras matemáticas estritas. No TradCopilot, cada análise gráfica e cada leitura técnica integra estes cálculos de forma determinística, permitindo que você avalie o risco antes de posicionar capital."
-                  : "La gestión profesional de operaciones exige reglas matemáticas estrictas. En TradCopilot, cada análisis gráfico y cada lectura técnica integra estos cálculos de forma determinista, permitiéndote evaluar el riesgo antes de posicionar capital."}
+                  ? "A gestão profissional de operações exige regras matemáticas estritas. No TradePilot, cada análise gráfica e cada leitura técnica integra estes cálculos de forma determinística, permitindo que você avalie o risco antes de posicionar capital."
+                  : "La gestión profesional de operaciones exige reglas matemáticas estrictas. En TradePilot, cada análisis gráfico y cada lectura técnica integra estos cálculos de forma determinista, permitiéndote evaluar el riesgo antes de posicionar capital."}
               </p>
             </div>
 
             <div className="tc-card space-y-3">
               <h2 className="text-[17px] font-semibold text-[var(--ink)]">
-                {locale === "pt-br" ? "Aplicação no Terminal TradCopilot" : "Aplicación en el Terminal TradCopilot"}
+                {locale === "pt-br" ? "Aplicação no Terminal TradePilot" : "Aplicación en el Terminal TradePilot"}
               </h2>
               <p>
                 {locale === "pt-br"
