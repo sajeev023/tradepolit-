@@ -23,7 +23,7 @@ function Tab({ href, label, icon: Icon, active }: { href: string; label: string;
       className="relative flex h-full flex-1 flex-col items-center justify-center gap-[3px] transition-transform active:scale-90"
     >
       <Icon size={21} strokeWidth={active ? 2.2 : 1.6} style={{ color: active ? "var(--color-text-primary)" : "var(--color-text-tertiary)" }} />
-      <span className="font-mono text-[8.5px] font-medium uppercase tracking-[0.1em]" style={{ color: active ? "var(--accent)" : "var(--color-text-quaternary)" }}>
+      <span className="font-mono text-[8.5px] font-medium uppercase tracking-[0.1em] [@media(max-height:480px)]:hidden" style={{ color: active ? "var(--accent)" : "var(--color-text-quaternary)" }}>
         {label}
       </span>
       {active && (
@@ -51,7 +51,7 @@ export function MobileDock() {
     <>
       <nav
         aria-label="Primary"
-        className="fixed inset-x-3 z-40 flex h-[62px] items-stretch rounded-[22px] border select-none lg:hidden"
+        className="fixed inset-x-3 z-40 flex h-[62px] items-stretch rounded-[22px] border select-none lg:hidden [@media(max-height:480px)]:mx-auto [@media(max-height:480px)]:h-[48px] [@media(max-height:480px)]:max-w-[520px] [@media(max-height:480px)]:rounded-2xl"
         style={{
           bottom: "calc(10px + env(safe-area-inset-bottom, 0px))",
           background: "rgba(18, 18, 16, 0.88)",
@@ -70,7 +70,7 @@ export function MobileDock() {
             onClick={() => setCopilotOpen(!copilotOpen)}
             aria-label="Open Copilot"
             aria-pressed={copilotOpen}
-            className="absolute -top-5 flex h-[54px] w-[54px] cursor-pointer items-center justify-center rounded-full"
+            className="absolute -top-5 flex h-[54px] w-[54px] cursor-pointer items-center justify-center rounded-full [@media(max-height:480px)]:-top-3 [@media(max-height:480px)]:h-[44px] [@media(max-height:480px)]:w-[44px]"
             style={{
               background: "var(--accent)",
               color: "var(--on-accent)",
@@ -90,7 +90,7 @@ export function MobileDock() {
           className="relative flex h-full flex-1 cursor-pointer flex-col items-center justify-center gap-[3px] transition-transform active:scale-90"
         >
           <LayoutGrid size={21} strokeWidth={menuActive ? 2.2 : 1.6} style={{ color: menuActive ? "var(--color-text-primary)" : "var(--color-text-tertiary)" }} />
-          <span className="font-mono text-[8.5px] font-medium uppercase tracking-[0.1em]" style={{ color: menuActive ? "var(--accent)" : "var(--color-text-quaternary)" }}>
+          <span className="font-mono text-[8.5px] font-medium uppercase tracking-[0.1em] [@media(max-height:480px)]:hidden" style={{ color: menuActive ? "var(--accent)" : "var(--color-text-quaternary)" }}>
             More
           </span>
         </button>

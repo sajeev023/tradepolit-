@@ -267,7 +267,7 @@ export function HeroWorkbench() {
           )}
           <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex items-center gap-2">
             <span className="tc-status-chip tc-status-chip--accent text-[11px] sm:text-[12px]">
-              <span className={`tc-status-chip__dot ${live ? "tc-status-chip__dot--pulse" : ""}`} />
+              <span className={`tc-status-chip__dot ${hydrated && live ? "tc-status-chip__dot--pulse" : ""}`} />
               {simulated ? "ILLUSTRATIVE" : "LIVE"}
             </span>
             <span className="text-[9px] sm:text-[10px] font-mono text-[var(--muted)]">{TF}</span>

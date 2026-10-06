@@ -76,8 +76,8 @@ export const SymbolBar = memo(function SymbolBar(p: SymbolBarProps) {
   const assetClass = SYMBOL_REGISTRY[p.symbol]?.assetClass;
   return (
     <div className="@container border-b" style={{ borderColor: "var(--hairline)" }}>
-    <div className="flex flex-col gap-3 px-3 py-3 sm:px-4 @3xl:flex-row @3xl:items-center @3xl:justify-between">
-      <div className="flex min-w-0 items-center justify-between gap-2 @3xl:justify-start @3xl:gap-6">
+    <div className="flex flex-col gap-3 px-3 py-3 sm:px-4 @4xl:flex-row @4xl:items-center @4xl:justify-between">
+      <div className="flex min-w-0 items-center justify-between gap-2 @4xl:shrink-0 @4xl:justify-start @4xl:gap-6">
         <button
           onClick={p.onOpenSymbols}
           className="flex min-w-0 shrink-0 cursor-pointer items-center gap-2 rounded-lg py-1 pr-2 lg:pointer-events-none lg:cursor-default lg:p-0"
@@ -93,7 +93,7 @@ export const SymbolBar = memo(function SymbolBar(p: SymbolBarProps) {
         <LivePrice symbol={p.symbol} fallback={p.priceData} refetch={p.refetchPrice} fetching={p.priceFetching} />
       </div>
 
-      <div className="flex items-center justify-between gap-3 @3xl:justify-end">
+      <div className="flex items-center justify-between gap-3 @4xl:justify-end">
         <div role="tablist" aria-label="Timeframe" className="timeframe-scroll-row grid min-w-0 flex-1 grid-cols-7 items-center gap-0.5 rounded-lg border p-0.5 sm:flex sm:flex-none sm:overflow-x-auto" style={{ background: "var(--panel-2)", borderColor: "var(--hairline)" }}>
           {TIMEFRAMES.map((tf) => {
             const on = tf === p.timeframe;

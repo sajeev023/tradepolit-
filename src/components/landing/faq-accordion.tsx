@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
 
 const faqs = [
   {
@@ -30,35 +30,32 @@ export function FaqAccordion() {
   const [expanded, setExpanded] = useState<number | null>(0);
 
   return (
-    <div className="space-y-2 sm:space-y-3">
+    <div className="divide-y divide-[var(--hairline)] overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--panel-1)]">
       {faqs.map((faq, idx) => {
         const open = expanded === idx;
         return (
-          <div
-            key={idx}
-            className="tc-card !p-0 overflow-hidden"
-          >
+          <div key={idx}>
             <button
               onClick={() => setExpanded(open ? null : idx)}
-              className="w-full flex items-center justify-between gap-3 px-3.5 py-3 sm:px-5 sm:py-4 text-left cursor-pointer"
+              className="flex min-h-[56px] w-full cursor-pointer items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-[var(--panel-2)] sm:px-6"
               aria-expanded={open}
+              aria-controls={`faq-panel-${idx}`}
             >
-              <h3 className="text-[14px] sm:text-[17px] font-semibold text-[var(--ink)] leading-snug">
-                {faq.q}
-              </h3>
-              <ChevronDown
-                size={16}
-                className={`shrink-0 text-[var(--muted)] transition-transform duration-300 ${
-                  open ? "rotate-180 text-[var(--accent)]" : ""
-                }`}
+              <span className="font-mono text-[11px] tabular-nums text-[var(--color-text-quaternary)]">{String(idx + 1).padStart(2, "0")}</span>
+              <h3 className="flex-1 text-[15px] font-medium leading-snug text-[var(--ink)] sm:text-[16.5px]">{faq.q}</h3>
+              <Plus
+                size={18}
+                className={`shrink-0 transition-transform duration-300 ${open ? "rotate-45 text-[var(--accent)]" : "text-[var(--color-text-tertiary)]"}`}
               />
             </button>
             <div
+              id={`faq-panel-${idx}`}
+              role="region"
               className="grid transition-[grid-template-rows] duration-300 ease-out"
               style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
             >
               <div className="overflow-hidden">
-                <p className="px-3.5 pb-3.5 sm:px-5 sm:pb-5 text-[12px] sm:text-[14px] text-[var(--muted)] leading-relaxed">
+                <p className="px-4 pb-5 pl-[52px] text-[13.5px] leading-[1.7] text-[var(--color-text-secondary)] sm:pl-[68px] sm:pr-10 sm:text-[14.5px]">
                   {faq.a}
                 </p>
               </div>

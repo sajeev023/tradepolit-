@@ -4,53 +4,54 @@ import { Shield, Eye, Clock, Terminal } from "lucide-react";
 const principles = [
   {
     icon: Terminal,
-    title: "Read-Only Architecture",
+    title: "Read-only architecture",
     body: "No broker keys, no fund custody, and no automated trade execution. Your accounts and assets remain entirely under your control.",
   },
   {
     icon: Eye,
-    title: "Real-Time Telemetry",
+    title: "Real-time telemetry",
     body: "Direct public Binance WebSocket streams and calculated indicators provide verifiable data without simulated delays.",
   },
   {
     icon: Clock,
-    title: "20-Trade Session Memory",
-    body: "Session history stays in memory so the terminal detects recurring revenge trade and overtrading patterns before entry.",
+    title: "20-trade session memory",
+    body: "Session history stays in memory so the terminal detects recurring revenge-trade and overtrading patterns before entry.",
   },
   {
     icon: Shield,
-    title: "Deterministic Risk Rules",
+    title: "Deterministic risk rules",
     body: "Setup recommendations enforce structural pivot invalidations and fixed risk limits rather than arbitrary AI guesses.",
   },
 ];
 
 export function FounderStory() {
   return (
-    <section className="tc-section tc-section--narrow tc-band-alt">
-      <Reveal blur className="text-center space-y-2 sm:space-y-3 mb-6 sm:mb-10 lg:mb-12">
-        <span className="tp-eyebrow-mono">FOUNDATION</span>
-        <h2 className="tp-h2 max-w-2xl mx-auto">
-          Built for disciplined execution
+    <section className="tc-section tc-section--wide tc-band-alt">
+      <Reveal blur className="mx-auto mb-10 max-w-[720px] text-center sm:mb-14">
+        <span className="tp-eyebrow-mono">Foundation</span>
+        <h2 className="mt-3 font-serif text-[clamp(32px,6vw,56px)] leading-[1.02] tracking-[-0.02em] text-[var(--ink)]">
+          Built for <em className="text-[var(--accent)]">disciplined</em> execution.
         </h2>
-        <p className="tp-body max-w-xl mx-auto">
-          TradePilot was built to automate chart routines and protect active traders from emotional mistakes during high-volatility sessions.
+        <p className="tp-body mx-auto mt-4 max-w-[520px]">
+          TradePilot automates chart routines and protects active traders from emotional mistakes during high-volatility sessions.
         </p>
       </Reveal>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
+      <div className="grid gap-px overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--hairline)] sm:grid-cols-2">
         {principles.map((p, i) => {
           const Icon = p.icon;
           return (
-            <Reveal key={p.title} delay={i * 60} className="tc-card space-y-1.5 sm:space-y-2 p-3.5 sm:p-4 lg:p-5">
-              <div className="flex items-center gap-2 sm:gap-2.5 text-[var(--accent)] font-semibold text-[12px] sm:text-[13px]">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded bg-[rgba(var(--accent-rgb),0.08)] border border-[rgba(var(--accent-rgb),0.2)] flex items-center justify-center">
-                  <Icon size={13} />
-                </div>
-                <span>{p.title}</span>
+            <Reveal key={p.title} delay={i * 60} className="flex gap-4 bg-[var(--panel-1)] p-5 sm:p-7">
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                style={{ background: "rgba(var(--accent-rgb),0.1)", color: "var(--accent)" }}
+              >
+                <Icon size={18} />
+              </span>
+              <div>
+                <h3 className="font-serif text-[23px] leading-tight tracking-[-0.01em] text-[var(--ink)]">{p.title}</h3>
+                <p className="mt-2 text-[13.5px] leading-[1.65] text-[var(--color-text-secondary)]">{p.body}</p>
               </div>
-              <p className="tc-card__body text-[11px] sm:text-[12px] leading-relaxed">
-                {p.body}
-              </p>
             </Reveal>
           );
         })}

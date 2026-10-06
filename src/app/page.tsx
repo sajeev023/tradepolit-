@@ -136,9 +136,9 @@ export default function LandingPage() {
       {/* ━━━ 9 · FAQ (skeptic first-person) ━━━━━━━━━━━━━━━━ */}
       <section id="faq" className="tc-section tc-section--narrow scroll-mt-20">
         <Reveal blur className="text-center space-y-2.5 sm:space-y-3 mb-6 sm:mb-10 lg:mb-12">
-          <span className="tp-eyebrow-mono">05 / QUESTIONS</span>
-          <h2 className="tp-h2">
-            Frequently asked questions about the terminal
+          <span className="tp-eyebrow-mono">05 / Questions</span>
+          <h2 className="font-serif text-[clamp(32px,6vw,56px)] leading-[1.02] tracking-[-0.02em] text-[var(--ink)]">
+            Questions, <em className="text-[var(--accent)]">answered.</em>
           </h2>
         </Reveal>
         <Suspense fallback={<div className="h-64" />}>

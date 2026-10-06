@@ -6,50 +6,32 @@ import { ExpectancyCalculator } from "./expectancy-calculator";
 const tiers = [
   {
     name: "Free",
-    tag: "STARTER",
+    tag: "Starter",
     price: "$0",
     cadence: "forever",
     description: "Core market telemetry and basic setup scans for individual traders.",
-    cta: "Get Started Free",
+    cta: "Get started free",
     href: "/signup",
     isPro: false,
     groups: [
-      {
-        title: "Technical Analysis",
-        items: ["5 AI chart scans / day", "Standard response speed", "OHLCV candle telemetry"],
-      },
-      {
-        title: "Journal & Memory",
-        items: ["Last 20 trades session memory", "Standard trade logging"],
-      },
-      {
-        title: "Discipline & Alerts",
-        items: ["3 active price alerts", "Basic discipline tracking"],
-      },
+      { title: "Technical analysis", items: ["5 AI chart scans / day", "Standard response speed", "OHLCV candle telemetry"] },
+      { title: "Journal & memory", items: ["Last 20 trades session memory", "Standard trade logging"] },
+      { title: "Discipline & alerts", items: ["3 active price alerts", "Basic discipline tracking"] },
     ],
   },
   {
     name: "Pro Terminal",
-    tag: "INSTITUTIONAL",
+    tag: "Full capacity",
     price: "$7.49",
     cadence: "month · billed monthly",
     description: "Unlimited high-speed multi-model scans and full behavioral guardrails.",
-    cta: "Start 7-Day Pro Trial",
+    cta: "Start 7-day Pro trial",
     href: "/signup?plan=pro",
     isPro: true,
     groups: [
-      {
-        title: "Technical Analysis",
-        items: ["Unlimited AI chart scans", "Multi-model race pipeline (<3s)", "Full indicator matrix (RSI, MACD, EMA, ATR)"],
-      },
-      {
-        title: "Journal & Memory",
-        items: ["Persistent full history trade journal", "Weekly performance & risk audit reports", "Saved snapshot analysis library"],
-      },
-      {
-        title: "Discipline & Alerts",
-        items: ["Real-time revenge & overtrading guardrails", "Position sizing anomaly detection", "Unlimited sub-20s level alerts"],
-      },
+      { title: "Technical analysis", items: ["Unlimited AI chart scans", "Multi-model race pipeline (<3s)", "Full indicator matrix (RSI, MACD, EMA, ATR)"] },
+      { title: "Journal & memory", items: ["Persistent full history trade journal", "Weekly performance & risk audit reports", "Saved snapshot analysis library"] },
+      { title: "Discipline & alerts", items: ["Real-time revenge & overtrading guardrails", "Position sizing anomaly detection", "Unlimited sub-20s level alerts"] },
     ],
   },
 ];
@@ -57,89 +39,75 @@ const tiers = [
 export function PricingSection() {
   return (
     <section id="pricing" className="tc-section tc-section--wide scroll-mt-20">
-      <Reveal blur className="text-center space-y-2 sm:space-y-3 mb-6 sm:mb-10 lg:mb-12">
-        <span className="tp-eyebrow-mono">04 / PRICING</span>
-        <h2 className="tp-h2">
-          Transparent, utility-based pricing
+      <Reveal blur className="mx-auto mb-10 max-w-[720px] text-center sm:mb-14">
+        <span className="tp-eyebrow-mono">04 / Pricing</span>
+        <h2 className="mt-3 font-serif text-[clamp(32px,6vw,56px)] leading-[1.02] tracking-[-0.02em] text-[var(--ink)]">
+          Simple pricing. <em className="text-[var(--accent)]">No surprises.</em>
         </h2>
-        <p className="tp-body max-w-sm mx-auto">
-          Start free with zero credit card commitment. Upgrade for full terminal capacity.
-        </p>
+        <p className="tp-body mx-auto mt-4 max-w-[420px]">Start free with no credit card. Upgrade for full terminal capacity.</p>
       </Reveal>
 
-      {/* Calculator directly above the cards */}
-      <Reveal delay={80} className="max-w-3xl mx-auto mb-5 sm:mb-8">
+      <Reveal delay={80} className="mx-auto mb-6 max-w-3xl sm:mb-10">
         <ExpectancyCalculator />
       </Reveal>
 
-      <div className="grid md:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto items-stretch">
+      <div className="mx-auto grid max-w-3xl items-stretch gap-4 sm:gap-5 md:grid-cols-2">
         {tiers.map((tier, i) => (
           <Reveal
             key={tier.name}
             delay={i * 80}
-            className={`tc-card p-4 sm:p-6 lg:p-7 h-full flex flex-col justify-between ${
-              tier.isPro ? "border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(var(--accent-rgb),0.02)]" : ""
+            className={`relative flex h-full flex-col overflow-hidden rounded-2xl border p-5 sm:p-7 ${
+              tier.isPro
+                ? "border-[rgba(var(--accent-rgb),0.4)] bg-[var(--panel-2)]"
+                : "border-[var(--hairline)] bg-[var(--panel-1)]"
             }`}
           >
-            <div>
-              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-[var(--accent)] tracking-wider">
-                  {tier.tag}
+            {tier.isPro && (
+              <span
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-px"
+                style={{ background: "linear-gradient(90deg, transparent, var(--accent), transparent)" }}
+              />
+            )}
+
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-[var(--color-text-tertiary)]">{tier.tag}</span>
+              {tier.isPro && (
+                <span
+                  className="rounded-full px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]"
+                  style={{ background: "rgba(var(--accent-rgb),0.1)", border: "1px solid rgba(var(--accent-rgb),0.28)" }}
+                >
+                  7-day trial
                 </span>
-                {tier.isPro && (
-                  <span className="text-[9px] sm:text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[rgba(var(--accent-rgb),0.12)] text-[var(--accent)] border border-[rgba(var(--accent-rgb),0.25)]">
-                    7-DAY TRIAL
-                  </span>
-                )}
-              </div>
-
-              <h3 className="text-[18px] sm:text-[20px] font-bold text-[var(--ink)] tracking-tight">
-                {tier.name}
-              </h3>
-
-              <div className="flex items-baseline gap-1.5 my-1.5 sm:my-2">
-                <span className="font-mono text-[1.85rem] sm:text-[2.25rem] font-bold text-[var(--ink)] tabular-nums">
-                  {tier.price}
-                </span>
-                <span className="text-[11px] sm:text-[12px] text-[var(--muted)] font-mono">/ {tier.cadence}</span>
-              </div>
-
-              <p className="text-[12px] sm:text-[13px] text-[var(--muted)] leading-relaxed mb-4 sm:mb-6">
-                {tier.description}
-              </p>
-
-              <div className="tc-card__divider" />
-
-              <div className="space-y-3 sm:space-y-4 my-4 sm:my-6">
-                {tier.groups.map((group) => (
-                  <div key={group.title} className="space-y-1 sm:space-y-1.5">
-                    <div className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wider text-[var(--muted)]">
-                      {group.title}
-                    </div>
-                    <ul className="space-y-1 sm:space-y-1.5">
-                      {group.items.map((item) => (
-                        <li key={item} className="flex items-start gap-2 text-[11px] sm:text-[12px] text-[var(--ink)]">
-                          <Check size={12} className="text-[var(--accent)] shrink-0 mt-0.5" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              )}
             </div>
 
-            <Link
-              href={tier.href}
-              className={`h-10 sm:h-11 rounded-md text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-transform active:scale-[0.98] ${
-                tier.isPro
-                  ? "text-[var(--bg-primary)] shadow-sm"
-                  : "border border-[var(--color-border-strong)] text-[var(--ink)] hover:border-[var(--accent)]"
-              }`}
-              style={tier.isPro ? { background: "var(--accent)" } : {}}
-            >
-              <span>{tier.cta}</span>
-              {tier.isPro && <ArrowRight size={14} />}
+            <h3 className="mt-4 text-[15px] font-semibold text-[var(--ink)]">{tier.name}</h3>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className="font-serif text-[56px] leading-none tracking-[-0.03em] text-[var(--ink)]">{tier.price}</span>
+              <span className="font-mono text-[11px] text-[var(--color-text-tertiary)]">/ {tier.cadence}</span>
+            </div>
+            <p className="mt-3 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">{tier.description}</p>
+
+            <div className="my-6 space-y-5 border-t border-[var(--hairline)] pt-6">
+              {tier.groups.map((group) => (
+                <div key={group.title}>
+                  <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-quaternary)]">{group.title}</div>
+                  <ul className="space-y-2">
+                    {group.items.map((item) => (
+                      <li key={item} className="flex items-start gap-2.5 text-[13px] leading-snug text-[var(--ink)]">
+                        <Check size={14} className="mt-[1px] shrink-0 text-[var(--accent)]" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <Link href={tier.href} className={`${tier.isPro ? "btn-primary" : "btn-secondary"} btn-lg mt-auto w-full`}>
+              {tier.cta}
+              {tier.isPro && <ArrowRight size={15} />}
             </Link>
           </Reveal>
         ))}
