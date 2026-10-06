@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+
+const subscribeNoop = () => () => {};
 import Link from "next/link";
 import { Send } from "lucide-react";
 import { useBinanceStream } from "@/hooks/useBinanceStream";
@@ -116,8 +118,11 @@ export function HeroWorkbench() {
     };
   }, [symbol]);
 
-  const displayPrice = live?.price ?? tech?.currentPrice ?? candles?.[candles.length - 1]?.close;
-  const changePct = live?.changePercent24h;
+  // false on the server and during hydration, true afterwards — the stream may hold a
+  // cached tick on the client's first render, which would otherwise mismatch the SSR "—".
+  const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false);
+  const displayPrice = hydrated ? (live?.price ?? tech?.currentPrice ?? candles?.[candles.length - 1]?.close) : undefined;
+  const changePct = hydrated ? live?.changePercent24h : undefined;
   // Mirror displayPrice into a ref so the boot effect can read the live value at
   // fire time without joining it to the effect deps (which would re-run on every
   // WebSocket tick and thrash the choreography).

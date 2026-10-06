@@ -4,30 +4,33 @@ import { Reveal } from "@/components/ui/reveal";
 
 export function FinalCta() {
   return (
-    <section className="tc-band-alt">
-      <div className="tc-section tc-section--narrow !py-8 sm:!py-14 lg:!py-20 text-center relative">
-        <div className="tc-aurora" aria-hidden="true" />
-        <Reveal blur className="space-y-3 sm:space-y-5 relative z-10">
-          <span className="tp-eyebrow-mono">GET STARTED</span>
-          <h2 className="tp-h2 max-w-xl mx-auto">
-            Execute with structured discipline
+    <section className="relative overflow-hidden border-y border-[var(--hairline)] bg-[var(--panel-1)]">
+      {/* the horizon line again — the page ends where it began */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(var(--accent-rgb),0.7) 30%, rgba(var(--accent-rgb),0.7) 70%, transparent)" }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-0 h-[240px] w-[min(760px,90%)] -translate-x-1/2 rounded-full opacity-[0.1] blur-[90px]"
+        style={{ background: "var(--accent)" }}
+      />
+      <div className="relative mx-auto max-w-[860px] px-5 py-16 text-center sm:py-24 lg:py-28">
+        <Reveal blur className="flex flex-col items-center">
+          <span className="tp-eyebrow-mono">Clear for takeoff</span>
+          <h2 className="mt-4 font-serif text-[clamp(38px,8vw,76px)] leading-[0.98] tracking-[-0.025em] text-[var(--ink)]">
+            Trade with a <em className="text-[var(--accent)]">memory.</em>
           </h2>
-          <p className="tp-body max-w-md mx-auto">
-            Free access with zero credit card requirement. Keep using your primary broker and charting platforms alongside it.
+          <p className="tp-body mt-5 max-w-[460px]">
+            Free to start, no credit card. Keep your broker and charting platform — TradePilot sits beside them, read-only.
           </p>
-          <div data-onpage-cta className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 pt-1 sm:pt-2 w-full sm:w-auto">
-            <Link
-              href="/signup"
-              className="group w-full sm:w-auto h-10 sm:h-11 px-5 sm:px-6 rounded-md text-[13px] font-semibold inline-flex items-center justify-center gap-2 text-[var(--bg-primary)] transition-transform active:scale-[0.98]"
-              style={{ background: "var(--accent)" }}
-            >
-              <span>Get Started Free</span>
-              <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+          <div data-onpage-cta className="mt-8 flex w-full flex-col items-stretch justify-center gap-2.5 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
+            <Link href="/signup" className="btn-primary btn-lg group">
+              Get started free
+              <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
-            <Link
-              href="/login"
-              className="w-full sm:w-auto h-10 sm:h-11 px-5 rounded-md border border-[var(--color-border-strong)] text-[var(--ink)] hover:border-[var(--accent)] text-[13px] font-semibold inline-flex items-center justify-center transition-colors"
-            >
+            <Link href="/login" className="btn-secondary btn-lg">
               Sign in
             </Link>
           </div>
