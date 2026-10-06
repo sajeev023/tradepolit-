@@ -987,18 +987,20 @@ body {
 }
 
 /* Price ticker animations */
+/* Direction flash: tint, then settle back to the resting ink colour. Never touches opacity,
+   so a fast tick stream can't leave the price invisible. */
 @keyframes ticker-up {
-  from { color: var(--color-profit); transform: translateY(3px); opacity: 0; }
-  to { color: var(--color-profit); transform: translateY(0); opacity: 1; }
+  from { color: var(--color-profit); }
+  to { color: var(--color-text-primary); }
 }
 
 @keyframes ticker-down {
-  from { color: var(--color-loss); transform: translateY(-3px); opacity: 0; }
-  to { color: var(--color-loss); transform: translateY(0); opacity: 1; }
+  from { color: var(--color-loss); }
+  to { color: var(--color-text-primary); }
 }
 
-.tick-up { animation: ticker-up 0.25s ease-out; }
-.tick-down { animation: ticker-down 0.25s ease-out; }
+.tick-up { animation: ticker-up 0.7s ease-out; }
+.tick-down { animation: ticker-down 0.7s ease-out; }
 
 /* Skeleton shimmer */
 @keyframes shimmer {
@@ -1184,364 +1186,101 @@ html.lenis, html.lenis body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   MOBILE — GLOBAL FOUNDATION (375–768px)
+   RESPONSIVE FOUNDATION
+   Structural layout lives in components (container queries + breakpoints).
+   This block only holds global guarantees — no per-page patches.
    ═══════════════════════════════════════════════════════════ */
 
-/* 1. Kill horizontal scroll everywhere.
-   Note: `#__next` was the Next.js 12 mount point and no longer exists in the
-   App Router — kept here is a dead selector, so we scope to real elements. */
-html, body, main {
-  overflow-x: hidden;
-  max-width: 100vw;
-}
-
-/* 2. Border-box everywhere — standard sane default. */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
-/* 3. Word-wrap text containers so long strings (addresses, tickers, URLs)
-   don't overflow their box. Scoped to actual text-bearing elements instead
-   of `*` so it never fights with widget/chart internals (TradingView, etc.). */
-p, span, a, li, td, th, h1, h2, h3, h4, h5, h6, label, dt, dd, blockquote, pre, code, input, textarea, select, button {
+/* Never allow sideways page scroll; `clip` (unlike `hidden`) keeps sticky working. */
+html,
+body {
+  overflow-x: clip;
+}
+
+p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, label {
   overflow-wrap: break-word;
 }
 
-/* 3. Prevent iOS zoom on input focus — 16px minimum */
-input, textarea, select {
-  font-size: 16px !important;
-  -webkit-text-size-adjust: 100%;
+/* Grid/flex children default to min-width:auto, which lets long content blow a column
+   past the viewport. Base layer = any `min-w-*` utility still wins. */
+@layer base {
+  .grid > *,
+  .flex-col > * {
+    min-width: 0;
+  }
 }
 
-/* 4. Minimum touch targets on coarse-pointer devices */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Touch devices: comfortable targets + no iOS focus-zoom (needs >=16px). */
 @media (pointer: coarse) {
-  button,
-  a,
-  input,
-  select,
-  textarea,
-  [role="button"],
-  .clickable,
   .btn-primary,
   .btn-secondary,
   .btn-ghost,
   .icon-button {
     min-height: 44px;
+  }
+  .icon-button {
     min-width: 44px;
   }
-}
-
-/* 5. Safe-area insets for notch/home-indicator devices */
-.bottom-nav,
-.mobile-bottom-nav,
-.fixed-bottom-nav {
-  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-}
-
-.fixed-top,
-.sticky-header-shell {
-  padding-top: env(safe-area-inset-top, 0px) !important;
-}
-
-/* 6. Scrollable tables/wide content — touch-friendly */
-.table-container,
-.wide-content,
-.overflow-table {
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* 7. Responsive grid helpers */
-@media (max-width: 767px) {
-  .desktop-row {
-    flex-direction: column !important;
-    gap: 16px !important;
-  }
-  .desktop-grid-3,
-  .desktop-grid-2,
-  .grid-2,
-  .grid-3,
-  .grid-4 {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-
-  /* Full-width cards & panels */
-  .card,
-  .panel,
-  section > .container {
-    width: 100% !important;
-    max-width: 100vw !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  /* Full-width submit / CTA buttons */
-  button[type="submit"]:not(.btn-no-full-width),
-  .cta-button,
-  .btn-full-mobile {
-    width: 100% !important;
-    justify-content: center !important;
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px;
   }
 }
 
-/* 8. TradingView widget — full width, fill available height */
+/* Buttons never wrap their label; they shrink padding instead. */
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  white-space: nowrap;
+}
+@media (max-width: 380px) {
+  .btn-lg {
+    padding: 0 14px;
+    font-size: 13px;
+  }
+}
+
+/* Timeframe strip: base state; SymbolBar overrides layout per breakpoint. */
+.timeframe-scroll-row {
+  scrollbar-width: none;
+}
+.timeframe-scroll-row::-webkit-scrollbar {
+  display: none;
+}
+.timeframe-pill {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* TradingView embed fills its host. */
 .tradingview-widget-container,
 .tradingview-widget-container iframe {
-  width: 100% !important;
-  max-width: 100vw !important;
-  height: 100% !important;
+  width: 100%;
+  height: 100%;
 }
 
-@media (max-width: 767px) {
-  .tradingview-widget-container {
-    min-height: 240px !important;
-  }
-}
-
-/* 9. Timeframe pills — horizontal scroll row */
-.timeframe-scroll-row {
-  display: flex !important;
-  flex-direction: row !important;
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-  gap: 6px !important;
-  scrollbar-width: none !important;
-  padding-bottom: 2px;
-}
-.timeframe-scroll-row::-webkit-scrollbar { display: none !important; }
-
-.timeframe-pill {
-  flex-shrink: 0 !important;
-  min-height: 36px !important;
-  min-width: 44px !important;
-  padding: 0 12px !important;
-  font-size: 12px !important;
-  border-radius: 8px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  white-space: nowrap !important;
-}
-
-/* 10. Images — never overflow */
-img, video, canvas, svg {
-  max-width: 100% !important;
-  height: auto;
-}
-iframe {
-  max-width: 100% !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   LANDING PAGE — MOBILE OVERRIDES
-   ═══════════════════════════════════════════════════════════ */
-
-@media (max-width: 767px) {
-  /* Hero section — tighter vertical, more breathing room above fold */
-  .hero-section {
-    padding-left: 20px !important;
-    padding-right: 20px !important;
-    padding-top: 72px !important;
-    padding-bottom: 40px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 28px !important;
-  }
-
-  /* Hero headline — 36-48px on mobile, per spec */
-  .hero-headline {
-    font-size: clamp(36px, 7.5vw, 52px) !important;
-    line-height: 1.08 !important;
-    letter-spacing: -0.03em !important;
-  }
-
-  /* Hero subtext — 15px, readable */
-  .hero-subtext {
-    font-size: 15px !important;
-    line-height: 1.6 !important;
-  }
-
-  /* CTA button row — stack vertically, full width, 48px touch targets */
-  .hero-cta-row {
-    flex-direction: column !important;
-    gap: 10px !important;
-    width: 100% !important;
-  }
-  .hero-cta-row .btn-primary,
-  .hero-cta-row .btn-secondary,
-  .hero-cta-row button,
-  .hero-cta-row a {
-    width: 100% !important;
-    height: 48px !important;
-    justify-content: center !important;
-    font-size: 15px !important;
-  }
-
-  /* Product mockup — hide heavy desktop mockup to avoid overflow */
-  .hero-mockup-desktop {
-    display: none !important;
-  }
-
-  /* Footer — stack links, center text */
-  footer .footer-inner {
-    flex-direction: column !important;
-    align-items: center !important;
-    text-align: center !important;
-    gap: 16px !important;
-  }
-
-  /* Pricing cards — Pro first via order */
-  .pricing-pro-card  { order: 1 !important; }
-  .pricing-free-card { order: 2 !important; }
-
-  /* Sections — full width padding */
-  section {
-    padding-left: 20px !important;
-    padding-right: 20px !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   DASHBOARD / CHARTS — MOBILE OVERRIDES
-   ═══════════════════════════════════════════════════════════ */
-
-@media (max-width: 1023px) {
-  /* Chart panel: full width */
-  .chart-main-panel {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  /* Watchlist rows: min 44px */
-  .watchlist-row {
-    min-height: 44px !important;
-    padding: 10px 12px !important;
-  }
-
-  /* AI chat input bar — fixed above bottom nav */
-  .ai-chat-input-bar {
-    position: fixed !important;
-    bottom: calc(52px + env(safe-area-inset-bottom, 0px)) !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 40 !important;
-    padding: 8px 16px !important;
-    background: var(--color-bg-secondary) !important;
-    border-top: 1px solid var(--color-border-subtle) !important;
-  }
-
-  /* Chat messages — full width */
-  .chat-message {
-    max-width: 100% !important;
-    font-size: 14px !important;
-    line-height: 1.6 !important;
-  }
-
-  /* Journal form — full width inputs */
-  .journal-form input,
-  .journal-form textarea,
-  .journal-form select {
-    width: 100% !important;
-    min-height: 48px !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   AUTH PAGES — MOBILE OVERRIDES
-   ═══════════════════════════════════════════════════════════ */
-
-@media (max-width: 767px) {
-  /* Auth form container — full width with side padding */
-  .auth-form-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 20px !important;
-  }
-
-  /* Auth inputs */
-  .auth-form-container input,
-  .auth-input {
-    width: 100% !important;
-    height: 48px !important;
-    padding: 0 16px !important;
-    font-size: 16px !important; /* prevent iOS zoom */
-  }
-
-  /* Auth buttons */
-  .auth-form-container button,
-  .auth-form-container a.btn-primary {
-    width: 100% !important;
-    height: 48px !important;
-    justify-content: center !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   BOTTOM NAV — MOBILE SPECIFIC
-   ═══════════════════════════════════════════════════════════ */
-
-.mobile-bottom-nav-shell {
-  height: calc(52px + env(safe-area-inset-bottom, 0px)) !important;
-  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-  backdrop-filter: blur(20px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
-}
-
-.mobile-bottom-nav-shell button {
-  min-height: 44px !important;
-  min-width: 44px !important;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MODALS & DIALOGS — MOBILE OVERRIDES
-   ═══════════════════════════════════════════════════════════ */
-
-@media (max-width: 767px) {
-  /* Full-width modals */
-  [role="dialog"],
-  .modal-container,
-  .dialog-panel {
-    width: 100% !important;
-    max-width: calc(100vw - 32px) !important;
-    margin: 0 16px !important;
-    max-height: 90dvh !important;
-    overflow-y: auto !important;
-  }
-
-  /* Modal close button — always reachable */
-  .modal-close-btn,
-  [aria-label="Close"] {
-    min-width: 44px !important;
-    min-height: 44px !important;
-    position: absolute !important;
-    top: 8px !important;
-    right: 8px !important;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MINIMUM FONT SIZE GUARDRAIL
-   ═══════════════════════════════════════════════════════════ */
-
-@media (max-width: 767px) {
-  /* Prevent tiny text — nothing below 12px on mobile */
-  p, span:not(.badge span), li, td, th, div.text-xs, div.text-\[11px\], div.text-\[10px\] {
-    font-size: max(12px, inherit);
-  }
-}
-
-/* sonner toast mobile positioning + z-index override */
+/* Toasts sit above the floating dock on phones. */
 [data-sonner-toaster] {
   z-index: var(--z-toast) !important;
 }
 @media (max-width: 1023px) {
   [data-sonner-toaster] {
-    bottom: calc(130px + env(safe-area-inset-bottom, 0px)) !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
     max-width: calc(100vw - 32px) !important;
   }
 }

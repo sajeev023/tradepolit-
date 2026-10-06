@@ -15,7 +15,7 @@ const num = (v: unknown, d = 2) => (typeof v === "number" ? v.toFixed(d) : "—"
 
 function Cell({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`flex min-w-[120px] shrink-0 flex-col gap-1.5 border-r px-4 py-2.5 last:border-r-0 ${className}`} style={{ borderColor: "var(--hairline)" }}>
+    <div className={`flex min-w-0 flex-col gap-1.5 px-4 py-2.5 sm:min-w-[120px] sm:shrink-0 sm:border-r sm:last:border-r-0 ${className}`} style={{ borderColor: "var(--hairline)", background: "var(--panel-1)" }}>
       <Label>{label}</Label>
       {children}
     </div>
@@ -44,7 +44,7 @@ function RsiGauge({ value }: { value: number }) {
 export const IndicatorStrip = memo(function IndicatorStrip({ data, isPro }: { data: Indicators; isPro: boolean }) {
   const ema = data.emaCrossover;
   return (
-    <div id="indicator-panel" className="flex items-stretch overflow-x-auto border-t [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ borderColor: "var(--hairline)", background: "var(--panel-1)" }}>
+    <div id="indicator-panel" className="grid grid-cols-2 gap-px border-t sm:flex sm:items-stretch sm:gap-0 sm:overflow-x-auto sm:[scrollbar-width:none] sm:[&::-webkit-scrollbar]:hidden" style={{ borderColor: "var(--hairline)", background: "var(--hairline)" }}>
       <Cell label="RSI 14">{typeof data.rsi === "number" ? <RsiGauge value={data.rsi} /> : <span className="font-mono text-[15px]">—</span>}</Cell>
       <Cell label="MACD / Signal">
         <span className="font-mono text-[15px] font-medium tabular-nums text-[var(--color-text-primary)]">
@@ -59,7 +59,7 @@ export const IndicatorStrip = memo(function IndicatorStrip({ data, isPro }: { da
         ) : <Locked />}
       </Cell>
       <Cell label="ATR 14">{isPro ? <span className="font-mono text-[15px] font-medium tabular-nums text-[var(--color-text-primary)]">{num(data.atr)}</span> : <Locked />}</Cell>
-      <div className="ml-auto flex shrink-0 items-center gap-1.5 px-4">
+      <div className="ml-auto hidden shrink-0 items-center gap-1.5 px-4 sm:flex" style={{ background: "var(--panel-1)" }}>
         <span className="live-dot" style={{ width: 5, height: 5 }} />
         <Label>Live</Label>
       </div>

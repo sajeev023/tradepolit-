@@ -9,6 +9,8 @@ const nextConfig = (phase: string): NextConfig => {
     poweredByHeader: false,
     // Dev-only: lets the logged-out cookie jar at 127.0.0.1 hydrate alongside localhost.
     allowedDevOrigins: ["127.0.0.1"],
+    // The floating dev badge sits on top of the mobile dock while testing.
+    devIndicators: false,
   experimental: {
     instantNavigationDevToolsToggle: true,
   },

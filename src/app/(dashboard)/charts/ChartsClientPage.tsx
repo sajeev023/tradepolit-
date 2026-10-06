@@ -1162,7 +1162,7 @@ Timestamp: ${new Date().toISOString()}
             onToggleAi={() => setAiPanelOpen((v) => !v)}
             onOpenSymbols={() => setMobileTab("watchlist")}
           />
-          <div className={`relative w-full flex-1 ${isChartMaximized ? "min-h-0" : "h-[50dvh] min-h-[300px] lg:h-auto lg:min-h-[400px]"}`} style={{ background: "var(--background)" }}>
+          <div className={`relative w-full flex-1 ${isChartMaximized ? "min-h-0" : "h-[50dvh] min-h-[300px] sm:h-[60dvh] lg:h-auto lg:min-h-[400px]"}`} style={{ background: "var(--background)" }}>
             <TradingViewChart symbol={selectedSymbol} timeframe={selectedTimeframe} isMaximized={isChartMaximized} />
           </div>
           {liveIndicators && <IndicatorStrip data={liveIndicators} isPro={isPro} />}

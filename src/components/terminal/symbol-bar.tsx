@@ -53,12 +53,12 @@ const LivePrice = memo(function LivePrice({ symbol, fallback, refetch, fetching 
       <div className="flex items-baseline gap-2 whitespace-nowrap sm:gap-3">
         <span
           key={data.price}
-          className={`font-mono text-[23px] font-medium leading-none tabular-nums tracking-[-0.04em] text-[var(--color-text-primary)] sm:text-[30px] ${dir === "up" ? "tick-up" : dir === "down" ? "tick-down" : ""}`}
+          className={`font-mono text-[20px] font-medium leading-none tabular-nums tracking-[-0.04em] text-[var(--color-text-primary)] min-[380px]:text-[23px] sm:text-[30px] ${dir === "up" ? "tick-up" : dir === "down" ? "tick-down" : ""}`}
         >
           {formatPrice(data.symbol, data.price)}
         </span>
-        <span className="font-mono text-[13px] tabular-nums" style={{ color: up ? "var(--color-profit)" : "var(--color-loss)" }}>
-          {up ? "▲" : "▼"} {Math.abs(data.changePercent24h).toFixed(2)}%
+        <span className="font-mono text-[12px] tabular-nums min-[380px]:text-[13px]" style={{ color: up ? "var(--color-profit)" : "var(--color-loss)" }}>
+          <span className="max-[379px]:hidden">{up ? "▲" : "▼"} </span>{up ? "+" : "−"}{Math.abs(data.changePercent24h).toFixed(2)}%
         </span>
       </div>
       <span className="hidden items-center gap-1.5 sm:flex" title={live ? "Live via WebSocket" : "Polled price — WebSocket unavailable"}>
@@ -77,13 +77,13 @@ export const SymbolBar = memo(function SymbolBar(p: SymbolBarProps) {
   return (
     <div className="@container border-b" style={{ borderColor: "var(--hairline)" }}>
     <div className="flex flex-col gap-3 px-3 py-3 sm:px-4 @3xl:flex-row @3xl:items-center @3xl:justify-between">
-      <div className="flex min-w-0 items-center justify-between gap-4 @3xl:justify-start @3xl:gap-6">
+      <div className="flex min-w-0 items-center justify-between gap-2 @3xl:justify-start @3xl:gap-6">
         <button
           onClick={p.onOpenSymbols}
           className="flex min-w-0 shrink-0 cursor-pointer items-center gap-2 rounded-lg py-1 pr-2 lg:pointer-events-none lg:cursor-default lg:p-0"
           aria-label="Choose symbol"
         >
-          <span className="font-mono text-[17px] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">{p.symbol}</span>
+          <span className="font-mono text-[15px] font-semibold tracking-[-0.02em] text-[var(--color-text-primary)] min-[380px]:text-[17px]">{p.symbol}</span>
           <span className="hidden items-center gap-1.5 sm:flex">
             {assetClass && <Chip>{assetClass}</Chip>}
             <Chip>{getExchangeName(p.symbol)}</Chip>
@@ -94,7 +94,7 @@ export const SymbolBar = memo(function SymbolBar(p: SymbolBarProps) {
       </div>
 
       <div className="flex items-center justify-between gap-3 @3xl:justify-end">
-        <div role="tablist" aria-label="Timeframe" className="timeframe-scroll-row flex min-w-0 items-center gap-0.5 overflow-x-auto rounded-lg border p-0.5" style={{ background: "var(--panel-2)", borderColor: "var(--hairline)" }}>
+        <div role="tablist" aria-label="Timeframe" className="timeframe-scroll-row grid min-w-0 flex-1 grid-cols-7 items-center gap-0.5 rounded-lg border p-0.5 sm:flex sm:flex-none sm:overflow-x-auto" style={{ background: "var(--panel-2)", borderColor: "var(--hairline)" }}>
           {TIMEFRAMES.map((tf) => {
             const on = tf === p.timeframe;
             return (
@@ -103,7 +103,7 @@ export const SymbolBar = memo(function SymbolBar(p: SymbolBarProps) {
                 role="tab"
                 aria-selected={on}
                 onClick={() => p.onTimeframe(tf)}
-                className="timeframe-pill relative h-8 min-w-[40px] shrink-0 cursor-pointer rounded-md px-2.5 font-mono text-[11.5px] font-medium transition-colors"
+                className="timeframe-pill relative h-9 min-w-0 cursor-pointer rounded-md px-0 font-mono text-[11.5px] font-medium transition-colors sm:h-8 sm:min-w-[40px] sm:shrink-0 sm:px-2.5"
                 style={{ color: on ? "var(--on-accent)" : "var(--color-text-tertiary)", background: on ? "var(--accent)" : "transparent" }}
               >
                 {tf}
@@ -116,9 +116,11 @@ export const SymbolBar = memo(function SymbolBar(p: SymbolBarProps) {
           <button onClick={p.onSnapshot} disabled={p.snapshotBusy} className="icon-button" aria-label="Export setup as PNG" title="Export setup PNG">
             <Camera size={16} />
           </button>
-          <button onClick={p.onToggleMaximize} className="icon-button" aria-label={p.isMaximized ? "Exit fullscreen" : "Maximize chart"} title={p.isMaximized ? "Exit fullscreen" : "Maximize chart"}>
-            {p.isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          </button>
+          <span className="max-sm:hidden">
+            <button onClick={p.onToggleMaximize} className="icon-button" aria-label={p.isMaximized ? "Exit fullscreen" : "Maximize chart"} title={p.isMaximized ? "Exit fullscreen" : "Maximize chart"}>
+              {p.isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            </button>
+          </span>
           <button
             onClick={p.onToggleAi}
             aria-pressed={p.aiOpen}

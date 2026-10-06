@@ -121,6 +121,7 @@ export const TradingViewChart = memo(function TradingViewChart({
 
     const initStart = performance.now();
     profiler.recordWidgetInit();
+    const isPhone = window.matchMedia("(max-width: 639px)").matches;
 
     let widget: any;
     try {
@@ -136,15 +137,18 @@ export const TradingViewChart = memo(function TradingViewChart({
         toolbar_bg: "#121214",
         enable_publishing: false,
         hide_top_toolbar: true,
-        hide_side_toolbar: false,
+        hide_side_toolbar: isPhone,
         allow_symbol_change: false,
         container_id: containerId,
-        studies: [
-          "RSI@tv-basicstudies",
-          "MACD@tv-basicstudies",
-          "Moving Average Exponential@tv-basicstudies",
-          "ATR@tv-basicstudies",
-        ],
+        // Phones keep only the price overlay; RSI/MACD/ATR values live in the indicator strip below.
+        studies: isPhone
+          ? ["Moving Average Exponential@tv-basicstudies"]
+          : [
+              "RSI@tv-basicstudies",
+              "MACD@tv-basicstudies",
+              "Moving Average Exponential@tv-basicstudies",
+              "ATR@tv-basicstudies",
+            ],
         disabled_features: [
           "header_widget_dom_node",
           "timeframes_toolbar",

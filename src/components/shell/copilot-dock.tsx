@@ -166,8 +166,7 @@ export function CopilotDock() {
               background: "var(--panel-1)",
               borderColor: "var(--color-border-strong)",
               boxShadow: "-30px 0 60px -30px rgba(0,0,0,0.7)",
-              paddingBottom: "env(safe-area-inset-bottom, 0px)",
-            }}
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",            }}
           >
             {/* Header */}
             <div className="flex items-center gap-3 border-b px-4 py-3" style={{ borderColor: "var(--hairline)" }}>
@@ -263,7 +262,7 @@ export function CopilotDock() {
                   rows={1}
                   maxLength={2000}
                   style={{ outline: "none" }}
-                  placeholder="Ask about your trades, risk, or this chart…"
+                  placeholder="Ask Copilot anything…"
                   className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent px-2.5 py-2 text-[13px] text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-quaternary)]"
                 />
                 <button
@@ -277,7 +276,7 @@ export function CopilotDock() {
                 </button>
               </div>
               <p className="mt-2 px-1 font-mono text-[9.5px] uppercase tracking-[0.06em] text-[var(--color-text-quaternary)]">
-                Educational analysis · not financial advice · ⌘J to toggle
+                Educational analysis · not financial advice<span className="max-lg:hidden"> · ⌘J to toggle</span>
               </p>
             </form>
           </motion.aside>
