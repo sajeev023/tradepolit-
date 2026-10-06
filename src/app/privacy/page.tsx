@@ -6,7 +6,7 @@ import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLa
 export const metadata: Metadata = buildMetadata({
   title: "Privacy Policy",
   description:
-    "How TradCopilot collects, uses, and protects your personal data: trading journal content, third-party processors, retention, and deletion rights.",
+    "How TradePilot collects, uses, and protects your personal data: trading journal content, third-party processors, retention, and deletion rights.",
   path: "/privacy",
 });
 
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
 
       <LegalSection title="9. International Data Transfers">
         <P>
-          By accessing TradCopilot, you acknowledge that your data may be processed in region-locked cloud environments outside of your home country (including servers hosted in the US, India, or Singapore). We ensure all database providers implement proper data privacy safeguards.
+          By accessing TradePilot, you acknowledge that your data may be processed in region-locked cloud environments outside of your home country (including servers hosted in the US, India, or Singapore). We ensure all database providers implement proper data privacy safeguards.
         </P>
       </LegalSection>
 

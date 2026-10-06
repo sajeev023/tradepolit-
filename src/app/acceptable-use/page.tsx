@@ -6,7 +6,7 @@ import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLa
 export const metadata: Metadata = buildMetadata({
   title: "Acceptable Use Policy",
   description:
-    "The rules and prohibited conduct that keep the TradCopilot platform safe, lawful, and useful for every trader.",
+    "The rules and prohibited conduct that keep the TradePilot platform safe, lawful, and useful for every trader.",
   path: "/acceptable-use",
 });
 
@@ -15,7 +15,7 @@ export default function AcceptableUsePage() {
     <LegalLayout title="Acceptable Use Policy" updated="July 12, 2026" icon={<CheckSquare size={24} />}>
       <LegalSection title="1. Lawful Use Only">
         <P>
-          You agree to use TradCopilot strictly in compliance with all applicable local, national, and international laws, regulations, and financial guidelines.
+          You agree to use TradePilot strictly in compliance with all applicable local, national, and international laws, regulations, and financial guidelines.
         </P>
       </LegalSection>
 
@@ -27,13 +27,13 @@ export default function AcceptableUsePage() {
 
       <LegalSection title="3. No Account Sharing">
         <P>
-          Your TradCopilot account and Pro Terminal access are for your personal, individual use only. You may not share your login credentials, API session keys, or subscription access with third parties.
+          Your TradePilot account and Pro Terminal access are for your personal, individual use only. You may not share your login credentials, API session keys, or subscription access with third parties.
         </P>
       </LegalSection>
 
       <LegalSection title="4. No Automated Trading Bots">
         <P>
-          TradCopilot is designed as an interactive copilot for human discretionary traders. <Strong>You are strictly prohibited from parsing or scraping TradCopilot&apos;s API endpoints or AI outputs to power automated algorithmic trading bots, automated order routers, or automated execution scripts.</Strong>
+          TradePilot is designed as an interactive copilot for human discretionary traders. <Strong>You are strictly prohibited from parsing or scraping TradePilot&apos;s API endpoints or AI outputs to power automated algorithmic trading bots, automated order routers, or automated execution scripts.</Strong>
         </P>
       </LegalSection>
 
@@ -45,7 +45,7 @@ export default function AcceptableUsePage() {
 
       <LegalSection title="6. No Reverse Engineering">
         <P>
-          You may not attempt to reverse engineer, decompile, disable, or bypass any security constraints, feature limits, telemetry modules, or subscription access checkpoints built into the TradCopilot application.
+          You may not attempt to reverse engineer, decompile, disable, or bypass any security constraints, feature limits, telemetry modules, or subscription access checkpoints built into the TradePilot application.
         </P>
       </LegalSection>
 

@@ -11,7 +11,7 @@ type LegalLayoutProps = {
 };
 
 /**
- * Shared shell for all TradCopilot legal pages.
+ * Shared shell for all TradePilot legal pages.
  * Renders the Back-to-Home link, page header, last-updated line, and a
  * space-y-6 body block. Uses only semantic design tokens — no raw palette.
  */
@@ -58,7 +58,7 @@ export default function LegalLayout({ title, updated, icon, children }: LegalLay
           color: "var(--color-text-tertiary)",
         }}
       >
-        © 2026 TradCopilot. Educational and analytical services only.
+        © 2026 TradePilot. Educational and analytical services only.
       </footer>
     </div>
   );

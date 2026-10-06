@@ -13,7 +13,7 @@
   --foreground: #EDE9DC;          /* Bone ink */
   --card: #121210;
   --card-foreground: #EDE9DC;
-  --muted-foreground: #8A877A;
+  --muted-foreground: #A3A092;
   --border: rgba(237, 233, 220, 0.09);
   --border-active: rgba(var(--accent-rgb), 0.55);
   --accent: #D7F83C;              /* Beacon — the ONE signal */
@@ -69,7 +69,7 @@
   --color-text-primary: var(--foreground);
   --color-text-secondary: #BEB9AB;
   --color-text-tertiary: var(--muted-foreground);
-  --color-text-quaternary: #666459;
+  --color-text-quaternary: #8A877A;                   /* AA: 4.9:1 on panel-2 */
   --color-text-accent: var(--accent);
 
   /* Cyan interaction accent — the ONE accent (futuristic terminal identity) */

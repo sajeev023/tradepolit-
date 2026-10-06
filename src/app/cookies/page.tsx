@@ -6,7 +6,7 @@ import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLa
 export const metadata: Metadata = buildMetadata({
   title: "Cookie Policy",
   description:
-    "How TradCopilot uses essential and functional cookies for sessions, state, and theme — and why we use no marketing or cross-site trackers.",
+    "How TradePilot uses essential and functional cookies for sessions, state, and theme — and why we use no marketing or cross-site trackers.",
   path: "/cookies",
 });
 
@@ -31,7 +31,7 @@ export default function CookiesPage() {
 
       <LegalSection title="3. No Advertising Cookies">
         <P>
-          <Strong>TradCopilot does not use any advertising cookies, marketing tracking scripts, or analytics scripts that monitor your behavior across other websites.</Strong> We respect your privacy and limit our client-side storage strictly to functional data.
+          <Strong>TradePilot does not use any advertising cookies, marketing tracking scripts, or analytics scripts that monitor your behavior across other websites.</Strong> We respect your privacy and limit our client-side storage strictly to functional data.
         </P>
       </LegalSection>
 
@@ -47,7 +47,7 @@ export default function CookiesPage() {
 
       <LegalSection title="5. How to Disable Cookies">
         <P>
-          You can control or disable cookies by modifying your web browser settings. Please note that if you block all cookies, TradCopilot will not be able to verify your login credentials, and the dashboard functions will become inaccessible.
+          You can control or disable cookies by modifying your web browser settings. Please note that if you block all cookies, TradePilot will not be able to verify your login credentials, and the dashboard functions will become inaccessible.
         </P>
       </LegalSection>
 

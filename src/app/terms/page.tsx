@@ -6,7 +6,7 @@ import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLa
 export const metadata: Metadata = buildMetadata({
   title: "Terms of Service",
   description:
-    "The terms governing use of the TradCopilot terminal: accounts, subscriptions, acceptable use, and the read-only nature of the service.",
+    "The terms governing use of the TradePilot terminal: accounts, subscriptions, acceptable use, and the read-only nature of the service.",
   path: "/terms",
 });
 
@@ -15,13 +15,13 @@ export default function TermsPage() {
     <LegalLayout title="Terms of Service" updated="July 12, 2026" icon={<FileText size={24} />}>
       <LegalSection title="1. Acceptance of Terms">
         <P>
-          By accessing or using TradCopilot (the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, you must immediately cease using the platform.
+          By accessing or using TradePilot (the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, you must immediately cease using the platform.
         </P>
       </LegalSection>
 
       <LegalSection title="2. Description of Service">
         <P>
-          TradCopilot is an AI-powered trading copilot and performance analysis platform offering trading journals, performance calculators, backtesting engines, and behavioral review tools. <Strong>TradCopilot is NOT a financial broker, does NOT execute trades, does NOT manage client funds, and does NOT provide direct financial or investment advice.</Strong> All calculations, alerts, and AI insights are for educational and analytical purposes only.
+          TradePilot is an AI-powered trading copilot and performance analysis platform offering trading journals, performance calculators, backtesting engines, and behavioral review tools. <Strong>TradePilot is NOT a financial broker, does NOT execute trades, does NOT manage client funds, and does NOT provide direct financial or investment advice.</Strong> All calculations, alerts, and AI insights are for educational and analytical purposes only.
         </P>
       </LegalSection>
 
@@ -45,13 +45,13 @@ export default function TermsPage() {
 
       <LegalSection title="6. Intellectual Property">
         <P>
-          All proprietary content, source code, logo, brand assets, design systems, algorithms, graphics, and software constituting the TradCopilot application are owned by TradCopilot and are protected by copyright, trademark, and intellectual property laws.
+          All proprietary content, source code, logo, brand assets, design systems, algorithms, graphics, and software constituting the TradePilot application are owned by TradePilot and are protected by copyright, trademark, and intellectual property laws.
         </P>
       </LegalSection>
 
       <LegalSection title="7. User-Generated Content">
         <P>
-          You retain ownership of any data, journal logs, notes, or screenshot configurations you input into the Service (&quot;User Content&quot;). By submitting User Content, you grant TradCopilot a worldwide, non-exclusive, royalty-free license to store, process, host, and retrieve the data to provide the Service to you.
+          You retain ownership of any data, journal logs, notes, or screenshot configurations you input into the Service (&quot;User Content&quot;). By submitting User Content, you grant TradePilot a worldwide, non-exclusive, royalty-free license to store, process, host, and retrieve the data to provide the Service to you.
         </P>
       </LegalSection>
 
@@ -63,7 +63,7 @@ export default function TermsPage() {
 
       <LegalSection title="9. Limitation of Liability">
         <P>
-          Trading financial markets involves substantial risk of loss. To the maximum extent permitted by law, TradCopilot, its founders, and affiliates shall not be liable for any trading losses, financial damages, loss of profits, data errors, or system downtime resulting from your use of the platform.
+          Trading financial markets involves substantial risk of loss. To the maximum extent permitted by law, TradePilot, its founders, and affiliates shall not be liable for any trading losses, financial damages, loss of profits, data errors, or system downtime resulting from your use of the platform.
         </P>
       </LegalSection>
 

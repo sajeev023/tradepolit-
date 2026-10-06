@@ -223,7 +223,7 @@ export const dictionary: Dictionary = {
       product: "Product",
       guidesAndCompare: "Guides & Compare",
       legalAndTrust: "Legal & Trust",
-      copyright: "© {year} TradCopilot Inc. All rights reserved.",
+      copyright: "© {year} TradePilot Inc. All rights reserved.",
       readOnlyDisclaimer:
         "Read-only analytical terminal. Not financial advice.",
     },

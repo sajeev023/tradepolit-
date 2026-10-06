@@ -6,7 +6,7 @@ import LegalLayout, { LegalSection, P, Strong } from "@/components/legal/LegalLa
 export const metadata: Metadata = buildMetadata({
   title: "Refund Policy",
   description:
-    "TradCopilot refund policy: a 7-day money-back guarantee for first-time Pro subscribers, plus cancellation terms and how to request a refund.",
+    "TradePilot refund policy: a 7-day money-back guarantee for first-time Pro subscribers, plus cancellation terms and how to request a refund.",
   path: "/refund",
 });
 
@@ -15,7 +15,7 @@ export default function RefundPage() {
     <LegalLayout title="Refund Policy" updated="July 12, 2026" icon={<Landmark size={24} />}>
       <LegalSection title="1. Subscription Billing">
         <P>
-          TradCopilot Pro Terminal subscriptions are billed on a recurring monthly or annual basis depending on the plan selected during checkout. Charges are processed automatically via our secure payment partners (Stripe, Razorpay, or Gumroad).
+          TradePilot Pro Terminal subscriptions are billed on a recurring monthly or annual basis depending on the plan selected during checkout. Charges are processed automatically via our secure payment partners (Stripe, Razorpay, or Gumroad).
         </P>
       </LegalSection>
 
@@ -27,7 +27,7 @@ export default function RefundPage() {
 
       <LegalSection title="3. Refund Eligibility">
         <P>
-          We stand by our product and offer a <Strong>7-day money-back guarantee</Strong> for first-time subscribers. If you are not satisfied with the TradCopilot Pro Terminal, you can request a full refund within 7 calendar days of your initial purchase date.
+          We stand by our product and offer a <Strong>7-day money-back guarantee</Strong> for first-time subscribers. If you are not satisfied with the TradePilot Pro Terminal, you can request a full refund within 7 calendar days of your initial purchase date.
         </P>
       </LegalSection>
 

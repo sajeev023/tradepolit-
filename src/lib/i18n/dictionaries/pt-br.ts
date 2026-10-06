@@ -45,7 +45,7 @@ export const dictionary: Dictionary = {
       product: "Produto",
       guidesAndCompare: "Guias & Comparações",
       legalAndTrust: "Legal & Confiança",
-      copyright: "© {year} TradCopilot Inc. Todos os direitos reservados.",
+      copyright: "© {year} TradePilot Inc. Todos os direitos reservados.",
       readOnlyDisclaimer:
         "Terminal analítico somente leitura. Não constitui aconselhamento financeiro.",
     },

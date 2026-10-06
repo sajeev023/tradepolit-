@@ -103,7 +103,7 @@ export const SymbolBar = memo(function SymbolBar(p: SymbolBarProps) {
                 role="tab"
                 aria-selected={on}
                 onClick={() => p.onTimeframe(tf)}
-                className="timeframe-pill relative h-9 min-w-0 cursor-pointer rounded-md px-0 font-mono text-[11.5px] font-medium transition-colors sm:h-8 sm:min-w-[40px] sm:shrink-0 sm:px-2.5"
+                className="timeframe-pill relative h-11 min-w-0 cursor-pointer rounded-md px-0 font-mono text-[11.5px] font-medium transition-colors sm:h-8 sm:min-w-[40px] sm:shrink-0 sm:px-2.5"
                 style={{ color: on ? "var(--on-accent)" : "var(--color-text-tertiary)", background: on ? "var(--accent)" : "transparent" }}
               >
                 {tf}

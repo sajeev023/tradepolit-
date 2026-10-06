@@ -215,7 +215,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 pt-2 border-t border-[var(--color-border-subtle)]">
-            <p className="text-[11px] sm:text-xs text-[var(--muted)]">© {year} TradCopilot Inc. All rights reserved.</p>
+            <p className="text-[11px] sm:text-xs text-[var(--muted)]">© {year} TradePilot Inc. All rights reserved.</p>
             <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-1.5 text-[11px] sm:text-xs text-[var(--muted)]">
               <Link href="/features" className="hover:text-[var(--ink)] transition-colors">Features</Link>
               <Link href="/pricing" className="hover:text-[var(--ink)] transition-colors">Pricing</Link>
