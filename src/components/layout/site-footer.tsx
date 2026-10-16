@@ -14,7 +14,7 @@ export function SiteFooter() {
           <div className="col-span-2 space-y-3.5 pr-4">
             <Link href="/" className="flex items-center gap-2 text-[var(--ink)] font-semibold text-sm">
               <Mark size={26} />
-              <span>TradePilot</span>
+              <span>TradCopilot</span>
             </Link>
             <p className="text-[12px] leading-relaxed text-[var(--muted)] max-w-sm">
               Read-only AI trading copilot for crypto and forex day traders: live technical chart analysis, automated session journaling, and behavioral risk guardrails.
@@ -95,7 +95,7 @@ export function SiteFooter() {
 
         {/* Footer Bottom Bar */}
         <div className="pt-6 border-t border-[var(--color-border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
-          <p>© {year} TradePilot Inc. All rights reserved. Read-only analytical terminal. Not financial advice.</p>
+          <p>© {year} TradCopilot Inc. All rights reserved. Read-only analytical terminal. Not financial advice.</p>
           <div className="flex items-center gap-4">
             <LanguageSwitcher variant="footer" />
             <Link href="/disclaimer" className="hover:text-[var(--ink)] transition-colors">Disclaimer</Link>

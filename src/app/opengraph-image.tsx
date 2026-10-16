@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "TradePilot — Trade your plan, not your impulses";
+export const alt = "TradCopilot — Trade your plan, not your impulses";
 export const size = {
   width: 1200,
   height: 630,
@@ -63,7 +63,7 @@ export default async function Image() {
               </svg>
             </div>
             <span style={{ fontSize: "28px", fontWeight: "700", letterSpacing: "-0.02em" }}>
-              TradePilot
+              TradCopilot
             </span>
           </div>
 

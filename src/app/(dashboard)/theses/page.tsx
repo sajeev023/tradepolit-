@@ -113,7 +113,7 @@ export default function ThesesPage() {
           Every call, <em className="text-[var(--accent)]">tracked.</em>
         </h1>
         <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--color-text-tertiary)]">
-          Save a thesis from any analysis. TradePilot monitors it against live prices and tells you when it resolves — then asks how it went.
+          Save a thesis from any analysis. TradCopilot monitors it against live prices and tells you when it resolves — then asks how it went.
         </p>
       </header>
 
@@ -150,7 +150,7 @@ export default function ThesesPage() {
           <EmptyState
             icon={<Target size={18} />}
             title="No theses yet"
-            body="Run an analysis on a chart, then tap Save as Thesis. TradePilot will watch it and close the loop when it resolves."
+            body="Run an analysis on a chart, then tap Save as Thesis. TradCopilot will watch it and close the loop when it resolves."
             action={<Link href="/charts" className="btn-secondary btn-sm">Open Markets</Link>}
           />
         </div>

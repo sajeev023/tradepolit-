@@ -27,7 +27,7 @@ import { HOME_FAQS } from "@/lib/faq-data";
 
 export const metadata = buildMetadata({
   titleAbsolute: true,
-  title: "TradePilot | AI Trading Copilot for Crypto & Forex Analysis",
+  title: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
   description:
     "Read-only AI trading copilot for crypto & forex day traders: live chart analysis with RSI, MACD, EMA & ATR, automated session journaling, behavioral guardrails, and risk tools. Free plan included.",
   path: "/",
@@ -174,7 +174,7 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 hover:text-[var(--ink)] transition-colors"
-                aria-label="TradePilot on X"
+                aria-label="TradCopilot on X"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -187,7 +187,7 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 hover:text-[var(--ink)] transition-colors"
-                aria-label="TradePilot on LinkedIn"
+                aria-label="TradCopilot on LinkedIn"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76c.97 0 1.75-.79 1.75-1.76s-.78-1.75-1.75-1.75a1.75 1.75 0 0 0 0 3.51m1.39 9.74v-8.37H5.07v8.37h2.78z" />
@@ -206,7 +206,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-[11px] text-[var(--muted)] max-w-2xl leading-relaxed">
-            TradePilot is a read-only{" "}
+            TradCopilot is a read-only{" "}
             <Link href="/ai-trading-copilot" className="underline decoration-[var(--color-border-subtle)] underline-offset-2 hover:text-[var(--ink)]">
               AI trading copilot
             </Link>{" "}
@@ -215,7 +215,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4 pt-2 border-t border-[var(--color-border-subtle)]">
-            <p className="text-[11px] sm:text-xs text-[var(--muted)]">© {year} TradePilot Inc. All rights reserved.</p>
+            <p className="text-[11px] sm:text-xs text-[var(--muted)]">© {year} TradCopilot Inc. All rights reserved.</p>
             <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-1.5 text-[11px] sm:text-xs text-[var(--muted)]">
               <Link href="/features" className="hover:text-[var(--ink)] transition-colors">Features</Link>
               <Link href="/pricing" className="hover:text-[var(--ink)] transition-colors">Pricing</Link>

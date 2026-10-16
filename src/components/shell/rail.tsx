@@ -96,7 +96,7 @@ export function Rail() {
         borderColor: "var(--hairline)",
       }}
     >
-      <Link href="/dashboard" aria-label="TradePilot home" className="mt-3.5 mb-3 transition-transform hover:scale-105 active:scale-95">
+      <Link href="/dashboard" aria-label="TradCopilot home" className="mt-3.5 mb-3 transition-transform hover:scale-105 active:scale-95">
         <Mark size={34} />
       </Link>
 

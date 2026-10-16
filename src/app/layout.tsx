@@ -17,7 +17,7 @@ import {
 } from "@/lib/seo";
 
 const siteUrl = "https://tradcopilot.com";
-const siteName = "TradePilot";
+const siteName = "TradCopilot";
 
 /* Self-hosted variable fonts (next/font) — no external requests at runtime.
    Inter = body/UI sans, Space Grotesk = technical display (eyebrows/labels),
@@ -48,10 +48,10 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   icons: { apple: "/pwa-icon?size=180" },
-  appleWebApp: { capable: true, title: "TradePilot", statusBarStyle: "black" },
+  appleWebApp: { capable: true, title: "TradCopilot", statusBarStyle: "black" },
   title: {
-    default: "TradePilot | AI Trading Copilot for Crypto & Forex Analysis",
-    template: "%s | TradePilot",
+    default: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
+    template: "%s | TradCopilot",
   },
   description:
     "Read-only AI trading copilot: live technical chart analysis (RSI, MACD, EMA, ATR), automated session journaling, behavioral guardrails, and risk tools for crypto & forex day traders.",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   // via buildMetadata() in lib/seo.ts — a root-level canonical used to collapse
   // every subpage onto the homepage for search engines.
   openGraph: {
-    title: "TradePilot | AI Trading Copilot for Crypto & Forex Analysis",
+    title: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
     description:
       "Live technical chart analysis, session trade journaling, behavioral guardrails, and risk tools for active crypto & forex traders.",
     siteName,
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TradePilot | AI Trading Copilot for Crypto & Forex Analysis",
+    title: "TradCopilot | AI Trading Copilot for Crypto & Forex Analysis",
     description:
       "Live technical chart analysis, trade journaling, and behavioral discipline guardrails for crypto & forex traders.",
   },

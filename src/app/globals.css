@@ -4,7 +4,7 @@
 @custom-variant dark (&:where(.dark,.dark *));
 
 :root {
-  /* TradePilot "Flight Deck" — warm graphite instrument panel.
+  /* TradCopilot "Flight Deck" — warm graphite instrument panel.
      Bone ink on graphite, ONE beacon-lime signal reserved for AI + interaction.
      Market meaning (gain / loss / caution) never shares a hue with the signal. */
   --background: #0A0A09;          /* Horizon — warm black */

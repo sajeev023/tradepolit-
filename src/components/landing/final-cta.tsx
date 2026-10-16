@@ -23,7 +23,7 @@ export function FinalCta() {
             Trade with a <em className="text-[var(--accent)]">memory.</em>
           </h2>
           <p className="tp-body mt-5 max-w-[460px]">
-            Free to start, no credit card. Keep your broker and charting platform — TradePilot sits beside them, read-only.
+            Free to start, no credit card. Keep your broker and charting platform — TradCopilot sits beside them, read-only.
           </p>
           <div data-onpage-cta className="mt-8 flex w-full flex-col items-stretch justify-center gap-2.5 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
             <Link href="/signup" className="btn-primary btn-lg group">

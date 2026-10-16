@@ -64,6 +64,6 @@ export const ALL_NAV = NAV_GROUPS.flatMap((g) => g.entries);
 export function titleForPath(pathname: string): string {
   if (pathname.startsWith("/settings")) return "Settings";
   if (pathname.startsWith("/admin")) return "Admin";
-  return ALL_NAV.find((n) => pathname.startsWith(n.href))?.title ?? "TradePilot";
+  return ALL_NAV.find((n) => pathname.startsWith(n.href))?.title ?? "TradCopilot";
 }
 

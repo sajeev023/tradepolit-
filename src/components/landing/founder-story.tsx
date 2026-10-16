@@ -33,7 +33,7 @@ export function FounderStory() {
           Built for <em className="text-[var(--accent)]">disciplined</em> execution.
         </h2>
         <p className="tp-body mx-auto mt-4 max-w-[520px]">
-          TradePilot automates chart routines and protects active traders from emotional mistakes during high-volatility sessions.
+          TradCopilot automates chart routines and protects active traders from emotional mistakes during high-volatility sessions.
         </p>
       </Reveal>
 

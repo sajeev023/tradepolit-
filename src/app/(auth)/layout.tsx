@@ -13,7 +13,7 @@ import AuthLayout from "./auth-shell";
  */
 export const metadata: Metadata = buildMetadata({
   title: "Account Access",
-  description: "Sign in to your TradePilot workspace.",
+  description: "Sign in to your TradCopilot workspace.",
   path: "/",
   noindex: true,
 });

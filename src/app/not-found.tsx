@@ -41,7 +41,7 @@ export default function NotFound() {
           <p className="text-[11px] text-[var(--color-text-quaternary)]">
             or{" "}
             <Link href="/features" className="underline hover:text-[var(--color-text-secondary)]">
-              explore TradePilot features
+              explore TradCopilot features
             </Link>
           </p>
         </div>

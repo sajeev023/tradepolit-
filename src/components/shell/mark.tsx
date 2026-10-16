@@ -1,5 +1,5 @@
 /**
- * TradePilot mark — a vector arrowhead cut by a horizon line. The lime wedge
+ * TradCopilot mark — a vector arrowhead cut by a horizon line. The lime wedge
  * is the "pilot" heading; the hairline is the horizon / price baseline.
  */
 export function Mark({ size = 28, className = "" }: { size?: number; className?: string }) {
