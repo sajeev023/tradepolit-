@@ -47,6 +47,8 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  icons: { apple: "/pwa-icon?size=180" },
+  appleWebApp: { capable: true, title: "TradePilot", statusBarStyle: "black" },
   title: {
     default: "TradePilot | AI Trading Copilot for Crypto & Forex Analysis",
     template: "%s | TradePilot",

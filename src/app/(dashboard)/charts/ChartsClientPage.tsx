@@ -937,7 +937,7 @@ Timestamp: ${new Date().toISOString()}
 
       const dataUrl = canvas.toDataURL("image/png");
       const link = document.createElement("a");
-      link.download = `TradCopilot-${selectedSymbol.replace("/", "-")}-${selectedTimeframe}.png`;
+      link.download = `TradePilot-${selectedSymbol.replace("/", "-")}-${selectedTimeframe}.png`;
       link.href = dataUrl;
       link.click();
 
