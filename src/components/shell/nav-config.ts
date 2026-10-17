@@ -11,6 +11,7 @@
   Sparkles,
   BarChart3,
   Activity,
+  Plane,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,6 +35,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "now",
     entries: [
       { label: "Cockpit", short: "Cockpit", href: "/dashboard", icon: Gauge, title: "Cockpit" },
+      { label: "Autopilot", short: "Pilot", href: "/autopilot", icon: Plane, title: "Autopilot" },
       { label: "Markets", short: "Markets", href: "/charts", icon: CandlestickChart, title: "Markets" },
       { label: "Watchlist", short: "Watch", href: "/watchlist", icon: Eye, title: "Watchlist" },
       { label: "News", short: "News", href: "/news", icon: Newspaper, title: "News" },

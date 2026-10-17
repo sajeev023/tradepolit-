@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-10-17T15:14:56.297Z",
+  "data": {
+    "source": "Binance spot 1h candles",
+    "symbols": [
+      "BTC/USD",
+      "ETH/USD",
+      "SOL/USD"
+    ],
+    "from": "2022-10-18T15:00:00.000Z",
+    "to": "2026-10-17T15:00:00.000Z"
+  },
+  "method": {
+    "sessionDays": 90,
+    "stepDays": 5,
+    "startingBalance": 1000,
+    "feeRatePerSide": 0.001,
+    "slippageRate": 0.0005,
+    "rules": "Long-only trend breakout: price above EMA200 with EMA50 above EMA200, entry on a close above the prior 55-candle high, 3x ATR stop, 3R target."
+  },
+  "profiles": {
+    "CONSERVATIVE": {
+      "sessions": 272,
+      "positivePct": 66.9,
+      "medianPct": 2.2,
+      "meanPct": 2.4,
+      "p10Pct": -4.3,
+      "p90Pct": 8.3,
+      "worstPct": -7.5,
+      "bestPct": 15.4,
+      "killSwitchPct": 3.3,
+      "avgTrades": 22,
+      "reachedDoublePct": 0
+    },
+    "BALANCED": {
+      "sessions": 272,
+      "positivePct": 64,
+      "medianPct": 3.9,
+      "meanPct": 5.4,
+      "p10Pct": -8.8,
+      "p90Pct": 21,
+      "worstPct": -15.1,
+      "bestPct": 33.1,
+      "killSwitchPct": 7.7,
+      "avgTrades": 29,
+      "reachedDoublePct": 0
+    },
+    "AGGRESSIVE": {
+      "sessions": 272,
+      "positivePct": 64.3,
+      "medianPct": 5,
+      "meanPct": 6.9,
+      "p10Pct": -10.9,
+      "p90Pct": 26.2,
+      "worstPct": -17.6,
+      "bestPct": 53,
+      "killSwitchPct": 1.1,
+      "avgTrades": 24,
+      "reachedDoublePct": 0
+    }
+  },
+  "buyHold": {
+    "medianPct": 7.1,
+    "p10Pct": -29.5,
+    "p90Pct": 62.9,
+    "positivePct": 57
+  }
+}

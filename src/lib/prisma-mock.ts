@@ -875,5 +875,32 @@ export const prismaMock = {
       return flags[idx];
     },
   },
+  autopilotSession: {
+    findMany: async ({ where = {}, orderBy, take = 50 }: any = {}) => {
+      const rows = ((memoryDb as any).autopilotSessions || []) as any[];
+      let list = rows.filter((r) => (where.userId ? r.userId === where.userId : true));
+      if (where.status?.in) list = list.filter((r) => where.status.in.includes(r.status));
+      if (orderBy?.createdAt === "desc") list = [...list].sort((a, b) => b.createdAt - a.createdAt);
+      return list.slice(0, take);
+    },
+    findFirst: async ({ where }: any) => {
+      const rows = ((memoryDb as any).autopilotSessions || []) as any[];
+      return rows.find((r) => r.id === where.id && (!where.userId || r.userId === where.userId)) || null;
+    },
+    create: async ({ data }: any) => {
+      if (!(memoryDb as any).autopilotSessions) (memoryDb as any).autopilotSessions = [];
+      const now = new Date();
+      const row = { id: `ap_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, ...data, createdAt: now, updatedAt: now };
+      (memoryDb as any).autopilotSessions.push(row);
+      return row;
+    },
+    update: async ({ where, data }: any) => {
+      const rows = ((memoryDb as any).autopilotSessions || []) as any[];
+      const idx = rows.findIndex((r) => r.id === where.id);
+      if (idx === -1) throw new Error("AutopilotSession not found");
+      rows[idx] = { ...rows[idx], ...data, updatedAt: new Date() };
+      return rows[idx];
+    },
+  },
 };
 

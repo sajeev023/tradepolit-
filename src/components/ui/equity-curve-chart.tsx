@@ -28,6 +28,8 @@ interface EquityCurveChartProps {
   animated?: boolean;
   /** Override the stroke/fill color (defaults to the brand accent). */
   color?: string;
+  /** Y-axis domain. Defaults to recharts' (starts at 0); pass ["auto", "auto"] to fit the data. */
+  yDomain?: [number | string, number | string];
   className?: string;
 }
 
@@ -52,6 +54,7 @@ export function EquityCurveChart({
   currency = true,
   animated = true,
   color,
+  yDomain,
   className,
 }: EquityCurveChartProps) {
   const autoId = useId();
@@ -82,6 +85,7 @@ export function EquityCurveChart({
             axisLine={false}
           />
           <YAxis
+            domain={yDomain}
             stroke="var(--color-text-tertiary)"
             fontSize={10}
             tickLine={false}

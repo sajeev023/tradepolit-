@@ -155,6 +155,7 @@ model User {
   thesisOutcomes     ThesisOutcome[]
   insights           UserInsight[]
   analyticsEvents    AnalyticsEvent[]
+  autopilotSessions  AutopilotSession[]
 }
 
 model Trade {
@@ -620,4 +621,24 @@ model SharedAnalysis {
   viewCount  Int      @default(0)
 
   @@map("shared_analyses")
+}
+
+// Autopilot: PAPER-trading sessions. A simulated cash account trading real
+// market candles under hard risk limits — no broker, no real money.
+// `config` and `state` are JSON documents owned by src/lib/autopilot.
+model AutopilotSession {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  status          String   @default("ACTIVE")
+  startingBalance Float
+  targetBalance   Float
+  config          Json
+  state           Json
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@map("autopilot_sessions")
 }
