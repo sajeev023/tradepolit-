@@ -79,12 +79,20 @@ export const MODELS: ModelDef[] = [
     timeout: 10_000,
   },
   {
-    // NVIDIA higher-quality text model
+    // NVIDIA small, non-reasoning instruct model — answers quickly with plain JSON
     id: 3,
-    name: "deepseek-ai/deepseek-v4.1-flash",
+    name: "google/gemma-3-12b-it",
+    provider: "nvidia",
+    quality: "fast",
+    timeout: 10_000,
+  },
+  {
+    // NVIDIA proven 70B instruct model — slower but reliable; first valid answer wins the race
+    id: 7,
+    name: "nvidia/llama-3.1-nemotron-70b-instruct",
     provider: "nvidia",
     quality: "good",
-    timeout: 10_000,
+    timeout: 11_000,
   },
   {
     // OpenAI fallback model

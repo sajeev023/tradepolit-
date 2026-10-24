@@ -157,7 +157,7 @@ async function callSingleProvider(
       max_tokens: options.maxTokens ?? 350
     });
   } else {
-    modelName = "nvidia/nemotron-nano-3-30b-a3b";
+    modelName = "google/gemma-3-12b-it";
     endpoint = "https://integrate.api.nvidia.com/v1/chat/completions";
     headers["Authorization"] = `Bearer ${apiKey}`;
     bodyJson = JSON.stringify({
