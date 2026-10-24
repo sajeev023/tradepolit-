@@ -225,14 +225,20 @@ export function calculateKeyLevels(candles: OHLCVCandle[]): KeyLevelsResult {
   const closes = candles.map((c) => c.close);
   if (closes.length === 0) return { support: NaN, resistance: NaN };
 
+  const price = closes[closes.length - 1];
   const recentCloses = closes.slice(-50);
-  const min = Math.min(...recentCloses);
-  const max = Math.max(...recentCloses);
+  let support = Math.min(...recentCloses);
+  let resistance = Math.max(...recentCloses);
 
-  return {
-    support: min,
-    resistance: max,
-  };
+  // When price sits at (or beyond) its recent range — a fresh low or high — there is
+  // no structure on that side. Reporting a level equal to the price made every
+  // downstream validation fail, so analysis returned 503 exactly when markets move
+  // most. Project the missing level from volatility instead.
+  const atr = calculateVolatility(candles).atr || price * 0.01;
+  if (!(support < price)) support = Math.max(price - 2 * atr, price * 0.5);
+  if (!(resistance > price)) resistance = price + 2 * atr;
+
+  return { support, resistance };
 }
 
 /**

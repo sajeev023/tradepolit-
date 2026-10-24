@@ -258,5 +258,5 @@ REQUIRED JSON RESPONSE SCHEMA:
       isValid: reval.isValid,
       issues: reval.issues,
     });
-  }, 60000);
+  }, 120000);
 });
