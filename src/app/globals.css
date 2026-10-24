@@ -16,8 +16,8 @@
   --muted-foreground: #A3A092;
   --border: rgba(237, 233, 220, 0.09);
   --border-active: rgba(var(--accent-rgb), 0.55);
-  --accent: #D7F83C;              /* Beacon — the ONE signal */
-  --accent-rgb: 215 248 60;
+  --accent: #1FDF7A;              /* Beacon — the ONE signal */
+  --accent-rgb: 31 223 122;
 
   --bg-primary: var(--background);
   --bg-band: var(--background-secondary);
@@ -29,9 +29,9 @@
   --red-rgb: 255 91 72;
   --amber: #FFB224;               /* Caution */
   --amber-rgb: 255 178 36;
-  --accent-bright: #E8FF7A;
-  --accent-bright-rgb: 232 255 122;
-  --on-accent: #10120A;           /* Ink used on top of the beacon */
+  --accent-bright: #5CF5A2;
+  --accent-bright-rgb: 92 245 162;
+  --on-accent: #03140A;           /* Ink used on top of the beacon */
   --hairline: rgba(237, 233, 220, 0.07);
   --panel-1: #121210;
   --panel-2: #181815;
@@ -74,7 +74,7 @@
 
   /* Cyan interaction accent — the ONE accent (futuristic terminal identity) */
   --color-accent-primary: var(--accent);
-  --color-accent-primary-hover: #C3E52F;             /* deeper beacon for hover */
+  --color-accent-primary-hover: #17C468;             /* deeper beacon for hover */
   --color-accent-primary-muted: rgba(var(--accent-rgb), 0.12);
   --color-accent-primary-subtle: rgba(var(--accent-rgb), 0.06);
 
@@ -126,12 +126,12 @@
   --color-yellow-300: #FFD070;  --color-yellow-400: #FFB224;   --color-yellow-500: #E69A00;
   --color-orange-400: #FFB224;  --color-orange-500: #E69A00;
 
-  --color-blue-300: #E8FF7A;   --color-blue-400: #D7F83C;   --color-blue-500: #BFE02A;   --color-blue-600: #A5C41F;
-  --color-violet-300: #E8FF7A; --color-violet-400: #D7F83C; --color-violet-500: #BFE02A; --color-violet-600: #A5C41F;
-  --color-purple-300: #E8FF7A; --color-purple-400: #D7F83C; --color-purple-500: #BFE02A; --color-purple-600: #A5C41F;
-  --color-indigo-300: #E8FF7A; --color-indigo-400: #D7F83C; --color-indigo-500: #BFE02A; --color-indigo-600: #A5C41F;
-  --color-sky-300: #E8FF7A;    --color-sky-400: #D7F83C;    --color-sky-500: #BFE02A;
-  --color-cyan-300: #E8FF7A;   --color-cyan-400: #D7F83C;   --color-cyan-500: #BFE02A;    --color-cyan-600: #A5C41F;
+  --color-blue-300: #5CF5A2;   --color-blue-400: #1FDF7A;   --color-blue-500: #17C468;   --color-blue-600: #0FA354;
+  --color-violet-300: #5CF5A2; --color-violet-400: #1FDF7A; --color-violet-500: #17C468; --color-violet-600: #0FA354;
+  --color-purple-300: #5CF5A2; --color-purple-400: #1FDF7A; --color-purple-500: #17C468; --color-purple-600: #0FA354;
+  --color-indigo-300: #5CF5A2; --color-indigo-400: #1FDF7A; --color-indigo-500: #17C468; --color-indigo-600: #0FA354;
+  --color-sky-300: #5CF5A2;    --color-sky-400: #1FDF7A;    --color-sky-500: #17C468;
+  --color-cyan-300: #5CF5A2;   --color-cyan-400: #1FDF7A;   --color-cyan-500: #17C468;    --color-cyan-600: #0FA354;
   --color-white: #F7F4EA;
 
   /* ── Typography ──

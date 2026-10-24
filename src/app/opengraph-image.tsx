@@ -34,7 +34,7 @@ export default async function Image() {
             width: "600px",
             height: "600px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(215, 248, 60, 0.18) 0%, rgba(10, 10, 9, 0) 70%)",
+            background: "radial-gradient(circle, rgba(31, 223, 122, 0.18) 0%, rgba(10, 10, 9, 0) 70%)",
           }}
         />
 
@@ -52,13 +52,13 @@ export default async function Image() {
                 width: "44px",
                 height: "44px",
                 borderRadius: "12px",
-                background: "linear-gradient(135deg, #D7F83C, #B8D82B)",
+                background: "linear-gradient(135deg, #1FDF7A, #17C468)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="#10120A">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#03140A">
                 <path d="M4.5 17.5 12 3l7.5 14.5L12 13.4z" />
               </svg>
             </div>
@@ -81,7 +81,7 @@ export default async function Image() {
               color: "#9CA3AF",
             }}
           >
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#D7F83C" }} />
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#1FDF7A" }} />
             <span>READ-ONLY ANALYSIS COPILOT</span>
           </div>
         </div>
@@ -99,7 +99,7 @@ export default async function Image() {
           >
             Trade your plan —
             <br />
-            <span style={{ fontStyle: "italic", color: "#D7F83C" }}>not your impulses.</span>
+            <span style={{ fontStyle: "italic", color: "#1FDF7A" }}>not your impulses.</span>
           </div>
           <p
             style={{
@@ -134,7 +134,7 @@ export default async function Image() {
             <span>·</span>
             <span>BEHAVIORAL GUARDRAILS</span>
           </div>
-          <span style={{ color: "#D7F83C" }}>tradcopilot.com</span>
+          <span style={{ color: "#1FDF7A" }}>tradcopilot.com</span>
         </div>
       </div>
     ),

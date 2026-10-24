@@ -19,10 +19,10 @@ export async function GET(request: Request) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#D7F83C",
+          background: "#1FDF7A",
         }}
       >
-        <svg width={glyph} height={glyph} viewBox="0 0 24 24" fill="#10120A">
+        <svg width={glyph} height={glyph} viewBox="0 0 24 24" fill="#03140A">
           <path d="M4.5 17.5 12 3l7.5 14.5L12 13.4z" />
         </svg>
       </div>
