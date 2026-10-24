@@ -141,8 +141,10 @@ async function callSingleProvider(
   let modelName = "";
 
   if (name === "gemini") {
-    modelName = "gemini-2.0-flash";
-    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    modelName = "gemini-3.5-flash-lite";
+    // Key goes in a header, never the URL: URLs are logged on failures and would leak it.
+    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
+    headers["x-goog-api-key"] = apiKey;
     bodyJson = JSON.stringify(convertMessagesToGemini(messages));
   } else if (name === "groq") {
     modelName = "llama-3.3-70b-versatile";
@@ -155,7 +157,7 @@ async function callSingleProvider(
       max_tokens: options.maxTokens ?? 350
     });
   } else {
-    modelName = "meta/llama-3.2-11b-vision-instruct";
+    modelName = "nvidia/nemotron-nano-3-30b-a3b";
     endpoint = "https://integrate.api.nvidia.com/v1/chat/completions";
     headers["Authorization"] = `Bearer ${apiKey}`;
     bodyJson = JSON.stringify({

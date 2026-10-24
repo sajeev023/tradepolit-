@@ -115,6 +115,12 @@ function downsampleCandles(candles: OHLCVCandle[], factor: number): OHLCVCandle[
   return result;
 }
 
+/**
+ * Binance spot hosts, in the order we try them. data-api.binance.vision serves the
+ * same public market data without the US geo-block that api.binance.com enforces.
+ */
+const BINANCE_HOSTS = ["data-api.binance.vision", "api.binance.com", "api1.binance.com", "api3.binance.com"] as const;
+
 export async function getLivePrice(symbol: string): Promise<PriceData> {
   const normSymbol = normalizeSymbol(symbol);
   const cacheKey = `price:${normSymbol}`;
@@ -219,31 +225,34 @@ export async function getLivePrice(symbol: string): Promise<PriceData> {
       const binanceSymbol = BINANCE_SYMBOL_MAP[normSymbol] ?? normSymbol.replace("/USD", "USDT");
 
       // ── Step A: Fetch absolute real-time transaction price (120ms latency, zero lag)
-      try {
-        const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`, {
-          signal: AbortSignal.timeout(3000),
-          cache: "no-store",
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.price && !isNaN(parseFloat(data.price))) {
-            price = parseFloat(data.price);
-            console.log(`[Market] Binance ← ${normSymbol} (${binanceSymbol}) = $${price}`);
+      // data-api.binance.vision is Binance's market-data host and is not geo-blocked
+      // (api.binance.com returns HTTP 451 from US servers such as Vercel). Prices are
+      // identical, and matching Binance is what keeps us equal to the TradingView
+      // BINANCE:*USDT chart instead of silently falling through to Coinbase.
+      for (const host of BINANCE_HOSTS) {
+        try {
+          const res = await fetch(`https://${host}/api/v3/ticker/price?symbol=${binanceSymbol}`, {
+            signal: AbortSignal.timeout(3000),
+            cache: "no-store",
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.price && !isNaN(parseFloat(data.price))) {
+              price = parseFloat(data.price);
+              console.log(`[Market] Binance(${host}) ← ${normSymbol} (${binanceSymbol}) = $${price}`);
+              break;
+            }
           }
+        } catch (err) {
+          console.warn(`[Market] Binance(${host}) ✗ ${normSymbol}: ${(err as Error).message}`);
         }
-      } catch (err) {
-        console.warn(`[Market] Binance ✗ ${normSymbol}: ${(err as Error).message}`);
       }
 
       // ── Step B: Fetch or retrieve cached 24h stats (15s cache TTL to avoid rate-limiting and lag)
       if (cachedStats) {
         stats = cachedStats;
       } else if (price) {
-        const endpoints = [
-          `https://api.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`,
-          `https://api1.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`,
-          `https://api3.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`,
-        ];
+        const endpoints = BINANCE_HOSTS.map((host) => `https://${host}/api/v3/ticker/24hr?symbol=${binanceSymbol}`);
         for (const endpoint of endpoints) {
           try {
             const res = await fetch(endpoint, {
@@ -467,9 +476,7 @@ export async function getOHLCV(
         timeframe === "1W" ? "1w" : "1h";
 
       const endpoints = [
-        `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${binanceInterval}&limit=${limit}`,
-        `https://api1.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${binanceInterval}&limit=${limit}`,
-        `https://api3.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${binanceInterval}&limit=${limit}`,
+        ...BINANCE_HOSTS.map((host) => `https://${host}/api/v3/klines?symbol=${binanceSymbol}&interval=${binanceInterval}&limit=${limit}`),
       ];
 
       for (const endpoint of endpoints) {

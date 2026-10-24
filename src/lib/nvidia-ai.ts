@@ -63,25 +63,25 @@ export const MODELS: ModelDef[] = [
     groqKeyIndex: 1,
   },
   {
-    // Gemini 2.0 Flash
+    // Gemini Flash-Lite (gemini-2.0-flash was shut down by Google)
     id: 5,
-    name: "gemini-2.0-flash",
+    name: "gemini-3.5-flash-lite",
     provider: "gemini",
     quality: "good",
     timeout: 6_000,
   },
   {
-    // NVIDIA fastest small model
+    // NVIDIA fast text model (the old llama-3.2 vision models timed out at 10s on text-only work)
     id: 2,
-    name: "meta/llama-3.2-11b-vision-instruct",
+    name: "nvidia/nemotron-nano-3-30b-a3b",
     provider: "nvidia",
     quality: "fast",
     timeout: 10_000,
   },
   {
-    // NVIDIA highest quality model
+    // NVIDIA higher-quality text model
     id: 3,
-    name: "meta/llama-3.2-90b-vision-instruct",
+    name: "deepseek-ai/deepseek-v4.1-flash",
     provider: "nvidia",
     quality: "good",
     timeout: 10_000,
@@ -223,7 +223,8 @@ async function callSingleModel(
     endpoint = GROQ_ENDPOINT;
   } else if (modelDef.provider === "gemini") {
     apiKey = (process.env.GEMINI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
-    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    // Key goes in a header, never the URL: URLs are logged on failures and would leak it.
+    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelDef.name}:generateContent`;
     if (!apiKey) throw new Error("GEMINI_API_KEY not set");
   } else if (modelDef.provider === "openai") {
     apiKey = (process.env.OPENAI_API_KEY || "").trim().replace(/^["']|["']$/g, "");
@@ -241,6 +242,7 @@ async function callSingleModel(
   const headers: Record<string, string> = { "Content-Type": "application/json" };
 
   if (modelDef.provider === "gemini") {
+    headers["x-goog-api-key"] = apiKey;
     const systemMsg = messages.find(m => m.role === "system");
     const rest = messages.filter(m => m.role !== "system");
     const contents = rest.map(m => ({
@@ -479,7 +481,7 @@ function formatProviderCheckReport(errors: any[]): string {
     const key = getApiKey(prov);
     const isEnabled = MODELS.some((m) => m.provider === prov && isKeyValid(key, prov));
     const keyExists = !!key?.trim();
-    const endpoint = prov === "groq" ? GROQ_ENDPOINT : prov === "openai" ? OPENAI_ENDPOINT : prov === "gemini" ? "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" : NVIDIA_ENDPOINT;
+    const endpoint = prov === "groq" ? GROQ_ENDPOINT : prov === "openai" ? OPENAI_ENDPOINT : prov === "gemini" ? "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent" : NVIDIA_ENDPOINT;
     const modelSample = MODELS.find((m) => m.provider === prov)?.name || "unknown";
 
     const err = errors.find((e) => e.provider === prov);
